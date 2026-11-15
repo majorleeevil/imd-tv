@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE tv SYSTEM "xmltv.dtd">
+<tv generator-info-name="test">
+  <channel id="bbc1.uk">
+    <display-name lang="en">BBC One</display-name>
+    <display-name>BBC One HD</display-name>
+    <icon src="http://i/bbc1.png"/>
+  </channel>
+  <channel id="itv1.uk">
+    <display-name>ITV 1</display-name>
+  </channel>
+  <programme start="20261108180000 +0000" stop="20261108183000 +0000" channel="bbc1.uk">
+    <title lang="en">News at Six</title>
+    <desc lang="en">The latest &amp; greatest news.</desc>
+    <episode-num system="xmltv_ns">0.4.</episode-num>
+    <episode-num system="onscreen">S1E5</episode-num>
+    <icon src="http://i/news.png"/>
+  </programme>
+  <programme start="20261108183000 +0000" stop="20261108190000 +0000" channel="bbc1.uk">
+    <title>Regional News</title>
+  </programme>
+  <programme start="20261108190000 +0100" stop="20261108200000 +0100" channel="itv1.uk">
+    <title>Quiz</title>
+    <desc>Questions.</desc>
+    <credits><presenter>Someone</presenter></credits>
+  </programme>
+</tv>

@@ -1,0 +1,16 @@
+{
+ "seasons":[{"season_number":1},{"season_number":2}],
+ "info":{"name":"Harbour Lights","cover":"http://c/1.jpg","plot":"A coastal drama.","genre":"Drama","releaseDate":"2019-04-01","rating":"8","backdrop_path":["http://b/1.jpg"],"category_id":"30"},
+ "episodes":{
+  "1":[
+   {"id":"8001","episode_num":1,"title":"Harbour Lights S01E01","container_extension":"mp4","season":1,"info":{"duration_secs":2700,"plot":"Pilot","movie_image":"http://t/8001.jpg"}},
+   {"id":"8001","episode_num":1,"title":"Harbour Lights S01E01 (repeat)","container_extension":"mp4","season":1,"info":[]},
+   {"id":"8002","episode_num":"2","title":"Harbour Lights S01E02","container_extension":"mp4","season":1,"info":[]},
+   {"id":8003,"episode_num":3,"title":"Harbour Lights S01E03","container_extension":"mp4","season":"1","info":{"duration_secs":"","plot":null}}
+  ],
+  "2":[
+   {"id":"9001","episode_num":1,"title":"Harbour Lights S02E01","container_extension":"mkv","season":2,"info":{"duration_secs":2800}},
+   {"id":"9002","episode_num":2,"title":"Harbour Lights S02E02","container_extension":"mkv","season":2}
+  ]
+ }
+}

@@ -1,0 +1,13 @@
+.superpowers/
+local.properties
+build/
+.gradle/
+.kotlin/
+
+# Signing keys never go in the repo
+*.jks
+*.keystore
+keystore.properties
+
+# Private notes, references and mockups: never committed
+private/

@@ -1,0 +1,5 @@
+﻿#EXTM3U
+#EXTINF:-1 tvg-id="a.uk" group-title="News",Alpha
+http://h/u/p/1
+#EXTINF:-1 tvg-id="b.uk" group-title="News",Beta
+http://h/u/p/2
