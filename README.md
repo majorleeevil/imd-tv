@@ -4,6 +4,8 @@
 
 **Live TV, films and series on Android TV — free and open source.**
 
+[![Downloads](https://img.shields.io/github/downloads/majorleeevil/imd-tv/total)](https://github.com/majorleeevil/imd-tv/releases)
+
 IMD TV is a player for your own IPTV playlist (Xtream login or M3U link). It has a fast TV guide that keeps up with
 the remote, movies and series with posters and subtitles, six themes, and no ads or tracking.
 
