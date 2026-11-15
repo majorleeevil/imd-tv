@@ -12,7 +12,14 @@ import kotlinx.coroutines.runBlocking
  */
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action != Intent.ACTION_BOOT_COMPLETED) return // MY_PACKAGE_REPLACED: only to start the process
+        if (intent.action == Intent.ACTION_MY_PACKAGE_REPLACED) {
+            // After a one-click update the old app was closed: open the new one (needs "Display over other apps" too).
+            if (org.imdtv.iptvtv.data.update.reopenMarker(context).delete() && android.provider.Settings.canDrawOverlays(context)) {
+                context.startActivity(Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            }
+            return
+        }
+        if (intent.action != Intent.ACTION_BOOT_COMPLETED) return
         val pending = goAsync()
         Thread {
             try {

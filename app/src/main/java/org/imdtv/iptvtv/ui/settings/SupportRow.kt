@@ -8,6 +8,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.launch
+import org.imdtv.iptvtv.IptvApp
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -38,11 +43,32 @@ const val CONTACT_EMAIL = "imd-tv@whittall.org"
 /** Settings › About: version, website & source, licence, contact, and the quiet Support IMD TV entry. */
 @Composable
 fun AboutRows(first: Modifier) {
-    SettingRow("Version", "IMD TV for Android TV", BuildConfig.VERSION_NAME, first) {}
+    VersionRow(first)
     QrRow("Website & source", "News, help and the source code", SITE_LABEL, R.drawable.site_qr, SITE_LABEL)
     SettingRow("Licence", "Free and open source software", "GPL-3.0") {}
     SettingRow("Contact", "Questions and feedback", CONTACT_EMAIL) {}
     QrRow("Support IMD TV", "Free and open source. Buy me a coffee if you'd like", null, R.drawable.support_qr, SUPPORT_LABEL)
+}
+
+/** Version: OK opens the update prompt when there is one, else checks GitHub now. */
+@Composable
+private fun VersionRow(first: Modifier) {
+    val updater = (LocalContext.current.applicationContext as IptvApp).container.updater
+    val update by updater.available.collectAsState()
+    var checking by remember { mutableStateOf(false) }
+    var result by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
+    val u = update
+    SettingRow("Version", result ?: if (u != null) "Version ${u.version} is available. Press OK to update" else "IMD TV for Android TV. Press OK to check for updates",
+        BuildConfig.VERSION_NAME, first, busy = checking) {
+        if (u != null) updater.prompt.value = true
+        else if (!checking) scope.launch {
+            checking = true
+            val ok = updater.check(manual = true)
+            checking = false
+            result = if (!ok) "Couldn't check for updates. Check your connection" else if (updater.available.value == null) "You have the latest version" else null
+        }
+    }
 }
 
 /** A row whose OK shows a QR code for [label] (a TV has no browser) with the address written out. Never prompts. */
