@@ -239,7 +239,7 @@ class MainActivity : ComponentActivity() {
     override fun onStart() {
         super.onStart()
         app.player.toForeground()
-        // TV boxes keep the app alive for days: check on every return to it, at most every 6 hours.
+        // TV boxes keep the app alive for days: check on every return to it, at most once an hour.
         lifecycleScope.launch { (application as IptvApp).container.updater.check() }
     }
 }

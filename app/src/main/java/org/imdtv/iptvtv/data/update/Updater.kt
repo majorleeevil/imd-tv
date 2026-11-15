@@ -28,7 +28,7 @@ import java.io.IOException
 
 private const val RELEASES = "https://api.github.com/repos/majorleeevil/imd-tv/releases"
 private const val APK_NAME = "imd-tv.apk"
-private const val CHECK_EVERY_MS = 6 * 60 * 60 * 1000L
+private const val CHECK_EVERY_MS = 60 * 60 * 1000L
 
 @Serializable private data class GhAsset(val name: String, @SerialName("browser_download_url") val url: String)
 @Serializable private data class GhRelease(@SerialName("tag_name") val tag: String, val body: String? = null, val assets: List<GhAsset> = emptyList())
@@ -88,7 +88,7 @@ class Updater(private val context: Context, private val http: OkHttpClient, priv
         prefs.edit { it[notesSeen] = BuildConfig.VERSION_NAME }
     }
 
-    /** Asks GitHub for the latest release; [manual] ignores the 6-hour spacing and "Later". Returns false on failure. */
+    /** Asks GitHub for the latest release; [manual] ignores the 1-hour spacing and "Later". Returns false on failure. */
     suspend fun check(manual: Boolean = false): Boolean = withContext(Dispatchers.IO) {
         if (!manual && System.currentTimeMillis() - lastCheck < CHECK_EVERY_MS) return@withContext true
         val release = try {
