@@ -92,7 +92,7 @@ IMD TV is free and always will be. If it's useful to you, you can
 
 ## Contact
 
-imd-tv@whittall.org
+support@imd-tv.com
 
 ## Licence
 
