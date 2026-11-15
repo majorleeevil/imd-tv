@@ -10,6 +10,7 @@ import android.util.Log
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -29,6 +30,7 @@ import java.io.IOException
 private const val RELEASES = "https://api.github.com/repos/majorleeevil/imd-tv/releases"
 private const val APK_NAME = "imd-tv.apk"
 private const val CHECK_EVERY_MS = 60 * 60 * 1000L
+private const val LATER_MS = 24 * 60 * 60 * 1000L
 
 @Serializable private data class GhAsset(val name: String, @SerialName("browser_download_url") val url: String)
 @Serializable private data class GhRelease(@SerialName("tag_name") val tag: String, val body: String? = null, val assets: List<GhAsset> = emptyList())
@@ -57,7 +59,7 @@ class Updater(private val context: Context, private val http: OkHttpClient, priv
     /** "Downloading… 40%", "Installing…", or null when idle. */
     val progress = MutableStateFlow<String?>(null)
     val error = MutableStateFlow<String?>(null)
-    private val later = stringPreferencesKey("update_later")
+    private val laterUntil = longPreferencesKey("update_later_until")
     private val notesSeen = stringPreferencesKey("notes_seen")
     @Volatile private var lastCheck = 0L
     /** This version's release notes, shown once after an update; null when closed. */
@@ -103,14 +105,14 @@ class Updater(private val context: Context, private val http: OkHttpClient, priv
         val u = if (apk != null && isNewer(release.tag, BuildConfig.VERSION_NAME))
             Update(release.tag.trimStart('v', 'V'), plainNotes(release.body.orEmpty()), apk.url) else null
         available.value = u
-        if (u != null && (manual || prefs.data.first()[later] != u.version)) prompt.value = true
+        if (u != null && (manual || System.currentTimeMillis() >= (prefs.data.first()[laterUntil] ?: 0L))) prompt.value = true
         true
     }
 
-    /** "Later": the prompt stays closed until a newer version than this one comes out. */
+    /** "Later" (or Back): the prompt stays closed for a day, then opens again on the next check. */
     suspend fun later() {
         prompt.value = false
-        available.value?.let { u -> prefs.edit { it[later] = u.version } }
+        prefs.edit { it[laterUntil] = System.currentTimeMillis() + LATER_MS }
     }
 
     suspend fun install(u: Update) = withContext(Dispatchers.IO) {
