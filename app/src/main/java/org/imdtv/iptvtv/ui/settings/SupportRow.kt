@@ -36,15 +36,18 @@ import org.imdtv.iptvtv.ui.MenuItem
 
 const val SUPPORT_URL = "https://buymeacoffee.com/majorleeevil"
 const val SUPPORT_LABEL = "buymeacoffee.com/majorleeevil"
+const val WEBSITE_LABEL = "imd-tv.com"
+const val WEBSITE_URL = "https://$WEBSITE_LABEL/"
 const val SITE_LABEL = "majorleeevil.github.io/imd-tv"
 const val SITE_URL = "https://$SITE_LABEL/"
-const val CONTACT_EMAIL = "imd-tv@whittall.org"
+const val CONTACT_EMAIL = "support@imd-tv.com"
 
-/** Settings › About: version, website & source, licence, contact, and the quiet Support IMD TV entry. */
+/** Settings › About: version, website, source, licence, contact, and the quiet Support IMD TV entry. */
 @Composable
 fun AboutRows(first: Modifier) {
     VersionRow(first)
-    QrRow("Website & source", "News, help and the source code", SITE_LABEL, R.drawable.site_qr, SITE_LABEL)
+    QrRow("Website", "News and help", WEBSITE_LABEL, R.drawable.website_qr, WEBSITE_LABEL)
+    QrRow("Source", "The source code", SITE_LABEL, R.drawable.site_qr, SITE_LABEL)
     SettingRow("Licence", "Free and open source software", "GPL-3.0") {}
     SettingRow("Contact", "Questions and feedback", CONTACT_EMAIL) {}
     QrRow("Support IMD TV", "Free and open source. Buy me a coffee if you'd like", null, R.drawable.support_qr, SUPPORT_LABEL)

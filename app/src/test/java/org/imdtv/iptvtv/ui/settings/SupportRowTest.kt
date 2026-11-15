@@ -14,4 +14,9 @@ class SupportRowTest {
         assertEquals("majorleeevil.github.io/imd-tv", SITE_LABEL)
         assertEquals("https://$SITE_LABEL/", SITE_URL)
     }
+
+    @Test fun websiteLabelIsTheWebsiteUrlWithoutSchemeOrSlash() {
+        assertEquals("imd-tv.com", WEBSITE_LABEL)
+        assertEquals("https://$WEBSITE_LABEL/", WEBSITE_URL)
+    }
 }
