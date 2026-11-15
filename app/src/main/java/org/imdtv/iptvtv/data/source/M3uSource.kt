@@ -106,6 +106,7 @@ class M3uSource(
             number = it.attrs["tvg-chno"]?.toIntOrNull(),
             tvgId = it.attrs["tvg-id"]?.takeIf(String::isNotBlank),
             streamUrl = it.url,
+            drm = it.drm,
         )
     }
 

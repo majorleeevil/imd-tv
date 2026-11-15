@@ -52,7 +52,11 @@ class AppContainer(context: Context) {
             p.url, p.username.orEmpty(), p.password.orEmpty(), p.streamFormat, http, json, p.userAgent,
         )
         ProviderType.M3U -> M3uSource(p.url, p.epgOverrideUrls, http, p.userAgent)
+        ProviderType.STALKER -> org.imdtv.iptvtv.data.source.StalkerSource(p.id, stalkerLinks.client(p))
     }
+
+    /** Portal sessions per playlist, shared by sync, playback and recording. */
+    val stalkerLinks by lazy { org.imdtv.iptvtv.data.source.StalkerLinks(http) { db.providerDao().get(it) } }
 
     val catalogueSync: CatalogueSync by lazy {
         CatalogueSync(db, keepLanguage = { if (settings.settings.first().matchTvLanguage) tvLanguage() else null })
@@ -102,6 +106,7 @@ class AppContainer(context: Context) {
     private val player = lazy {
         PlayerManager(appContext).also { p ->
             p.guard = { retry -> recordings.blocksWatching { main.post(retry) } }
+            p.resolveLink = stalkerLinks::resolve
             p.smbSettings = { smbSettings(kotlinx.coroutines.runBlocking { settings.settings.first() }) } // on the player's loader thread
         }
     }

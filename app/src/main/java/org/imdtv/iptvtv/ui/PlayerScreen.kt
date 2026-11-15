@@ -46,10 +46,12 @@ fun PlayerScreen(player: PlayerManager, title: String, liveVm: LiveViewModel? = 
     val live = liveVm != null
     val focused = liveVm?.focused?.collectAsState()?.value
     val name = focused?.displayName(liveVm.strip.collectAsState().value) ?: title
-    var error by remember { mutableStateOf<String?>(null) }
+    // Kept with the channel it is for: a stream that fails inside play() reports before a zap's effects run.
+    var failure by remember { mutableStateOf<Pair<Long?, String>?>(null) }
     val shownName by androidx.compose.runtime.rememberUpdatedState(if (live) name else title) // the zapped-to channel, not the first
-    LaunchedEffect(Unit) { player.errors.collect { error = "Can't play $shownName: ${it.errorCodeName}" } }
-    LaunchedEffect(focused?.id) { error = null } // a zap starts a new stream
+    // The view model's value, not the composed one: a zap sets it, then plays, before the next recomposition.
+    LaunchedEffect(Unit) { player.errors.collect { failure = liveVm?.focused?.value?.id to "Can't play $shownName: ${org.imdtv.iptvtv.player.playErrorText(it)}" } }
+    val error = failure?.takeIf { it.first == focused?.id }?.second
 
     var overlay by remember { mutableStateOf(false) }
     var lastKey by remember { mutableLongStateOf(0L) }

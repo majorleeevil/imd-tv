@@ -12,6 +12,7 @@ import org.junit.Assert.assertSame
 import org.junit.Assert.assertNotSame
 import org.imdtv.iptvtv.data.settings.AudioDecoder
 import org.junit.Test
+import kotlinx.coroutines.launch
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
@@ -191,5 +192,27 @@ class PlayerManagerTest {
         manager.guard = { false }
         manager.play("http://x/1.ts", null)
         assertEquals("http://x/1.ts", manager.playingUrl.value)
+    }
+
+    @Test
+    fun portalDownDuringRetriesKeepsRetryingThenReports() {
+        val looper = org.robolectric.Shadows.shadowOf(android.os.Looper.getMainLooper())
+        var calls = 0
+        manager.resolveLink = { calls++; if (calls == 1) "http://x/1.ts" else throw java.io.IOException("portal down") }
+        val got = mutableListOf<androidx.media3.common.PlaybackException>()
+        val job = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Unconfined).launch { manager.errors.collect { got += it } }
+        manager.play("stalker://1/itv?cmd=x", null)
+        looper.idle()
+        assertEquals(1, calls)
+        manager.streamError(androidx.media3.common.PlaybackException("lost", null, androidx.media3.common.PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED))
+        for ((delay, expected) in listOf(1L to 2, 2L to 3)) {
+            looper.idleFor(java.time.Duration.ofSeconds(delay))
+            assertEquals(expected, calls)
+            assertTrue("no error while retries are left", got.isEmpty())
+        }
+        looper.idleFor(java.time.Duration.ofSeconds(4))
+        assertEquals(4, calls)
+        assertEquals("portal down", got.single().message)
+        job.cancel()
     }
 }

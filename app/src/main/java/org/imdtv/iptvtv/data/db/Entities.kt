@@ -8,7 +8,7 @@ import androidx.room.PrimaryKey
 import org.imdtv.iptvtv.data.model.Kind
 import org.imdtv.iptvtv.data.model.StreamFormat
 
-enum class ProviderType { XTREAM, M3U }
+enum class ProviderType { XTREAM, M3U, STALKER }
 
 /** Where a user category sits in the category list (Your categories › Options › Priority). */
 enum class GroupPlacement { TOP, NORMAL, BOTTOM }
@@ -85,7 +85,12 @@ data class ChannelEntity(
     val packLogo: String? = null,
     /** tv-logos path, e.g. `countries/united-kingdom/hd/sky-sports-main-event-uhd-uk.png` (not a URL). */
     val builtinLogo: String? = null,
-)
+    /** Playlist DRM (Kodi license_type / license_key), read at play time by drmSpec(). */
+    val drmType: String? = null,
+    val drmKey: String? = null,
+) {
+    fun drm(): org.imdtv.iptvtv.data.source.Drm? = drmType?.let { org.imdtv.iptvtv.data.source.Drm(it, drmKey) }
+}
 
 @Entity(
     tableName = "movie",

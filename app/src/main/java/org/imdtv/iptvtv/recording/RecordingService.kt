@@ -62,7 +62,7 @@ class RecordingService : Service() {
             container.db.recordingDao().get(id)?.let { r -> repo.running.update { it + (id to r) } }
             withContext(Dispatchers.Main) { holdLocks(s.keepAwake); notify(repo.running.value.values.map { it.title }) }
             val status = runRecording(id, container.db, store, StreamCapture(container.http),
-                otherStreams = { repo.running.value.size > 1 || container.isWatching() })
+                otherStreams = { repo.running.value.size > 1 || container.isWatching() }, resolve = container.stalkerLinks::resolve)
             container.db.recordingDao().get(id)?.let { r ->
                 if (status == RecStatus.FAILED || r.statusReason != null && status == RecStatus.STOPPED) repo.prompt.value = Prompt.Notice("${r.title}: ${r.statusReason}")
             }

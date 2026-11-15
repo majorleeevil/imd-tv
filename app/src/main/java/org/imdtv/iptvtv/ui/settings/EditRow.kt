@@ -35,7 +35,7 @@ import org.imdtv.iptvtv.ui.FocusBox
 @Composable
 fun EditRow(
     title: String, explanation: String, value: String?, initial: String, modifier: Modifier = Modifier,
-    keyboard: KeyboardType = KeyboardType.Text, secret: Boolean = false, onDraft: ((String?) -> Unit)? = null, onSave: (String) -> Unit,
+    keyboard: KeyboardType = KeyboardType.Text, secret: Boolean = false, onDraft: ((String?) -> Unit)? = null, saveLabel: String = "Save", onSave: (String) -> Unit,
 ) {
     var editing by remember { mutableStateOf(false) }
     var text by remember { mutableStateOf(initial) }
@@ -52,7 +52,7 @@ fun EditRow(
             // Down from the box goes to Save (the nearest-below search picked Cancel).
             Field("", text, keyboard, secret, modifier = Modifier.focusRequester(fieldFocus).focusProperties { down = saveFocus }) { text = it; onDraft?.invoke(it) }
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.padding(bottom = 6.dp)) {
-                PillButton("Save", Modifier.focusRequester(saveFocus)) { onSave(text.trim()); close() }
+                PillButton(saveLabel, Modifier.focusRequester(saveFocus)) { onSave(text.trim()); close() }
                 PillButton("Cancel") { close() }
             }
         }

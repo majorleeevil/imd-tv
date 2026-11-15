@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -50,8 +51,11 @@ import org.imdtv.iptvtv.ui.FocusBox
 import org.imdtv.iptvtv.ui.onLongOk
 import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.focusable
 import org.imdtv.iptvtv.data.db.GroupPlacement
 import org.imdtv.iptvtv.data.db.CustomGroupEntity
+import org.imdtv.iptvtv.data.db.CategoryEntity
+import org.imdtv.iptvtv.data.catalogue.displayName
 import org.imdtv.iptvtv.ui.TextPrompt
 import org.imdtv.iptvtv.ui.ContextMenu
 
@@ -68,6 +72,7 @@ enum class ChannelPage(val title: String, val explanation: String, val parent: C
     MOVIE_CATEGORIES("Movies", "Movie categories", parent = PROVIDER_CATEGORIES),
     SERIES_CATEGORIES("Series", "Series categories", parent = PROVIDER_CATEGORIES),
     CHANNEL_NAME_CLEANUP("Channel name clean-up", "Remove or rename prefixes and suffixes such as “UK|”", parent = CHANNELS),
+    SHOW_HIDE_CHANNELS("Show or hide channels", "Hide or bring back many channels at once, by category", parent = CHANNELS),
 }
 
 private fun LogoKind.short() = when (this) { LogoKind.PLAYLIST -> "Playlist"; LogoKind.OPEN_SOURCE -> "Open-source"; LogoKind.PACK -> "My pack" }
@@ -86,12 +91,17 @@ private fun ChannelsPageRows(vm: SettingsViewModel, first: FocusRequester, opene
     val s by vm.settings.collectAsState()
     val matching by vm.logoMatching.collectAsState()
     val logos = ChannelPage.CHANNEL_LOGOS
-    SettingRow(logos.title, logos.explanation, s.logoOrder.joinToString(" → ") { it.short() } + "  ›",
-        Modifier.focusRequester(first).focusRequester(openers.getValue(logos)), matching) { onOpen(logos) }
-    val names = ChannelPage.CHANNEL_NAME_CLEANUP
-    SettingRow(names.title, names.explanation, strip.ifBlank { "None" }, Modifier.focusRequester(openers.getValue(names))) { onOpen(names) }
-    SwitchRow("Hide header channels", "Hide divider rows such as “#### SKY CINEMA ####”", s.hideHeaderChannels) { on ->
-        vm.update { it.copy(hideHeaderChannels = on) }
+    // Scrolls: in short themes (Xcube) the rows below Channel logos were out of reach.
+    Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        SettingRow(logos.title, logos.explanation, s.logoOrder.joinToString(" → ") { it.short() } + "  ›",
+            Modifier.focusRequester(first).focusRequester(openers.getValue(logos)), matching) { onOpen(logos) }
+        val names = ChannelPage.CHANNEL_NAME_CLEANUP
+        SettingRow(names.title, names.explanation, strip.ifBlank { "None" }, Modifier.focusRequester(openers.getValue(names))) { onOpen(names) }
+        val showHide = ChannelPage.SHOW_HIDE_CHANNELS
+        SettingRow(showHide.title, showHide.explanation, "›", Modifier.focusRequester(openers.getValue(showHide))) { onOpen(showHide) }
+        SwitchRow("Hide header channels", "Hide divider rows such as “#### SKY CINEMA ####”", s.hideHeaderChannels) { on ->
+            vm.update { it.copy(hideHeaderChannels = on) }
+        }
     }
 }
 
@@ -117,6 +127,7 @@ fun ChannelPageView(
             ChannelPage.CATEGORY_NAME_CLEANUP -> { BackHandler(onBack = onClose); NameCleanupPage(vm, first, category = true) }
             ChannelPage.CHANNELS -> { BackHandler(onBack = onClose); ChannelsPageRows(vm, first, openers, onOpen) }
             ChannelPage.YOUR_CATEGORIES -> { BackHandler(onBack = onClose); YourCategoriesPage(vm, first) }
+            ChannelPage.SHOW_HIDE_CHANNELS -> ShowHideChannelsPage(vm, first, onClose)
         }
     }
 }
@@ -211,6 +222,73 @@ private fun CategoryListPage(vm: SettingsViewModel, kind: Kind, first: FocusRequ
                             fontSize = 12.sp, color = if (f || isMoving) Color(0xFF555555) else LocalTheme.current.colors.muted)
                     }
                     if (!isMoving) Toggle(!hidden, f) // hidden while moving: the gold track would vanish into the gold row
+                }
+            }
+        }
+    }
+}
+
+/** Live categories; OK opens one's channels to tick with OK, then Hide or Show the ticked ones (Reddit R1, 2026-11-15). */
+@Composable
+private fun ShowHideChannelsPage(vm: SettingsViewModel, first: FocusRequester, onClose: () -> Unit) {
+    LaunchedEffect(Unit) { vm.categoryKind.value = Kind.LIVE }
+    val cats = vm.categoryRows.collectAsState().value.filter { it.category.kind == Kind.LIVE }
+    var open by remember { mutableStateOf<CategoryEntity?>(null) }
+    var cameFrom by remember { mutableStateOf<Long?>(null) }
+    val back = remember { FocusRequester() }
+    // Every row is replaced on open/close: park focus on a spot that stays (else it falls to the section list and Settings jumps to its root).
+    val parkSpot = remember { FocusRequester() }
+    var parking by remember { mutableStateOf(false) }
+    fun go(to: CategoryEntity?) { parking = true; runCatching { parkSpot.requestFocus() }; if (to == null) cameFrom = open?.id; open = to }
+    BackHandler { if (open == null) onClose() else go(null) }
+    LaunchedEffect(open) {
+        withFrameNanos { }
+        runCatching { if (open == null && cameFrom != null) back.requestFocus() else first.requestFocus() }
+        parking = false
+    }
+    Box(Modifier.focusRequester(parkSpot).focusProperties { canFocus = parking }.focusable())
+    val cat = open
+    if (cat == null) {
+        val list = rememberLazyListState(cats.indexOfFirst { it.category.id == cameFrom }.coerceAtLeast(0))
+        if (cats.isEmpty()) Text("No categories yet", fontSize = 15.sp, color = LocalTheme.current.colors.muted)
+        LazyColumn(state = list, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            items(cats, key = { it.category.id }) { r ->
+                val m = if (r.category.id == cameFrom) Modifier.focusRequester(back) else Modifier
+                SettingRow(r.category.name.ifEmpty { "Uncategorised" }, "${r.count} shown", "›",
+                    if (r == cats.first()) m.focusRequester(first) else m) { go(r.category) }
+            }
+        }
+        return
+    }
+    val channels by remember(cat.id) { vm.channelsIn(cat.id) }.collectAsState(emptyList())
+    val strip = parseStripList(vm.nameStrip.collectAsState().value)
+    val selected = remember(cat.id) { androidx.compose.runtime.mutableStateListOf<Long>() }
+    // Back clears a selection before it leaves the category.
+    BackHandler(enabled = selected.isNotEmpty()) { selected.clear() }
+    var noneTicked by remember { mutableStateOf(false) }
+    fun apply(hidden: Boolean) { if (selected.isEmpty()) noneTicked = true else { vm.setChannelsHidden(selected.toList(), hidden); selected.clear() } }
+    // Closing the dialog gives focus back to the row that opened it (Hide or Show selected).
+    if (noneTicked) org.imdtv.iptvtv.ui.ContextMenu("No Channels Selected!", listOf("OK" to { noneTicked = false })) { noneTicked = false }
+    val n = selected.size
+    val muted = LocalTheme.current.colors.muted
+    LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        item { Text(cat.name.ifEmpty { "Uncategorised" }, fontSize = 15.sp, color = muted, modifier = Modifier.padding(bottom = 6.dp)) }
+        item { SettingRow(if (n == 0) "Hide selected" else "Hide $n selected", if (n == 0) "Tick channels below with OK" else "Hide the ticked channels",
+            null, Modifier.focusRequester(first)) { apply(true) } }
+        item { SettingRow(if (n == 0) "Show selected" else "Show $n selected", "Bring ticked hidden channels back", null) { apply(false) } }
+        items(channels, key = { it.id }) { ch ->
+            val ticked = ch.id in selected
+            FocusBox(onClick = { if (ticked) selected.remove(ch.id) else selected.add(ch.id) }) { f ->
+                Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(if (f) Color.White else Color(0x14FFFFFF))
+                    .padding(horizontal = 18.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Box(Modifier.size(22.dp).clip(RoundedCornerShape(4.dp))
+                        .background(if (ticked) LocalTheme.current.colors.accent else Color.Transparent)
+                        .border(2.dp, if (ticked) LocalTheme.current.colors.accent else if (f) Color(0xFF555555) else muted, RoundedCornerShape(4.dp)),
+                        contentAlignment = Alignment.Center) { if (ticked) Text("✓", fontSize = 14.sp, color = Color.White) }
+                    Column(Modifier.weight(1f).padding(start = 14.dp)) {
+                        Text(ch.displayName(strip), fontSize = 16.sp, color = if (f) Color.Black else Color.White, maxLines = 1)
+                        Text(if (ch.hidden) "Hidden" else "Shown", fontSize = 12.sp, color = if (f) Color(0xFF555555) else muted)
+                    }
                 }
             }
         }

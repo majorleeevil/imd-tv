@@ -75,4 +75,14 @@ class MigrationTest {
             db.query("SELECT count(*) FROM recording").use { c -> c.moveToFirst(); assertEquals(0, c.getInt(0)) }
         }
     }
+
+    @Test fun v7ToV8AddsChannelDrm() {
+        helper.createDatabase(DB, 7).use { db ->
+            db.execSQL("INSERT INTO provider (id,name,type,url,username,password,userAgent,streamFormat,epgOverrideUrls,lastSync,nameStrip,categoryStrip) VALUES (1,'p','M3U','http://x',NULL,NULL,NULL,'TS','',NULL,'','')")
+            db.execSQL("INSERT INTO channel (id,providerId,categoryId,remoteId,name,logo,number,hidden,tvgId,streamUrl) VALUES (1,1,NULL,'r','BBC',NULL,NULL,0,NULL,'http://s')")
+        }
+        helper.runMigrationsAndValidate(DB, 8, true).use { db ->
+            db.query("SELECT name, drmType, drmKey FROM channel").use { c -> c.moveToFirst(); assertEquals("BBC", c.getString(0)); assertTrue(c.isNull(1)); assertTrue(c.isNull(2)) }
+        }
+    }
 }

@@ -86,16 +86,20 @@ private fun RestoreForm(b: Backup, vm: SettingsViewModel, park: () -> Unit, onCa
         val p = b.playlists[i]
         var user by remember(step) { mutableStateOf("") }
         var pass by remember(step) { mutableStateOf("") }
+        // Stalker: the MAC in the username slot, the optional serial in the password slot (as the playlist form saves them).
+        val portal = p.type == org.imdtv.iptvtv.data.db.ProviderType.STALKER.name
+        val ready = if (portal) org.imdtv.iptvtv.data.source.isValidMac(user) else user.isNotBlank() && pass.isNotBlank()
         Text("Login for ${p.name}", fontSize = 16.sp, color = Color.White, modifier = Modifier.padding(top = 8.dp))
         // The password keyboard has the number row many providers' logins need (as the playlist form).
-        EditRow("Username", "As given by your provider", user.ifEmpty { "Not set" }, user, Modifier.focusRequester(firstRow),
+        EditRow(if (portal) "MAC address" else "Username", if (portal) "e.g. 00:1A:79:12:34:56" else "As given by your provider",
+            user.ifEmpty { "Not set" }, user, Modifier.focusRequester(firstRow),
             keyboard = androidx.compose.ui.text.input.KeyboardType.Password) { user = it }
-        EditRow("Password", "As given by your provider", if (pass.isEmpty()) "Not set" else "••••••", pass,
+        EditRow(if (portal) "Serial (optional)" else "Password", "As given by your provider", if (pass.isEmpty()) "Not set" else "••••••", pass,
             keyboard = androidx.compose.ui.text.input.KeyboardType.Password, secret = true) { pass = it }
         SettingRow(if (step == asks.size - 1) "Next: review" else "Next playlist",
-            if (user.isBlank() || pass.isBlank()) "Enter the username and password first" else "Use this login for ${p.name}", null) {
+            if (!ready) (if (portal) "Enter the MAC address first" else "Enter the username and password first") else "Use this login for ${p.name}", null) {
             // The last step swaps these rows out: park focus first, or it falls to the group list (and switches group).
-            if (user.isNotBlank() && pass.isNotBlank()) { logins[i] = user to pass; if (step == asks.size - 1) park(); step++ }
+            if (ready) { logins[i] = user.trim() to pass; if (step == asks.size - 1) park(); step++ }
         }
         SettingRow("Skip", "Leave ${p.name} out of the restore", null) { logins.remove(i); if (step == asks.size - 1) park(); step++ }
     } else {

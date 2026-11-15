@@ -81,6 +81,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         CatalogueSyncWorker.runOnLaunch(this)
+        lifecycleScope.launch { (application as IptvApp).container.updater.checkWhatsNew() }
         // Audio decoder (spec §4.4): the player rebuilds when idle, else from the next stream.
         lifecycleScope.launch {
             (application as IptvApp).container.settings.settings.map { it.audioDecoder }.distinctUntilChanged()
@@ -212,6 +213,7 @@ class MainActivity : ComponentActivity() {
                         if ((app.stack.value.last() as? Screen.Player)?.live == true) app.back()
                     }
                     org.imdtv.iptvtv.data.update.UpdatePrompt((application as IptvApp).container.updater, (application as IptvApp).container.background)
+                    org.imdtv.iptvtv.data.update.WhatsNewPrompt((application as IptvApp).container.updater)
                     if (exitHint) Text(
                         buildAnnotatedString {
                             append("Press ")

@@ -16,6 +16,7 @@ data class Channel(
     val number: Int?,
     val tvgId: String?,
     val streamUrl: String,
+    val drm: org.imdtv.iptvtv.data.source.Drm? = null,
 )
 
 data class Movie(

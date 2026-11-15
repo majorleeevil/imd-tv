@@ -3,7 +3,7 @@ package org.imdtv.iptvtv.data.source
 import org.imdtv.iptvtv.data.model.Kind
 import java.io.InputStream
 
-data class M3uEntry(val name: String, val attrs: Map<String, String>, val url: String)
+data class M3uEntry(val name: String, val attrs: Map<String, String>, val url: String, val drm: Drm? = null)
 
 data class M3uParseResult(val entries: List<M3uEntry>, val skipped: Int)
 
@@ -18,6 +18,10 @@ object M3uParser {
         var skipped = 0
         var pending: Pair<String, Map<String, String>>? = null
         val headers = LinkedHashMap<String, String>() // #EXTVLCOPT http-user-agent / http-referrer of the pending entry
+        // #KODIPROP lines may come before or after #EXTINF, so they last until the next URL line.
+        var drmType: String? = null
+        var drmKey: String? = null
+        val propHeaders = LinkedHashMap<String, String>()
         input.bufferedReader(Charsets.UTF_8).useLines { lines ->
             for (raw in lines) {
                 val line = raw.removePrefix("﻿").trim()
@@ -37,11 +41,25 @@ object M3uParser {
                         val (k, v) = line.substring(11).split('=', limit = 2).let { it[0].trim().lowercase() to it.getOrElse(1) { "" }.trim() }
                         when (k) { "http-user-agent" -> headers["User-Agent"] = v; "http-referrer", "http-referer" -> headers["Referer"] = v }
                     }
+                    line.startsWith("#KODIPROP:", ignoreCase = true) -> {
+                        val (k, v) = line.substring(10).split('=', limit = 2).let { it[0].trim().lowercase() to it.getOrElse(1) { "" }.trim() }
+                        when (k) {
+                            "inputstream.adaptive.license_type" -> drmType = v
+                            "inputstream.adaptive.license_key" -> drmKey = v
+                            // Kodi 21: keysystem|key-or-url|headers
+                            "inputstream.adaptive.drm_legacy" -> v.split('|', limit = 2).let { drmType = it[0]; drmKey = it.getOrNull(1) }
+                            "inputstream.adaptive.stream_headers" -> propHeaders += splitStreamHeaders("|$v").second
+                        }
+                    }
                     line.startsWith("#") -> Unit // #EXTM3U, #EXTGRP …
-                    else -> pending?.let { (name, attrs) ->
-                        entries += M3uEntry(name, attrs, if ('|' in line) line else withStreamHeaders(line, headers))
-                        pending = null
-                        headers.clear()
+                    else -> {
+                        pending?.let { (name, attrs) ->
+                            val drm = drmType?.takeIf { it.isNotBlank() }?.let { Drm(it, drmKey?.takeIf(String::isNotBlank)) }
+                            entries += M3uEntry(name, attrs, if ('|' in line) line else withStreamHeaders(line, propHeaders + headers), drm)
+                            pending = null
+                            headers.clear()
+                        }
+                        drmType = null; drmKey = null; propHeaders.clear()
                     }
                 }
             }

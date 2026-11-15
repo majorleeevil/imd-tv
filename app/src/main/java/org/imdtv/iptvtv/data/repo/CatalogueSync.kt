@@ -49,11 +49,11 @@ class CatalogueSync(
      * Each kind is fully fetched before its transaction, so a failure keeps that kind's cached data.
      */
     suspend fun sync(providerId: Long, source: PlaylistSource, onProgress: (String) -> Unit = {}): SyncResult {
-        onProgress("Loading live TV…")
+        onProgress("Downloading channels…")
         val live = syncLive(providerId, source.liveCategories(), source.liveChannels())
-        onProgress("${live.items} channels saved · loading movies…")
+        onProgress("Downloading movies… · ${live.items} channels saved")
         val vod = syncMovies(providerId, source.vodCategories(), source.movies())
-        onProgress("${live.items} channels, ${vod.items} movies saved · loading series…")
+        onProgress("Downloading series… · ${live.items} channels, ${vod.items} movies saved")
         val ser = syncSeries(providerId, source.seriesCategories(), source.series())
         return SyncResult(
             categories = live.categories + vod.categories + ser.categories,
@@ -111,9 +111,9 @@ class CatalogueSync(
             val catId = c.idByRemote[resolve(ch.categoryRemoteId)]
             val old = existing[ch.remoteId]
             if (old == null) fresh += ChannelEntity(providerId = providerId, categoryId = catId, remoteId = ch.remoteId, name = ch.name,
-                logo = ch.logo, number = ch.number, tvgId = ch.tvgId, streamUrl = ch.streamUrl)
-            else ChannelFromProvider(old.id, ch.name, ch.logo, ch.number, ch.tvgId, ch.streamUrl, catId).let { n ->
-                if (n != ChannelFromProvider(old.id, old.name, old.logo, old.number, old.tvgId, old.streamUrl, old.categoryId)) changed += n
+                logo = ch.logo, number = ch.number, tvgId = ch.tvgId, streamUrl = ch.streamUrl, drmType = ch.drm?.type, drmKey = ch.drm?.key)
+            else ChannelFromProvider(old.id, ch.name, ch.logo, ch.number, ch.tvgId, ch.streamUrl, catId, ch.drm?.type, ch.drm?.key).let { n ->
+                if (n != ChannelFromProvider(old.id, old.name, old.logo, old.number, old.tvgId, old.streamUrl, old.categoryId, old.drmType, old.drmKey)) changed += n
             }
         }
         fresh.chunked(WRITE_CHUNK).forEach { dao.upsert(it) }

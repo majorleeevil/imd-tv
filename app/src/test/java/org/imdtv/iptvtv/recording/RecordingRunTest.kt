@@ -37,13 +37,13 @@ class RecordingRunTest {
     @Before fun setUp() { db = inMemoryDb(); server.start() }
     @After fun tearDown() { db.close(); server.shutdown() }
 
-    private suspend fun recording(path: String = "/live/~iptvu~/~iptvp~/1.ts"): Long {
+    private suspend fun recording(path: String = "/live/~iptvu~/~iptvp~/1.ts", drmType: String? = null): Long {
         val p = db.providerDao().insert(ProviderEntity(name = "p", type = ProviderType.XTREAM, url = server.url("/").toString(),
             username = "secretuser", password = "secretpass", userAgent = "UA", streamFormat = StreamFormat.TS, epgOverrideUrls = emptyList(), lastSync = null))
         db.categoryDao().upsert(listOf(CategoryEntity(providerId = p, kind = Kind.LIVE, remoteId = "c", name = "c")))
         val cat = db.categoryDao().byRemoteIds(p, Kind.LIVE).single().id
         db.channelDao().upsert(listOf(ChannelEntity(providerId = p, categoryId = cat, remoteId = "1", name = "BBC One", logo = null,
-            number = 1, tvgId = null, streamUrl = server.url(path).toString())))
+            number = 1, tvgId = null, streamUrl = server.url(path).toString(), drmType = drmType)))
         val ch = db.channelDao().byProvider(p).single()
         return db.recordingDao().insert(RecordingEntity(providerId = p, channelId = ch.id, channelName = "BBC One", channelLogo = null,
             title = "News", description = null, scheduledStart = now, scheduledEnd = now + 3_600_000, programmeStart = null))
@@ -68,6 +68,15 @@ class RecordingRunTest {
         assertTrue(File(r.location!!).length() > 0); assertEquals(File(r.location!!).length(), r.bytes)
         assertEquals(1_000_000_000L, r.actualStart)
         assertEquals("UA", server.takeRequest().getHeader("User-Agent"))
+    }
+
+    @Test fun drmChannelFailsWithoutFileOrRequest() = runTest {
+        val id = recording(drmType = "clearkey")
+        assertEquals(RecStatus.FAILED, run(id))
+        val r = db.recordingDao().get(id)!!
+        assertTrue(r.statusReason!!.contains("DRM")); assertEquals(null, r.location)
+        assertEquals(0, server.requestCount)
+        assertTrue(!File(tmp.root, "rec").exists() || File(tmp.root, "rec").list()!!.isEmpty())
     }
 
     @Test fun lostStreamIsStoppedAndKeepsFile() = runTest {

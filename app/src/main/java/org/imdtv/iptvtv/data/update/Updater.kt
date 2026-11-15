@@ -26,7 +26,7 @@ import org.imdtv.iptvtv.IptvApp
 import java.io.File
 import java.io.IOException
 
-private const val LATEST = "https://api.github.com/repos/majorleeevil/imd-tv/releases/latest"
+private const val RELEASES = "https://api.github.com/repos/majorleeevil/imd-tv/releases"
 private const val APK_NAME = "imd-tv.apk"
 private const val CHECK_EVERY_MS = 6 * 60 * 60 * 1000L
 
@@ -58,16 +58,41 @@ class Updater(private val context: Context, private val http: OkHttpClient, priv
     val progress = MutableStateFlow<String?>(null)
     val error = MutableStateFlow<String?>(null)
     private val later = stringPreferencesKey("update_later")
+    private val notesSeen = stringPreferencesKey("notes_seen")
     @Volatile private var lastCheck = 0L
+    /** This version's release notes, shown once after an update; null when closed. */
+    val whatsNew = MutableStateFlow<String?>(null)
+
+    private fun release(path: String): GhRelease =
+        http.newCall(Request.Builder().url("$RELEASES/$path").header("Accept", "application/vnd.github+json").build()).execute().use { r ->
+            if (!r.isSuccessful) throw IOException("HTTP ${r.code}")
+            json.decodeFromString<GhRelease>(r.body!!.string())
+        }
+
+    /** After an update (not a fresh install), fetches this version's release notes once. Offline: tries next launch. */
+    suspend fun checkWhatsNew() = withContext(Dispatchers.IO) {
+        val v = BuildConfig.VERSION_NAME
+        if (prefs.data.first()[notesSeen] == v) return@withContext
+        val pkg = context.packageManager.getPackageInfo(context.packageName, 0)
+        val body = if (pkg.firstInstallTime == pkg.lastUpdateTime) "" else try {
+            release("tags/v$v").body.orEmpty()
+        } catch (e: IOException) {
+            if (e.message != "HTTP 404") { Log.i("Updater", "Release notes check failed: $e"); return@withContext }
+            "" // no release for this version (a dev build)
+        }
+        if (body.isBlank()) prefs.edit { it[notesSeen] = v } else whatsNew.value = plainNotes(body, max = Int.MAX_VALUE)
+    }
+
+    suspend fun closeWhatsNew() {
+        whatsNew.value = null
+        prefs.edit { it[notesSeen] = BuildConfig.VERSION_NAME }
+    }
 
     /** Asks GitHub for the latest release; [manual] ignores the 6-hour spacing and "Later". Returns false on failure. */
     suspend fun check(manual: Boolean = false): Boolean = withContext(Dispatchers.IO) {
         if (!manual && System.currentTimeMillis() - lastCheck < CHECK_EVERY_MS) return@withContext true
         val release = try {
-            http.newCall(Request.Builder().url(LATEST).header("Accept", "application/vnd.github+json").build()).execute().use { r ->
-                if (!r.isSuccessful) throw IOException("HTTP ${r.code}")
-                json.decodeFromString<GhRelease>(r.body!!.string())
-            }
+            release("latest")
         } catch (e: Exception) {
             if (e is CancellationException) throw e
             Log.i("Updater", "Update check failed: $e") // offline or GitHub down: try again next time
@@ -135,10 +160,10 @@ class Updater(private val context: Context, private val http: OkHttpClient, priv
 /** Exists while a one-click update is installing: BootReceiver reopens the app once it's replaced. */
 fun reopenMarker(context: Context) = File(context.noBackupFilesDir, "reopen-after-update")
 
-/** Release notes as plain text: no Markdown headings, bold or links' brackets, at most ~600 characters. */
-internal fun plainNotes(md: String): String = md.lines()
+/** Release notes as plain text: no Markdown headings, bold or links' brackets, at most ~[max] characters. */
+internal fun plainNotes(md: String, max: Int = 600): String = md.lines()
     .map { it.trimStart('#', ' ').replace("**", "").replace(Regex("""\[([^\]]+)\]\([^)]*\)"""), "$1") }
-    .joinToString("\n").trim().let { if (it.length > 600) it.take(600).substringBeforeLast('\n') + "\n…" else it }
+    .joinToString("\n").trim().let { if (it.length > max) it.take(max).substringBeforeLast('\n') + "\n…" else it }
 
 /** Android's installer reports here: show its confirm screen, or say why the install didn't happen. */
 class UpdateReceiver : BroadcastReceiver() {

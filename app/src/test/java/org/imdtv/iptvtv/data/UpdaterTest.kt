@@ -21,4 +21,10 @@ class UpdaterTest {
     @Test fun notes() {
         assertEquals("What's new\nBulk hide channels\nSee the site", plainNotes("## What's new\n**Bulk hide** channels\nSee [the site](https://x)"))
     }
+
+    @Test fun fullNotesAreNotCut() {
+        val long = (1..100).joinToString("\n") { "- change $it" }
+        assertEquals(long, plainNotes(long, max = Int.MAX_VALUE))
+        assertTrue(plainNotes(long).endsWith("…"))
+    }
 }

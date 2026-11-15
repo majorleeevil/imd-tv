@@ -150,8 +150,8 @@ class VodViewModel(app: Application) : AndroidViewModel(app) {
     fun loadDetail(item: VodItem) {
         if (details.value.containsKey(item.id)) return
         val p = provider.value ?: return
-        // M3U has no movie details, and asking would download and hold the whole playlist.
-        if (item.kind == Kind.MOVIE && p.type == ProviderType.M3U) return
+        // M3U has no movie details, and asking would download and hold the whole playlist; Stalker has no detail call.
+        if (item.kind == Kind.MOVIE && p.type != ProviderType.XTREAM) return
         viewModelScope.launch {
             runCatching {
                 if (item.kind == Kind.MOVIE) source(p).movieDetail(item.remoteId).let {

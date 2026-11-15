@@ -16,7 +16,7 @@ import java.io.OutputStream
  * refusal then means the provider allows no second one). Stopping = cancelling the caller; what was saved is kept.
  */
 suspend fun runRecording(id: Long, db: AppDatabase, store: RecordingStore, capture: StreamCapture, otherStreams: () -> Boolean,
-                         now: () -> Long = System::currentTimeMillis): RecStatus {
+                         now: () -> Long = System::currentTimeMillis, resolve: suspend (String) -> String = { it }): RecStatus {
     val dao = db.recordingDao()
     val row = dao.get(id) ?: return RecStatus.FAILED
     suspend fun finish(status: RecStatus, reason: String?, location: String?, bytes: Long): RecStatus {
@@ -26,6 +26,12 @@ suspend fun runRecording(id: Long, db: AppDatabase, store: RecordingStore, captu
     }
     val ch = row.channelId?.let { db.channelDao().get(it) } ?: return finish(RecStatus.FAILED, "Channel no longer in the playlist", null, 0)
     val p = db.providerDao().get(ch.providerId) ?: return finish(RecStatus.FAILED, "Channel no longer in the playlist", null, 0)
+    // The capture copies bytes as they come: an encrypted stream would make an unplayable file.
+    ch.drmType?.let { return finish(RecStatus.FAILED, "This channel uses DRM ($it) and can't be recorded", null, 0) }
+    // shortcut: a portal link is fetched once; if the capture has to reconnect after it expired, the recording ends as stream lost.
+    val link = try { resolve(ch.streamUrl) } catch (e: CancellationException) { throw e } catch (e: Exception) {
+        return finish(RecStatus.FAILED, "Failed — ${e.message ?: "no stream link"}", null, 0)
+    }
     val others = otherStreams()
     val (location, raw) = try {
         store.create(recordingFileName(row.channelName, row.title, now()))
@@ -41,7 +47,7 @@ suspend fun runRecording(id: Long, db: AppDatabase, store: RecordingStore, captu
         return finish(status, reason, location, out.count)
     }
     return try {
-        val end = capture.capture(streamRequest(ch.streamUrl, p.userAgent, p.login()), out, row.scheduledEnd, store::freeBytes) { b ->
+        val end = capture.capture(streamRequest(link, p.userAgent, p.login()), out, row.scheduledEnd, store::freeBytes) { b ->
             runBlocking { dao.setBytes(id, b) }
         }
         when (end) {

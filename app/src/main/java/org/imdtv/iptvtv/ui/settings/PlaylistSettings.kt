@@ -37,14 +37,14 @@ fun updatedLabel(lastSync: Long?): String {
     return "Updated " + (if (t.toLocalDate() == LocalDate.now()) time else dayTime).format(t).lowercase(Locale.UK)
 }
 
-private fun ProviderEntity.typeLabel() = if (type == ProviderType.XTREAM) "Xtream" else "M3U"
+private fun ProviderEntity.typeLabel() = when (type) { ProviderType.XTREAM -> "Xtream"; ProviderType.M3U -> "M3U"; ProviderType.STALKER -> "Stalker" }
 
 /** The Playlists group: Add playlist, then one row per playlist opening its page. */
 @Composable
 fun PlaylistGroupRows(vm: SettingsViewModel, first: Modifier, openers: MutableMap<Long, FocusRequester>, onAdd: () -> Unit, onOpen: (Long) -> Unit) {
     val providers by vm.providers.collectAsState()
     val activeId by vm.providerId.collectAsState()
-    SettingRow("Add playlist", "Add another Xtream or M3U playlist", null, first, onClick = onAdd)
+    SettingRow("Add playlist", "Add another Xtream, M3U or Stalker playlist", null, first, onClick = onAdd)
     providers.forEach { p ->
         SettingRow(p.name, "${p.typeLabel()} · ${updatedLabel(p.lastSync)}${if (p.id == activeId) " · In use" else ""}", "›",
             Modifier.focusRequester(openers.getOrPut(p.id) { FocusRequester() })) { onOpen(p.id) }
@@ -68,7 +68,7 @@ fun PlaylistPage(
     if (p == null) return
     Column(modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(p.name, fontSize = 20.sp, color = Color.White, modifier = Modifier.padding(top = 6.dp, bottom = 18.dp))
-        SettingRow("Edit", "URL, login and user agent", null, Modifier.focusRequester(first)) { onEdit(id) }
+        SettingRow("Edit", "Name, URL, login and user agent", null, Modifier.focusRequester(first)) { onEdit(id) }
         if (activeId == id) SettingRow("In use", "This is the playlist the app is showing", null) { }
         else SettingRow("Use this playlist", "Show this playlist's channels, films and series", null) { onUse(id) }
         SettingRow("Update playlist now", update[id] ?: updatedLabel(p.lastSync), null) { vm.updatePlaylist(id) }

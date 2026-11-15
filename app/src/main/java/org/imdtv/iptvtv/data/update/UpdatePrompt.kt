@@ -1,6 +1,23 @@
 package org.imdtv.iptvtv.data.update
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.focusable
+import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -35,5 +52,28 @@ fun UpdatePrompt(updater: Updater, background: CoroutineScope) {
             MenuItem(if (error != null) "Try again" else "Update now", Modifier.focusRequester(first)) { background.launch { updater.install(u) } }
             MenuItem("Later", Modifier) { scope.launch { updater.later() } }
         }
+    }
+}
+
+/** "What's new": this version's release notes after an update. Up/Down scroll the notes; at the end, Down moves to OK. */
+@Composable
+fun WhatsNewPrompt(updater: Updater) {
+    val notes by updater.whatsNew.collectAsState()
+    val scope = rememberCoroutineScope()
+    val text = notes ?: return
+    val close = { scope.launch { updater.closeWhatsNew() }; Unit }
+    MenuFrame("What's new in IMD TV ${org.imdtv.iptvtv.BuildConfig.VERSION_NAME}", onDismiss = close) { first ->
+        val scroll = rememberScrollState()
+        var focused by remember { mutableStateOf(false) }
+        Text(text, fontSize = 15.sp, color = Color.White, modifier = Modifier.fillMaxWidth().heightIn(max = 300.dp)
+            .clip(RoundedCornerShape(8.dp)).background(if (focused) Color(0x1FFFFFFF) else Color.Transparent)
+            .onFocusChanged { focused = it.isFocused }.focusRequester(first)
+            .onPreviewKeyEvent { e ->
+                val step = when (e.key) { Key.DirectionDown -> 150f; Key.DirectionUp -> -150f; else -> return@onPreviewKeyEvent false }
+                if (if (step > 0) !scroll.canScrollForward else !scroll.canScrollBackward) return@onPreviewKeyEvent false
+                if (e.type == KeyEventType.KeyDown) scope.launch { scroll.animateScrollBy(step) }
+                true
+            }.focusable().verticalScroll(scroll).padding(8.dp))
+        MenuItem("OK", Modifier.padding(top = 8.dp)) { close() }
     }
 }

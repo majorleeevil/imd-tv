@@ -9,9 +9,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.focus.FocusDirection
@@ -24,7 +25,6 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -32,6 +32,10 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -64,44 +68,81 @@ private fun ProviderForm(vm: AppViewModel, editing: ProviderEntity?) {
     var type by rememberSaveable { mutableStateOf(editing?.type ?: ProviderType.XTREAM) }
     var url by rememberSaveable { mutableStateOf(editing?.url.orEmpty()) }
     var user by rememberSaveable { mutableStateOf(editing?.username.orEmpty()) }
-    var pass by rememberSaveable { mutableStateOf(editing?.password.orEmpty()) }
+    var pass by rememberSaveable { mutableStateOf(editing?.password.orEmpty().substringBefore('\n')) }
+    // Stalker keeps "serial\ndeviceId" in the password column (StalkerLogin); the form shows them as two fields.
+    var deviceId by rememberSaveable { mutableStateOf(editing?.takeIf { it.type == ProviderType.STALKER }?.password.orEmpty().substringAfter('\n', "")) }
     var epg by rememberSaveable { mutableStateOf("") }
     var agent by rememberSaveable { mutableStateOf(editing?.userAgent.orEmpty()) }
 
-    Column(
-        Modifier.padding(48.dp).width(640.dp).verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Text(if (editing == null) "Add playlist" else "Edit ${editing.name}", style = MaterialTheme.typography.headlineMedium, color = Color.White)
-        if (editing == null) Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            ProviderType.entries.forEach { t ->
-                Button(onClick = { type = t }) { Text((if (t == type) "● " else "○ ") + t.name) }
-            }
-        }
-        Field(if (type == ProviderType.XTREAM) "Server URL" else "Playlist URL", url, KeyboardType.Uri, openOnOk = true) { url = it }
-        if (type == ProviderType.XTREAM) {
-            // The password keyboard has the number row many providers' usernames need.
-            Field("Username", user, KeyboardType.Password, openOnOk = true) { user = it }
-            Field("Password", pass, KeyboardType.Password, secret = true, openOnOk = true) { pass = it }
-        } else if (editing == null) {
-            Field("EPG URLs (optional, one per line)", epg, KeyboardType.Uri, openOnOk = true) { epg = it }
-        }
-        Field("User agent (optional)", agent, openOnOk = true) { agent = it }
-        when {
-            state.busy -> Text(state.progress ?: "Loading playlist…", color = Color.White)
-            state.result != null -> {
-                Text(state.result!!, color = Color.White)
-                if (editing == null) Button(onClick = vm::done) { Text("Watch") }
-                else Button(onClick = { vm.back() }) { Text("Done") }
-            }
-            else -> {
-                state.error?.let { Text(it, color = Color(0xFFFF8A80)) }
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Button(onClick = { vm.save(type, url, user, pass, epg, agent, editing) }) { Text("Save") }
-                    if (vm.canLeaveSetup && editing == null) Button(onClick = vm::refreshGuide) { Text("Refresh guide now") }
+    var name by rememberSaveable { mutableStateOf(editing?.name.orEmpty()) }
+    val ready = state.result != null
+    val next = remember { FocusRequester() }
+    val save = remember { FocusRequester() }
+    LaunchedEffect(ready) { if (ready) runCatching { next.requestFocus() } } // Save has gone: focus Watch/Done, not the top
+    // One 1080p screen (960×540 dp): labels sit beside the fields, progress and Watch on the right.
+    // Scrolls only when the Name box is open on the tallest (Stalker) form.
+    Column(Modifier.verticalScroll(rememberScrollState()).padding(horizontal = 48.dp, vertical = 28.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(if (editing == null) "Add playlist" else "Edit ${editing.name}", style = MaterialTheme.typography.headlineSmall, color = Color.White)
+        Row(horizontalArrangement = Arrangement.spacedBy(32.dp)) {
+            Column(Modifier.width(560.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (editing == null) Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    ProviderType.entries.forEach { t ->
+                        Button(onClick = { type = t }) { Text((if (t == type) "● " else "○ ") + t.name) }
+                    }
+                }
+                FormField(when (type) { ProviderType.XTREAM -> "Server URL"; ProviderType.M3U -> "Playlist URL"; ProviderType.STALKER -> "Portal URL" },
+                    url, KeyboardType.Uri) { url = it }
+                if (type == ProviderType.STALKER) {
+                    FormField("MAC address\ne.g. 00:1A:79:12:34:56", user, KeyboardType.Password) { user = it }
+                    FormField("Serial (optional)", pass, KeyboardType.Password) { pass = it }
+                    FormField("Device ID (optional)", deviceId, KeyboardType.Password) { deviceId = it }
+                } else if (type == ProviderType.XTREAM) {
+                    // The password keyboard has the number row many providers' usernames need.
+                    FormField("Username", user, KeyboardType.Password) { user = it }
+                    FormField("Password", pass, KeyboardType.Password, secret = true) { pass = it }
+                } else if (editing == null) {
+                    FormField("EPG URLs (optional, one per line)", epg, KeyboardType.Uri) { epg = it }
+                }
+                FormField("User agent (optional)", agent) { agent = it }
+                org.imdtv.iptvtv.ui.settings.EditRow("Name (optional)", "Blank: named after the URL, e.g. example.com",
+                    // Down goes to Save: the nearest-below search picked "Refresh guide now".
+                    modifier = Modifier.focusProperties { if (!ready) down = save },
+                    value = name.ifBlank { "Automatic" }, initial = name, saveLabel = "Confirm") { name = it } // "Save" here read as the form's Save (user, 2026-11-15)
+                if (!ready) {
+                    // The buttons stay while busy: if Save left the screen, focus fell to the top and the error showed off screen.
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                        Button(onClick = {
+                            if (state.busy) return@Button
+                            val secret = if (type == ProviderType.STALKER) org.imdtv.iptvtv.data.source.StalkerLogin(user, pass, deviceId).packed().orEmpty() else pass
+                            vm.save(type, url, user, secret, epg, agent, editing, name)
+                        }, Modifier.focusRequester(save)) { Text("Save") }
+                        if (vm.canLeaveSetup && editing == null) Button(onClick = vm::refreshGuide) { Text("Refresh guide now") }
+                        // Beside Save, not above it: a line above pushed Save off the bottom of the Stalker form.
+                        if (!state.busy) state.error?.let { Text(it, color = Color(0xFFFF8A80), fontSize = 13.sp, maxLines = 3, modifier = Modifier.weight(1f)) }
+                    }
                 }
             }
+            Column(Modifier.width(240.dp).padding(top = if (editing == null) 56.dp else 0.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                // Greyed out (not pressable) until the playlist has loaded.
+                Button(onClick = { if (editing == null) vm.done() else vm.back() }, Modifier.focusRequester(next), enabled = ready) {
+                    Text(if (editing == null) "Watch" else "Done")
+                }
+                if (state.busy) {
+                    Spinner(size = 32.dp)
+                    Text(state.progress ?: "Loading playlist…", color = Color.White, fontSize = 14.sp)
+                }
+                state.result?.let { Text(it, color = Color.White, fontSize = 14.sp) }
+            }
         }
+    }
+}
+
+/** A [Field] with its label on the left, so the form fits one screen. */
+@Composable
+private fun FormField(label: String, value: String, keyboard: KeyboardType = KeyboardType.Text, secret: Boolean = false, onChange: (String) -> Unit) {
+    Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+        Text(label, color = Color.LightGray, fontSize = 14.sp, modifier = Modifier.width(170.dp))
+        Column(Modifier.weight(1f)) { Field("", value, keyboard, secret, openOnOk = true, onChange = onChange) }
     }
 }
 

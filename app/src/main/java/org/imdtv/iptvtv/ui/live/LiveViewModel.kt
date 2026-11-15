@@ -177,7 +177,7 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
 
     fun preview(ch: ChannelEntity) {
         previewed.value = ch
-        player.play(ch.streamUrl, provider.value?.userAgent, provider.value?.login())
+        player.play(ch.streamUrl, provider.value?.userAgent, provider.value?.login(), drm = ch.drm())
         viewModelScope.launch { c.settings.update { it.copy(lastLiveChannelId = ch.id) } }
     }
 

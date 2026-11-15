@@ -204,9 +204,9 @@ class CatalogueSyncTest {
         sync.sync(p, src) { steps += it }
         assertEquals(
             listOf(
-                "Loading live TV…",
-                "2 channels saved · loading movies…",
-                "2 channels, 0 movies saved · loading series…",
+                "Downloading channels…",
+                "Downloading movies… · 2 channels saved",
+                "Downloading series… · 2 channels, 0 movies saved",
             ),
             steps,
         )

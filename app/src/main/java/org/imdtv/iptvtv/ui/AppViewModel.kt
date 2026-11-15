@@ -144,20 +144,25 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         return true
     }
 
-    fun save(type: ProviderType, url: String, username: String, password: String, epgUrls: String, userAgent: String, editing: ProviderEntity? = null) {
+    /** A blank [name] keeps the automatic one: the URL's host. */
+    fun save(type: ProviderType, url: String, username: String, password: String, epgUrls: String, userAgent: String, editing: ProviderEntity? = null, name: String = "") {
         val trimmed = url.trim().trimEnd('/')
         if (Uri.parse(trimmed).host.isNullOrEmpty()) {
             form.value = FormState(error = "Enter a full URL, e.g. http://example.com:8080")
             return
         }
+        if (type == ProviderType.STALKER && !org.imdtv.iptvtv.data.source.isValidMac(username)) {
+            form.value = FormState(error = "Enter the MAC address as six pairs, e.g. 00:1A:79:12:34:56")
+            return
+        }
         form.value = FormState(busy = true)
         viewModelScope.launch {
-            val login = username.trim().ifEmpty { null }
+            val login = username.trim().ifEmpty { null }?.let { if (type == ProviderType.STALKER) it.uppercase() else it }
             val pass = password.ifEmpty { null }
             val agent = userAgent.trim().ifEmpty { null }
-            if (editing != null) { saveEdit(editing, editing.copy(name = Uri.parse(trimmed).host ?: editing.name, url = trimmed, username = login, password = pass, userAgent = agent)); return@launch }
+            if (editing != null) { saveEdit(editing, editing.copy(name = name.trim().ifEmpty { Uri.parse(trimmed).host ?: editing.name }, url = trimmed, username = login, password = pass, userAgent = agent)); return@launch }
             val entity = ProviderEntity(
-                name = Uri.parse(trimmed).host!!, type = type, url = trimmed,
+                name = name.trim().ifEmpty { Uri.parse(trimmed).host!! }, type = type, url = trimmed,
                 username = login, password = pass,
                 userAgent = agent, streamFormat = StreamFormat.TS,
                 epgOverrideUrls = epgUrls.split('\n', ',', ' ').map { it.trim() }.filter { it.isNotEmpty() },
@@ -195,6 +200,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     private fun loadError(e: Exception) = when (e) {
         is XtreamAuthException -> "Login failed: ${e.message}"
+        is org.imdtv.iptvtv.data.source.StalkerException -> "Portal login failed: ${e.message}"
         else -> "Couldn't load the playlist: ${e.message ?: e::class.simpleName}"
     }
 

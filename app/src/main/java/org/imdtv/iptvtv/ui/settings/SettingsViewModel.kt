@@ -158,6 +158,8 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun setHidden(cat: CategoryEntity, hidden: Boolean) { viewModelScope.launch { c.db.categoryDao().setHidden(cat.id, hidden) } }
+    fun channelsIn(categoryId: Long) = c.db.channelDao().observeAllByCategory(categoryId)
+    fun setChannelsHidden(ids: List<Long>, hidden: Boolean) { viewModelScope.launch { c.db.channelDao().setHiddenForIds(ids, hidden) } }
     fun setAllHidden(hidden: Boolean) = launchFor { c.db.categoryDao().setHiddenForKind(it, categoryKind.value, hidden) }
     fun move(cat: CategoryEntity, delta: Int) = launchFor { categoryRepo.move(it, cat.kind, cat.id, delta) }
 
@@ -305,7 +307,7 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
     /** Already on this box with a login: restore keeps that login instead of asking again. */
     fun hasSavedLogin(p: BPlaylist) = providers.value.any {
         it.type.name == p.type && when (it.type) {
-            org.imdtv.iptvtv.data.db.ProviderType.XTREAM -> it.url == p.url && !it.username.isNullOrBlank()
+            org.imdtv.iptvtv.data.db.ProviderType.XTREAM, org.imdtv.iptvtv.data.db.ProviderType.STALKER -> it.url == p.url && !it.username.isNullOrBlank()
             org.imdtv.iptvtv.data.db.ProviderType.M3U -> org.imdtv.iptvtv.data.security.m3uBackupUrl(it.url) == p.url // same playlist, login in its address
         }
     }
@@ -349,6 +351,6 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
     }
 }
 
-/** Xtream always; M3U when its backed-up address had its login taken out. */
-fun needsLogin(p: BPlaylist) = p.type == org.imdtv.iptvtv.data.db.ProviderType.XTREAM.name ||
+/** Xtream and Stalker (MAC) always; M3U when its backed-up address had its login taken out. */
+fun needsLogin(p: BPlaylist) = p.type == org.imdtv.iptvtv.data.db.ProviderType.XTREAM.name || p.type == org.imdtv.iptvtv.data.db.ProviderType.STALKER.name ||
     (p.type == org.imdtv.iptvtv.data.db.ProviderType.M3U.name && org.imdtv.iptvtv.data.security.hasLoginPlaceholders(p.url))

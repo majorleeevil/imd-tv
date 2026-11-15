@@ -11,6 +11,18 @@ import androidx.annotation.OptIn
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import org.imdtv.iptvtv.data.security.Login
+import org.imdtv.iptvtv.data.source.Drm
+import org.imdtv.iptvtv.data.source.DrmException
+import org.imdtv.iptvtv.data.source.DrmScheme
+import org.imdtv.iptvtv.data.source.DrmSpec
+import org.imdtv.iptvtv.data.source.drmSpec
+import org.imdtv.iptvtv.data.source.isStalkerLink
+import kotlinx.coroutines.launch
+import androidx.media3.exoplayer.drm.DefaultDrmSessionManager
+import androidx.media3.exoplayer.drm.DefaultDrmSessionManagerProvider
+import androidx.media3.exoplayer.drm.DrmSessionManagerProvider
+import androidx.media3.exoplayer.drm.FrameworkMediaDrm
+import androidx.media3.exoplayer.drm.LocalMediaDrmCallback
 import org.imdtv.iptvtv.data.security.withLogin
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
@@ -66,7 +78,7 @@ class PlayerManager(private val context: Context) {
         if (player.playbackState != Player.STATE_IDLE || d == audioDecoder) return
         // Idle with a stream (a failed one waiting to retry): the new player must load it again, or it stays empty.
         val u = url
-        if (u != null) { this.url = null; reload(u, userAgent, login, vod, null) } else applyDecoder()
+        if (u != null) { this.url = null; reload(u, userAgent, login, vod, drm, null) } else applyDecoder()
     }
 
     /** Swaps in a player built for [wantedDecoder], keeping the listener and the attached view. */
@@ -130,7 +142,13 @@ class PlayerManager(private val context: Context) {
     }
     private var userAgent: String? = null
     private var retries = 0
-    private val retry = Runnable { player.prepare() }
+    // A portal link is usually good for one connection: a retry asks the portal again.
+    private val retry = Runnable { if (url?.let(::isStalkerLink) == true) start() else player.prepare() }
+
+    /** Turns a saved `stalker://` link into a playable one (set by the app container); may throw with a message for the user. */
+    var resolveLink: suspend (String) -> String = { it }
+    private val scope = kotlinx.coroutines.MainScope()
+    private var resolving: kotlinx.coroutines.Job? = null
     private var view: PlayerView? = null
 
     private val listener = object : Player.Listener {
@@ -145,29 +163,35 @@ class PlayerManager(private val context: Context) {
 
             override fun onVideoSizeChanged(videoSize: VideoSize) = readFormats()
 
-            override fun onPlayerError(error: PlaybackException) {
-                Log.w(TAG, "error ${error.errorCodeName} ${tail(url)} (retry ${retries + 1}/$MAX_RETRIES)", error)
-                if (retries < MAX_RETRIES) {
-                    handler.postDelayed(retry, 1000L shl retries++) // 1s, 2s, 4s
-                } else {
-                    retries = 0
-                    _errors.tryEmit(error)
-                }
-            }
+            override fun onPlayerError(error: PlaybackException) = streamError(error)
         }
+
+    @androidx.annotation.VisibleForTesting
+    internal fun streamError(error: PlaybackException) {
+        Log.w(TAG, "error ${error.errorCodeName} ${tail(url)} (retry ${retries + 1}/$MAX_RETRIES)", error)
+        if (!scheduleRetry()) _errors.tryEmit(error)
+    }
+
+    /** Queues the next retry (1s, 2s, 4s); false once they are used up. */
+    private fun scheduleRetry(): Boolean {
+        if (retries >= MAX_RETRIES) { retries = 0; return false }
+        handler.postDelayed(retry, 1000L shl retries++)
+        return true
+    }
 
     init { player.addListener(listener) }
 
     /** [login] fills the Xtream placeholders in [url] (saved links hold no login); [url] itself stays the key for comparisons. */
-    fun play(url: String, userAgent: String?, login: Login? = null, vod: Boolean = false) = play(url, userAgent, login, vod, guarded = true)
+    fun play(url: String, userAgent: String?, login: Login? = null, vod: Boolean = false, drm: Drm? = null) =
+        play(url, userAgent, login, vod, drm, guarded = true)
 
     /** Asked before a provider stream starts (a recording may hold the login's only connection); true = not now. It
      *  gets a retry that plays without asking again. */
     var guard: ((retry: () -> Unit) -> Boolean)? = null
 
-    private fun play(url: String, userAgent: String?, login: Login?, vod: Boolean, guarded: Boolean) {
+    private fun play(url: String, userAgent: String?, login: Login?, vod: Boolean, drm: Drm?, guarded: Boolean) {
         if (url == this.url && player.playbackState != Player.STATE_IDLE) { player.playWhenReady = true; return }
-        if (guarded && guard?.invoke { play(url, userAgent, login, vod, guarded = false) } == true) return
+        if (guarded && guard?.invoke { play(url, userAgent, login, vod, drm, guarded = false) } == true) return
         handler.removeCallbacks(retry)
         retries = 0
         applyDecoder() // a new stream: a pending decoder change takes effect now, before playWhenReady is set on it
@@ -177,26 +201,77 @@ class PlayerManager(private val context: Context) {
         this.url = url
         this.userAgent = userAgent
         this.login = login
+        this.drm = drm
         _formats.value = StreamFormats.UNKNOWN
-        Log.i(TAG, "play ${tail(url)}")
+        Log.i(TAG, "play ${tail(url)}${drm?.let { " drm=${it.type}" }.orEmpty()}")
+        start()
+    }
+
+    /** Loads the current [url]; a portal link is resolved first, and dropped if another stream was asked for meanwhile. */
+    private fun start() {
+        val url = url ?: return
+        resolving?.cancel()
+        if (!isStalkerLink(url)) return load(url)
+        player.stop() // the last stream mustn't keep playing (or hold the connection) while the portal answers
+        resolving = scope.launch {
+            val real = try { resolveLink(url) } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) {
+                Log.w(TAG, "link not resolved ${tail(url)}: $e")
+                // In a retry the portal may be down with the stream: keep retrying (asking it again) like any lost stream.
+                if (this@PlayerManager.url == url && (retries == 0 || !scheduleRetry()))
+                    fail(e.message ?: "The portal didn't give a stream link", e, PlaybackException.ERROR_CODE_IO_UNSPECIFIED)
+                return@launch
+            }
+            if (this@PlayerManager.url == url) load(real)
+        }
+    }
+
+    /** [address]: the saved link, or what a portal link resolved to. */
+    private fun load(address: String) {
         // Headers on the link (M3U #EXTVLCOPT or Kodi "url|User-Agent=…") win over the playlist's user agent.
-        val req = org.imdtv.iptvtv.data.source.streamRequest(url, userAgent, login)
+        val req = org.imdtv.iptvtv.data.source.streamRequest(address, userAgent, login)
         val http = DefaultHttpDataSource.Factory().setAllowCrossProtocolRedirects(true)
         req.headers["User-Agent"]?.let { http.setUserAgent(it) }
         (req.headers - "User-Agent").takeIf { it.isNotEmpty() }?.let { http.setDefaultRequestProperties(it) }
+        val spec = try { drm?.let(::drmSpec) } catch (e: DrmException) {
+            return fail(e.message!!, e, PlaybackException.ERROR_CODE_DRM_SCHEME_UNSUPPORTED)
+        }
+        val factory = DefaultMediaSourceFactory(DefaultDataSource.Factory(context, http))
+        spec?.let { factory.setDrmSessionManagerProvider(drmSessions(it, http)) }
         // A stream format with no module in the app (e.g. Smooth Streaming) throws here: report it, don't crash.
         val source = try {
-            DefaultMediaSourceFactory(DefaultDataSource.Factory(context, http)).createMediaSource(MediaItem.fromUri(req.url))
+            factory.createMediaSource(mediaItem(req.url, spec))
         } catch (e: IllegalStateException) {
             Log.w(TAG, "unsupported stream format ${tail(url)}", e)
-            this.url = null
-            player.stop(); player.clearMediaItems()
-            _errors.tryEmit(PlaybackException("Unsupported stream format", e, PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED))
-            return
+            return fail("Unsupported stream format", e, PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED)
         }
         player.setMediaSource(source)
         player.prepare()
     }
+
+    /** Ends the start of the current stream with [message] shown to the user (see [StreamProblem]). */
+    private fun fail(message: String, cause: Throwable?, code: Int) {
+        url = null
+        player.stop(); player.clearMediaItems()
+        _errors.tryEmit(PlaybackException(message, StreamProblem(message, cause), code))
+    }
+
+    private fun mediaItem(uri: String, spec: DrmSpec?): MediaItem = MediaItem.Builder().setUri(uri).apply {
+        spec ?: return@apply
+        setDrmConfiguration(MediaItem.DrmConfiguration.Builder(if (spec.scheme == DrmScheme.WIDEVINE) C.WIDEVINE_UUID else C.CLEARKEY_UUID).apply {
+            // The playlist's licence server wins over one named in the manifest, as in Kodi.
+            spec.licenseUrl?.let { setLicenseUri(it); setForceDefaultLicenseUri(true) }
+            setLicenseRequestHeaders(spec.headers)
+        }.build())
+    }.build()
+
+    /** ClearKey keys from the playlist are answered locally; a licence server is asked with the stream's headers. */
+    private fun drmSessions(spec: DrmSpec, http: DefaultHttpDataSource.Factory): DrmSessionManagerProvider =
+        spec.keysJson?.let { keys ->
+            DrmSessionManagerProvider {
+                DefaultDrmSessionManager.Builder().setUuidAndExoMediaDrmProvider(C.CLEARKEY_UUID, FrameworkMediaDrm.DEFAULT_PROVIDER)
+                    .build(LocalMediaDrmCallback(keys.toByteArray()))
+            }
+        } ?: DefaultDrmSessionManagerProvider().apply { setDrmHttpDataSourceFactory(http) }
 
     /** Network-share login for smb:// recordings (set by the app container). */
     var smbSettings: () -> org.imdtv.iptvtv.recording.SmbSettings = { org.imdtv.iptvtv.recording.SmbSettings("", "", "", "", "") }
@@ -204,6 +279,7 @@ class PlayerManager(private val context: Context) {
     /** A recording (file path or smb://) from [startMs]; no guard: it uses no provider connection. */
     fun playRecording(location: String, startMs: Long) {
         handler.removeCallbacks(retry)
+        resolving?.cancel()
         retries = 0
         applyDecoder()
         player.playWhenReady = true
@@ -212,6 +288,7 @@ class PlayerManager(private val context: Context) {
         this.url = location
         this.userAgent = null
         this.login = null
+        this.drm = null
         _formats.value = StreamFormats.UNKNOWN
         val smb = location.startsWith("smb://")
         val factory: androidx.media3.datasource.DataSource.Factory =
@@ -222,9 +299,9 @@ class PlayerManager(private val context: Context) {
         if (startMs > 0) player.seekTo(startMs)
     }
 
-    private fun reload(u: String, userAgent: String?, login: Login?, vod: Boolean, positionMs: Long?) {
+    private fun reload(u: String, userAgent: String?, login: Login?, vod: Boolean, drm: Drm?, positionMs: Long?) {
         if (org.imdtv.iptvtv.recording.isRecordingLocation(u)) playRecording(u, positionMs ?: 0)
-        else { play(u, userAgent, login, vod); positionMs?.let { player.seekTo(it) } }
+        else { play(u, userAgent, login, vod, drm); positionMs?.let { player.seekTo(it) } }
     }
 
     /** Moves the player to [view] without re-preparing, so playback continues uninterrupted. */
@@ -249,15 +326,16 @@ class PlayerManager(private val context: Context) {
     /** The stream playing now, or the one [toForeground] will resume. */
     val currentUrl: String? get() = url ?: resume?.url
 
-    private data class Resume(val url: String, val userAgent: String?, val login: Login?, val positionMs: Long?, val vod: Boolean)
+    private data class Resume(val url: String, val userAgent: String?, val login: Login?, val positionMs: Long?, val vod: Boolean, val drm: Drm?)
     private var login: Login? = null
+    private var drm: Drm? = null
     private var resume: Resume? = null
 
     /** Releases the provider connection (accounts allow only 1–2) when the app leaves the screen. */
     fun toBackground() {
         val u = url ?: return
         val vod = player.isCurrentMediaItemSeekable && player.duration != C.TIME_UNSET
-        resume = Resume(u, userAgent, login, if (vod) player.currentPosition else null, this.vod)
+        resume = Resume(u, userAgent, login, if (vod) player.currentPosition else null, this.vod, drm)
         stop()
     }
 
@@ -265,11 +343,12 @@ class PlayerManager(private val context: Context) {
     fun toForeground() {
         val r = resume ?: return
         resume = null
-        reload(r.url, r.userAgent, r.login, r.vod, r.positionMs)
+        reload(r.url, r.userAgent, r.login, r.vod, r.drm, r.positionMs)
     }
 
     fun stop() {
         handler.removeCallbacks(retry)
+        resolving?.cancel()
         retries = 0
         url = null
         _formats.value = StreamFormats.UNKNOWN
@@ -311,3 +390,12 @@ fun liveTextParams(base: TrackSelectionParameters, defaults: TrackSelectionParam
         .setIgnoredTextSelectionFlags(defaults.ignoredTextSelectionFlags or C.SELECTION_FLAG_DEFAULT)
         .setSelectUndeterminedTextLanguage(defaults.selectUndeterminedTextLanguage)
         .build()
+
+/** A start failure with a message meant for the user (bad DRM data, a portal link that couldn't be fetched). */
+class StreamProblem(message: String, cause: Throwable? = null) : Exception(message, cause)
+
+/** The text the player shows for [e]. */
+fun playErrorText(e: PlaybackException): String = (e.cause as? StreamProblem)?.message ?: when (e.errorCode) {
+    in 6000..6999 -> "DRM error (${e.errorCodeName}): the licence or keys were refused, or this device can't play this DRM"
+    else -> e.errorCodeName
+}

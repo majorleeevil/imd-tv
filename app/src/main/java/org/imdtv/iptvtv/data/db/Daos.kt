@@ -152,6 +152,13 @@ abstract class ChannelDao {
     )
     abstract fun observeFavourites(providerId: Long): Flow<List<ChannelEntity>>
     @Query("UPDATE channel SET hidden = :hidden WHERE id = :id") abstract suspend fun setHidden(id: Long, hidden: Boolean)
+    @Query("UPDATE channel SET hidden = :hidden WHERE id IN (:ids)") abstract suspend fun setHiddenForIds(ids: List<Long>, hidden: Boolean)
+    /** Every channel of a category, hidden ones included (Settings › Show or hide channels). */
+    @Query(
+        """SELECT * FROM channel WHERE categoryId = :categoryId
+           ORDER BY coalesce(customNumber, number) IS NULL, coalesce(customNumber, number), coalesce(customName, name)"""
+    )
+    abstract fun observeAllByCategory(categoryId: Long): Flow<List<ChannelEntity>>
     @Query("UPDATE channel SET customName = :name WHERE id = :id") abstract suspend fun setCustomName(id: Long, name: String?)
 
     @Query("DELETE FROM channel WHERE id IN (:ids)")
@@ -430,6 +437,7 @@ abstract class RecentDao {
     abstract fun observe(providerId: Long): Flow<List<ChannelEntity>>
 }
 
-data class ChannelFromProvider(val id: Long, val name: String, val logo: String?, val number: Int?, val tvgId: String?, val streamUrl: String, val categoryId: Long?)
+data class ChannelFromProvider(val id: Long, val name: String, val logo: String?, val number: Int?, val tvgId: String?, val streamUrl: String, val categoryId: Long?,
+                               val drmType: String? = null, val drmKey: String? = null)
 data class MovieFromProvider(val id: Long, val name: String, val poster: String?, val year: Int?, val rating: Double?, val streamUrl: String?, val categoryId: Long?)
 data class SeriesFromProvider(val id: Long, val name: String, val poster: String?, val year: Int?, val rating: Double?, val categoryId: Long?)
