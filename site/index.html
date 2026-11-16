@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>IMD TV — free, open-source IPTV for Android TV</title>
-<meta name="description" content="IMD TV is a free, open-source IPTV player for Android TV and Google TV: a fast TV guide, movies and series, six themes, and no ads or tracking. Bring your own Xtream or M3U playlist.">
+<meta name="description" content="IMD TV is a free, open-source IPTV player for Android TV and Google TV: a fast TV guide, movies and series, six themes, and no ads or tracking. Bring your own Xtream, M3U or Stalker portal playlist.">
 <meta name="theme-color" content="#060a26">
 <link rel="icon" type="image/png" href="favicon.png">
 <link rel="preload" href="fonts/Inter-Variable.woff2" as="font" type="font/woff2" crossorigin>
@@ -39,7 +39,7 @@
       <div>
         <p class="kicker">Free · Open source · Android TV</p>
         <h1>Live TV, films<br>and series.<br><span class="grad">One app.</span></h1>
-        <p class="lead">IMD TV plays your own Xtream or M3U playlist with a TV guide that keeps up with the remote, six themes, and no ads, tracking or paywalls.</p>
+        <p class="lead">IMD TV plays your own Xtream, M3U or Stalker portal playlist with a TV guide that keeps up with the remote, six themes, and no ads, tracking or paywalls.</p>
         <div class="btns">
           <a class="btn primary" href="#download">Download for Android TV</a>
           <a class="btn ghost" href="https://github.com/majorleeevil/imd-tv">View on GitHub</a>
@@ -56,7 +56,7 @@
       <h2>Complete, free, <span class="grad">and fast.</span></h2>
       <p>IMD TV exists because there are limited free IPTV applications that offer a complete feature set without requiring a licence, subscription or locking essential functionality behind a paywall. Most of the open-source alternatives available today sit outside the Android ecosystem, and more specifically, Android TV. IMD TV was built to address that gap, bringing a fully featured, open-source IPTV application to the platform.</p>
       <p><strong>Speed is the primary focus of IMD TV, and it's something that has influenced every part of its design.</strong> Watching TV, browsing the EPG, switching channels and searching through playlists should all be quick and responsive, regardless of the device you're using. These are fundamental parts of the viewing experience, and they shouldn't be accompanied by the delays that have become commonplace in other IPTV applications.</p>
-      <p>The rest follows from that. Every screen is designed for the remote first. It works with any provider's Xtream login or M3U link rather than one service. Your logins stay encrypted on your box, and nothing about what you watch leaves it. The best part? It's tested and developed on budget streaming sticks first, not just high-end boxes.</p>
+      <p>The rest follows from that. Every screen is designed for the remote first. It works with any provider's Xtream login, M3U link or Stalker portal rather than one service. Your logins stay encrypted on your box, and nothing about what you watch leaves it. The best part? It's tested and developed on budget streaming sticks first, not just high-end boxes.</p>
     </div>
   </section>
 
@@ -100,6 +100,7 @@
             <li>Favourites, and categories of your own: copy channels in, place them above or below the provider's</li>
             <li>Rename channels and your own categories</li>
             <li>Hide and reorder categories, or hide a whole language or country at once</li>
+            <li>Show or hide channels in bulk: tick the ones you want, then hide or show them all at once</li>
             <li>Clean up names: remove prefixes and suffixes such as “UK|” – you can even hide divider channels</li>
           </ul>
         </div>
@@ -151,18 +152,19 @@
 
       <h3 class="more-title">And all of this, free</h3>
       <ul class="more" role="list">
-        <li>The ability to add several playlists, not just one. Choose between Xtream logins and M3U links, and switch between them in Settings</li>
+        <li>The ability to add several playlists, not just one. Choose between Xtream logins, M3U links and Stalker portals (beta), give each your own name, and switch between them in Settings</li>
         <li>Channel logos from open-source sets, your playlist or your own logo pack. You choose which source channels use first, second or third</li>
         <li>The ability to record shows to local storage, external storage or network storage</li>
         <li>Backup and restore, with logins never written to the file</li>
         <li>The ability to start the application when your TV box starts</li>
-        <li>Six themes, some with colour choices</li>
+        <li>DRM channels: M3U channels protected with ClearKey or Widevine play too</li>
         <li>Recently watched channels, one press away</li>
         <li>An open-source guide, built in – if you want it. No more creating your own guides</li>
         <li>The ability to choose the priority of EPGs. Want channels to choose the open-source guide, or your playlists? You decide</li>
         <li>Keep up to 14 days of guide, past and upcoming</li>
         <li>Plays HLS, DASH and MPEG-TS streams, with a custom user agent per playlist if your provider needs one</li>
         <li>An on-screen clock and an optional connection ping</li>
+        <li>One-click updates, with a short “what's new” after each one</li>
       </ul>
     </div>
   </section>
@@ -191,7 +193,7 @@
         <div class="card"><h3>Free and open source</h3><p>No subscription, no premium tier, nothing locked away. Read the code, change it, share it under the GPL-3.0 licence.</p></div>
         <div class="card"><h3>Private</h3><p>No ads, no tracking, no accounts. Logins are encrypted on your box and never leave it except to sign in to your provider.</p></div>
         <div class="card"><h3>Made for the remote</h3><p>Every screen works with a D-pad, and the guide stays quick even on budget streaming sticks.</p></div>
-        <div class="card"><h3>Any provider</h3><p>Use the Xtream login or M3U link you already have, from any provider. Add more than one and switch between them.</p></div>
+        <div class="card"><h3>Any provider</h3><p>Use the Xtream login, M3U link or Stalker portal you already have, from any provider. Add more than one and switch between them.</p></div>
         <div class="card"><h3>Easy to move</h3><p>Back up your favourites, categories and settings to a file and restore them on a new box. Your logins are never written to it.</p></div>
         <div class="card"><h3>Built in the open</h3><p>Report a bug or suggest a feature on GitHub, and see every change before it reaches your TV.</p></div>
       </div>
@@ -206,13 +208,13 @@
       <ol class="steps">
         <li><span>On your TV, install the free <strong>Downloader</strong> app from the Play Store.</span></li>
         <li><span>Open Downloader, type the code <code>7573990</code> and press Go. When asked, allow Downloader to install apps, then choose Install.</span></li>
-        <li><span>Open IMD TV and add your Xtream login or M3U link.</span></li>
+        <li><span>Open IMD TV and add your Xtream login, M3U link or Stalker portal.</span></li>
       </ol>
       <h3 class="install-h">Option 2: Sideloading (from a computer)</h3>
       <ol class="steps">
         <li><span>Download <a href="https://github.com/majorleeevil/imd-tv/releases/latest/download/imd-tv.apk">imd-tv.apk</a> on your computer.</span></li>
         <li><span>On the TV, turn on Developer options and USB or network debugging, then run <code>adb connect &lt;your TV's IP&gt;</code> and <code>adb install imd-tv.apk</code>. Or copy the file to a USB drive and open it with a file manager app on the TV.</span></li>
-        <li><span>Open IMD TV and add your Xtream login or M3U link.</span></li>
+        <li><span>Open IMD TV and add your Xtream login, M3U link or Stalker portal.</span></li>
       </ol>
       <div class="btns">
         <a class="btn primary" href="https://github.com/majorleeevil/imd-tv/releases/latest/download/imd-tv.apk">Download the APK</a>
@@ -229,8 +231,8 @@
       <div class="faq">
         <div class="qa"><h3>Does IMD TV come with channels?</h3><p>No. IMD TV is a player: it plays the playlist you already have from your provider. It doesn't sell, host or link to any channels or content.</p></div>
         <div class="qa"><h3>Which boxes does it work on?</h3><p>Android TV and Google TV 8.0 or newer. It's tested on a Chromecast with Google TV and a Thomson 140 streaming stick, and it's designed to stay quick on budget hardware.</p></div>
-        <div class="qa"><h3>Which playlists does it support?</h3><p>Xtream logins (server, username and password) and M3U links, from any provider. You can add more than one playlist.</p></div>
-        <div class="qa"><h3>Can I record one channel and watch another?</h3><p>Only if your provider allows two connections at once. Xtream logins tell the app their limit, and it asks before stopping anything. M3U playlists don't, so the recording fails if the provider refuses a second stream. Recording the channel you're watching needs two connections too.</p></div>
+        <div class="qa"><h3>Which playlists does it support?</h3><p>Xtream logins (server, username and password), M3U links, and Stalker portals (portal URL and MAC address; beta), from any provider. M3U channels protected with ClearKey or Widevine DRM play too. You can add more than one playlist.</p></div>
+        <div class="qa"><h3>Can I record one channel and watch another?</h3><p>Only if your provider allows two connections at once. Xtream logins tell the app their limit, and it asks before stopping anything. M3U playlists and Stalker portals don't, so the recording fails if the provider refuses a second stream. Recording the channel you're watching needs two connections too.</p></div>
         <div class="qa"><h3>How much can I record?</h3><p>Small boxes have little room: a Chromecast with Google TV holds about 2 hours of HD. Use a USB drive or a network share for more. Recordings on the box or a USB drive are removed if you uninstall the app; recordings on a network share stay.</p></div>
         <div class="qa"><h3>Will a scheduled recording wake my box?</h3><p>Not always. A box in deep standby may miss the start, and the recording is marked "Missed". If the box wakes while the programme is still on, the rest is recorded.</p></div>
         <div class="qa"><h3>What can't it record?</h3><p>DASH and encrypted streams. Recordings are saved as they arrive (.ts files), not converted. There's no live pause and no series recording.</p></div>

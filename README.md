@@ -6,7 +6,7 @@
 
 [![Downloads](https://img.shields.io/github/downloads/majorleeevil/imd-tv/total)](https://github.com/majorleeevil/imd-tv/releases)
 
-IMD TV is a player for your own IPTV playlist (Xtream login or M3U link). It has a fast TV guide that keeps up with
+IMD TV is a player for your own IPTV playlist (Xtream login, M3U link or Stalker portal). It has a fast TV guide that keeps up with
 the remote, movies and series with posters and subtitles, six themes, and no ads or tracking.
 
 Website: https://majorleeevil.github.io/imd-tv/
@@ -19,7 +19,9 @@ Website: https://majorleeevil.github.io/imd-tv/
 - **TV guide** — seven days of programmes, and free open-source guides (epgshare01) for channels your provider leaves blank.
 - **Movies & series** — posters, plots, seasons and episodes, resume where you left off, embedded subtitles in your language.
 - **Search** — channels, films and series in one search, or within a single category.
-- **Your categories** — favourites, your own groups, hide what you never watch, reorder the rest.
+- **Playlists** — Xtream logins, M3U links and Stalker portals (beta). Add several, name them, switch in Settings.
+- **Your categories** — favourites, your own groups, hide what you never watch (whole categories or ticked channels in bulk), reorder the rest.
+- **DRM** — M3U channels protected with ClearKey or Widevine play.
 - **Recording** — record live TV now or schedule a programme from the guide, to the box, a USB drive or a network
   share (SMB), and watch it later with resume. Turn it on in Settings › Playback › Recording.
 - **Channel logos** — open-source logos (tv-logos), your playlist's, or your own logo pack.
@@ -47,7 +49,7 @@ Six themes, all with the same fast guide:
 - A box in deep standby may not wake for a scheduled recording; it is then marked "Missed". If the box wakes while the
   programme is still on, the rest is recorded.
 - Recording one channel while watching another needs two connections from your provider. Xtream logins report their
-  limit and the app asks before it stops one; with M3U playlists the app just tries, and the recording fails if the
+  limit and the app asks before it stops one; with M3U playlists and Stalker portals the app just tries, and the recording fails if the
   provider refuses a second stream. (Recording the channel you're watching needs two connections too.)
 - Internal storage on small boxes holds only a few hours (a Chromecast with Google TV: about 2 hours of HD). Use a USB
   drive or a network share.
@@ -64,14 +66,14 @@ Requires Android TV / Google TV **8.0 or newer** (tested on Chromecast with Goog
 
 1. On your TV, install the free **Downloader** app from the Play Store.
 2. Open Downloader, type the code `7573990` and press Go. When asked, allow Downloader to install apps, then choose Install.
-3. Open IMD TV and add your Xtream login or M3U link.
+3. Open IMD TV and add your Xtream login, M3U link or Stalker portal.
 
 ### Option 2: Sideloading (from a computer)
 
 1. Download `imd-tv.apk` from [Releases](#releases) on your computer.
 2. On the TV, turn on Developer options and USB or network debugging, then run `adb connect <your TV's IP>` and
    `adb install imd-tv.apk`. Or copy the file to a USB drive and open it with a file manager app on the TV.
-3. Open IMD TV and add your Xtream login or M3U link.
+3. Open IMD TV and add your Xtream login, M3U link or Stalker portal.
 
 ## Build from source
 
