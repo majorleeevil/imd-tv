@@ -88,8 +88,12 @@ class MainActivity : ComponentActivity() {
                 .collect { app.player.setAudioDecoder(it) }
         }
         lifecycleScope.launch {
-            (application as IptvApp).container.settings.settings.map { it.subtitlesOn to it.subtitleLanguage }.distinctUntilChanged()
-                .collect { (on, language) -> app.player.setSubtitles(on, language) }
+            (application as IptvApp).container.settings.settings.map { Triple(it.subtitlesOn, it.subtitleLanguage, it.liveSubtitlesOn) }.distinctUntilChanged()
+                .collect { (on, language, live) -> app.player.setSubtitles(on, language, live) }
+        }
+        lifecycleScope.launch {
+            (application as IptvApp).container.settings.settings.map { it.clock24h }.distinctUntilChanged()
+                .collect { org.imdtv.iptvtv.ui.use24Hour = it }
         }
         setContent {
             val themeId = app.settings.collectAsState().value.theme
@@ -208,7 +212,7 @@ class MainActivity : ComponentActivity() {
                             vod.play(url, top.item, episode, startMs)
                             app.playFullScreen(title, live = false)
                         }, onOpen = app::open)
-                        is Screen.Player -> PlayerScreen(app.player, top.title, live.takeIf { top.live }, onGuide = { app.back() })
+                        is Screen.Player -> PlayerScreen(app.player, top.title, live.takeIf { top.live }, onGuide = { app.back() }, showClock = settings.playerClock)
                     }
                     }
                     // Xcube 180: Live, Movies, Series and Settings are blades inside one frame (spec §6A.7).
