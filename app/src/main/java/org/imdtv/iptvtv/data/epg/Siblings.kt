@@ -1,6 +1,7 @@
 package org.imdtv.iptvtv.data.epg
 
 import org.imdtv.iptvtv.data.db.ChannelEntity
+import org.imdtv.iptvtv.data.db.EpgChannelEntity
 import org.imdtv.iptvtv.data.db.EpgLinkEntity
 import org.imdtv.iptvtv.data.logos.logoKey
 import org.imdtv.iptvtv.data.catalogue.detectCountry
@@ -38,4 +39,23 @@ fun guideDonors(target: ChannelEntity, withGuide: List<ChannelEntity>, query: St
     val words = query.lowercase().split(' ').filter { it.isNotBlank() }
     val found = if (words.isEmpty()) emptyList() else others.filter { c -> words.all { c.name.lowercase().contains(it) } }.sortedBy { it.name }
     return (siblings + found).distinctBy { it.id }.take(limit)
+}
+
+/** An XMLTV channel in one of Your EPG sources, offered by "Use guide from…"; [source] is the source's shown name. */
+data class SourceChannel(val sourceId: Long, val xmltvId: String, val name: String, val source: String)
+
+/**
+ * "Use guide from…" rows from Your EPG sources ([rows] in source priority order, [labels] by source id): with no [query]
+ * the channels named like [target] (logo key, as [guideSiblings]), else those with every word of it, by name.
+ * One row per (source, xmltv id), under its first matching display name.
+ */
+fun sourceChannelChoices(target: String, rows: List<EpgChannelEntity>, labels: Map<Long, String>, query: String,
+                         limit: Int = 50): List<SourceChannel> {
+    val words = query.lowercase().split(' ').filter { it.isNotBlank() }
+    val hits = if (words.isEmpty()) {
+        val key = logoKey(target)?.key ?: return emptyList()
+        rows.filter { logoKey(it.displayName)?.key == key }
+    } else rows.filter { r -> words.all { r.displayName.lowercase().contains(it) } }.sortedBy { it.displayName.lowercase() }
+    return hits.distinctBy { it.sourceId to it.xmltvId }.take(limit)
+        .map { SourceChannel(it.sourceId, it.xmltvId, it.displayName, labels[it.sourceId].orEmpty()) }
 }

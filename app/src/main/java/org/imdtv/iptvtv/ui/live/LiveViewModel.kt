@@ -1,5 +1,10 @@
 package org.imdtv.iptvtv.ui.live
 
+import org.imdtv.iptvtv.data.db.EpgChannelEntity
+import org.imdtv.iptvtv.data.epg.SourceChannel
+import org.imdtv.iptvtv.data.epg.guideKindOf
+import org.imdtv.iptvtv.data.epg.sourceChannelChoices
+import org.imdtv.iptvtv.data.settings.GuideKind
 import org.imdtv.iptvtv.data.catalogue.displayName
 import org.imdtv.iptvtv.data.db.login
 
@@ -357,16 +362,23 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
 
     // Use guide from… (spec §5.4)
     /** Donors with their category name, for "<name> · <category>". */
-    suspend fun donors(ch: ChannelEntity, query: String): List<Pair<ChannelEntity, String?>> {
+    /** Playlist channels with a guide, then (Batch 3b) channels of Your EPG sources, labelled by source. */
+    suspend fun donors(ch: ChannelEntity, query: String): List<GuideChoice> {
         // The channel list and its same-name siblings (~3 s on a TV box) are worked out once per channel, not per search.
         val pool = donorPool?.takeIf { it.channelId == ch.id } ?: kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
             val list = c.db.channelDao().withGuide(ch.providerId)
-            DonorPool(ch.id, list, guideSiblings(ch, list), c.db.categoryDao().allKinds(ch.providerId).associate { it.id to it.name })
+            val own = c.providerRepository.playlistGuideUrls(ch.providerId)
+            val mine = c.db.epgDao().sources(ch.providerId).filter { guideKindOf(it, own) == GuideKind.USER }
+            DonorPool(ch.id, list, guideSiblings(ch, list), c.db.categoryDao().allKinds(ch.providerId).associate { it.id to it.name },
+                mine.flatMap { c.db.epgDao().channels(it.id) }, mine.associate { it.id to org.imdtv.iptvtv.ui.settings.sourceLabel(it) })
         }.also { donorPool = it }
-        val found = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) { guideDonors(ch, pool.list, query, siblings = pool.siblings) }
-        return found.map { it to it.categoryId?.let(pool.cats::get) }
+        return kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+            guideDonors(ch, pool.list, query, siblings = pool.siblings).map { GuideChoice.Channel(it, it.categoryId?.let(pool.cats::get)) } +
+                sourceChannelChoices(ch.name, pool.sourceRows, pool.sourceLabels, query).map { GuideChoice.Source(it) }
+        }
     }
-    private class DonorPool(val channelId: Long, val list: List<ChannelEntity>, val siblings: List<ChannelEntity>, val cats: Map<Long, String>)
+    private class DonorPool(val channelId: Long, val list: List<ChannelEntity>, val siblings: List<ChannelEntity>, val cats: Map<Long, String>,
+                            val sourceRows: List<EpgChannelEntity>, val sourceLabels: Map<Long, String>)
     private var donorPool: DonorPool? = null
     /** The picker closed: links may change before it opens again. */
     fun clearDonors() { donorPool = null }
@@ -375,6 +387,13 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             val l = c.db.epgDao().link(donor.id) ?: return@launch
             c.db.epgDao().upsertLinks(listOf(EpgLinkEntity(ch.id, l.sourceId, l.xmltvId, manual = true)))
+            guideBump.value++
+        }
+    }
+    /** A manual link to a channel of one of Your EPG sources: the matcher never touches it. */
+    fun useGuideFrom(ch: ChannelEntity, s: SourceChannel) {
+        viewModelScope.launch {
+            c.db.epgDao().upsertLinks(listOf(EpgLinkEntity(ch.id, s.sourceId, s.xmltvId, manual = true)))
             guideBump.value++
         }
     }
@@ -445,4 +464,10 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
         const val WINDOW = 5 * HALF_HOUR // the widest guide (Glass, Liquid: 2½ hours)
         const val MAX_SHIFT = 7 * 48 // 7 days of half-hours
     }
+}
+
+/** A "Use guide from…" row: a playlist channel's guide, or a channel of one of Your EPG sources. */
+sealed interface GuideChoice {
+    data class Channel(val channel: ChannelEntity, val category: String?) : GuideChoice
+    data class Source(val channel: SourceChannel) : GuideChoice
 }
