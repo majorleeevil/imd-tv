@@ -41,6 +41,23 @@ class ChannelDaoTest {
     }
 
     @Test
+    fun byNumberPrefersCustomNumberAndSkipsHiddenAndOtherProviders() = runTest {
+        val p = db.insertTestProvider()
+        val other = db.insertTestProvider()
+        fun ch(prov: Long, id: String, number: Int?, customNumber: Int? = null, hidden: Boolean = false) =
+            ChannelEntity(providerId = prov, categoryId = null, remoteId = id, name = id, logo = null, number = number,
+                customNumber = customNumber, hidden = hidden, tvgId = null, streamUrl = "http://x/$id")
+        db.channelDao().upsert(listOf(
+            ch(p, "plain", 7), ch(p, "custom", 3, customNumber = 7), ch(p, "moved", 7, customNumber = 9),
+            ch(p, "hid", 7, hidden = true), ch(other, "foreign", 7),
+        ))
+
+        assertEquals(listOf("custom", "plain"), db.channelDao().byNumber(p, 7).map { it.remoteId })
+        assertEquals(listOf("moved"), db.channelDao().byNumber(p, 9).map { it.remoteId })
+        assertEquals(emptyList<String>(), db.channelDao().byNumber(p, 3).map { it.remoteId })
+    }
+
+    @Test
     fun countsAndGuideVersionEmitOnChange() = runBlocking {
         val p = db.insertTestProvider()
         db.categoryDao().upsert(listOf(CategoryEntity(providerId = p, kind = Kind.LIVE, remoteId = "1", name = "News")))

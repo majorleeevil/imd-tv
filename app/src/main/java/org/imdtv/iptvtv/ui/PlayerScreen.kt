@@ -40,10 +40,11 @@ import org.imdtv.iptvtv.ui.live.LiveViewModel
 
 private val OK = setOf(Key.DirectionCenter, Key.Enter, Key.NumPadEnter)
 
-/** Full-screen playback. Live ([liveVm] set) adds the info overlay (OK opens, Back closes, 5s auto-hide) and Up/Down zapping. */
+/** Full-screen playback. Live ([liveVm] set) adds the info overlay (OK opens, Back closes, 5s auto-hide) and Up/Down (or Left/Right) zapping. */
 @Composable
 fun PlayerScreen(player: PlayerManager, title: String, liveVm: LiveViewModel? = null, onGuide: () -> Unit = {}) {
     val live = liveVm != null
+    val zapLeftRight = liveVm?.settings?.collectAsState()?.value?.zapLeftRight == true
     val focused = liveVm?.focused?.collectAsState()?.value
     val name = focused?.displayName(liveVm.strip.collectAsState().value) ?: title
     // Kept with the channel it is for: a stream that fails inside play() reports before a zap's effects run.
@@ -64,7 +65,7 @@ fun PlayerScreen(player: PlayerManager, title: String, liveVm: LiveViewModel? = 
 
     Box(
         Modifier.fillMaxSize().background(Color.Black)
-            .onPreviewKeyEvent { lastKey = System.nanoTime(); false },
+            .onPreviewKeyEvent { lastKey = System.nanoTime(); liveVm?.numberKey(it, true) == true },
     ) {
         AndroidView(
             factory = { ctx -> PlayerView(ctx).also {
@@ -82,8 +83,7 @@ fun PlayerScreen(player: PlayerManager, title: String, liveVm: LiveViewModel? = 
                 if (overlay) return@onKeyEvent false
                 when {
                     e.key in OK -> { if (e.type == KeyEventType.KeyUp) overlay = true; true }
-                    e.key == Key.DirectionUp -> { if (e.type == KeyEventType.KeyDown) liveVm.zapBy(-1); true }
-                    e.key == Key.DirectionDown -> { if (e.type == KeyEventType.KeyDown) liveVm.zapBy(1); true }
+                    zapDelta(e.key, zapLeftRight) != null -> { if (e.type == KeyEventType.KeyDown) zapDelta(e.key, zapLeftRight)?.let(liveVm::zapBy); true }
                     else -> false
                 }
             })
@@ -113,4 +113,10 @@ fun keepFocusWhenControlsHide(view: PlayerView) {
     view.setControllerVisibilityListener(PlayerView.ControllerVisibilityListener { v ->
         if (v != android.view.View.VISIBLE && !view.isFocused) view.requestFocus()
     })
+}
+
+/** Full screen zap keys: Up/Down, or Left/Right (Left = previous) by the setting; null for any other key. */
+fun zapDelta(key: Key, leftRight: Boolean): Int? = when {
+    leftRight -> when (key) { Key.DirectionLeft -> -1; Key.DirectionRight -> 1; else -> null }
+    else -> when (key) { Key.DirectionUp -> -1; Key.DirectionDown -> 1; else -> null }
 }

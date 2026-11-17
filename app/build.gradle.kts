@@ -17,8 +17,8 @@ android {
         applicationId = "org.imdtv.iptvtv"
         minSdk = 26
         targetSdk = 35
-        versionCode = 5
-        versionName = "0.3.1"
+        versionCode = 6
+        versionName = "0.4.0"
     }
 
     // Release key, kept outside the repo: ~/.config/iptv-tv/keystore.properties (storeFile, storePassword, keyAlias,
@@ -93,6 +93,7 @@ dependencies {
     implementation(libs.work.runtime)
     implementation(libs.coil.compose)
     implementation(libs.smbj) // recordings on a network share
+    implementation(libs.zxing.core) // QR code for the log page
 
     testImplementation(libs.junit)
     testImplementation(libs.robolectric)

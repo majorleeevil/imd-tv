@@ -54,6 +54,12 @@ class BackupRepository(
             categories = db.categoryDao().allKinds(p.id).map { BCategory(it.kind.name, it.remoteId, it.hidden, it.sortOrder, it.pinned) },
             groups = db.customGroupDao().observe(p.id).first().map { BGroup(it.name, it.sortOrder, db.customGroupDao().memberRemoteIds(it.id), it.placement.name) },
             favourites = favourites, categoryStrip = p.categoryStrip,
+            progress = db.progressDao().all(p.id).let { rows ->
+                val movies = rows.filter { it.kind == Kind.MOVIE }.map { it.itemId }.distinct().chunked(900).flatMap { db.movieDao().byIds(it) }.associate { it.id to it.remoteId }
+                val series = rows.filter { it.kind == Kind.SERIES }.map { it.itemId }.distinct().chunked(900).flatMap { db.seriesDao().byIds(it) }.associate { it.id to it.remoteId }
+                rows.mapNotNull { r -> (if (r.kind == Kind.MOVIE) movies else series)[r.itemId]?.let {
+                    BProgress(r.kind.name, it, r.episode, r.positionMs, r.durationMs, r.updatedAt, r.completed) } }
+            },
         )
     }
 
@@ -131,6 +137,19 @@ class BackupRepository(
             favs.forEach { f ->
                 val item = ids[f.remoteId]
                 if (kind != null && item != null) { db.favouriteDao().add(FavouriteEntity(id, kind, item, now - n++)); applied++ } else skipped++
+            }
+        }
+
+        if (b.progress.isNotEmpty()) {
+            val movies = db.movieDao().byProvider(id).associate { it.remoteId to it.id }
+            val series = db.seriesDao().byProvider(id).associate { it.remoteId to it.id }
+            b.progress.forEach { bp ->
+                val kind = Kind.entries.find { it.name == bp.kind }
+                val item = when (kind) { Kind.MOVIE -> movies[bp.remoteId]; Kind.SERIES -> series[bp.remoteId]; else -> null }
+                if (kind != null && item != null) {
+                    db.progressDao().upsert(org.imdtv.iptvtv.data.db.ProgressEntity(id, kind, item, bp.positionMs, bp.durationMs, bp.updatedAt, bp.completed, bp.episode))
+                    applied++
+                } else skipped++
             }
         }
         return RestoreResult(applied, skipped)

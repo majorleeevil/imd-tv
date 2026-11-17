@@ -287,7 +287,7 @@ fun XmbScreen(
                 section((x.folder ?: 1) - 1).forEachIndexed { i, hit ->
                     val d = i - x.folderItem
                     if (d < -3 || d > 6) return@forEachIndexed
-                    val title = if (hit is ChannelEntity) listOfNotNull((hit.customNumber ?: hit.number)?.toString(), hit.displayName(strip)).joinToString("  ")
+                    val title = if (hit is ChannelEntity) listOfNotNull((hit.customNumber ?: hit.number)?.toString()?.takeIf { org.imdtv.iptvtv.ui.LocalShowNumbers.current }, hit.displayName(strip)).joinToString("  ")
                         else (hit as VodItem).name
                     XmbItem(title, d == 0, Modifier.offset(x = listX, y = FOCUS_Y + ITEM_H * d + if (d > 0) 14.dp else 0.dp).width(560.dp), folderIcon = false)
                 }

@@ -177,11 +177,9 @@ class CatalogueSync(
         val keep = unique.mapTo(HashSet()) { it.remoteId }
         existing.values.filter { it.remoteId !in keep }.map { it.id }.chunked(SQL_DELETE_CHUNK).forEach { ids ->
             db.withTransaction {
-                // Series progress is per episode (ProgressEntity.itemId = episode id).
-                val goneEpisodes = dao.episodeIds(ids)
                 dao.deleteIds(ids)
                 db.favouriteDao().deleteForItems(providerId, Kind.SERIES, ids)
-                db.progressDao().deleteForItems(providerId, Kind.SERIES, goneEpisodes)
+                db.progressDao().deleteForItems(providerId, Kind.SERIES, ids) // series progress rows are keyed by the series id
             }
         }
         return KindResult(c.idByRemote.size, unique.size, c.newlyHidden)

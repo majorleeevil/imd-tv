@@ -28,6 +28,7 @@ import org.imdtv.iptvtv.IptvApp
 import org.imdtv.iptvtv.data.db.CategoryEntity
 import org.imdtv.iptvtv.data.db.FavouriteEntity
 import org.imdtv.iptvtv.data.db.MovieEntity
+import org.imdtv.iptvtv.data.db.ProgressEntity
 import org.imdtv.iptvtv.data.db.ProviderEntity
 import org.imdtv.iptvtv.data.db.ProviderType
 import org.imdtv.iptvtv.data.db.SeriesEntity
@@ -66,6 +67,11 @@ fun vodMatches(query: kotlinx.coroutines.flow.Flow<String>, scope: kotlinx.corou
 suspend fun clearQueryOnScopeChange(scope: kotlinx.coroutines.flow.Flow<Pair<Kind, Long?>>, query: MutableStateFlow<String>) =
     scope.distinctUntilChanged().drop(1).collect { query.value = "" }
 
+/** How far the latest play of [item] got (0–1), for a poster bar; null if never played or watched. [rows] newest first. */
+fun progressFraction(item: VodItem, rows: List<ProgressEntity>): Float? =
+    rows.firstOrNull { it.kind == item.kind && it.itemId == item.id }?.takeIf { !it.completed && it.durationMs > 0 }
+        ?.let { (it.positionMs.toFloat() / it.durationMs).coerceIn(0f, 1f) }
+
 @OptIn(ExperimentalCoroutinesApi::class)
 class VodViewModel(app: Application) : AndroidViewModel(app) {
     private val c = (app as IptvApp).container
@@ -86,12 +92,26 @@ class VodViewModel(app: Application) : AndroidViewModel(app) {
 
     private val categoryStrip = provider.map { org.imdtv.iptvtv.data.catalogue.parseStripList(it?.categoryStrip.orEmpty()) }.distinctUntilChanged()
 
+    /** Every progress row of the active playlist (movies and episodes; small), newest first. */
+    val progress: StateFlow<List<ProgressEntity>> = providerId.flatMapLatest { c.db.progressDao().observe(it) }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+    /** Movies left part-way, and series with an episode in progress or one watched in the last 30 days (the next is due). */
+    val continueWatching: StateFlow<List<VodItem>> = combine(progress, kind) { rows, k -> rows to k }
+        .mapLatest { (rows, k) ->
+            val recent = System.currentTimeMillis() - 30L * 24 * 3600_000
+            items(k, rows.filter { it.kind == k }.distinctBy { it.itemId } // newest row per movie/series
+                .filter { !it.completed || (k == Kind.SERIES && it.updatedAt > recent) }.map { it.itemId })
+        }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
     val categories: StateFlow<List<RailCategory>> = combine(providerId, kind) { p, k -> p to k }
         .flatMapLatest { (p, k) ->
             val counts = if (k == Kind.MOVIE) c.db.movieDao().observeCounts(p) else c.db.seriesDao().observeCounts(p)
-            combine(c.db.categoryDao().observeVisible(p, k), counts, categoryStrip) { cats, n, strip ->
+            combine(c.db.categoryDao().observeVisible(p, k), counts, categoryStrip, continueWatching) { cats, n, strip, cont ->
                 val byId = n.associate { it.categoryId to it.n }
-                cats.map { RailCategory(it.cleaned(strip), byId[it.id] ?: 0) }.filter { it.count > 0 }
+                // Continue watching is a category too, so every theme's rows, rails and lists show it first.
+                listOfNotNull(cont.takeIf { it.isNotEmpty() }?.let { RailCategory(CategoryEntity(CONTINUE_ID, p, k, "", "Continue watching"), it.size) }) +
+                    cats.map { RailCategory(it.cleaned(strip), byId[it.id] ?: 0) }.filter { it.count > 0 }
             }
         }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
@@ -103,14 +123,14 @@ class VodViewModel(app: Application) : AndroidViewModel(app) {
     /** Category shown as a full poster grid (picked from the rail); null = home rows. */
     val gridCategory = MutableStateFlow<CategoryEntity?>(null)
     val grid: StateFlow<List<VodItem>> = gridCategory
-        .mapLatest { cat -> cat?.let { inCategory(it.id, GRID_LIMIT) } ?: emptyList() }
+        .flatMapLatest { cat -> if (cat?.id == CONTINUE_ID) continueWatching else kotlinx.coroutines.flow.flow { emit(cat?.let { inCategory(it.id, GRID_LIMIT) } ?: emptyList()) } }
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     /** The in-category search bar's text; [matches] null = no query, show the normal rows/grid. */
     val query = MutableStateFlow("")
     private val searchScope = combine(kind, gridCategory) { k, g -> k to g?.id }
     val matches: StateFlow<List<VodItem>?> = vodMatches(query, searchScope, c.search.version) { k, cat, q ->
-        provider.value?.let { c.search.inCategory(it.id, k, cat, q) }.orEmpty()
+        provider.value?.let { c.search.inCategory(it.id, k, cat?.takeIf { it != CONTINUE_ID }, q) }.orEmpty()
     }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     fun warmSearch() { viewModelScope.launch { provider.value?.let { c.search.warm(it.id, emptyList(), listOf(kind.value)) } } }
@@ -136,7 +156,8 @@ class VodViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     suspend fun inCategory(categoryId: Long, limit: Int = ROW_LIMIT): List<VodItem> =
-        if (kind.value == Kind.MOVIE) c.db.movieDao().inCategory(categoryId, limit).map { it.item() }
+        if (categoryId == CONTINUE_ID) continueWatching.value.take(limit)
+        else if (kind.value == Kind.MOVIE) c.db.movieDao().inCategory(categoryId, limit).map { it.item() }
         else c.db.seriesDao().inCategory(categoryId, limit).map { it.item() }
 
     private suspend fun items(k: Kind, ids: List<Long>): List<VodItem> {
@@ -172,6 +193,20 @@ class VodViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    /** This movie's progress row, or one of this series' episodes ([episode] = its remoteId). */
+    fun progressOf(item: VodItem, episode: String = ""): ProgressEntity? =
+        progress.value.find { it.kind == item.kind && it.itemId == item.id && it.episode == episode }
+
+    /** Mark watched (Play then starts over) or unwatched (forgets the position too). */
+    fun setWatched(item: VodItem, watched: Boolean, episode: String = "") {
+        val p = provider.value ?: return
+        viewModelScope.launch {
+            if (watched) c.db.progressDao().upsert(ProgressEntity(p.id, item.kind, item.id, 0, progressOf(item, episode)?.durationMs ?: 0,
+                System.currentTimeMillis(), completed = true, episode = episode))
+            else c.db.progressDao().delete(p.id, item.kind, item.id, episode)
+        }
+    }
+
     // shortcut: learned heights live in a small prefs file, not Room; move them to the DB if the list grows large.
     private val heightPrefs = app.getSharedPreferences("vod_heights", android.content.Context.MODE_PRIVATE)
     private fun heightKey(item: VodItem) = "${provider.value?.id}:${item.kind}:${item.remoteId}"
@@ -185,11 +220,15 @@ class VodViewModel(app: Application) : AndroidViewModel(app) {
     fun learnedHeight(item: VodItem): Int? = learnedHeights.value[heightKey(item)]
     private var learn: kotlinx.coroutines.Job? = null
 
-    /** Plays [url]; for [item] (the movie, or the series an episode belongs to) remembers the picture height once known. */
-    fun play(url: String, item: VodItem? = null) {
-        player.play(url, provider.value?.userAgent, provider.value?.login(), vod = true)
+    /**
+     * Plays [url] from [startMs]; for [item] (the movie, or the series [episode] belongs to: its remoteId) remembers
+     * the picture height once known, and where it's left (see WatchProgress).
+     */
+    fun play(url: String, item: VodItem? = null, episode: String = "", startMs: Long = 0) {
+        player.play(url, provider.value?.userAgent, provider.value?.login(), vod = true, startMs = startMs)
         learn?.cancel()
         if (item == null) return
+        provider.value?.let { c.watchProgress.start(it.id, item.kind, item.id, episode, url) }
         val key = heightKey(item)
         learn = viewModelScope.launch {
             // Only while this stream is still the one playing: a live channel tuned after a failed start mustn't count.
@@ -201,5 +240,7 @@ class VodViewModel(app: Application) : AndroidViewModel(app) {
     companion object {
         const val ROW_LIMIT = 30
         const val GRID_LIMIT = 600
+        /** The Continue watching pseudo-category (not a row in the category table). */
+        const val CONTINUE_ID = -2L
     }
 }

@@ -95,7 +95,7 @@ class XmltvParser {
         var icon: String? = null
         children(p) { name ->
             when (name) {
-                "title" -> p.nextText().trim().let { if (title == null) title = it }
+                "title" -> p.nextText().replace(SPACES, " ").trim().let { if (title == null) title = it } // a line break in a title hides the rest in a one-line cell
                 "desc" -> p.nextText().trim().let { if (desc == null && it.isNotEmpty()) desc = it }
                 "episode-num" -> {
                     val system = p.getAttributeValue(null, "system")
@@ -132,3 +132,5 @@ class XmltvParser {
         }
     }
 }
+
+private val SPACES = Regex("\\s+")

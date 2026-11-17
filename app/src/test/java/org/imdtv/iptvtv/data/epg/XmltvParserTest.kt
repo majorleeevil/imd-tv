@@ -81,4 +81,12 @@ class XmltvParserTest {
         assertEquals(1, skipped)
         assertEquals(listOf("Good"), programmes.map { it.title })
     }
+
+    @Test
+    fun titleLineBreaksBecomeSpaces() {
+        val xml = "<tv><programme start=\"20261108180000 +0000\" stop=\"20261108183000 +0000\" channel=\"a\"><title>Line One:\n   The Second  Line\r\n</title></programme></tv>"
+        val programmes = mutableListOf<XProgramme>()
+        XmltvParser().parse(xml.byteInputStream(), {}, programmes::add)
+        assertEquals("Line One: The Second Line", programmes.single().title)
+    }
 }

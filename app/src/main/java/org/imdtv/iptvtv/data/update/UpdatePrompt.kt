@@ -45,7 +45,8 @@ fun UpdatePrompt(updater: Updater, background: CoroutineScope) {
     val u = update ?: return
     if (!open) return
     MenuFrame("IMD TV ${u.version} is available", onDismiss = { scope.launch { updater.later() } }) { first ->
-        val body = error ?: progress ?: u.notes.ifBlank { "A new version of IMD TV is ready to install." }
+        // No release notes here: they show once, after the update (What's new).
+        val body = error ?: progress ?: "A new version of IMD TV is ready to install."
         Text(body, fontSize = 15.sp, color = Color.White, modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp))
         if (progress != null) MenuItem("Hide", Modifier.focusRequester(first)) { updater.prompt.value = false }
         else {

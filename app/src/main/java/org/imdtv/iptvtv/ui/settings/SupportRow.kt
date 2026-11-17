@@ -1,6 +1,22 @@
 package org.imdtv.iptvtv.ui.settings
 
+import android.graphics.Bitmap
+import android.os.Build
 import androidx.compose.foundation.Image
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.graphics.asImageBitmap
+import com.google.zxing.BarcodeFormat
+import com.google.zxing.EncodeHintType
+import com.google.zxing.qrcode.QRCodeWriter
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
+import org.imdtv.iptvtv.data.support.LogCollector
+import org.imdtv.iptvtv.data.support.LogServer
+import org.imdtv.iptvtv.data.support.lanAddress
+import org.imdtv.iptvtv.data.support.scrubLog
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -50,6 +66,7 @@ fun AboutRows(first: Modifier) {
     QrRow("Source", "The source code", SITE_LABEL, R.drawable.site_qr, SITE_LABEL)
     SettingRow("Licence", "Free and open source software", "GPL-3.0") {}
     SettingRow("Contact", "Questions and feedback", CONTACT_EMAIL) {}
+    SendLogsRow()
     QrRow("Support IMD TV", "Free and open source. Buy me a coffee if you'd like", null, R.drawable.support_qr, SUPPORT_LABEL)
 }
 
@@ -87,6 +104,58 @@ private fun QrRow(title: String, explanation: String, value: String?, qr: Int, l
         }
         Text("Scan with your phone, or visit\n$label", fontSize = 15.sp, color = Color.White, textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp))
+        MenuItem("Close", Modifier.focusRequester(first)) { open = false }
+    }
+}
+
+private const val LOG_PAGE_MS = 10 * 60 * 1000L
+
+/** Send logs: OK builds the scrubbed log, serves it on the local network for 10 minutes and shows a QR code for it. Nothing runs otherwise. */
+@Composable
+private fun SendLogsRow() {
+    var open by remember { mutableStateOf(false) }
+    SettingRow("Send logs", "Send this app's log to support from your phone", null) { open = true }
+    if (!open) return
+    val ctx = LocalContext.current
+    val app = ctx.applicationContext as IptvApp
+    var server by remember { mutableStateOf<LogServer?>(null) }
+    var qr by remember { mutableStateOf<ImageBitmap?>(null) }
+    var failed by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        val s = withContext(Dispatchers.IO) {
+            runCatching {
+                val addr = lanAddress() ?: return@runCatching null
+                val c = app.container
+                val providers = c.db.providerDao().all()
+                val (prev, cur) = LogCollector.read(ctx)
+                val header = "IMD TV ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})\n${Build.MANUFACTURER} ${Build.MODEL}, Android ${Build.VERSION.RELEASE}\n" +
+                    "Theme: ${c.settings.settings.first().theme}\nPlaylists: ${providers.size} ${providers.map { it.type }}\n\n"
+                // Stalker passwords hold "serial\ndeviceId": each line is a secret.
+                val secrets = providers.flatMap { listOfNotNull(it.username, it.password) }.flatMap { it.lines() }
+                LogServer(addr, (header + scrubLog(prev + cur, secrets)).toByteArray()).also {
+                    server = it // set at once so closing the page mid-build still stops it
+                    val m = QRCodeWriter().encode(it.url, BarcodeFormat.QR_CODE, 0, 0, mapOf(EncodeHintType.MARGIN to 0))
+                    qr = Bitmap.createBitmap(IntArray(m.width * m.height) { i -> if (m.get(i % m.width, i / m.width)) 0xFF000000.toInt() else -1 }, m.width, m.height, Bitmap.Config.ARGB_8888).asImageBitmap()
+                }
+            }.getOrNull()
+        }
+        server = s
+        failed = s == null
+        delay(LOG_PAGE_MS)
+        open = false
+    }
+    DisposableEffect(Unit) { onDispose { server?.stop() } }
+    MenuFrame("Send logs", onDismiss = { open = false }) { first ->
+        val img = qr
+        if (img != null) Box(Modifier.fillMaxWidth().padding(vertical = 8.dp), contentAlignment = Alignment.Center) {
+            Image(img, contentDescription = "QR code for the log file", filterQuality = FilterQuality.None,
+                modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(Color.White).padding(12.dp).size(200.dp))
+        }
+        Text(when {
+            img != null -> "${server?.url}\n\nScan with your phone on the same Wi-Fi, then email the file to $CONTACT_EMAIL"
+            failed -> "No Wi-Fi or Ethernet address found. Connect the TV to your home network and try again"
+            else -> "Preparing the log..."
+        }, fontSize = 15.sp, color = Color.White, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp))
         MenuItem("Close", Modifier.focusRequester(first)) { open = false }
     }
 }

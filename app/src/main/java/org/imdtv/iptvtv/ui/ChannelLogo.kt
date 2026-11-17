@@ -20,12 +20,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import org.imdtv.iptvtv.data.settings.LogoKind
 
+/** Appearance > Channel numbers, provided once at the root. */
+val LocalShowNumbers = androidx.compose.runtime.staticCompositionLocalOf { true }
+
 /** The channel's logo per the Channel logos setting; the number tile while loading, on error and when there is none. */
 @Composable
 fun ChannelLogo(ch: ChannelEntity, source: List<LogoKind>, modifier: Modifier = Modifier, fontSize: TextUnit = 16.sp) {
     val tile = @Composable {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text((ch.customNumber ?: ch.number)?.toString() ?: "TV", fontSize = fontSize, fontWeight = FontWeight.Bold, color = Color.White)
+            Text((ch.customNumber ?: ch.number)?.toString()?.takeIf { LocalShowNumbers.current } ?: "TV", fontSize = fontSize, fontWeight = FontWeight.Bold, color = Color.White)
         }
     }
     val urls = shownLogos(ch, source)

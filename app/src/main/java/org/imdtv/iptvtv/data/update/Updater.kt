@@ -35,7 +35,7 @@ private const val LATER_MS = 24 * 60 * 60 * 1000L
 @Serializable private data class GhAsset(val name: String, @SerialName("browser_download_url") val url: String)
 @Serializable private data class GhRelease(@SerialName("tag_name") val tag: String, val body: String? = null, val assets: List<GhAsset> = emptyList())
 
-data class Update(val version: String, val notes: String, val apkUrl: String)
+data class Update(val version: String, val apkUrl: String)
 
 /** True when release tag [tag] ("v0.2.0") is a newer version than [current] ("0.1.0"). */
 fun isNewer(tag: String, current: String): Boolean {
@@ -103,7 +103,7 @@ class Updater(private val context: Context, private val http: OkHttpClient, priv
         lastCheck = System.currentTimeMillis()
         val apk = release.assets.find { it.name == APK_NAME }
         val u = if (apk != null && isNewer(release.tag, BuildConfig.VERSION_NAME))
-            Update(release.tag.trimStart('v', 'V'), plainNotes(release.body.orEmpty()), apk.url) else null
+            Update(release.tag.trimStart('v', 'V'), apk.url) else null
         available.value = u
         if (u != null && (manual || System.currentTimeMillis() >= (prefs.data.first()[laterUntil] ?: 0L))) prompt.value = true
         true

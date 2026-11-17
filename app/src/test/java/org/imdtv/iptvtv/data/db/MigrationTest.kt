@@ -76,6 +76,27 @@ class MigrationTest {
         }
     }
 
+    @Test fun v8ToV9AddsFavouriteSortOrder() {
+        helper.createDatabase(DB, 8).use { db ->
+            db.execSQL("INSERT INTO favourite (providerId,kind,itemId,addedAt) VALUES (1,'LIVE',5,100)")
+        }
+        helper.runMigrationsAndValidate(DB, 9, true).use { db ->
+            db.query("SELECT itemId, addedAt, sortOrder FROM favourite").use { c -> c.moveToFirst(); assertEquals(5, c.getInt(0)); assertEquals(100, c.getInt(1)); assertEquals(0, c.getInt(2)) }
+        }
+    }
+
+    @Test fun v9ToV10AddsProgressEpisode() {
+        helper.createDatabase(DB, 9).use { db ->
+            db.execSQL("INSERT INTO progress (providerId,kind,itemId,positionMs,durationMs,updatedAt,completed) VALUES (1,'MOVIE',5,60000,7200000,100,0)")
+        }
+        helper.runMigrationsAndValidate(DB, 10, true).use { db ->
+            db.query("SELECT itemId, positionMs, durationMs, updatedAt, completed, episode FROM progress").use { c ->
+                c.moveToFirst(); assertEquals(5, c.getInt(0)); assertEquals(60000, c.getLong(1)); assertEquals(7200000, c.getLong(2))
+                assertEquals(100, c.getLong(3)); assertEquals(0, c.getInt(4)); assertEquals("", c.getString(5))
+            }
+        }
+    }
+
     @Test fun v7ToV8AddsChannelDrm() {
         helper.createDatabase(DB, 7).use { db ->
             db.execSQL("INSERT INTO provider (id,name,type,url,username,password,userAgent,streamFormat,epgOverrideUrls,lastSync,nameStrip,categoryStrip) VALUES (1,'p','M3U','http://x',NULL,NULL,NULL,'TS','',NULL,'','')")

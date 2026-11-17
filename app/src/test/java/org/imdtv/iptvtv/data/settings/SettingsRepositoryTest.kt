@@ -30,7 +30,7 @@ class SettingsRepositoryTest {
 
     @Test fun updateRoundTripsEveryField() = runTest {
         val s = AppSettings(ThemeId.CELESTIAL_GLASS, true, AudioDecoder.HARDWARE, false, false, true, 24, true, false, 14, 0, 42L, true)
-            .copy(subtitlesOn = true, subtitleLanguage = "fr")
+            .copy(subtitlesOn = true, subtitleLanguage = "fr", zapLeftRight = true, backToFullScreen = true, showChannelNumbers = false)
         repo.update { s }
         assertEquals(s, repo.settings.first())
     }
@@ -92,6 +92,13 @@ class SettingsRepositoryTest {
         prefs.edit { it[stringPreferencesKey("logo_order")] = "BOGUS,,PLAYLIST,PLAYLIST"; it[stringPreferencesKey("guide_order")] = "" }
         assertEquals(listOf(LogoKind.PLAYLIST), repo.settings.first().logoOrder)
         assertEquals(listOf(GuideKind.PLAYLIST, GuideKind.OPEN_SOURCE), repo.settings.first().guideOrder)
+    }
+
+    @Test fun guideSettingsRoundTripAndClamp() = runTest {
+        assertEquals(5, repo.settings.first().guideRows); assertFalse(repo.settings.first().multiLineGuide)
+        repo.update { it.copy(guideRows = 9, multiLineGuide = true) }
+        assertEquals(9, repo.settings.first().guideRows); assertEquals(true, repo.settings.first().multiLineGuide)
+        assertEquals(5, AppSettings(guideRows = 10).clamped().guideRows)
     }
 
     @Test fun hideHeaderChannelsRoundTrip() = runTest {

@@ -41,6 +41,7 @@ fun LiveGuideScreen(vm: LiveViewModel, nav: @Composable () -> Unit, onFullScreen
     val rail by vm.rail.collectAsState()
     val entry by vm.entry.collectAsState()
     val updating by vm.guideUpdating.collectAsState()
+    val rows = vm.settings.collectAsState().value.guideRows
 
     var screen by remember { mutableStateOf(Size.Zero) }
     val colors = LocalTheme.current.colors // read here so a theme change re-rasterises the cached background
@@ -64,7 +65,7 @@ fun LiveGuideScreen(vm: LiveViewModel, nav: @Composable () -> Unit, onFullScreen
             Text("All live categories are hidden. Show them again in Settings › Channels & categories.", fontSize = 16.sp,
                 color = Color.White, modifier = Modifier.padding(start = 24.dp, top = 380.dp))
         }
-        Row(Modifier.padding(start = 24.dp, top = 318.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.padding(start = 24.dp, top = if (backdrop != null) 302.dp else 286.dp), verticalAlignment = Alignment.CenterVertically) {
             Text(
                 "◀ ${entry?.title.orEmpty()}", fontSize = 11.sp, color = Color.White, maxLines = 1,
                 modifier = Modifier.clip(RoundedCornerShape(10.dp)).background(colors.cellDim).padding(horizontal = 7.dp, vertical = 2.dp),
@@ -76,9 +77,10 @@ fun LiveGuideScreen(vm: LiveViewModel, nav: @Composable () -> Unit, onFullScreen
             }
         }
 
-        // Glass: 35dp bottom leaves exactly four whole rows (25 header + 4 × 32 + 3 × 4) above the TV-safe edge.
-        GuideGrid(vm, state, if (backdrop != null) LIQUID_GRID else GLASS_GRID, onFullScreen, onLeftAtStart = { state.railOpen = true },
-            modifier = Modifier.padding(start = 24.dp, top = 340.dp, end = 24.dp, bottom = if (backdrop != null) inset else 35.dp).fillMaxSize().glass(blur = false).padding(inset)) // no backdrop patch on the grid: the performance gate (ledger)
+        // Glass and Liquid: the grid runs off the right edge and stops 12dp above the bottom, so the last row's border shows; GuideGrid splits it into 5–9 whole rows.
+        val grid = (if (backdrop != null) LIQUID_GRID else GLASS_GRID).copy(gap = if (rows > 5) 2.dp else 4.dp)
+        GuideGrid(vm, state, grid, onFullScreen, onLeftAtStart = { state.railOpen = true }, rows = rows,
+            modifier = Modifier.padding(start = 24.dp, top = if (backdrop != null) 320.dp else 306.dp, bottom = 12.dp).fillMaxSize().glass(blur = false).padding(inset)) // no backdrop patch on the grid: the performance gate (ledger)
         if (state.railOpen) CategoryRail(vm, state)
         GuideMenus(vm, state)
     }

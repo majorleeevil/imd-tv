@@ -99,7 +99,8 @@ class MainActivity : ComponentActivity() {
             val backdrop = if (themeId != ThemeId.LIQUID_GLASS) null else remember(conf.screenWidthDp, conf.screenHeightDp, themeColour) {
                 with(density) { glassBackdrop(this, androidx.compose.ui.geometry.Size(conf.screenWidthDp.dp.toPx(), conf.screenHeightDp.dp.toPx()), themeColour.liquid.map { androidx.compose.ui.graphics.Color(it) }) }
             }
-            CompositionLocalProvider(LocalTheme provides remember(themeId, themeColour) { themeOf(themeId, themeColour) }, LocalGlassBackdrop provides backdrop) {
+            CompositionLocalProvider(LocalTheme provides remember(themeId, themeColour) { themeOf(themeId, themeColour) }, LocalGlassBackdrop provides backdrop,
+                org.imdtv.iptvtv.ui.LocalShowNumbers provides app.settings.collectAsState().value.showChannelNumbers) {
             MaterialTheme(colorScheme = darkColorScheme()) {
             // Celestial Glass and Liquid Glass: every TV Text in Inter (the website's font). Inside MaterialTheme, which
             // otherwise sets its own sans-serif text style over anything provided outside it.
@@ -124,7 +125,14 @@ class MainActivity : ComponentActivity() {
                     if (exitHint) { delay(3_000); exitHint = false }
                 }
                 BackHandler {
+                    val playing = live.previewing
                     when {
+                        // Back in the live guide opens the playing channel (Retro: only inside its guide; menu focused keeps the usual Back).
+                        top == Screen.Live && tab == Tab.LIVE && settings.backToFullScreen && !menuFocused && playing != null &&
+                            (settings.theme != ThemeId.CELESTIAL_RETRO || live.retroGuideOpen) -> {
+                            live.focused.value = playing; live.watched(playing)
+                            app.playFullScreen(playing.displayName(live.strip.value), live = true)
+                        }
                         top == Screen.Vod && grid != null && settings.theme != ThemeId.XCUBE_180 && settings.theme != ThemeId.GAMESTATION -> vod.gridCategory.value = null
                         top == Screen.Live && live.retroGuideOpen && settings.theme == ThemeId.CELESTIAL_RETRO -> live.retroGuideOpen = false
                         app.back() -> Unit
@@ -196,8 +204,8 @@ class MainActivity : ComponentActivity() {
                             themeId == ThemeId.CELESTIAL_RETRO -> retroMenu(Tab.RECORDINGS)
                             else -> org.imdtv.iptvtv.recording.RecordingsScreen(nav, app::playRecording)
                         }
-                        is Screen.Detail -> VodDetailScreen(vod, top.item, onPlay = { url, title ->
-                            vod.play(url, top.item)
+                        is Screen.Detail -> VodDetailScreen(vod, top.item, onPlay = { url, title, episode, startMs ->
+                            vod.play(url, top.item, episode, startMs)
                             app.playFullScreen(title, live = false)
                         }, onOpen = app::open)
                         is Screen.Player -> PlayerScreen(app.player, top.title, live.takeIf { top.live }, onGuide = { app.back() })
@@ -212,6 +220,7 @@ class MainActivity : ComponentActivity() {
                     org.imdtv.iptvtv.recording.PromptHost((application as IptvApp).container.recordings) {
                         if ((app.stack.value.last() as? Screen.Player)?.live == true) app.back()
                     }
+                    org.imdtv.iptvtv.ui.live.NumberEntryBox(live)
                     org.imdtv.iptvtv.data.update.UpdatePrompt((application as IptvApp).container.updater, (application as IptvApp).container.background)
                     org.imdtv.iptvtv.data.update.WhatsNewPrompt((application as IptvApp).container.updater)
                     if (exitHint) Text(

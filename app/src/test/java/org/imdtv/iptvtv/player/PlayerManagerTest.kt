@@ -215,4 +215,21 @@ class PlayerManagerTest {
         assertEquals("portal down", got.single().message)
         job.cancel()
     }
+
+    @Test
+    fun stallClockWaitsLongerForAStartThanForAFreeze() {
+        val c = StallClock(startMs = 12_000, playingMs = 5_000)
+        assertFalse(c.update(0, 0))
+        assertFalse(c.update(0, 11_000)) // still connecting
+        assertTrue(c.update(0, 12_000)) // never started
+        assertFalse(c.update(500, 13_000)) // playing
+        assertFalse(c.update(500, 17_000))
+        assertTrue(c.update(500, 18_000)) // frozen for 5 s
+        assertFalse(c.update(500, 19_000)) // counts again after firing
+        assertTrue(c.update(500, 23_000))
+        c.reset() // a new stream gets the start limit again
+        assertFalse(c.update(500, 30_000))
+        assertFalse(c.update(500, 35_000))
+        assertTrue(c.update(500, 42_000))
+    }
 }

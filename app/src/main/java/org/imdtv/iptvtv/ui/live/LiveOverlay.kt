@@ -101,7 +101,7 @@ fun LiveOverlay(vm: LiveViewModel, onGuide: () -> Unit, onPick: (ChannelEntity) 
                         }
                     }
                     Row(Modifier.padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        val number = (ch.customNumber ?: ch.number)?.let { "$it  " }.orEmpty()
+                        val number = (ch.customNumber ?: ch.number)?.takeIf { org.imdtv.iptvtv.ui.LocalShowNumbers.current }?.let { "$it  " }.orEmpty()
                         Text(number + ch.displayName(strip), fontSize = 14.sp, fontWeight = FontWeight.Medium, color = Color.White, maxLines = 1)
                         badges(formats).forEach { b ->
                             Text(b, fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = Color.White,
@@ -160,7 +160,7 @@ private fun RecentCard(ch: ChannelEntity, name: String, cur: GuideProgramme?, fo
         }
         Spacer(Modifier.width(8.dp))
         Column(Modifier.weight(1f)) {
-            Text(((ch.customNumber ?: ch.number)?.let { "$it  " }.orEmpty()) + name, fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
+            Text(((ch.customNumber ?: ch.number)?.takeIf { org.imdtv.iptvtv.ui.LocalShowNumbers.current }?.let { "$it  " }.orEmpty()) + name, fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
                 color = fg, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(cur?.title ?: "No guide information", fontSize = 11.sp, color = fg.copy(alpha = .75f), maxLines = 2, overflow = TextOverflow.Ellipsis)
         }

@@ -6,6 +6,11 @@ import org.imdtv.iptvtv.data.db.login
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import android.app.Application
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEvent
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.type
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -128,6 +133,9 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
     val previewingId: StateFlow<Long?> = combine(previewed, player.playingUrl) { ch, url -> ch?.id?.takeIf { ch.streamUrl == url } }
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
+    /** The channel the guide's preview is playing, or null. */
+    val previewing: ChannelEntity? get() = previewed.value?.takeIf { it.id == previewingId.value }
+
     var guidePos: GuidePos? = null
     /** Celestial Retro: the guide is open (else its category menu shows). Kept here so full screen and back returns to it. */
     var retroGuideOpen by androidx.compose.runtime.mutableStateOf(false)
@@ -177,8 +185,13 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
 
     fun preview(ch: ChannelEntity) {
         previewed.value = ch
-        player.play(ch.streamUrl, provider.value?.userAgent, provider.value?.login(), drm = ch.drm())
-        viewModelScope.launch { c.settings.update { it.copy(lastLiveChannelId = ch.id) } }
+        viewModelScope.launch {
+            // The playlist's login fills the link. At app start (last channel) it may not have loaded yet, and a link
+            // without it is refused (401) on every retry. Loaded (every other time), this doesn't suspend.
+            val p = provider.first { it?.id == ch.providerId }!!
+            if (previewed.value?.id == ch.id) player.play(ch.streamUrl, p.userAgent, p.login(), drm = ch.drm())
+            c.settings.update { it.copy(lastLiveChannelId = ch.id) }
+        }
     }
 
     /** Recently watched channels of the active playlist, newest first (spec §4.2). */
@@ -206,9 +219,79 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
         val id = zap(list.map { it.id }, focused.value?.id ?: return, delta) ?: return
         val ch = list.first { it.id == id }
         if (ch.id == focused.value?.id) return // a category of one zaps to itself
+        zapTo(ch)
+    }
+
+    private fun zapTo(ch: ChannelEntity) {
         focused.value = ch
         preview(ch) // also writes lastLiveChannelId
         if (zapRecordsRecent(entry.value)) watched(ch)
+    }
+
+    // --- Channel number entry (remote's number keys) ---
+
+    private val digits = DigitBuffer()
+    /** The number box's text: digits so far ("75_"), or "No channel 754" for a moment; empty when hidden. */
+    val typed = MutableStateFlow("")
+    private var typedJob: kotlinx.coroutines.Job? = null
+    private var typedFullScreen = false
+    private var swallowOkUp = false // the OK that committed must not also open the overlay / click a row on key-up
+    /** Guide: a typed number found this channel; the guide moves its focus there. */
+    val jumps = kotlinx.coroutines.flow.MutableSharedFlow<ChannelEntity>(extraBufferCapacity = 1)
+
+    /** Displayed number [n] (custom first) among the active playlist's visible channels; the selected list wins, else any category. */
+    suspend fun channelByNumber(n: Int): ChannelEntity? {
+        val found = c.db.channelDao().byNumber(provider.value?.id ?: return null, n)
+        val here = channels.value.mapTo(HashSet()) { it.id }
+        return found.firstOrNull { it.id in here } ?: found.firstOrNull()
+    }
+
+    /** Number keys for full screen ([fullScreen]) or the guide: true when the key was used. */
+    fun numberKey(e: KeyEvent, fullScreen: Boolean): Boolean {
+        val down = e.type == KeyEventType.KeyDown
+        val ok = e.key == Key.DirectionCenter || e.key == Key.Enter || e.key == Key.NumPadEnter
+        val d = digitOf(e.key)
+        if (d == null) {
+            if (!ok) return false
+            if (!down && swallowOkUp) { swallowOkUp = false; return true }
+            if (!down || !digits.active) return false
+            swallowOkUp = true
+            commitNumber()
+            return true
+        }
+        if (down && e.nativeKeyEvent.repeatCount == 0) {
+            typedFullScreen = fullScreen
+            typedJob?.cancel()
+            digits.append(d)?.let { commitNumber(it); return true }
+            typed.value = digits.text + "_"
+            typedJob = viewModelScope.launch { delay(2_000); commitNumber() }
+        }
+        return true
+    }
+
+    fun cancelNumber() { typedJob?.cancel(); digits.cancel(); typed.value = "" }
+
+    private fun commitNumber(number: Int? = digits.commit()) {
+        typedJob?.cancel()
+        val n = number ?: return
+        typed.value = "$n"
+        typedJob = viewModelScope.launch {
+            val ch = channelByNumber(n)
+            if (ch == null) { typed.value = "No channel $n"; delay(1_500); typed.value = ""; return@launch }
+            typed.value = ""
+            if (typedFullScreen) {
+                if (ch.id != focused.value?.id) if (ch.id in channels.value.map { it.id }) zapTo(ch) else switchTo(ch)
+            } else {
+                selectCategoryOf(ch)
+                focused.value = ch
+                jumps.tryEmit(ch)
+            }
+        }
+    }
+
+    private fun selectCategoryOf(ch: ChannelEntity) {
+        if (ch.id in channels.value.map { it.id }) return
+        rail.value?.map { it.entry }?.find { it is RailEntry.Provider && it.category.id == ch.categoryId }?.let { select(it) }
     }
 
     /** A Recents card: play it and select its category, so Up/Down then zaps there and Back lands on it in the guide. */
@@ -357,7 +440,7 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
 
     companion object {
         const val HALF_HOUR = 30 * 60_000L
-        const val WINDOW = 4 * HALF_HOUR
+        const val WINDOW = 5 * HALF_HOUR // the widest guide (Glass, Liquid: 2½ hours)
         const val MAX_SHIFT = 7 * 48 // 7 days of half-hours
     }
 }

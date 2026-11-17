@@ -192,11 +192,15 @@ fun SettingsScreen(vm: SettingsViewModel, onAddPlaylist: () -> Unit, onEditPlayl
                             }
                         }
                     }
-                    SettingsGroup.APPEARANCE -> AppearanceRows(s, first, onTheme = { t -> vm.update { it.copy(theme = t) } }, onColour = { c -> vm.update { it.copy(themeColour = c) } })
+                    SettingsGroup.APPEARANCE -> AppearanceRows(s, first, onTheme = { t -> vm.update { it.copy(theme = t) } }, onColour = { c -> vm.update { it.copy(themeColour = c) } }, onChange = { f -> vm.update(f) })
                     SettingsGroup.BEHAVIOUR -> {
                         SwitchRow("Last channel on start", "Open the last live channel full screen when the app starts", s.lastChannelOnStart, first) { on ->
                             vm.update { it.copy(lastChannelOnStart = on) }
                         }
+                        ChoiceRow("Change channel with", "Full screen live TV: the keys that go to the previous and next channel",
+                            listOf(false, true), s.zapLeftRight, { if (it) "Left / Right" else "Up / Down" }) { v -> vm.update { it.copy(zapLeftRight = v) } }
+                        ChoiceRow("Back in TV guide", "What Back does in the live TV guide while a channel is playing",
+                            listOf(false, true), s.backToFullScreen, { if (it) "Go to full screen" else "Go to the menu" }) { v -> vm.update { it.copy(backToFullScreen = v) } }
                         SwitchRow("Confirm exit", "Press Back twice at the top menu to leave the app", s.confirmExit) { on ->
                             vm.update { it.copy(confirmExit = on) }
                         }

@@ -80,7 +80,8 @@ fun PlusGuideScreen(vm: LiveViewModel, nav: @Composable () -> Unit, onFullScreen
     var navFocused by remember { mutableStateOf(false) }
     val toTabs = { state.heldFocus = tabsFocus; runCatching { tabsFocus.requestFocus() }; Unit }
     // Back in the guide goes to the category tabs first; Back there falls through to the app (focus the nav).
-    BackHandler(enabled = state.heldFocus == null && !navFocused && state.menu == null) { toTabs() }
+    val backToFull = vm.settings.collectAsState().value.backToFullScreen && previewingId != null // then Back is the app's: full screen
+    BackHandler(enabled = state.heldFocus == null && !navFocused && state.menu == null && !backToFull) { toTabs() }
 
     var screen by remember { mutableStateOf(Size.Zero) }
     Box(Modifier.fillMaxSize().onSizeChanged { screen = Size(it.width.toFloat(), it.height.toFloat()) }.drawWithCache {

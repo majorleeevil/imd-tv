@@ -367,6 +367,9 @@ private fun YourCategoriesPage(vm: SettingsViewModel, first: FocusRequester) {
     val saved by vm.groups.collectAsState()
     var menu by remember { mutableStateOf<GroupMenu?>(null) }
     var moving by remember { mutableStateOf<Long?>(null) }
+    // Channel order of one category (null id = Favourites) and its title; replaces the list while open.
+    var ordering by remember { mutableStateOf<Pair<Long?, String>?>(null) }
+    ordering?.let { (id, title) -> BackHandler { ordering = null }; ChannelOrderPage(vm, id, title); return }
     // While moving, this page's order leads (fast presses mustn't wait for the database); grouped by side of the list.
     var order by remember { mutableStateOf<List<org.imdtv.iptvtv.data.db.CustomGroupEntity>?>(null) }
     val groups = order ?: saved.sortedBy { it.placement.ordinal }
@@ -379,6 +382,7 @@ private fun YourCategoriesPage(vm: SettingsViewModel, first: FocusRequester) {
         }
         Text("Add channels with a long press of OK in the guide.", fontSize = 12.sp, color = LocalTheme.current.colors.muted,
             modifier = Modifier.padding(top = 4.dp, bottom = 12.dp))
+        SettingRow("★ Favourites", "OK to change the order of your favourite channels", "›") { ordering = null to "Favourites" }
         groups.forEach { g ->
             key(g.id) {
                 val isMoving = moving == g.id
@@ -406,6 +410,7 @@ private fun YourCategoriesPage(vm: SettingsViewModel, first: FocusRequester) {
             "Rename…" to { menu = GroupMenu.Rename(m.g) },
             "Delete" to { menu = GroupMenu.Delete(m.g) },
             "Priority ›" to { menu = GroupMenu.Priority(m.g) },
+            "Channel order ›" to { menu = null; ordering = m.g.id to m.g.name },
         )) { menu = null }
         is GroupMenu.Rename -> TextPrompt("Rename “${m.g.name}”", m.g.name, "Name", onSave = { if (it.isNotBlank()) vm.renameGroup(m.g, it); menu = null }) { menu = null }
         is GroupMenu.Delete -> ContextMenu("Delete “${m.g.name}”? Its channels stay in their own categories", listOf(
@@ -416,5 +421,34 @@ private fun YourCategoriesPage(vm: SettingsViewModel, first: FocusRequester) {
         is GroupMenu.Priority -> ContextMenu("Priority", GroupPlacement.entries.map { p ->
             ((if (p == m.g.placement) "✓ " else "    ") + p.label()) to { vm.setGroupPlacement(m.g, p); menu = null }
         }) { menu = null }
+    }
+}
+
+/** The channels of Favourites (id null) or one of your categories: OK picks one up, Up/Down moves it, OK drops it. */
+@Composable
+private fun ChannelOrderPage(vm: SettingsViewModel, groupId: Long?, title: String) {
+    val saved by remember(groupId) { vm.orderedChannels(groupId) }.collectAsState(emptyList())
+    var picked by remember { mutableStateOf<Long?>(null) }
+    var order by remember { mutableStateOf<List<org.imdtv.iptvtv.data.db.ChannelEntity>?>(null) }
+    val channels = order ?: saved
+    fun drop() { picked = null; order?.let { vm.saveChannelOrder(groupId, it) } }
+    BackHandler(enabled = picked != null) { drop() }
+    LaunchedEffect(saved) { if (picked == null) order = null }
+    Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text("$title: OK to pick a channel up, Up/Down to move it, OK to drop it.", fontSize = 12.sp, color = LocalTheme.current.colors.muted,
+            modifier = Modifier.padding(bottom = 8.dp))
+        channels.forEach { ch ->
+            key(ch.id) {
+                val isPicked = picked == ch.id
+                SettingRow((if (isPicked) "↕ " else "") + ch.displayName(emptyList()), "", null,
+                    Modifier.focusProperties { canFocus = picked == null || picked == ch.id }
+                        .onPreviewKeyEvent { e ->
+                            if (!isPicked) return@onPreviewKeyEvent false
+                            val d = when (e.key) { Key.DirectionUp -> -1; Key.DirectionDown -> 1; Key.DirectionLeft, Key.DirectionRight -> 0; else -> return@onPreviewKeyEvent false }
+                            if (d != 0 && e.type == KeyEventType.KeyDown) moveWithin(channels, channels.indexOf(ch), d) { GroupPlacement.NORMAL }?.let { order = it }
+                            true
+                        }) { if (isPicked) drop() else { order = channels; picked = ch.id } }
+            }
+        }
     }
 }

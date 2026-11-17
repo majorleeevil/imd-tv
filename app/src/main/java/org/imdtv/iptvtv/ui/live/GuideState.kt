@@ -13,6 +13,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.focus.FocusRequester
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import org.imdtv.iptvtv.data.db.ChannelEntity
 
@@ -86,6 +87,16 @@ fun rememberGuideState(vm: LiveViewModel, previews: Boolean = true): GuideState 
         delay(700)
         vm.preview(ch)
         state.previewing = true
+    }
+    // A number typed on the remote: focus that channel's row (once its category's list is showing); the autoplay effect above previews it.
+    LaunchedEffect(Unit) {
+        vm.jumps.collectLatest { ch ->
+            val ids = vm.listing.first { l -> l.first == vm.entry.value?.key && l.second.any { it.id == ch.id } }.second.map { it.id }
+            state.heldFocus = null
+            state.focusIndex = ids.indexOf(ch.id)
+            list.scrollToItem(state.focusIndex)
+            state.refocus()
+        }
     }
     // Re-entering from full screen recreates this state, so start on the channel being watched, not the top row.
     LaunchedEffect(entry?.key) {

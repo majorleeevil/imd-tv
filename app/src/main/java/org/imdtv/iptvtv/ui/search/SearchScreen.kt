@@ -201,7 +201,7 @@ private fun ChannelTile(ch: ChannelEntity, name: String, logos: List<org.imdtv.i
             }
             Text(name, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = if (f) Color.Black else Color.White, maxLines = 1,
                 overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 6.dp))
-            Text((ch.customNumber ?: ch.number)?.toString() ?: " ", fontSize = 11.sp, color = if (f) Color(0xFF555555) else LocalTheme.current.colors.muted)
+            Text((ch.customNumber ?: ch.number)?.toString()?.takeIf { org.imdtv.iptvtv.ui.LocalShowNumbers.current } ?: " ", fontSize = 11.sp, color = if (f) Color(0xFF555555) else LocalTheme.current.colors.muted)
         }
     }
 }

@@ -129,6 +129,12 @@ abstract class ChannelDao {
     )
     abstract suspend fun searchable(providerId: Long): List<SearchRow>
 
+    /** Visible channels whose displayed number is [n]; a custom number comes before a provider number. */
+    @Query("""SELECT ch.* FROM channel ch LEFT JOIN category cat ON cat.id = ch.categoryId
+              WHERE ch.providerId = :providerId AND ch.hidden = 0 AND coalesce(cat.hidden, 0) = 0 AND coalesce(ch.customNumber, ch.number) = :n
+              ORDER BY ch.customNumber IS NULL, ch.id""")
+    abstract suspend fun byNumber(providerId: Long, n: Int): List<ChannelEntity>
+
     @Query("SELECT * FROM channel WHERE providerId = :providerId AND streamUrl = :url LIMIT 1")
     abstract suspend fun byStreamUrl(providerId: Long, url: String): ChannelEntity?
 
@@ -148,7 +154,7 @@ abstract class ChannelDao {
     abstract fun observePackCount(p: Long): Flow<Int>
     @Query(
         """SELECT ch.* FROM channel ch JOIN favourite f ON f.itemId = ch.id AND f.providerId = ch.providerId AND f.kind = 'LIVE'
-           WHERE ch.providerId = :providerId AND ch.hidden = 0 ORDER BY f.addedAt DESC"""
+           WHERE ch.providerId = :providerId AND ch.hidden = 0 ORDER BY f.sortOrder, f.addedAt DESC"""
     )
     abstract fun observeFavourites(providerId: Long): Flow<List<ChannelEntity>>
     @Query("UPDATE channel SET hidden = :hidden WHERE id = :id") abstract suspend fun setHidden(id: Long, hidden: Boolean)
@@ -231,9 +237,6 @@ abstract class SeriesDao {
     @Query("SELECT * FROM episode WHERE seriesId = :seriesId ORDER BY season, number")
     abstract suspend fun episodes(seriesId: Long): List<EpisodeEntity>
     @Upsert abstract suspend fun upsertEpisodes(list: List<EpisodeEntity>)
-    @Query("SELECT id FROM episode WHERE seriesId IN (:seriesIds)")
-    protected abstract suspend fun episodeIdsChunk(seriesIds: List<Long>): List<Long>
-    open suspend fun episodeIds(seriesIds: List<Long>): List<Long> = seriesIds.chunked(SQL_CHUNK).flatMap { episodeIdsChunk(it) }
 
     @Query("DELETE FROM series WHERE id IN (:ids)")
     abstract suspend fun deleteIds(ids: List<Long>)
@@ -329,6 +332,10 @@ abstract class ProgressDao {
     @Query("DELETE FROM progress WHERE providerId = :providerId") abstract suspend fun deleteForProvider(providerId: Long)
     @Query("SELECT * FROM progress WHERE providerId = :providerId ORDER BY updatedAt DESC")
     abstract suspend fun all(providerId: Long): List<ProgressEntity>
+    @Query("SELECT * FROM progress WHERE providerId = :providerId ORDER BY updatedAt DESC")
+    abstract fun observe(providerId: Long): kotlinx.coroutines.flow.Flow<List<ProgressEntity>>
+    @Query("DELETE FROM progress WHERE providerId = :providerId AND kind = :kind AND itemId = :itemId AND episode = :episode")
+    abstract suspend fun delete(providerId: Long, kind: Kind, itemId: Long, episode: String)
 
     @Query("DELETE FROM progress WHERE providerId = :providerId AND kind = :kind AND itemId IN (:ids)")
     protected abstract suspend fun deleteIds(providerId: Long, kind: Kind, ids: List<Long>)
@@ -343,10 +350,12 @@ abstract class ProgressDao {
 abstract class FavouriteDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE) abstract suspend fun add(f: FavouriteEntity)
     @Query("DELETE FROM favourite WHERE providerId = :providerId") abstract suspend fun deleteForProvider(providerId: Long)
-    @Query("SELECT * FROM favourite WHERE providerId = :providerId AND kind = :kind ORDER BY addedAt DESC")
+    @Query("SELECT * FROM favourite WHERE providerId = :providerId AND kind = :kind ORDER BY sortOrder, addedAt DESC")
     abstract suspend fun list(providerId: Long, kind: Kind): List<FavouriteEntity>
-    @Query("SELECT * FROM favourite WHERE providerId = :providerId AND kind = :kind ORDER BY addedAt DESC")
+    @Query("SELECT * FROM favourite WHERE providerId = :providerId AND kind = :kind ORDER BY sortOrder, addedAt DESC")
     abstract fun observe(providerId: Long, kind: Kind): Flow<List<FavouriteEntity>>
+    @Query("UPDATE favourite SET sortOrder = :sortOrder WHERE providerId = :providerId AND kind = :kind AND itemId = :itemId")
+    abstract suspend fun setSortOrder(providerId: Long, kind: Kind, itemId: Long, sortOrder: Int)
     @Query("DELETE FROM favourite WHERE providerId = :providerId AND kind = :kind AND itemId = :itemId")
     abstract suspend fun remove(providerId: Long, kind: Kind, itemId: Long)
 
@@ -392,6 +401,9 @@ abstract class CustomGroupDao {
     @Transaction
     open suspend fun addChannel(groupId: Long, channelId: Long) =
         insertMember(CustomGroupChannelEntity(groupId, channelId, nextMemberOrder(groupId)))
+
+    @Query("UPDATE custom_group_channel SET sortOrder = :sortOrder WHERE groupId = :groupId AND channelId = :channelId")
+    abstract suspend fun setMemberOrder(groupId: Long, channelId: Long, sortOrder: Int)
 
     @Query("DELETE FROM custom_group_channel WHERE groupId = :groupId AND channelId = :channelId")
     abstract suspend fun removeChannel(groupId: Long, channelId: Long)

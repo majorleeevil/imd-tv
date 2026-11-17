@@ -56,6 +56,10 @@ data class AppSettings(
     val themeColour: ThemeColour = ThemeColour.DEFAULT,
     val showDateTime: Boolean = true,
     val showPing: Boolean = false,
+    /** Channel rows in the Celestial/Liquid Glass guide: one of [GUIDE_ROWS]. */
+    val guideRows: Int = 5,
+    /** Channel names and programme titles may wrap onto 2 lines in the guide grid. */
+    val multiLineGuide: Boolean = false,
     /** Movies and series start with subtitles in [subtitleLanguage] when the file has that language. */
     val subtitlesOn: Boolean = false,
     /** ISO 639-1 code; null = the TV's language. */
@@ -75,6 +79,11 @@ data class AppSettings(
     val smbUser: String = "",
     /** Stored encrypted (Secrets); never backed up. */
     val smbPassword: String = "",
+    /** Live full screen: Left/Right zaps (Left = previous) instead of Up/Down. */
+    val zapLeftRight: Boolean = false,
+    /** Back in the live TV guide opens the playing channel full screen instead of going to the menu. */
+    val backToFullScreen: Boolean = false,
+    val showChannelNumbers: Boolean = true,
 ) {
     fun clamped() = copy(
         epgUpdateIntervalHours = epgUpdateIntervalHours.takeIf { it in EPG_INTERVALS } ?: 12,
@@ -82,8 +91,11 @@ data class AppSettings(
         epgPastDays = epgPastDays.coerceIn(0, 7),
         startEarlyMin = startEarlyMin.takeIf { it in START_EARLY } ?: 2,
         endLateMin = endLateMin.takeIf { it in END_LATE } ?: 5,
+        guideRows = guideRows.takeIf { it in GUIDE_ROWS } ?: 5,
     )
 }
+
+val GUIDE_ROWS = listOf(5, 6, 7, 8, 9)
 
 /** The Subtitle language choices besides "TV language" (ISO 639-1); shown sorted by display name. */
 val SUBTITLE_LANGUAGES = listOf("ar", "bg", "cs", "da", "de", "el", "en", "es", "et", "fa", "fi", "fr", "he", "hi", "hr",

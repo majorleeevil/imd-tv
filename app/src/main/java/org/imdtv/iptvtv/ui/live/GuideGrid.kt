@@ -1,3 +1,4 @@
+@file:OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 package org.imdtv.iptvtv.ui.live
 
 import androidx.compose.ui.graphics.RectangleShape
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -20,8 +22,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.foundation.gestures.LocalBringIntoViewSpec
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
@@ -67,14 +73,41 @@ data class GridStyle(
     val rowDividers: Boolean = false,
     /** Flat cells with slightly rounded corners and a small gap instead of touching (Glass, Liquid). */
     val roundedCells: Boolean = false,
-)
+    /** Set by [forGuide]: scales the guide's fonts to the row height; [lines] is the max lines for names and titles. */
+    val textScale: Float = 1f, val lines: Int = 1,
+) {
+    fun sp(size: Float) = (size * textScale).sp
+}
+
+/** Keeps the focused row one row below the top, so rows line up with the list's edges. (The TV default keeps it 30% down,
+ *  which shows a sliver of a row at the top and cuts the last one off.) */
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
+private fun wholeRowScroll(pitchPx: Int) = object : androidx.compose.foundation.gestures.BringIntoViewSpec {
+    override fun calculateScrollDistance(offset: Float, size: Float, containerSize: Float) = offset - pitchPx
+}
+
+/** Whole-pixel row height for [count] rows plus their gaps in [areaPx]: rows that fill the list exactly scroll by whole
+ *  rows (fractional ones left a sliver at the top and cut the last row off). */
+fun guideRowPx(areaPx: Int, count: Int, gapPx: Int): Int = (areaPx - gapPx * (count - 1)) / count
+
+/**
+ * Fonts shrink once the rows are shorter than ~21dp (14sp text), never below 65%. With [multiLine], names and titles get 2 lines
+ * when the font can still be at least 70% size and fit both (rows of 27dp and up); shorter rows keep 1 line.
+ */
+fun GridStyle.forGuide(multiLine: Boolean): GridStyle {
+    val h = rowHeight.value
+    val fit = (h - 2) / 33.6f // two lines of 14sp at 1.2 line height
+    val two = multiLine && fit >= .7f
+    val shrink = ((h - 4) / 17.5f).coerceIn(.65f, 1f)
+    return copy(textScale = if (two) minOf(shrink, fit) else shrink, lines = if (two) 2 else 1)
+}
 
 /** Celestial Glass: mockup 01, 420px per half hour (1dp = 2px on a 1080p TV). */
-// 5.9dp/min: 195 + 5 + 120 × 5.9 = 908dp fits between the 24dp margins (the TV's overscan cut off a grid that ran to the edge).
-val GLASS_GRID = GridStyle(32.dp, 195.dp, 5.9.dp, 120, 4.dp, FontWeight.Medium, focusedProgramme = Color(0x8C7891AA), roundedCells = true) // frosted glass
+// 150 min (195 + 5 + 150 × 5.9 = 1085dp) runs off the right edge of the screen on purpose (user, 2026-11-16).
+val GLASS_GRID = GridStyle(32.dp, 195.dp, 5.9.dp, 150, 4.dp, FontWeight.Medium, focusedProgramme = Color(0x8C7891AA), roundedCells = true) // frosted glass
 
 /** Liquid Glass: the Glass grid inside one glass panel; the focused programme is a brighter tint (spec §6A.6). */
-// dpPerMin 5.75: 195 + 120 × 5.75 = 885dp fits the 888dp inside the inset glass panel.
+// Like Glass, the panel runs off the right edge.
 val LIQUID_GRID = GLASS_GRID.copy(focusedProgramme = Color(0x59FFFFFF), dpPerMin = 5.75.dp)
 
 /** Xcube 180 (spec §6A.7): flat rows with thin light dividers, pale-green focus, ~6 rows × 1½ hours. */
@@ -99,9 +132,11 @@ private val FOCUS_BORDER = Color(0xCCFFFFFF)
  *  with [onUpAtTop], Up on the first row calls it instead of moving focus. */
 @Composable
 fun GuideGrid(
-    vm: LiveViewModel, state: GuideState, style: GridStyle, onFullScreen: (ChannelEntity) -> Unit, onLeftAtStart: () -> Unit,
-    modifier: Modifier = Modifier, onUpAtTop: (() -> Unit)? = null,
+    vm: LiveViewModel, state: GuideState, base: GridStyle, onFullScreen: (ChannelEntity) -> Unit, onLeftAtStart: () -> Unit,
+    modifier: Modifier = Modifier, onUpAtTop: (() -> Unit)? = null, rows: Int = 0,
 ) {
+    val multiLine = vm.settings.collectAsState().value.multiLineGuide
+    val style = remember(base, multiLine) { base.forGuide(multiLine) }
     val channels by vm.channels.collectAsState()
     val programmes by vm.programmes.collectAsState()
     val now by vm.now.collectAsState()
@@ -121,8 +156,20 @@ fun GuideGrid(
                     modifier = Modifier.width(style.dpPerMin * 30).padding(bottom = 5.dp))
             }
         }
-        Box(Modifier.fillMaxSize().clipToBounds()) {
-            LazyColumn(state = state.list, verticalArrangement = Arrangement.spacedBy(style.gap), modifier = Modifier.fillMaxSize()) {
+        BoxWithConstraints(Modifier.fillMaxSize().clipToBounds()) {
+            // rows > 0: [rows] whole-pixel rows fill the measured height (5–9 in Glass and Liquid); else the style's row height.
+            val density = LocalDensity.current
+            val area = constraints.maxHeight
+            val (style, listHeight, scrollSpec) = remember(style, rows, area) {
+                if (rows <= 0) Triple(style, null, null) else with(density) {
+                    val gap = style.gap.roundToPx()
+                    val row = guideRowPx(area, rows, gap)
+                    Triple(base.copy(rowHeight = row.toDp()).forGuide(multiLine), (row * rows + gap * (rows - 1)).toDp(), wholeRowScroll(row + gap))
+                }
+            }
+            CompositionLocalProvider(LocalBringIntoViewSpec provides (scrollSpec ?: LocalBringIntoViewSpec.current)) {
+            LazyColumn(state = state.list, verticalArrangement = Arrangement.spacedBy(style.gap),
+                modifier = if (listHeight != null) Modifier.height(listHeight) else Modifier.fillMaxSize()) {
                 itemsIndexed(channels, key = { _, ch -> ch.id }) { i, ch ->
                     GuideRow(
                         ch, ch.displayName(strip), programmes[ch.id].orEmpty(), now, windowStart, style, isFocused = focused?.id == ch.id && !state.railOpen && state.heldFocus == null,
@@ -130,6 +177,7 @@ fun GuideGrid(
                         modifier = (if (i == state.focusIndex) Modifier.focusRequester(state.rowFocus) else Modifier)
                             .onPreviewKeyEvent { e ->
                                 if (state.railOpen) return@onPreviewKeyEvent true // rail is taking focus; don't move the guide behind it
+                                if (vm.numberKey(e, false)) return@onPreviewKeyEvent true
                                 if (e.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
                                 when (e.key) {
                                     Key.DirectionLeft -> { if (!vm.shiftTime(-1)) { state.focusIndex = i; onLeftAtStart() }; true }
@@ -143,6 +191,7 @@ fun GuideGrid(
                         onClick = { state.onOk(ch, onFullScreen) },
                     )
                 }
+            }
             }
             val nowMin = (now - windowStart) / 60_000
             if (nowMin in 0..style.windowMin) {
@@ -171,14 +220,14 @@ private fun GuideRow(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 val fg = if (f) colors.onFocus else Color.White
-                val number = ch.customNumber ?: ch.number
+                val number = (ch.customNumber ?: ch.number)?.takeIf { org.imdtv.iptvtv.ui.LocalShowNumbers.current }
                 if (style.numberFirst) {
-                    Text(listOfNotNull(number, name).joinToString("  "), fontSize = 14.sp, fontWeight = style.font, color = fg, maxLines = 1,
+                    Text(listOfNotNull(number, name).joinToString("  "), fontSize = style.sp(14f), fontWeight = style.font, color = fg, maxLines = style.lines,
                         overflow = TextOverflow.Ellipsis)
                 } else {
-                    Text(name, fontSize = 14.sp, fontWeight = style.font, color = fg, maxLines = 1,
+                    Text(name, fontSize = style.sp(14f), fontWeight = style.font, color = fg, maxLines = style.lines,
                         overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
-                    number?.let { Text("  $it", fontSize = 12.sp, color = fg.copy(alpha = .85f)) }
+                    number?.let { Text("  $it", fontSize = style.sp(12f), color = fg.copy(alpha = .85f)) }
                 }
             }
         }
@@ -190,7 +239,7 @@ private fun GuideRow(
                 Box(Modifier.width(style.dpPerMin * style.windowMin - when { style.boxed -> 3.dp; style.roundedCells -> 2.dp; else -> 0.dp })
                     .fillMaxHeight().background(colors.cellDim, when { style.boxed -> BOX; style.roundedCells -> CELL; else -> RectangleShape }),
                     contentAlignment = Alignment.CenterStart) {
-                    Text(if (progs.isEmpty()) "No guide information" else "", fontSize = 12.sp, color = colors.muted, modifier = Modifier.padding(horizontal = 10.dp))
+                    Text(if (progs.isEmpty()) "No guide information" else "", fontSize = style.sp(12f), color = colors.muted, modifier = Modifier.padding(horizontal = 10.dp))
                 }
             }
             for (p in progs) {
@@ -230,8 +279,8 @@ private fun GuideRow(
                         },
                     contentAlignment = Alignment.CenterStart,
                 ) {
-                    Text(p.title, fontSize = 12.5.sp, fontWeight = if (focusedNow) FontWeight.SemiBold else FontWeight.Normal,
-                        color = (if (focusedNow) style.focusedProgrammeText else Color.White).copy(alpha = if (past && !focusedNow) .55f else 1f), maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(horizontal = 10.dp))
+                    Text(p.title, fontSize = style.sp(12.5f), fontWeight = if (focusedNow) FontWeight.SemiBold else FontWeight.Normal,
+                        color = (if (focusedNow) style.focusedProgrammeText else Color.White).copy(alpha = if (past && !focusedNow) .55f else 1f), maxLines = style.lines, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(horizontal = 10.dp))
                 }
             }
         }

@@ -213,7 +213,7 @@ class CatalogueSyncTest {
     }
 
     @Test
-    fun seriesDeletionRemovesItsEpisodeProgressOnly() = runTest {
+    fun seriesDeletionRemovesItsProgressOnly() = runTest {
         val p = db.insertTestProvider()
         val src = FakeSource(seriesList = listOf(
             org.imdtv.iptvtv.data.model.Series("s1", null, "One", null, null, null),
@@ -222,23 +222,16 @@ class CatalogueSyncTest {
         sync.sync(p, src)
         val s1 = db.seriesDao().byProvider(p).single { it.remoteId == "s1" }
         val s2 = db.seriesDao().byProvider(p).single { it.remoteId == "s2" }
-        fun ep(seriesId: Long, remoteId: String) = org.imdtv.iptvtv.data.db.EpisodeEntity(
-            seriesId = seriesId, remoteId = remoteId, season = 1, number = 1, title = remoteId,
-            plot = null, thumb = null, durationSecs = null, streamUrl = "u")
-        // s2's episode is inserted first so its row id equals s1's row id.
-        db.seriesDao().upsertEpisodes(listOf(ep(s2.id, "e2")))
-        db.seriesDao().upsertEpisodes(listOf(ep(s1.id, "e1")))
-        val e1 = db.seriesDao().episodes(s1.id).single().id
-        val clash = db.seriesDao().episodes(s2.id).single().id
-        db.progressDao().upsert(org.imdtv.iptvtv.data.db.ProgressEntity(p, Kind.SERIES, e1, 10, 100, 1, false))
-        db.progressDao().upsert(org.imdtv.iptvtv.data.db.ProgressEntity(p, Kind.SERIES, s1.id, 20, 100, 1, false))
+        fun row(id: Long, ep: String) = org.imdtv.iptvtv.data.db.ProgressEntity(p, Kind.SERIES, id, 10, 100, 1, false, ep)
+        db.progressDao().upsert(row(s1.id, "e1"))
+        db.progressDao().upsert(row(s1.id, "e2"))
+        db.progressDao().upsert(row(s2.id, "e1"))
         db.favouriteDao().add(FavouriteEntity(p, Kind.SERIES, s1.id, 1))
-        assertEquals(s1.id, clash) // fixture sanity: ids really collide
 
         src.seriesList = src.seriesList.filter { it.remoteId == "s2" }
         sync.sync(p, src)
 
-        assertEquals(listOf(s1.id), db.progressDao().all(p).map { it.itemId })
+        assertEquals(listOf(s2.id to "e1"), db.progressDao().all(p).map { it.itemId to it.episode })
         assertTrue(db.favouriteDao().list(p, Kind.SERIES).isEmpty())
     }
 

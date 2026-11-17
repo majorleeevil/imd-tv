@@ -34,6 +34,8 @@ data class BPlaylist(
     val groups: List<BGroup>,
     val favourites: List<BFavourite>,
     val categoryStrip: String = "",
+    /** Where movies and episodes were left (older backups have none). */
+    val progress: List<BProgress> = emptyList(),
 )
 
 /** [url] null = the playlist's own guide, whose URL carries the login: restored from the new login. */
@@ -49,6 +51,11 @@ data class BGroup(val name: String, val sortOrder: Int, val channels: List<Strin
 
 @Serializable
 data class BFavourite(val kind: String, val remoteId: String)
+
+/** [remoteId] of the movie or series; [episode] the episode's remoteId ("" for a movie). */
+@Serializable
+data class BProgress(val kind: String, val remoteId: String, val episode: String, val positionMs: Long, val durationMs: Long,
+                     val updatedAt: Long, val completed: Boolean)
 
 /** [AppSettings] minus lastLiveChannelId (a row id, meaningless after restore). */
 @Serializable
@@ -83,6 +90,11 @@ data class BSettings(
     val smbShare: String = "",
     val smbFolder: String = "",
     val smbUser: String = "",
+    val guideRows: Int = AppSettings().guideRows,
+    val multiLineGuide: Boolean = AppSettings().multiLineGuide,
+    val zapLeftRight: Boolean = AppSettings().zapLeftRight,
+    val backToFullScreen: Boolean = AppSettings().backToFullScreen,
+    val showChannelNumbers: Boolean = AppSettings().showChannelNumbers,
 ) {
     fun toAppSettings(lastLiveChannelId: Long?): AppSettings {
         val d = AppSettings()
@@ -93,6 +105,7 @@ data class BSettings(
             audioDecoder = AudioDecoder.entries.find { it.name == audioDecoder } ?: d.audioDecoder,
             lastChannelOnStart = lastChannelOnStart,
             confirmExit = confirmExit,
+            zapLeftRight = zapLeftRight, backToFullScreen = backToFullScreen, showChannelNumbers = showChannelNumbers,
             startOnBoot = startOnBoot,
             epgUpdateIntervalHours = epgUpdateIntervalHours,
             epgUpdateOnStart = epgUpdateOnStart,
@@ -107,6 +120,8 @@ data class BSettings(
             hideHeaderChannels = hideHeaderChannels,
             showDateTime = showDateTime,
             showPing = showPing,
+            guideRows = guideRows,
+            multiLineGuide = multiLineGuide,
             subtitlesOn = subtitlesOn,
             subtitleLanguage = subtitleLanguage,
             recordingOn = recordingOn,
@@ -124,6 +139,8 @@ data class BSettings(
             s.startOnBoot, s.epgUpdateIntervalHours, s.epgUpdateOnStart, s.epgUpdateOnPlaylistChange, s.epgDaysToKeep,
             s.epgPastDays, s.matchTvLanguage, s.logoOrder.map { it.name }, s.guideOrder.map { it.name },
             s.borrowSiblingGuide, s.hideHeaderChannels, s.showDateTime, s.showPing, s.subtitlesOn, s.subtitleLanguage,
+            guideRows = s.guideRows, multiLineGuide = s.multiLineGuide,
+            zapLeftRight = s.zapLeftRight, backToFullScreen = s.backToFullScreen, showChannelNumbers = s.showChannelNumbers,
             recordingOn = s.recordingOn, recordTo = s.recordTo.name, startEarlyMin = s.startEarlyMin, endLateMin = s.endLateMin,
             keepAwake = s.keepAwake, smbServer = s.smbServer, smbShare = s.smbShare, smbFolder = s.smbFolder, smbUser = s.smbUser,
         )

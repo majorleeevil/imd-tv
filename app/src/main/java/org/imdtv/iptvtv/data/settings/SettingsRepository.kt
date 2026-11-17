@@ -20,6 +20,9 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
     private val decoder = stringPreferencesKey("audio_decoder")
     private val lastChannelOnStart = booleanPreferencesKey("last_channel_on_start")
     private val confirmExit = booleanPreferencesKey("confirm_exit")
+    private val zapLeftRight = booleanPreferencesKey("zap_left_right")
+    private val backToFullScreen = booleanPreferencesKey("back_to_full_screen")
+    private val showChannelNumbers = booleanPreferencesKey("show_channel_numbers")
     private val startOnBoot = booleanPreferencesKey("start_on_boot")
     private val interval = intPreferencesKey("epg_update_interval_hours")
     private val epgOnStart = booleanPreferencesKey("epg_update_on_start")
@@ -37,6 +40,8 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
     private val hideHeaders = booleanPreferencesKey("hide_header_channels")
     private val showDateTime = booleanPreferencesKey("show_date_time")
     private val showPing = booleanPreferencesKey("show_ping")
+    private val guideRows = intPreferencesKey("guide_rows")
+    private val multiLineGuide = booleanPreferencesKey("multi_line_guide")
     private val subtitlesOn = booleanPreferencesKey("subtitles_on")
     private val subtitleLanguage = stringPreferencesKey("subtitle_language")
     private val backupFolder = stringPreferencesKey("backup_folder")
@@ -67,6 +72,9 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
             audioDecoder = this[decoder]?.let { n -> AudioDecoder.entries.find { it.name == n } } ?: d.audioDecoder,
             lastChannelOnStart = this[lastChannelOnStart] ?: d.lastChannelOnStart,
             confirmExit = this[confirmExit] ?: d.confirmExit,
+            zapLeftRight = this[zapLeftRight] ?: d.zapLeftRight,
+            backToFullScreen = this[backToFullScreen] ?: d.backToFullScreen,
+            showChannelNumbers = this[showChannelNumbers] ?: d.showChannelNumbers,
             startOnBoot = this[startOnBoot] ?: d.startOnBoot,
             epgUpdateIntervalHours = this[interval] ?: d.epgUpdateIntervalHours,
             epgUpdateOnStart = this[epgOnStart] ?: d.epgUpdateOnStart,
@@ -81,6 +89,8 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
             hideHeaderChannels = this[hideHeaders] ?: d.hideHeaderChannels,
             showDateTime = this[showDateTime] ?: d.showDateTime,
             showPing = this[showPing] ?: d.showPing,
+            guideRows = this[guideRows] ?: d.guideRows,
+            multiLineGuide = this[multiLineGuide] ?: d.multiLineGuide,
             subtitlesOn = this[subtitlesOn] ?: d.subtitlesOn,
             subtitleLanguage = this[subtitleLanguage],
             backupFolder = this[backupFolder],
@@ -105,6 +115,9 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
         this[decoder] = s.audioDecoder.name
         this[lastChannelOnStart] = s.lastChannelOnStart
         this[confirmExit] = s.confirmExit
+        this[zapLeftRight] = s.zapLeftRight
+        this[backToFullScreen] = s.backToFullScreen
+        this[showChannelNumbers] = s.showChannelNumbers
         this[startOnBoot] = s.startOnBoot
         this[interval] = s.epgUpdateIntervalHours
         this[epgOnStart] = s.epgUpdateOnStart
@@ -119,6 +132,8 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
         this[showDateTime] = s.showDateTime
         this[showPing] = s.showPing
         this[subtitlesOn] = s.subtitlesOn
+        this[guideRows] = s.guideRows
+        this[multiLineGuide] = s.multiLineGuide
         s.subtitleLanguage?.let { this[subtitleLanguage] = it } ?: remove(subtitleLanguage)
         s.backupFolder?.let { this[backupFolder] = it } ?: remove(backupFolder)
         s.lastLiveChannelId?.let { this[lastChannel] = it } ?: remove(lastChannel)

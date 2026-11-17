@@ -17,6 +17,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.imdtv.iptvtv.data.db.AppDatabase
 import org.imdtv.iptvtv.data.db.FavouriteEntity
+import org.imdtv.iptvtv.data.db.ProgressEntity
 import org.imdtv.iptvtv.data.db.ProviderEntity
 import org.imdtv.iptvtv.data.db.ProviderType
 import org.imdtv.iptvtv.data.db.inMemoryDb
@@ -38,6 +39,8 @@ class BackupTest {
     @After fun tearDown() { dbs.forEach { it.close() } }
 
     private val catalogue = FakeSource(
+        movieList = listOf(org.imdtv.iptvtv.data.model.Movie("m1", null, "Film", null, null, null, "http://h/movie/m1.mp4")),
+        seriesList = listOf(org.imdtv.iptvtv.data.model.Series("s1", null, "Show", null, null, null)),
         liveCats = listOf(live("5", "UK| News"), live("6", "UK| Sport")),
         channels = listOf(channel("1", "BBC One", cat = "5"), channel("2", "Sky News", cat = "5"), channel("3", "Sky Sports", cat = "6")),
         epg = listOf("http://h/xmltv.php?username=alice-user&password=s3cret-pw"),
@@ -71,10 +74,15 @@ class BackupTest {
         db.customGroupDao().addChannel(g, ch.getValue("1").id)
         db.customGroupDao().setPlacement(g, org.imdtv.iptvtv.data.db.GroupPlacement.TOP)
         db.favouriteDao().add(FavouriteEntity(p, Kind.LIVE, ch.getValue("2").id, 1))
+        val movie = db.movieDao().byProvider(p).single().id
+        val show = db.seriesDao().byProvider(p).single().id
+        db.progressDao().upsert(ProgressEntity(p, Kind.MOVIE, movie, 90_000, 7_200_000, 10, false))
+        db.progressDao().upsert(ProgressEntity(p, Kind.SERIES, show, 0, 3_000_000, 20, true, "e1"))
+        db.progressDao().upsert(ProgressEntity(p, Kind.SERIES, show, 45_000, 3_000_000, 30, false, "e2"))
         providers.addEpgSource(p, "http://guide/uk.xml", "UK guide")
         db.providerDao().setCategoryStrip(p, "UK|")
         db.epgDao().sources(p).first().let { db.epgDao().setOffset(it.id, 60) }
-        settings.update { it.copy(theme = ThemeId.LIQUID_GLASS, confirmExit = false, epgDaysToKeep = 3) }
+        settings.update { it.copy(theme = ThemeId.LIQUID_GLASS, confirmExit = false, epgDaysToKeep = 3, zapLeftRight = true, backToFullScreen = true, showChannelNumbers = false) }
         return p
     }
 
@@ -87,6 +95,11 @@ class BackupTest {
             db.customGroupDao().observeChannels(groupId).first().map { it.remoteId },
             db.favouriteDao().list(p, Kind.LIVE).map { ch[it.itemId] },
             db.epgDao().sources(p).map { Triple(it.url, it.name, it.offsetMinutes) },
+            db.progressDao().all(p).map { r ->
+                val remote = if (r.kind == Kind.MOVIE) db.movieDao().byProvider(p).single { it.id == r.itemId }.remoteId
+                else db.seriesDao().byProvider(p).single { it.id == r.itemId }.remoteId
+                listOf(r.kind, remote, r.episode, r.positionMs, r.durationMs, r.updatedAt, r.completed)
+            },
             db.providerDao().get(p)!!.nameStrip,
             db.providerDao().get(p)!!.categoryStrip,
             settings.settings.first().copy(lastLiveChannelId = null),
@@ -112,6 +125,30 @@ class BackupTest {
         assertEquals("fr", b.settings.settings.first().subtitleLanguage)
         assertEquals(0, result.skipped)
         assertTrue(result.applied > 0)
+    }
+
+    @Test fun progressMapsToNewLocalIds() = runTest {
+        val a = env()
+        a.customise()
+        val decoded = decodeBackup(encodeBackup(a.backup.create()))
+        assertEquals(3, decoded.playlists.single().progress.size)
+
+        val b = env()
+        // A throwaway provider first, so the restored rows get different local ids from the original ones.
+        b.providers.add(xtream().copy(name = "Other")).also { b.providers.syncNow(it) }
+        b.backup.restorePlaylist(decoded.playlists.single(), "alice-user", "s3cret-pw") {}
+        val q = b.db.providerDao().all().last().id
+        val movie = b.db.movieDao().byProvider(q).single().id
+        val show = b.db.seriesDao().byProvider(q).single().id
+        val rows = b.db.progressDao().all(q).map { Triple(it.kind, it.itemId, it.episode) }.toSet()
+        assertEquals(setOf(Triple(Kind.MOVIE, movie, ""), Triple(Kind.SERIES, show, "e1"), Triple(Kind.SERIES, show, "e2")), rows)
+        assertTrue(b.db.progressDao().all(q).single { it.episode == "e2" }.let { it.positionMs == 45_000L && !it.completed })
+    }
+
+    @Test fun oldBackupWithoutProgressStillDecodes() {
+        val json = """{"version": 1, "playlists": [{"name": "P", "type": "XTREAM", "url": "http://h", "userAgent": null, "streamFormat": "TS",
+            "nameStrip": "", "epgSources": [], "categories": [], "groups": [], "favourites": []}], "settings": {}}"""
+        assertEquals(emptyList<BProgress>(), decodeBackup(json).playlists.single().progress)
     }
 
     @Test fun restoreOntoSameProviderUpdatesInPlace() = runTest {
@@ -176,6 +213,12 @@ class BackupTest {
         assertEquals(RestoreResult(applied = 0, skipped = 4), result)
         val p = b.db.providerDao().all().single().id
         assertTrue(b.db.categoryDao().all(p, Kind.LIVE).none { it.hidden })
+    }
+
+    @Test fun guideSettingsSurviveBackup() {
+        val s = org.imdtv.iptvtv.data.settings.AppSettings(guideRows = 7, multiLineGuide = true)
+        val back = decodeBackup(encodeBackup(Backup(playlists = emptyList(), settings = BSettings.of(s)))).settings.toAppSettings(null)
+        assertEquals(7, back.guideRows); assertTrue(back.multiLineGuide)
     }
 
     @Test fun backupHasRecordingSettingsButNoSmbPassword() {

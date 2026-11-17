@@ -265,10 +265,13 @@ data class FavouriteEntity(
     val kind: Kind,
     val itemId: Long,
     val addedAt: Long,
+    /** Your own order (Your categories › Favourites); equal values fall back to newest first. */
+    @ColumnInfo(defaultValue = "0") val sortOrder: Int = 0,
 )
 
-/** [itemId] is the local row id of the movie (kind MOVIE) or the episode (kind SERIES). */
-@Entity(tableName = "progress", primaryKeys = ["providerId", "kind", "itemId"])
+/** Where a movie or episode was left. [itemId] is the local row id of the movie or the series; [episode] is the
+ *  episode's remoteId ("" for a movie): episodes are fetched on demand and have no local row. */
+@Entity(tableName = "progress", primaryKeys = ["providerId", "kind", "itemId", "episode"])
 data class ProgressEntity(
     val providerId: Long,
     val kind: Kind,
@@ -277,6 +280,7 @@ data class ProgressEntity(
     val durationMs: Long,
     val updatedAt: Long,
     val completed: Boolean,
+    @ColumnInfo(defaultValue = "") val episode: String = "",
 )
 
 @Entity(

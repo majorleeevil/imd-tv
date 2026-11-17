@@ -265,6 +265,18 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch { c.db.withTransaction { order.forEachIndexed { n, it -> c.db.customGroupDao().setSortOrder(it.id, n) } } }
     }
 
+    /** Favourites (null) or one of your categories: its channels as shown, hidden ones left out. */
+    private val favouriteChannels = perProvider(emptyList()) { c.db.channelDao().observeFavourites(it) }
+    fun orderedChannels(groupId: Long?): kotlinx.coroutines.flow.Flow<List<org.imdtv.iptvtv.data.db.ChannelEntity>> =
+        if (groupId == null) favouriteChannels else c.db.customGroupDao().observeChannels(groupId)
+
+    /** Saves the channel order as shown (sortOrder becomes the position). */
+    fun saveChannelOrder(groupId: Long?, order: List<org.imdtv.iptvtv.data.db.ChannelEntity>) {
+        viewModelScope.launch { c.db.withTransaction { order.forEachIndexed { n, ch ->
+            if (groupId == null) c.db.favouriteDao().setSortOrder(ch.providerId, Kind.LIVE, ch.id, n) else c.db.customGroupDao().setMemberOrder(groupId, ch.id, n)
+        } } }
+    }
+
     fun setGroupPlacement(g: CustomGroupEntity, p: org.imdtv.iptvtv.data.db.GroupPlacement) {
         viewModelScope.launch { c.db.customGroupDao().setPlacement(g.id, p) }
     }

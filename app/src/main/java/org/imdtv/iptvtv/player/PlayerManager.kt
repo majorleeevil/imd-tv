@@ -182,16 +182,18 @@ class PlayerManager(private val context: Context) {
     init { player.addListener(listener) }
 
     /** [login] fills the Xtream placeholders in [url] (saved links hold no login); [url] itself stays the key for comparisons. */
-    fun play(url: String, userAgent: String?, login: Login? = null, vod: Boolean = false, drm: Drm? = null) =
-        play(url, userAgent, login, vod, drm, guarded = true)
+    /** [startMs]: a movie/episode starts there (resume), applied when the stream loads, also after the guard or a portal link. */
+    fun play(url: String, userAgent: String?, login: Login? = null, vod: Boolean = false, drm: Drm? = null, startMs: Long = 0) =
+        play(url, userAgent, login, vod, drm, guarded = true, startMs)
 
     /** Asked before a provider stream starts (a recording may hold the login's only connection); true = not now. It
      *  gets a retry that plays without asking again. */
     var guard: ((retry: () -> Unit) -> Boolean)? = null
 
-    private fun play(url: String, userAgent: String?, login: Login?, vod: Boolean, drm: Drm?, guarded: Boolean) {
+    private fun play(url: String, userAgent: String?, login: Login?, vod: Boolean, drm: Drm?, guarded: Boolean, startMs: Long = 0) {
         if (url == this.url && player.playbackState != Player.STATE_IDLE) { player.playWhenReady = true; return }
-        if (guarded && guard?.invoke { play(url, userAgent, login, vod, drm, guarded = false) } == true) return
+        if (guarded && guard?.invoke { play(url, userAgent, login, vod, drm, guarded = false, startMs) } == true) return
+        startAt = startMs
         handler.removeCallbacks(retry)
         retries = 0
         applyDecoder() // a new stream: a pending decoder change takes effect now, before playWhenReady is set on it
@@ -205,6 +207,25 @@ class PlayerManager(private val context: Context) {
         _formats.value = StreamFormats.UNKNOWN
         Log.i(TAG, "play ${tail(url)}${drm?.let { " drm=${it.type}" }.orEmpty()}")
         start()
+        stall.reset()
+        handler.removeCallbacks(watchdog)
+        if (!vod) handler.postDelayed(watchdog, WATCH_MS)
+    }
+
+    private val stall = StallClock(START_STALL_MS, STALL_MS)
+    // A live stream can freeze with no error (picture and sound stop); loading it again is what fixed it by hand.
+    private val watchdog = object : Runnable {
+        override fun run() {
+            if (url == null || vod) return
+            handler.postDelayed(this, WATCH_MS)
+            // IDLE = a retry is pending; not playing = paused on purpose.
+            if (player.playbackState == Player.STATE_IDLE || !player.playWhenReady) return stall.reset()
+            if (stall.update(player.currentPosition, android.os.SystemClock.elapsedRealtime())) {
+                Log.w(TAG, "stalled in ${arrayOf("?", "IDLE", "BUFFERING", "READY", "ENDED")[player.playbackState]}, reloading ${tail(url)}")
+                stall.reset() // the reconnect gets the start limit, or a slow provider would be reloaded in a loop
+                start()
+            }
+        }
     }
 
     /** Loads the current [url]; a portal link is resolved first, and dropped if another stream was asked for meanwhile. */
@@ -244,9 +265,11 @@ class PlayerManager(private val context: Context) {
             Log.w(TAG, "unsupported stream format ${tail(url)}", e)
             return fail("Unsupported stream format", e, PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED)
         }
-        player.setMediaSource(source)
+        val at = startAt; startAt = 0 // once: a later reload of this stream (retry) is not a resume
+        if (at > 0) player.setMediaSource(source, at) else player.setMediaSource(source)
         player.prepare()
     }
+    private var startAt = 0L
 
     /** Ends the start of the current stream with [message] shown to the user (see [StreamProblem]). */
     private fun fail(message: String, cause: Throwable?, code: Int) {
@@ -301,7 +324,7 @@ class PlayerManager(private val context: Context) {
 
     private fun reload(u: String, userAgent: String?, login: Login?, vod: Boolean, drm: Drm?, positionMs: Long?) {
         if (org.imdtv.iptvtv.recording.isRecordingLocation(u)) playRecording(u, positionMs ?: 0)
-        else { play(u, userAgent, login, vod, drm); positionMs?.let { player.seekTo(it) } }
+        else play(u, userAgent, login, vod, drm, startMs = positionMs ?: 0)
     }
 
     /** Moves the player to [view] without re-preparing, so playback continues uninterrupted. */
@@ -346,8 +369,13 @@ class PlayerManager(private val context: Context) {
         reload(r.url, r.userAgent, r.login, r.vod, r.drm, r.positionMs)
     }
 
+    /** Called before every stop (Back, the app leaving the screen, a tab change) while the stream is still loaded. */
+    var beforeStop: () -> Unit = {}
+
     fun stop() {
+        beforeStop()
         handler.removeCallbacks(retry)
+        handler.removeCallbacks(watchdog)
         resolving?.cancel()
         retries = 0
         url = null
@@ -359,6 +387,11 @@ class PlayerManager(private val context: Context) {
 
     private companion object {
         const val MAX_RETRIES = 3
+        const val WATCH_MS = 2_000L
+        /** A stream that played and froze; longer than a normal live rebuffer. */
+        const val STALL_MS = 5_000L
+        /** A stream that never started: longer than a slow provider's connect. */
+        const val START_STALL_MS = 12_000L
         const val TAG = "IptvPlayer"
         /** Last path segment only: Xtream URLs carry the username and password. */
         fun tail(url: String?) = url?.substringBefore('|')?.substringAfterLast('/') // headers may hold tokens too
@@ -390,6 +423,21 @@ fun liveTextParams(base: TrackSelectionParameters, defaults: TrackSelectionParam
         .setIgnoredTextSelectionFlags(defaults.ignoredTextSelectionFlags or C.SELECTION_FLAG_DEFAULT)
         .setSelectUndeterminedTextLanguage(defaults.selectUndeterminedTextLanguage)
         .build()
+
+/** True once the playback position hasn't moved for [startMs] (before it first moves) or [playingMs] (after); then it
+ *  starts counting again. */
+class StallClock(private val startMs: Long, private val playingMs: Long) {
+    private var pos = Long.MIN_VALUE
+    private var since = 0L
+    private var played = false
+    fun reset() { pos = Long.MIN_VALUE; played = false }
+    fun update(positionMs: Long, nowMs: Long): Boolean {
+        if (positionMs != pos) { played = pos != Long.MIN_VALUE; pos = positionMs; since = nowMs; return false }
+        if (nowMs - since < if (played) playingMs else startMs) return false
+        since = nowMs
+        return true
+    }
+}
 
 /** A start failure with a message meant for the user (bad DRM data, a portal link that couldn't be fetched). */
 class StreamProblem(message: String, cause: Throwable? = null) : Exception(message, cause)
