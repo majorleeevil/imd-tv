@@ -35,6 +35,7 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -155,3 +156,11 @@ fun Modifier.onLongOk(action: () -> Unit): Modifier = composed {
 @Composable
 fun AppLogo(modifier: Modifier = Modifier) =
     androidx.compose.foundation.Image(androidx.compose.ui.res.painterResource(org.imdtv.iptvtv.R.drawable.logo), contentDescription = null, modifier = modifier)
+
+/** The small bottom information bar ("Press ↩ to exit application", "5 channels hidden"); the caller places and times it. */
+@Composable
+fun InfoBar(text: AnnotatedString, modifier: Modifier = Modifier) = Text(text, fontSize = 14.sp, color = Color.White,
+    modifier = modifier.background(Color(0xCC1A1C24), RoundedCornerShape(20.dp)).padding(horizontal = 20.dp, vertical = 9.dp))
+
+@Composable
+fun InfoBar(text: String, modifier: Modifier = Modifier) = InfoBar(AnnotatedString(text), modifier)

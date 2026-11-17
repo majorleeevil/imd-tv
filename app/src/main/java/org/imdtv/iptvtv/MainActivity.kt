@@ -4,12 +4,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.tv.material3.Text
 import kotlinx.coroutines.delay
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.LaunchedEffect
@@ -227,14 +225,13 @@ class MainActivity : ComponentActivity() {
                     org.imdtv.iptvtv.ui.live.NumberEntryBox(live)
                     org.imdtv.iptvtv.data.update.UpdatePrompt((application as IptvApp).container.updater, (application as IptvApp).container.background)
                     org.imdtv.iptvtv.data.update.WhatsNewPrompt((application as IptvApp).container.updater)
-                    if (exitHint) Text(
+                    if (exitHint) org.imdtv.iptvtv.ui.InfoBar(
                         buildAnnotatedString {
                             append("Press ")
                             withStyle(SpanStyle(fontSize = 22.sp, fontWeight = FontWeight.Bold)) { append("↩") }
                             append(" to exit application")
-                        }, fontSize = 14.sp, color = Color.White,
-                        modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 40.dp)
-                            .background(Color(0xCC1A1C24), RoundedCornerShape(20.dp)).padding(horizontal = 20.dp, vertical = 9.dp),
+                        },
+                        Modifier.align(Alignment.BottomCenter).padding(bottom = 40.dp),
                     )
                 }
             }

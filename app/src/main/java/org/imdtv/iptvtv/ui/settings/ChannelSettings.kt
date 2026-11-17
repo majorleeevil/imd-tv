@@ -72,7 +72,7 @@ enum class ChannelPage(val title: String, val explanation: String, val parent: C
     MOVIE_CATEGORIES("Movies", "Movie categories", parent = PROVIDER_CATEGORIES),
     SERIES_CATEGORIES("Series", "Series categories", parent = PROVIDER_CATEGORIES),
     CHANNEL_NAME_CLEANUP("Channel name clean-up", "Remove or rename prefixes and suffixes such as “UK|”", parent = CHANNELS),
-    SHOW_HIDE_CHANNELS("Show or hide channels", "Hide or bring back many channels at once, by category", parent = CHANNELS),
+    MANAGE_CHANNELS("Manage channels", "Show, hide and reorder channels, by category", parent = CHANNELS),
 }
 
 private fun LogoKind.short() = when (this) { LogoKind.PLAYLIST -> "Playlist"; LogoKind.OPEN_SOURCE -> "Open-source"; LogoKind.PACK -> "My pack" }
@@ -97,8 +97,8 @@ private fun ChannelsPageRows(vm: SettingsViewModel, first: FocusRequester, opene
             Modifier.focusRequester(first).focusRequester(openers.getValue(logos)), matching) { onOpen(logos) }
         val names = ChannelPage.CHANNEL_NAME_CLEANUP
         SettingRow(names.title, names.explanation, strip.ifBlank { "None" }, Modifier.focusRequester(openers.getValue(names))) { onOpen(names) }
-        val showHide = ChannelPage.SHOW_HIDE_CHANNELS
-        SettingRow(showHide.title, showHide.explanation, "›", Modifier.focusRequester(openers.getValue(showHide))) { onOpen(showHide) }
+        val manage = ChannelPage.MANAGE_CHANNELS
+        SettingRow(manage.title, manage.explanation, "›", Modifier.focusRequester(openers.getValue(manage))) { onOpen(manage) }
         SwitchRow("Hide header channels", "Hide divider rows such as “#### SKY CINEMA ####”", s.hideHeaderChannels) { on ->
             vm.update { it.copy(hideHeaderChannels = on) }
         }
@@ -127,7 +127,7 @@ fun ChannelPageView(
             ChannelPage.CATEGORY_NAME_CLEANUP -> { BackHandler(onBack = onClose); NameCleanupPage(vm, first, category = true) }
             ChannelPage.CHANNELS -> { BackHandler(onBack = onClose); ChannelsPageRows(vm, first, openers, onOpen) }
             ChannelPage.YOUR_CATEGORIES -> { BackHandler(onBack = onClose); YourCategoriesPage(vm, first) }
-            ChannelPage.SHOW_HIDE_CHANNELS -> ShowHideChannelsPage(vm, first, onClose)
+            ChannelPage.MANAGE_CHANNELS -> ManageChannelsPage(vm, first, onClose)
         }
     }
 }
@@ -243,9 +243,9 @@ private fun CategoryListPage(vm: SettingsViewModel, kind: Kind, first: FocusRequ
     }
 }
 
-/** Live categories; OK opens one's channels to tick with OK, then Hide or Show the ticked ones (Reddit R1, 2026-11-15). */
+/** Manage channels: live categories; OK opens one's channels to show/hide, move, or tick many (Reddit R1, 2026-11-15; Batch 2). */
 @Composable
-private fun ShowHideChannelsPage(vm: SettingsViewModel, first: FocusRequester, onClose: () -> Unit) {
+private fun ManageChannelsPage(vm: SettingsViewModel, first: FocusRequester, onClose: () -> Unit) {
     LaunchedEffect(Unit) { vm.categoryKind.value = Kind.LIVE }
     val cats = vm.categoryRows.collectAsState().value.filter { it.category.kind == Kind.LIVE }
     var open by remember { mutableStateOf<CategoryEntity?>(null) }
@@ -277,36 +277,89 @@ private fun ShowHideChannelsPage(vm: SettingsViewModel, first: FocusRequester, o
     }
     val channels by remember(cat.id) { vm.channelsIn(cat.id) }.collectAsState(emptyList())
     val strip = parseStripList(vm.nameStrip.collectAsState().value)
+    // Default: OK shows/hides one channel, hold OK moves it. "Select channels" switches to ticking many, then Save changes.
+    var selecting by remember(cat.id) { mutableStateOf(false) }
     val selected = remember(cat.id) { androidx.compose.runtime.mutableStateListOf<Long>() }
-    // Back clears a selection before it leaves the category.
-    BackHandler(enabled = selected.isNotEmpty()) { selected.clear() }
+    /** Toggles pressed but not yet written back by the database: channel id → hidden (as the categories page). */
+    val pending = remember(cat.id) { androidx.compose.runtime.mutableStateMapOf<Long, Boolean>() }
+    // Back leaves select mode (dropping the ticks) before it leaves the category.
+    BackHandler(enabled = selecting) { selected.clear(); selecting = false }
     var noneTicked by remember { mutableStateOf(false) }
-    fun apply(hidden: Boolean) { if (selected.isEmpty()) noneTicked = true else { vm.setChannelsHidden(selected.toList(), hidden); selected.clear() } }
-    // Closing the dialog gives focus back to the row that opened it (Hide or Show selected).
-    if (noneTicked) org.imdtv.iptvtv.ui.ContextMenu("No Channels Selected!", listOf("OK" to { noneTicked = false })) { noneTicked = false }
+    var savedMessage by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(savedMessage) { if (savedMessage != null) { kotlinx.coroutines.delay(3_000); savedMessage = null } }
+    fun hiddenNow(ch: org.imdtv.iptvtv.data.db.ChannelEntity) = pending[ch.id] ?: ch.hidden
+    fun save() {
+        if (selected.isEmpty()) { noneTicked = true; return }
+        // Each ticked channel flips: shown ones are hidden, hidden ones shown.
+        val (toShow, toHide) = channels.filter { it.id in selected }.partition { hiddenNow(it) }
+        toHide.forEach { pending[it.id] = true }; toShow.forEach { pending[it.id] = false }
+        if (toHide.isNotEmpty()) vm.setChannelsHidden(toHide.map { it.id }, true)
+        if (toShow.isNotEmpty()) vm.setChannelsHidden(toShow.map { it.id }, false)
+        savedMessage = channelsSavedMessage(toHide.size, toShow.size)
+        selected.clear(); selecting = false
+    }
+    // Hold OK opens Move up / Move down; closing it focuses the (moved) row.
+    var menuFor by remember(cat.id) { mutableStateOf<Long?>(null) }
+    var focusAfter by remember(cat.id) { mutableStateOf<Long?>(null) }
+    val afterFocus = remember { FocusRequester() }
+    LaunchedEffect(focusAfter) { if (focusAfter != null) { withFrameNanos { }; runCatching { afterFocus.requestFocus() }; focusAfter = null } }
+    val list = rememberLazyListState()
+    val menuIndex = channels.indexOfFirst { it.id == menuFor }
+    // Keep the row being moved on screen (+2 for the title and button rows above it).
+    LaunchedEffect(menuIndex) {
+        if (menuIndex < 0) return@LaunchedEffect
+        if (menuIndex + 2 !in list.layoutInfo.visibleItemsInfo.map { it.index }.drop(1).dropLast(1)) list.scrollToItem((menuIndex + 2 - 3).coerceAtLeast(0))
+    }
+    // Closing the dialog gives focus back to the row that opened it (Save changes).
+    if (noneTicked) ContextMenu("No Channels Selected!", listOf("OK" to { noneTicked = false })) { noneTicked = false }
     val n = selected.size
     val muted = LocalTheme.current.colors.muted
-    LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+    LazyColumn(state = list, verticalArrangement = Arrangement.spacedBy(6.dp)) {
         item { Text(cat.name.ifEmpty { "Uncategorised" }, fontSize = 15.sp, color = muted, modifier = Modifier.padding(bottom = 6.dp)) }
-        item { SettingRow(if (n == 0) "Hide selected" else "Hide $n selected", if (n == 0) "Tick channels below with OK" else "Hide the ticked channels",
-            null, Modifier.focusRequester(first)) { apply(true) } }
-        item { SettingRow(if (n == 0) "Show selected" else "Show $n selected", "Bring ticked hidden channels back", null) { apply(false) } }
+        item {
+            if (selecting) SettingRow("Save changes", if (n == 0) "Tick channels below with OK · Back to cancel" else "Hide or show the $n ticked channels",
+                null, Modifier.focusRequester(first)) { save() }
+            else SettingRow("Select channels", "Tick many channels, then hide or show them all at once", null, Modifier.focusRequester(first)) { selecting = true }
+        }
         items(channels, key = { it.id }) { ch ->
             val ticked = ch.id in selected
-            FocusBox(onClick = { if (ticked) selected.remove(ch.id) else selected.add(ch.id) }) { f ->
+            val hidden = hiddenNow(ch)
+            LaunchedEffect(ch.hidden) { if (pending[ch.id] == ch.hidden) pending.remove(ch.id) }
+            FocusBox(
+                onClick = {
+                    if (selecting) { if (ticked) selected.remove(ch.id) else selected.add(ch.id) }
+                    else { pending[ch.id] = !hidden; vm.setChannelsHidden(listOf(ch.id), !hidden) }
+                },
+                modifier = Modifier.then(if (focusAfter == ch.id) Modifier.focusRequester(afterFocus) else Modifier)
+                    .onLongOk { if (!selecting) menuFor = ch.id },
+            ) { f ->
                 Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(if (f) Color.White else Color(0x14FFFFFF))
                     .padding(horizontal = 18.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Box(Modifier.size(22.dp).clip(RoundedCornerShape(4.dp))
+                    if (selecting) Box(Modifier.padding(end = 14.dp).size(22.dp).clip(RoundedCornerShape(4.dp))
                         .background(if (ticked) LocalTheme.current.colors.accent else Color.Transparent)
                         .border(2.dp, if (ticked) LocalTheme.current.colors.accent else if (f) Color(0xFF555555) else muted, RoundedCornerShape(4.dp)),
                         contentAlignment = Alignment.Center) { if (ticked) Text("✓", fontSize = 14.sp, color = Color.White) }
-                    Column(Modifier.weight(1f).padding(start = 14.dp)) {
+                    Column(Modifier.weight(1f)) {
                         Text(ch.displayName(strip), fontSize = 16.sp, color = if (f) Color.Black else Color.White, maxLines = 1)
-                        Text(if (ch.hidden) "Hidden" else "Shown", fontSize = 12.sp, color = if (f) Color(0xFF555555) else muted)
+                        Text(if (selecting) (if (hidden) "Hidden" else "Shown") else "OK to show/hide · hold OK to move",
+                            fontSize = 12.sp, color = if (f) Color(0xFF555555) else muted)
                     }
+                    Toggle(!hidden, f)
                 }
             }
         }
+    }
+    menuFor?.let { id ->
+        val at = channels.indexOfFirst { it.id == id }
+        val ch = channels.getOrNull(at) ?: return@let
+        ContextMenu("${ch.displayName(strip)}  ·  ${at + 1} of ${channels.size}", listOf(
+            "Move up" to { vm.moveChannel(ch, -1) },
+            "Move down" to { vm.moveChannel(ch, 1) },
+        )) { menuFor = null; focusAfter = ch.id }
+    }
+    savedMessage?.let { msg ->
+        // Not focusable: the bar never takes focus from the list.
+        androidx.compose.ui.window.Popup(alignment = Alignment.BottomCenter) { org.imdtv.iptvtv.ui.InfoBar(msg, Modifier.padding(bottom = 40.dp)) }
     }
 }
 
