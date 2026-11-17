@@ -24,4 +24,14 @@ class CategoryRepository(private val db: AppDatabase) {
         list.add((from + delta).coerceIn(0, list.size), cat)
         db.categoryDao().update(list.mapIndexedNotNull { i, c -> if (c.sortOrder != i) c.copy(sortOrder = i) else null })
     }
+
+    /** Renumbers the category's channels (hidden ones too) 0..n−1 in guide order, then moves one [delta] places, clamped. */
+    suspend fun moveChannel(categoryId: Long, channelId: Long, delta: Int) = db.withTransaction {
+        val list = db.channelDao().allByCategory(categoryId).toMutableList()
+        val from = list.indexOfFirst { it.id == channelId }
+        if (from < 0) return@withTransaction
+        val ch = list.removeAt(from)
+        list.add((from + delta).coerceIn(0, list.size), ch)
+        list.forEachIndexed { i, c -> if (c.sortOrder != i) db.channelDao().setSortOrder(c.id, i) }
+    }
 }

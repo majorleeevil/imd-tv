@@ -152,6 +152,32 @@ class BackupTest {
         assertEquals(emptyList<BProgress>(), decodeBackup(json).playlists.single().progress)
     }
 
+    @Test fun channelOrderRoundTrips() = runTest {
+        val a = env()
+        val p = a.providers.add(xtream()).also { a.providers.syncNow(it) }
+        val ch = a.db.channelDao().byProvider(p).associateBy { it.remoteId }
+        a.db.channelDao().setSortOrder(ch.getValue("2").id, 0)
+        a.db.channelDao().setSortOrder(ch.getValue("1").id, 1)
+        val decoded = decodeBackup(encodeBackup(a.backup.create()))
+        assertEquals(listOf(BChannelOrder("5", listOf("2", "1"))), decoded.playlists.single().channelOrder)
+
+        val b = env()
+        b.providers.add(xtream().copy(name = "Other")).also { b.providers.syncNow(it) }
+        b.backup.restorePlaylist(decoded.playlists.single(), "alice-user", "s3cret-pw") {}
+        val q = b.db.providerDao().all().last().id
+        val cat = b.db.categoryDao().all(q, Kind.LIVE).first { it.remoteId == "5" }
+        assertEquals(listOf("2", "1"), b.db.channelDao().allByCategory(cat.id).map { it.remoteId })
+        assertEquals(listOf(0, 1), b.db.channelDao().allByCategory(cat.id).map { it.sortOrder })
+        val sport = b.db.categoryDao().all(q, Kind.LIVE).first { it.remoteId == "6" }
+        assertEquals(listOf<Int?>(null), b.db.channelDao().allByCategory(sport.id).map { it.sortOrder })
+    }
+
+    @Test fun oldBackupWithoutChannelOrderStillDecodes() {
+        val json = """{"version": 1, "playlists": [{"name": "P", "type": "XTREAM", "url": "http://h", "userAgent": null, "streamFormat": "TS",
+            "nameStrip": "", "epgSources": [], "categories": [], "groups": [], "favourites": []}], "settings": {}}"""
+        assertEquals(emptyList<BChannelOrder>(), decodeBackup(json).playlists.single().channelOrder)
+    }
+
     @Test fun restoreOntoSameProviderUpdatesInPlace() = runTest {
         val a = env()
         val p = a.customise()

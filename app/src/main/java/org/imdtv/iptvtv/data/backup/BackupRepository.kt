@@ -47,13 +47,16 @@ class BackupRepository(
             }
             ids.mapNotNull { remote[it] }.map { BFavourite(kind.name, it) }
         }
+        val liveCats = db.categoryDao().allKinds(p.id).filter { it.kind == Kind.LIVE }.associate { it.id to it.remoteId }
+        val channelOrder = db.channelDao().byProvider(p.id).filter { it.sortOrder != null && it.categoryId != null }.groupBy { it.categoryId!! }
+            .mapNotNull { (cid, chs) -> liveCats[cid]?.let { BChannelOrder(it, chs.sortedBy { c -> c.sortOrder }.map { c -> c.remoteId }) } }
         return BPlaylist(
             // Never a login in a backup: an M3U address carrying one keeps placeholders, filled in on restore.
             name = p.name, type = p.type.name, url = if (p.type == ProviderType.M3U) m3uBackupUrl(p.url) else p.url, userAgent = p.userAgent, streamFormat = p.streamFormat.name,
             nameStrip = p.nameStrip, epgSources = sources,
             categories = db.categoryDao().allKinds(p.id).map { BCategory(it.kind.name, it.remoteId, it.hidden, it.sortOrder, it.pinned) },
             groups = db.customGroupDao().observe(p.id).first().map { BGroup(it.name, it.sortOrder, db.customGroupDao().memberRemoteIds(it.id), it.placement.name) },
-            favourites = favourites, categoryStrip = p.categoryStrip,
+            favourites = favourites, categoryStrip = p.categoryStrip, channelOrder = channelOrder,
             progress = db.progressDao().all(p.id).let { rows ->
                 val movies = rows.filter { it.kind == Kind.MOVIE }.map { it.itemId }.distinct().chunked(900).flatMap { db.movieDao().byIds(it) }.associate { it.id to it.remoteId }
                 val series = rows.filter { it.kind == Kind.SERIES }.map { it.itemId }.distinct().chunked(900).flatMap { db.seriesDao().byIds(it) }.associate { it.id to it.remoteId }
@@ -114,6 +117,11 @@ class BackupRepository(
         b.categories.forEach { if (cats.containsKey(it.kind to it.remoteId)) applied++ else skipped++ }
 
         val channels = db.channelDao().byProvider(id).associate { it.remoteId to it.id }
+        b.channelOrder.forEach { o ->
+            if (cats[Kind.LIVE.name to o.category] == null) { skipped += o.channels.size; return@forEach }
+            o.channels.forEachIndexed { i, r -> channels[r]?.let { db.channelDao().setSortOrder(it, i); applied++ } ?: skipped++ }
+        }
+
         val groups = db.customGroupDao().observe(id).first().associateBy { it.name }
         b.groups.sortedBy { it.sortOrder }.forEach { g ->
             // Every member gone from the playlist: don't make an empty group (one saved empty is restored).

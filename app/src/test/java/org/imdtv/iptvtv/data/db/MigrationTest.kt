@@ -106,4 +106,16 @@ class MigrationTest {
             db.query("SELECT name, drmType, drmKey FROM channel").use { c -> c.moveToFirst(); assertEquals("BBC", c.getString(0)); assertTrue(c.isNull(1)); assertTrue(c.isNull(2)) }
         }
     }
+
+    @Test fun v10ToV11AddsChannelSortOrder() {
+        helper.createDatabase(DB, 10).use { db ->
+            db.execSQL("INSERT INTO provider (id,name,type,url,username,password,userAgent,streamFormat,epgOverrideUrls,lastSync,nameStrip,categoryStrip) VALUES (1,'p','M3U','http://x',NULL,NULL,NULL,'TS','',NULL,'','')")
+            db.execSQL("INSERT INTO channel (id,providerId,categoryId,remoteId,name,logo,number,hidden,tvgId,streamUrl) VALUES (1,1,NULL,'r','BBC',NULL,7,1,NULL,'http://s')")
+        }
+        helper.runMigrationsAndValidate(DB, 11, true).use { db ->
+            db.query("SELECT name, number, hidden, sortOrder FROM channel").use { c ->
+                c.moveToFirst(); assertEquals("BBC", c.getString(0)); assertEquals(7, c.getInt(1)); assertEquals(1, c.getInt(2)); assertTrue(c.isNull(3))
+            }
+        }
+    }
 }

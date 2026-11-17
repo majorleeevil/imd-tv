@@ -77,4 +77,29 @@ class CategoryRepositoryTest {
         assertEquals(listOf("tr"), shown(Kind.SERIES) - "en")
         assertEquals(2, shown(Kind.LIVE).size)
     }
+
+    @Test
+    fun moveChannelRenumbersKeepsHiddenAndSurvivesSync() = runTest {
+        val p = db.insertTestProvider()
+        val src = FakeSource(liveCats = listOf(live("1", "A")),
+            channels = listOf(channel("a", "A", cat = "1", number = 1), channel("b", "B", cat = "1", number = 2), channel("c", "C", cat = "1", number = 3)))
+        val sync = CatalogueSync(db)
+        sync.sync(p, src)
+        val cat = id(p, "1")
+        val chs = db.channelDao().byProvider(p).associate { it.remoteId to it.id }
+        db.channelDao().setHidden(chs.getValue("b"), true)
+        suspend fun all() = db.channelDao().allByCategory(cat).map { it.remoteId }
+        suspend fun shown() = db.channelDao().observeByCategory(cat).first().map { it.remoteId }
+
+        repo.moveChannel(cat, chs.getValue("c"), -1)
+        assertEquals(listOf("a", "c", "b"), all())
+        repo.moveChannel(cat, chs.getValue("c"), -1)
+        assertEquals(listOf("c", "a", "b"), all())
+        repo.moveChannel(cat, chs.getValue("c"), -1) // clamped at the top
+        assertEquals(listOf("c", "a"), shown())
+
+        // A new channel from the provider goes after the placed ones.
+        sync.sync(p, FakeSource(liveCats = src.liveCats, channels = src.channels + channel("d", "D", cat = "1", number = 0)))
+        assertEquals(listOf("c", "a", "b", "d"), all())
+    }
 }

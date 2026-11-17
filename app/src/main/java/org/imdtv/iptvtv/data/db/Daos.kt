@@ -107,7 +107,7 @@ data class SearchRow(val id: Long, val name: String, val customName: String?, va
 abstract class ChannelDao {
     @Query(
         """SELECT * FROM channel WHERE categoryId = :categoryId AND hidden = 0
-           ORDER BY coalesce(customNumber, number) IS NULL, coalesce(customNumber, number), coalesce(customName, name)"""
+           ORDER BY sortOrder IS NULL, sortOrder, coalesce(customNumber, number) IS NULL, coalesce(customNumber, number), coalesce(customName, name)"""
     )
     abstract fun observeByCategory(categoryId: Long): Flow<List<ChannelEntity>>
 
@@ -159,12 +159,18 @@ abstract class ChannelDao {
     abstract fun observeFavourites(providerId: Long): Flow<List<ChannelEntity>>
     @Query("UPDATE channel SET hidden = :hidden WHERE id = :id") abstract suspend fun setHidden(id: Long, hidden: Boolean)
     @Query("UPDATE channel SET hidden = :hidden WHERE id IN (:ids)") abstract suspend fun setHiddenForIds(ids: List<Long>, hidden: Boolean)
-    /** Every channel of a category, hidden ones included (Settings › Show or hide channels). */
+    /** Every channel of a category, hidden ones included (Settings › Manage channels), in guide order. */
     @Query(
         """SELECT * FROM channel WHERE categoryId = :categoryId
-           ORDER BY coalesce(customNumber, number) IS NULL, coalesce(customNumber, number), coalesce(customName, name)"""
+           ORDER BY sortOrder IS NULL, sortOrder, coalesce(customNumber, number) IS NULL, coalesce(customNumber, number), coalesce(customName, name)"""
     )
     abstract fun observeAllByCategory(categoryId: Long): Flow<List<ChannelEntity>>
+    @Query(
+        """SELECT * FROM channel WHERE categoryId = :categoryId
+           ORDER BY sortOrder IS NULL, sortOrder, coalesce(customNumber, number) IS NULL, coalesce(customNumber, number), coalesce(customName, name)"""
+    )
+    abstract suspend fun allByCategory(categoryId: Long): List<ChannelEntity>
+    @Query("UPDATE channel SET sortOrder = :sortOrder WHERE id = :id") abstract suspend fun setSortOrder(id: Long, sortOrder: Int?)
     @Query("UPDATE channel SET customName = :name WHERE id = :id") abstract suspend fun setCustomName(id: Long, name: String?)
 
     @Query("DELETE FROM channel WHERE id IN (:ids)")

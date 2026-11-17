@@ -88,6 +88,8 @@ data class ChannelEntity(
     /** Playlist DRM (Kodi license_type / license_key), read at play time by drmSpec(). */
     val drmType: String? = null,
     val drmKey: String? = null,
+    /** The user's place in its category (Settings › Manage channels); null = by number, after any placed ones. */
+    val sortOrder: Int? = null,
 ) {
     fun drm(): org.imdtv.iptvtv.data.source.Drm? = drmType?.let { org.imdtv.iptvtv.data.source.Drm(it, drmKey) }
 }

@@ -37,6 +37,8 @@ data class BPlaylist(
     val categoryStrip: String = "",
     /** Where movies and episodes were left (older backups have none). */
     val progress: List<BProgress> = emptyList(),
+    /** The user's channel order within live categories (older backups have none). */
+    val channelOrder: List<BChannelOrder> = emptyList(),
 )
 
 /** [url] null = the playlist's own guide, whose URL carries the login: restored from the new login. */
@@ -52,6 +54,10 @@ data class BGroup(val name: String, val sortOrder: Int, val channels: List<Strin
 
 @Serializable
 data class BFavourite(val kind: String, val remoteId: String)
+
+/** [category] is a LIVE category remoteId; [channels] are the placed channels' remoteIds in order. */
+@Serializable
+data class BChannelOrder(val category: String, val channels: List<String>)
 
 /** [remoteId] of the movie or series; [episode] the episode's remoteId ("" for a movie). */
 @Serializable
