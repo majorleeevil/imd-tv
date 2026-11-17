@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.withLock
 import org.imdtv.iptvtv.IptvApp
 import org.imdtv.iptvtv.data.backup.BPlaylist
 import org.imdtv.iptvtv.data.backup.Backup
@@ -161,7 +162,13 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
     fun channelsIn(categoryId: Long) = c.db.channelDao().observeAllByCategory(categoryId)
     fun setChannelsHidden(ids: List<Long>, hidden: Boolean) { viewModelScope.launch { c.db.channelDao().setHiddenForIds(ids, hidden) } }
     fun setAllHidden(hidden: Boolean) = launchFor { c.db.categoryDao().setHiddenForKind(it, categoryKind.value, hidden) }
-    fun move(cat: CategoryEntity, delta: Int) = launchFor { categoryRepo.move(it, cat.kind, cat.id, delta) }
+    // One move at a time: quick presses each read the order the last one wrote.
+    private val moveLock = kotlinx.coroutines.sync.Mutex()
+    fun move(cat: CategoryEntity, delta: Int) = launchFor { p -> moveLock.withLock { categoryRepo.move(p, cat.kind, cat.id, delta) } }
+    fun moveChannel(ch: org.imdtv.iptvtv.data.db.ChannelEntity, delta: Int) {
+        val cat = ch.categoryId ?: return
+        viewModelScope.launch { moveLock.withLock { categoryRepo.moveChannel(cat, ch.id, delta) } }
+    }
 
     /** Languages A–Z ("Other" last), each with its countries; a country is shown when any of its categories is. */
     val languages: StateFlow<List<LanguageRow>> = perProvider(emptyList()) { p ->

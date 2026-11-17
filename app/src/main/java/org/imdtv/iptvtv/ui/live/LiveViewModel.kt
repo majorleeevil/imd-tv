@@ -30,6 +30,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.withLock
 import org.imdtv.iptvtv.IptvApp
 import org.imdtv.iptvtv.data.catalogue.parseStripList
 import org.imdtv.iptvtv.data.db.CategoryEntity
@@ -427,15 +428,16 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
     fun hideCategory(cat: CategoryEntity) { viewModelScope.launch { c.db.categoryDao().setHidden(cat.id, true) } }
 
     /** Moves [delta] places among the categories the rail shows, so a step never vanishes behind a hidden one. */
+    private val moveLock = kotlinx.coroutines.sync.Mutex()
     fun moveCategory(cat: CategoryEntity, delta: Int) {
-        viewModelScope.launch {
+        viewModelScope.launch { moveLock.withLock {
             val all = c.db.categoryDao().all(cat.providerId, Kind.LIVE)
             val visible = all.filter { !it.hidden || it.id == cat.id }
-            val i = visible.indexOfFirst { it.id == cat.id }.takeIf { it >= 0 } ?: return@launch
+            val i = visible.indexOfFirst { it.id == cat.id }.takeIf { it >= 0 } ?: return@withLock
             val target = visible[(i + delta).coerceIn(0, visible.lastIndex)]
             CategoryRepository(c.db).move(cat.providerId, Kind.LIVE, cat.id,
                 all.indexOfFirst { it.id == target.id } - all.indexOfFirst { it.id == cat.id })
-        }
+        } }
     }
 
     companion object {

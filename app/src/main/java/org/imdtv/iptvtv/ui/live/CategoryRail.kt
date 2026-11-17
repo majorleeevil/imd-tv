@@ -56,6 +56,8 @@ internal class RailMove(val cat: CategoryEntity, val from: Int)
 @Composable
 internal fun Rail(
     items: List<RailItem>, selectedKey: String?, focus: FocusRequester, move: RailMove?,
+    /** Kept in view (its menu is open); [focusKey] is focused once, then [onFocusKeyDone]. */
+    keepKey: String?, focusKey: String?, onFocusKeyDone: () -> Unit,
     onPick: (RailEntry) -> Unit, onLongPress: (RailEntry) -> Unit, onMove: (Int) -> Unit, onMoveEnd: (cancel: Boolean) -> Unit,
     onClose: () -> Unit,
 ) {
@@ -63,8 +65,10 @@ internal fun Rail(
     val state = rememberLazyListState(start)
     val movingKey = move?.let { "c${it.cat.id}" }
     val moveFocus = remember { FocusRequester() }
-    val movingIndex = items.indexOfFirst { it.entry.key == movingKey }
+    val movingIndex = items.indexOfFirst { it.entry.key == (movingKey ?: keepKey) }
+    val keyFocus = remember { FocusRequester() }
     LaunchedEffect(movingKey) { if (movingKey != null) { withFrameNanos { }; runCatching { moveFocus.requestFocus() } } }
+    LaunchedEffect(focusKey) { if (focusKey != null) { withFrameNanos { }; runCatching { keyFocus.requestFocus() }; onFocusKeyDone() } }
     LaunchedEffect(movingIndex) {
         if (movingIndex >= 0 && movingIndex !in state.layoutInfo.visibleItemsInfo.map { it.index }.drop(1).dropLast(1)) {
             state.scrollToItem((movingIndex - 3).coerceAtLeast(0))
@@ -105,6 +109,7 @@ internal fun Rail(
                     onClick = { onPick(rc.entry) },
                     modifier = (if (i == start) Modifier.focusRequester(focus) else Modifier)
                         .then(if (isMoving) Modifier.focusRequester(moveFocus) else Modifier)
+                        .then(if (rc.entry.key == focusKey) Modifier.focusRequester(keyFocus) else Modifier)
                         // Only provider categories have a menu; Favourites and user categories are managed in Settings.
                         .then(if (rc.entry is RailEntry.Provider) Modifier.onLongOk { onLongPress(rc.entry) } else Modifier)
                         .onPreviewKeyEvent { e -> if (e.type == KeyEventType.KeyDown && e.key == Key.DirectionRight) { onPick(rc.entry); true } else false },
@@ -131,7 +136,7 @@ internal fun endRailMove(vm: LiveViewModel, state: GuideState, providerKeys: Lis
     state.railMove = null
 }
 
-/** The category rail wired to the guide: pick, long-press Hide/Move, move mode, close (spec §4.3). */
+/** The category rail wired to the guide: pick, long-press Move up/down/Hide, move mode, close (spec §4.3). */
 @Composable
 fun CategoryRail(vm: LiveViewModel, state: GuideState, modifier: Modifier = Modifier) {
     val rail by vm.rail.collectAsState()
@@ -139,6 +144,8 @@ fun CategoryRail(vm: LiveViewModel, state: GuideState, modifier: Modifier = Modi
     val providerKeys = rail.orEmpty().filter { it.entry is RailEntry.Provider }.map { it.entry.key }
     Box(modifier) {
         Rail(rail.orEmpty(), entry?.key, state.railFocus, state.railMove,
+            keepKey = (state.menu as? GuideMenu.Category)?.let { "c${it.cat.id}" }, focusKey = state.railFocusKey,
+            onFocusKeyDone = { state.railFocusKey = null },
             onPick = { vm.select(it); state.railOpen = false },
             onLongPress = { e -> if (e is RailEntry.Provider) state.menu = GuideMenu.Category(e.category) },
             onMove = { d -> state.railMove?.let { vm.moveCategory(it.cat, d) } },

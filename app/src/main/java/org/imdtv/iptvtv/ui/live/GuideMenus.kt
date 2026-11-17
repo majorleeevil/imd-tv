@@ -19,7 +19,8 @@ internal sealed interface GuideMenu {
     data class UseGuideFrom(val ch: ChannelEntity) : GuideMenu
     data class RecordLater(val ch: ChannelEntity) : GuideMenu
     data class CancelRecording(val ch: ChannelEntity, val p: org.imdtv.iptvtv.data.repo.GuideProgramme) : GuideMenu
-    data class Category(val cat: CategoryEntity) : GuideMenu
+    /** [horizontal]: Celestial Plus tabs, so the steps read left/right. */
+    data class Category(val cat: CategoryEntity, val horizontal: Boolean = false) : GuideMenu
 }
 
 /** The long-press menus of a channel row and a rail category, shared by every theme. */
@@ -82,12 +83,17 @@ fun GuideMenus(vm: LiveViewModel, state: GuideState) {
             (if (m.p.start <= System.currentTimeMillis()) "Stop recording" else "Cancel recording") to { vm.cancelRecording(m.ch, m.p); state.menu = null },
             "Keep it" to { state.menu = null },
         )) { state.menu = null }
-        is GuideMenu.Category -> ContextMenu(m.cat.name, listOf(
-            "Hide" to { vm.hideCategory(m.cat); state.menu = null; state.railOpen = false; state.refocus() },
-            "Move" to {
-                state.railMove = RailMove(m.cat, rail.orEmpty().filter { it.entry is RailEntry.Provider }.indexOfFirst { it.entry.key == "c${m.cat.id}" })
-                state.menu = null
-            },
-        )) { state.menu = null }
+        is GuideMenu.Category -> {
+            // Move up/down are one step per press and keep the menu open; closing it puts focus on the moved row.
+            val provider = rail.orEmpty().filter { it.entry is RailEntry.Provider }
+            val key = "c${m.cat.id}"
+            val at = provider.indexOfFirst { it.entry.key == key }
+            ContextMenu("${m.cat.name.ifEmpty { "Uncategorised" }}  ·  ${at + 1} of ${provider.size}", listOf(
+                (if (m.horizontal) "Move left" else "Move up") to { vm.moveCategory(m.cat, -1) },
+                (if (m.horizontal) "Move right" else "Move down") to { vm.moveCategory(m.cat, 1) },
+                "Hide" to { vm.hideCategory(m.cat); state.menu = null; state.railOpen = false; state.refocus() },
+                "Move several places…" to { state.railMove = RailMove(m.cat, at); state.menu = null },
+            )) { state.menu = null; state.railFocusKey = key }
+        }
     }
 }

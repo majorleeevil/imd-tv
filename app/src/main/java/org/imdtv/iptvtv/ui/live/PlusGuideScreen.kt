@@ -17,6 +17,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -79,6 +81,8 @@ fun PlusGuideScreen(vm: LiveViewModel, nav: @Composable () -> Unit, onFullScreen
     val scope = rememberCoroutineScope()
     var navFocused by remember { mutableStateOf(false) }
     val toTabs = { state.heldFocus = tabsFocus; runCatching { tabsFocus.requestFocus() }; Unit }
+    // A tab's menu closed (it may have moved): focus that tab, which is the selected one.
+    LaunchedEffect(state.railFocusKey) { if (state.railFocusKey != null) { withFrameNanos { }; toTabs(); state.railFocusKey = null } }
     // Back in the guide goes to the category tabs first; Back there falls through to the app (focus the nav).
     val backToFull = vm.settings.collectAsState().value.backToFullScreen && previewingId != null // then Back is the app's: full screen
     BackHandler(enabled = state.heldFocus == null && !navFocused && state.menu == null && !backToFull) { toTabs() }
@@ -140,7 +144,7 @@ fun PlusGuideScreen(vm: LiveViewModel, nav: @Composable () -> Unit, onFullScreen
                 onPick = { vm.select(it) },
                 onDown = { scope.launch { state.enterFromTabs(channels.map { it.id }) } },
                 onUp = { focusManager.moveFocus(FocusDirection.Up) },
-                onLongPress = { e -> if (e is RailEntry.Provider) state.menu = GuideMenu.Category(e.category) },
+                onLongPress = { e -> if (e is RailEntry.Provider) state.menu = GuideMenu.Category(e.category, horizontal = true) },
                 move = state.railMove,
                 onMove = { d -> state.railMove?.let { vm.moveCategory(it.cat, d) } },
                 onMoveEnd = { cancel -> endRailMove(vm, state, providerKeys, cancel) },

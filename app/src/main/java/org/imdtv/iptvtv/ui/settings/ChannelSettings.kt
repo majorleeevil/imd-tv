@@ -169,9 +169,14 @@ private fun CategoryListPage(vm: SettingsViewModel, kind: Kind, first: FocusRequ
     val pending = remember { androidx.compose.runtime.mutableStateMapOf<Long, Boolean>() }
     var moving by remember { mutableStateOf<Long?>(null) }
     var movedFrom by remember { mutableStateOf(0) }
+    // Hold OK opens Move up / Move down / Move several places; closing it focuses the (moved) row.
+    var menuFor by remember { mutableStateOf<Long?>(null) }
+    var focusAfter by remember { mutableStateOf<Long?>(null) }
+    val afterFocus = remember { FocusRequester() }
+    LaunchedEffect(focusAfter) { if (focusAfter != null) { withFrameNanos { }; runCatching { afterFocus.requestFocus() }; focusAfter = null } }
     BackHandler(enabled = moving == null, onBack = onClose)
     val list = rememberLazyListState()
-    val movingIndex = rows.indexOfFirst { it.category.id == moving }
+    val movingIndex = rows.indexOfFirst { it.category.id == (moving ?: menuFor) }
     // Keep the row being moved on screen (+2 for the Show all / Hide all rows above it).
     LaunchedEffect(movingIndex) {
         if (movingIndex < 0) return@LaunchedEffect
@@ -182,7 +187,7 @@ private fun CategoryListPage(vm: SettingsViewModel, kind: Kind, first: FocusRequ
     val scope = rememberCoroutineScope()
     // Leaving the list (to the tabs or the group list) resets it, so coming back starts at the top.
     LazyColumn(state = list, verticalArrangement = Arrangement.spacedBy(6.dp),
-        modifier = Modifier.onFocusChanged { if (!it.hasFocus) scope.launch { list.scrollToItem(0) } }) {
+        modifier = Modifier.onFocusChanged { if (!it.hasFocus && menuFor == null && focusAfter == null) scope.launch { list.scrollToItem(0) } }) {
         item { SettingRow("Show all", "Show every ${KIND_TABS.first { it.first == kind }.second} category", null, Modifier.focusRequester(first)) { pending.clear(); vm.setAllHidden(false) } }
         item { SettingRow("Hide all", "Hide every ${KIND_TABS.first { it.first == kind }.second} category", null) { pending.clear(); vm.setAllHidden(true) } }
         items(rows, key = { it.category.id }) { r ->
@@ -196,7 +201,8 @@ private fun CategoryListPage(vm: SettingsViewModel, kind: Kind, first: FocusRequ
             FocusBox(
                 onClick = { if (isMoving) moving = null else { pending[cat.id] = !hidden; vm.setHidden(cat, !hidden) } },
                 modifier = Modifier.focusProperties { canFocus = moving == null || moving == cat.id }
-                    .onLongOk { if (moving == null) { moving = cat.id; movedFrom = rows.indexOf(r) } }
+                    .then(if (focusAfter == cat.id) Modifier.focusRequester(afterFocus) else Modifier)
+                    .onLongOk { if (moving == null) menuFor = cat.id }
                     .onPreviewKeyEvent { e ->
                         if (!isMoving) return@onPreviewKeyEvent false
                         val down = e.type == KeyEventType.KeyDown
@@ -225,6 +231,15 @@ private fun CategoryListPage(vm: SettingsViewModel, kind: Kind, first: FocusRequ
                 }
             }
         }
+    }
+    val at = rows.indexOfFirst { it.category.id == menuFor }
+    if (at >= 0) {
+        val cat = rows[at].category
+        ContextMenu("${cat.name.ifEmpty { "Uncategorised" }}  ·  ${at + 1} of ${rows.size}", listOf(
+            "Move up" to { vm.move(cat, -1) },
+            "Move down" to { vm.move(cat, 1) },
+            "Move several places…" to { menuFor = null; focusAfter = cat.id; moving = cat.id; movedFrom = at },
+        )) { menuFor = null; focusAfter = cat.id }
     }
 }
 

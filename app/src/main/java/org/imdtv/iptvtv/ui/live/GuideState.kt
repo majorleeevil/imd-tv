@@ -31,6 +31,8 @@ class GuideState internal constructor(
     var railOpen by mutableStateOf(false)
     internal var menu by mutableStateOf<GuideMenu?>(null)
     internal var railMove by mutableStateOf<RailMove?>(null)
+    /** A rail category to focus once its menu closes (it may have moved). */
+    internal var railFocusKey by mutableStateOf<String?>(null)
     internal var restored = false
     /** Set while a layout keeps focus outside the grid (Plus tabs): refocus goes there instead of to the row. */
     var heldFocus by mutableStateOf<FocusRequester?>(null)
