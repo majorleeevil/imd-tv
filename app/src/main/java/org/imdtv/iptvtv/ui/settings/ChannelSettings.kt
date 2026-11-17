@@ -316,10 +316,12 @@ private fun ManageChannelsPage(vm: SettingsViewModel, first: FocusRequester, onC
     val muted = LocalTheme.current.colors.muted
     LazyColumn(state = list, verticalArrangement = Arrangement.spacedBy(6.dp)) {
         item { Text(cat.name.ifEmpty { "Uncategorised" }, fontSize = 15.sp, color = muted, modifier = Modifier.padding(bottom = 6.dp)) }
+        // One row whose label changes: swapping two rows would drop focus (and Settings would jump to its root).
         item {
-            if (selecting) SettingRow("Save changes", if (n == 0) "Tick channels below with OK · Back to cancel" else "Hide or show the $n ticked channels",
-                null, Modifier.focusRequester(first)) { save() }
-            else SettingRow("Select channels", "Tick many channels, then hide or show them all at once", null, Modifier.focusRequester(first)) { selecting = true }
+            SettingRow(if (selecting) "Save changes" else "Select channels",
+                if (!selecting) "Tick many channels, then hide or show them all at once"
+                else if (n == 0) "Tick channels below with OK · Back to cancel" else "Hide or show the $n ticked channels",
+                null, Modifier.focusRequester(first)) { if (selecting) save() else selecting = true }
         }
         items(channels, key = { it.id }) { ch ->
             val ticked = ch.id in selected
@@ -359,7 +361,7 @@ private fun ManageChannelsPage(vm: SettingsViewModel, first: FocusRequester, onC
     }
     savedMessage?.let { msg ->
         // Not focusable: the bar never takes focus from the list.
-        androidx.compose.ui.window.Popup(alignment = Alignment.BottomCenter) { org.imdtv.iptvtv.ui.InfoBar(msg, Modifier.padding(bottom = 40.dp)) }
+        androidx.compose.ui.window.Popup(alignment = Alignment.BottomCenter) { org.imdtv.iptvtv.ui.InfoBar(msg) } // at the foot of the pane, about where the exit hint sits
     }
 }
 
