@@ -36,7 +36,10 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 
 /** Liquid Glass backdrop (spec §6A.6): the sharp picture and a pre-blurred copy, both rasterised once per size. */
-class GlassBackdrop(val sharp: ImageBitmap, val blurred: ImageBitmap)
+class GlassBackdrop(val sharp: ImageBitmap, val blurred: ImageBitmap, val dark: Boolean = false) {
+    /** White panel tint: a little stronger over the dark backdrop so the panels still read as glass. */
+    val tint = if (dark) Color(0x3DFFFFFF) else Color(0x2EFFFFFF)
+}
 
 /** Provided only while Liquid Glass is the theme; null elsewhere, which turns [glass] panels off. */
 val LocalGlassBackdrop = staticCompositionLocalOf<GlassBackdrop?> { null }
@@ -47,14 +50,16 @@ private fun bitmap(density: Density, size: Size, draw: androidx.compose.ui.graph
     return img
 }
 
-fun glassBackdrop(density: Density, size: Size, gradient: List<Color> = listOf(Color(0xFF0FB5BA), Color(0xFF7A3CF0))): GlassBackdrop {
+fun glassBackdrop(density: Density, size: Size, gradient: List<Color> = listOf(Color(0xFF0FB5BA), Color(0xFF7A3CF0)), dark: Boolean = false): GlassBackdrop {
     val w = size.width; val h = size.height
+    // Dark mode: the blobs are darkened with the gradient (by [DARK_PULL]) so the backdrop is near-black throughout.
+    fun blob(argb: Long) = themeStop(argb, dark)
     val sharp = bitmap(density, size) {
         drawRect(Brush.linearGradient(gradient, end = Offset(w, h)))
-        drawCircle(Color(0xFFFF5FA2), radius = h * .34f, center = Offset(w * .82f, h * .2f))
-        drawCircle(Color(0xFFFFB347), radius = h * .22f, center = Offset(w * .12f, h * .82f))
-        drawCircle(Color(0xFF3D8BFF), radius = h * .28f, center = Offset(w * .55f, h * .95f))
-        drawOval(Color(0xFF7FF0E0), topLeft = Offset(w * .3f, h * .05f), size = Size(w * .22f, h * .18f))
+        drawCircle(blob(0xFFFF5FA2), radius = h * .34f, center = Offset(w * .82f, h * .2f))
+        drawCircle(blob(0xFFFFB347), radius = h * .22f, center = Offset(w * .12f, h * .82f))
+        drawCircle(blob(0xFF3D8BFF), radius = h * .28f, center = Offset(w * .55f, h * .95f))
+        drawOval(blob(0xFF7FF0E0), topLeft = Offset(w * .3f, h * .05f), size = Size(w * .22f, h * .18f))
     }
     // Frosted blur, done once: shrink to 1/8, box-blur that small copy three times (≈ gaussian), scale back up.
     val small = bitmap(density, Size(w / 8, h / 8)) {
@@ -64,7 +69,7 @@ fun glassBackdrop(density: Density, size: Size, gradient: List<Color> = listOf(C
     val blurred = bitmap(density, size) {
         drawImage(small, dstSize = IntSize(w.toInt(), h.toInt()), filterQuality = FilterQuality.High)
     }
-    return GlassBackdrop(sharp, blurred)
+    return GlassBackdrop(sharp, blurred, dark)
 }
 
 /** In-place box blur of [img] (horizontal then vertical, [passes] times). Small bitmaps only: it runs on the CPU. */
@@ -112,7 +117,7 @@ fun Modifier.glass(shape: Shape = RoundedCornerShape(16.dp), smoked: Boolean = f
         val outline = shape.createOutline(size, layoutDirection, this)
         val px = 1.dp.toPx()
         onDrawBehind {
-            drawOutline(outline, Color(0x2EFFFFFF))
+            drawOutline(outline, backdrop?.tint ?: Color(0x2EFFFFFF))
             drawOutline(outline, EDGE, style = Stroke(px))
         }
     }
@@ -144,7 +149,7 @@ fun Modifier.glass(shape: Shape = RoundedCornerShape(16.dp), smoked: Boolean = f
                     val src = IntOffset(at.x.toInt().coerceIn(0, b.width - w), at.y.toInt().coerceIn(0, b.height - h))
                     drawImage(b, srcOffset = src, srcSize = IntSize(w, h), dstSize = IntSize(w, h))
                 }
-                drawPath(path, if (smoked) Color(0x8C0A0F1E) else Color(0x2EFFFFFF))
+                drawPath(path, if (smoked) Color(0x8C0A0F1E) else backdrop?.tint ?: Color(0x2EFFFFFF))
                 drawPath(path, EDGE, style = Stroke(px))
             }
         }

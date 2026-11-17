@@ -12,17 +12,34 @@ data class ThemeColors(
     val accent: Color, val text: Color, val muted: Color, val vodBg: Color, val vodCard: Color,
 )
 
-fun colorsOf(id: ThemeId, colour: ThemeColour = ThemeColour.DEFAULT): ThemeColors {
+/** How far Theme mode › Dark pulls each gradient stop towards black (still reads as the colour). */
+const val DARK_PULL = .75f
+
+/**
+ * Celestial Glass's darkest stop is already dark and colours the panels and Settings/Movies backgrounds, so it is pulled
+ * less: at .75 they read as plain black on the TV.
+ */
+private const val DARK_PULL_DEEPEST = .5f
+
+/** One gradient stop of a [ThemeColour], darkened for Theme mode › Dark. */
+fun themeStop(argb: Long, dark: Boolean, pull: Float = DARK_PULL): Color = Color(argb).let { if (dark) lerp(it, Color.Black, pull) else it }
+
+fun colorsOf(id: ThemeId, colour: ThemeColour = ThemeColour.DEFAULT, dark: Boolean = false): ThemeColors {
     val base = baseColors(id)
-    if (colour == ThemeColour.DEFAULT) return base
+    if (colour == ThemeColour.DEFAULT && !dark) return base
     return when (id) {
         // Celestial Glass: cells, panel and VOD colours follow the chosen gradient the way the default blue's do.
         ThemeId.CELESTIAL_GLASS -> {
-            val (d, m, l) = colour.glass.map { Color(it) }
+            val (d, m, l) = colour.glass.mapIndexed { i, c -> themeStop(c, dark, if (i == 0) DARK_PULL_DEEPEST else DARK_PULL) }
             base.copy(bg = listOf(d, m, l), cell = lerp(l, Color.White, .08f).copy(alpha = .55f), cellDim = l.copy(alpha = .35f),
                 panel = lerp(d, Color.Black, .25f).copy(alpha = .94f), onFocus = d, vodBg = lerp(d, Color.Black, .1f), vodCard = lerp(d, m, .35f))
         }
-        ThemeId.LIQUID_GLASS -> base.copy(bg = colour.liquid.map { Color(it) })
+        ThemeId.LIQUID_GLASS -> {
+            val bg = colour.liquid.map { themeStop(it, dark) }
+            // Dark: the Movies hero fades into vodBg, so the light theme's indigo would show as a bright band; use the
+            // middle of the dark backdrop instead.
+            if (dark) base.copy(bg = bg, vodBg = lerp(bg[0], bg[1], .5f)) else base.copy(bg = bg)
+        }
         else -> base
     }
 }
@@ -74,7 +91,7 @@ private fun baseColors(id: ThemeId): ThemeColors = when (id) {
 
 data class Theme(val id: ThemeId, val colors: ThemeColors)
 
-fun themeOf(id: ThemeId, colour: ThemeColour = ThemeColour.DEFAULT) = Theme(id, colorsOf(id, colour))
+fun themeOf(id: ThemeId, colour: ThemeColour = ThemeColour.DEFAULT, dark: Boolean = false) = Theme(id, colorsOf(id, colour, dark))
 
 val LocalTheme = staticCompositionLocalOf { themeOf(ThemeId.CELESTIAL_GLASS) }
 

@@ -96,12 +96,13 @@ class MainActivity : ComponentActivity() {
         setContent {
             val themeId = app.settings.collectAsState().value.theme
             val themeColour = app.settings.collectAsState().value.themeColour
+            val themeDark = app.settings.collectAsState().value.themeDark
             val density = androidx.compose.ui.platform.LocalDensity.current
             val conf = androidx.compose.ui.platform.LocalConfiguration.current
-            val backdrop = if (themeId != ThemeId.LIQUID_GLASS) null else remember(conf.screenWidthDp, conf.screenHeightDp, themeColour) {
-                with(density) { glassBackdrop(this, androidx.compose.ui.geometry.Size(conf.screenWidthDp.dp.toPx(), conf.screenHeightDp.dp.toPx()), themeColour.liquid.map { androidx.compose.ui.graphics.Color(it) }) }
+            val backdrop = if (themeId != ThemeId.LIQUID_GLASS) null else remember(conf.screenWidthDp, conf.screenHeightDp, themeColour, themeDark) {
+                with(density) { glassBackdrop(this, androidx.compose.ui.geometry.Size(conf.screenWidthDp.dp.toPx(), conf.screenHeightDp.dp.toPx()), themeColour.liquid.map { org.imdtv.iptvtv.ui.theme.themeStop(it, themeDark) }, themeDark) }
             }
-            CompositionLocalProvider(LocalTheme provides remember(themeId, themeColour) { themeOf(themeId, themeColour) }, LocalGlassBackdrop provides backdrop,
+            CompositionLocalProvider(LocalTheme provides remember(themeId, themeColour, themeDark) { themeOf(themeId, themeColour, themeDark) }, LocalGlassBackdrop provides backdrop,
                 org.imdtv.iptvtv.ui.LocalShowNumbers provides app.settings.collectAsState().value.showChannelNumbers) {
             MaterialTheme(colorScheme = darkColorScheme()) {
             // Celestial Glass and Liquid Glass: every TV Text in Inter (the website's font). Inside MaterialTheme, which
