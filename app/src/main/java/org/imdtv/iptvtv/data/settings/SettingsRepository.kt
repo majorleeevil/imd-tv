@@ -23,6 +23,7 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
     private val zapLeftRight = booleanPreferencesKey("zap_left_right")
     private val backToFullScreen = booleanPreferencesKey("back_to_full_screen")
     private val showChannelNumbers = booleanPreferencesKey("show_channel_numbers")
+    private val themeDark = booleanPreferencesKey("theme_dark")
     private val clock24h = booleanPreferencesKey("clock_24h")
     private val playerClock = booleanPreferencesKey("player_clock")
     private val liveSubtitlesOn = booleanPreferencesKey("live_subtitles_on")
@@ -80,6 +81,7 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
             zapLeftRight = this[zapLeftRight] ?: d.zapLeftRight,
             backToFullScreen = this[backToFullScreen] ?: d.backToFullScreen,
             showChannelNumbers = this[showChannelNumbers] ?: d.showChannelNumbers,
+            themeDark = this[themeDark] ?: d.themeDark,
             clock24h = this[clock24h] ?: d.clock24h,
             playerClock = this[playerClock] ?: d.playerClock,
             liveSubtitlesOn = this[liveSubtitlesOn] ?: d.liveSubtitlesOn,
@@ -128,6 +130,7 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
         this[zapLeftRight] = s.zapLeftRight
         this[backToFullScreen] = s.backToFullScreen
         this[showChannelNumbers] = s.showChannelNumbers
+        this[themeDark] = s.themeDark
         this[clock24h] = s.clock24h
         this[playerClock] = s.playerClock
         this[liveSubtitlesOn] = s.liveSubtitlesOn

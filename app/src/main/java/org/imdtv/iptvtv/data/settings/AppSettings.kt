@@ -57,6 +57,8 @@ data class AppSettings(
     val borrowSiblingGuide: Boolean = true,
     val hideHeaderChannels: Boolean = false,
     val themeColour: ThemeColour = ThemeColour.DEFAULT,
+    /** Celestial Glass / Liquid Glass: near-black versions of the theme colour. */
+    val themeDark: Boolean = false,
     val showDateTime: Boolean = true,
     val showPing: Boolean = false,
     /** Channel rows in the Celestial/Liquid Glass guide: one of [GUIDE_ROWS]. */

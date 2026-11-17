@@ -15,6 +15,7 @@ fun AppearanceRows(s: AppSettings, first: Modifier, onTheme: (ThemeId) -> Unit, 
     // Only the two glass themes take a background colour.
     if (s.theme == ThemeId.CELESTIAL_GLASS || s.theme == ThemeId.LIQUID_GLASS) {
         ChoiceRow("Theme colour", "Background colour of ${s.theme.label}", ThemeColour.entries, s.themeColour, { it.label }, onPick = onColour)
+        ChoiceRow("Theme mode", "Dark uses near-black versions of the theme colour", listOf(false, true), s.themeDark, { if (it) "Dark" else "Light" }, onPick = { d -> onChange { it.copy(themeDark = d) } })
     }
     if (s.theme == ThemeId.CELESTIAL_GLASS || s.theme == ThemeId.LIQUID_GLASS) {
         ChoiceRow("Channels in guide", "How many channel rows the guide shows at once; more rows are shorter with smaller text", GUIDE_ROWS, s.guideRows, { "$it" }) { n -> onChange { it.copy(guideRows = n) } }

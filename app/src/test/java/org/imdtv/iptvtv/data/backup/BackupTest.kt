@@ -83,7 +83,7 @@ class BackupTest {
         providers.addEpgSource(p, "http://guide/uk.xml", "UK guide")
         db.providerDao().setCategoryStrip(p, "UK|")
         db.epgDao().sources(p).first().let { db.epgDao().setOffset(it.id, 60) }
-        settings.update { it.copy(theme = ThemeId.LIQUID_GLASS, confirmExit = false, epgDaysToKeep = 3, zapLeftRight = true, backToFullScreen = true, showChannelNumbers = false, clock24h = false, playerClock = true, liveSubtitlesOn = true, headerSize = HeaderSize.SMALL, previewFade = false) }
+        settings.update { it.copy(theme = ThemeId.LIQUID_GLASS, confirmExit = false, epgDaysToKeep = 3, zapLeftRight = true, backToFullScreen = true, showChannelNumbers = false, themeDark = true, clock24h = false, playerClock = true, liveSubtitlesOn = true, headerSize = HeaderSize.SMALL, previewFade = false) }
         return p
     }
 

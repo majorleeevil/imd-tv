@@ -107,6 +107,7 @@ data class BSettings(
     val liveSubtitlesOn: Boolean = AppSettings().liveSubtitlesOn,
     val headerSize: String = AppSettings().headerSize.name,
     val previewFade: Boolean = AppSettings().previewFade,
+    val themeDark: Boolean = AppSettings().themeDark,
 ) {
     fun toAppSettings(lastLiveChannelId: Long?): AppSettings {
         val d = AppSettings()
@@ -118,7 +119,7 @@ data class BSettings(
             lastChannelOnStart = lastChannelOnStart,
             confirmExit = confirmExit,
             zapLeftRight = zapLeftRight, backToFullScreen = backToFullScreen, showChannelNumbers = showChannelNumbers, clock24h = clock24h, playerClock = playerClock, liveSubtitlesOn = liveSubtitlesOn,
-            headerSize = HeaderSize.entries.find { it.name == headerSize } ?: d.headerSize, previewFade = previewFade,
+            headerSize = HeaderSize.entries.find { it.name == headerSize } ?: d.headerSize, previewFade = previewFade, themeDark = themeDark,
             startOnBoot = startOnBoot,
             epgUpdateIntervalHours = epgUpdateIntervalHours,
             epgUpdateOnStart = epgUpdateOnStart,
@@ -154,7 +155,7 @@ data class BSettings(
             s.borrowSiblingGuide, s.hideHeaderChannels, s.showDateTime, s.showPing, s.subtitlesOn, s.subtitleLanguage,
             guideRows = s.guideRows, multiLineGuide = s.multiLineGuide,
             zapLeftRight = s.zapLeftRight, backToFullScreen = s.backToFullScreen, showChannelNumbers = s.showChannelNumbers, clock24h = s.clock24h, playerClock = s.playerClock, liveSubtitlesOn = s.liveSubtitlesOn,
-            headerSize = s.headerSize.name, previewFade = s.previewFade,
+            headerSize = s.headerSize.name, previewFade = s.previewFade, themeDark = s.themeDark,
             recordingOn = s.recordingOn, recordTo = s.recordTo.name, startEarlyMin = s.startEarlyMin, endLateMin = s.endLateMin,
             keepAwake = s.keepAwake, smbServer = s.smbServer, smbShare = s.smbShare, smbFolder = s.smbFolder, smbUser = s.smbUser,
         )
