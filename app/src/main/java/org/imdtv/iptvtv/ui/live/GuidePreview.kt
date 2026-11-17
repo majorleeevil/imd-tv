@@ -48,6 +48,7 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.media3.ui.PlayerView
 import androidx.tv.material3.Text
 import org.imdtv.iptvtv.data.settings.LogoKind
+import org.imdtv.iptvtv.data.settings.HeaderSize
 import org.imdtv.iptvtv.ui.ChannelLogo
 import kotlinx.coroutines.flow.first
 import org.imdtv.iptvtv.data.db.ChannelEntity
@@ -129,15 +130,26 @@ fun Preview(vm: LiveViewModel, visible: Boolean, screen: Size, modifier: Modifie
 }
 
 @Composable
-fun Hero(ch: ChannelEntity?, name: String, progs: List<GuideProgramme>, now: Long, logoSource: List<LogoKind>, badges: List<String>, modifier: Modifier) {
+fun Hero(ch: ChannelEntity?, name: String, progs: List<GuideProgramme>, now: Long, logoSource: List<LogoKind>, badges: List<String>, modifier: Modifier,
+         size: HeaderSize = HeaderSize.LARGE) {
     if (ch == null) return
     val cur = progs.firstOrNull { it.start <= now && now < it.stop }
     Column(modifier) {
-        Box(Modifier.size(60.dp, 43.dp).clip(RoundedCornerShape(3.dp)).background(Color(0x33FFFFFF)), contentAlignment = Alignment.Center) {
-            ChannelLogo(ch, logoSource, Modifier.fillMaxSize().padding(4.dp))
+        val logo = @Composable {
+            Box(Modifier.size(60.dp, 43.dp).clip(RoundedCornerShape(3.dp)).background(Color(0x33FFFFFF)), contentAlignment = Alignment.Center) {
+                ChannelLogo(ch, logoSource, Modifier.fillMaxSize().padding(4.dp))
+            }
         }
-        Text(cur?.title ?: name, fontSize = 31.sp, color = Color.White, maxLines = 1,
-            overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 9.dp, bottom = 5.dp))
+        // Small header: logo beside a smaller title, so the hero fits in ~75dp.
+        if (size == HeaderSize.SMALL) Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 5.dp)) {
+            logo()
+            Text(cur?.title ?: name, fontSize = 24.sp, color = Color.White, maxLines = 1,
+                overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(start = 12.dp))
+        } else {
+            logo()
+            Text(cur?.title ?: name, fontSize = 31.sp, color = Color.White, maxLines = 1,
+                overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 9.dp, bottom = 5.dp))
+        }
         Row(horizontalArrangement = Arrangement.spacedBy(7.dp), verticalAlignment = Alignment.CenterVertically) {
             if (cur != null) {
                 Text("${duration(cur.stop - cur.start)} · Started at ${clockTime(cur.start)}" + if (badges.isNotEmpty()) " ·" else "",
@@ -151,11 +163,11 @@ fun Hero(ch: ChannelEntity?, name: String, progs: List<GuideProgramme>, now: Lon
                     modifier = Modifier.border(1.dp, Color(0xB3FFFFFF), RoundedCornerShape(3.dp)).padding(horizontal = 4.dp, vertical = 1.dp))
             }
         }
-        cur?.desc?.let {
+        if (size == HeaderSize.LARGE) cur?.desc?.let {
             Text(it, fontSize = 14.sp, lineHeight = 19.sp, color = Color(0xFFEAF0FF), maxLines = 3, overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.padding(top = 7.dp))
         }
-        if (cur != null) {
+        if (cur != null && size != HeaderSize.SMALL) {
             val f = ((now - cur.start).toFloat() / (cur.stop - cur.start)).coerceIn(0f, 1f)
             Box(Modifier.padding(top = 9.dp).size(210.dp, 2.5.dp).clip(RoundedCornerShape(2.dp)).background(Color(0x24FFFFFF))) {
                 Box(Modifier.fillMaxHeight().fillMaxWidth(f).background(Color.White))

@@ -34,6 +34,10 @@ import androidx.tv.material3.Text
 import org.imdtv.iptvtv.ui.Spinner
 import org.imdtv.iptvtv.data.catalogue.displayName
 import org.imdtv.iptvtv.data.db.ChannelEntity
+import org.imdtv.iptvtv.data.settings.HeaderSize
+import androidx.compose.foundation.border
+import androidx.compose.ui.platform.LocalDensity
+import kotlin.math.roundToInt
 
 @Composable
 fun LiveGuideScreen(vm: LiveViewModel, nav: @Composable () -> Unit, onFullScreen: (ChannelEntity) -> Unit) {
@@ -41,31 +45,44 @@ fun LiveGuideScreen(vm: LiveViewModel, nav: @Composable () -> Unit, onFullScreen
     val rail by vm.rail.collectAsState()
     val entry by vm.entry.collectAsState()
     val updating by vm.guideUpdating.collectAsState()
-    val rows = vm.settings.collectAsState().value.guideRows
+    val settings = vm.settings.collectAsState().value
+    // Header size: everything below the nav moves up by [shift]; the grid gains rows of about the same height.
+    val shift = when (settings.headerSize) { HeaderSize.LARGE -> 0.dp; HeaderSize.MEDIUM -> 70.dp; HeaderSize.SMALL -> 130.dp }
 
     var screen by remember { mutableStateOf(Size.Zero) }
     val colors = LocalTheme.current.colors // read here so a theme change re-rasterises the cached background
     val backdrop = LocalGlassBackdrop.current // Liquid Glass: same layout, glass panels over its backdrop
     val inset = if (backdrop != null) 12.dp else 0.dp
+    val gridTop = (if (backdrop != null) 320.dp else 306.dp) - shift
+    val screenH = with(LocalDensity.current) { screen.height.toDp() }
+    val rows = if (shift == 0.dp || screenH <= gridTop) settings.guideRows
+        else (settings.guideRows * (screenH - gridTop - 12.dp).value / (screenH - gridTop - shift - 12.dp).value).roundToInt().coerceAtMost(14)
+    // Liquid's framed preview, also Glass's when Preview fade is off: 16:9, as tall as the hero panel.
+    val boxed = backdrop != null || !settings.previewFade
+    val boxH = 232.dp - shift
     Box(Modifier.fillMaxSize().onSizeChanged { screen = Size(it.width.toFloat(), it.height.toFloat()) }.drawWithCache {
         // The Chromecast GPU is the bottleneck: rasterise the full-screen gradients once, then just blit them.
         val img = backdrop?.sharp ?: backgroundBitmap(colors, this, size, Offset.Zero, size)
         onDrawBehind { drawImage(img) }
     }) {
-        Preview(vm, visible = state.previewing, screen = screen, edge = if (backdrop != null) PreviewEdge.RIM else PreviewEdge.FADE,
-            // Liquid Glass: a smaller framed preview clear of the description panel.
-            // Top and height match the hero panel, so the nav pill never overlaps it.
-            modifier = Modifier.align(Alignment.TopEnd).then(if (backdrop != null) Modifier.padding(top = 80.dp, end = 30.dp).size(412.dp, 232.dp) else Modifier))
+        Preview(vm, visible = state.previewing, screen = screen,
+            edge = if (backdrop != null) PreviewEdge.RIM else if (boxed) PreviewEdge.NONE else PreviewEdge.FADE,
+            // Boxed: a smaller framed preview clear of the description panel; top and height match the hero panel,
+            // so the nav pill never overlaps it. Fade: full corner preview, shrunk with the header.
+            modifier = Modifier.align(Alignment.TopEnd).then(
+                if (boxed) Modifier.padding(top = 80.dp, end = 30.dp).size(boxH * 16 / 9, boxH)
+                    .then(if (backdrop == null) Modifier.border(1.dp, Color(0x66FFFFFF)) else Modifier)
+                else Modifier.size((300.dp - shift) * 53 / 30, 300.dp - shift)))
         Box(Modifier.padding(start = 24.dp, top = 22.dp)) { nav() }
         GuideHero(vm, Modifier.padding(start = 24.dp, top = 80.dp).width(450.dp)
             // Liquid Glass: a fixed-size panel, so moving focus doesn't re-rasterise it for each description length.
-            .then(if (backdrop != null) Modifier.height(232.dp) else Modifier).glass().padding(inset))
+            .then(if (backdrop != null) Modifier.height(232.dp - shift) else Modifier).glass().padding(inset), settings.headerSize)
 
         if (rail?.isEmpty() == true) {
             Text("All live categories are hidden. Show them again in Settings › Channels & categories.", fontSize = 16.sp,
                 color = Color.White, modifier = Modifier.padding(start = 24.dp, top = 380.dp))
         }
-        Row(Modifier.padding(start = 24.dp, top = if (backdrop != null) 302.dp else 286.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.padding(start = 24.dp, top = gridTop - 18.dp), verticalAlignment = Alignment.CenterVertically) {
             Text(
                 "◀ ${entry?.title.orEmpty()}", fontSize = 11.sp, color = Color.White, maxLines = 1,
                 modifier = Modifier.clip(RoundedCornerShape(10.dp)).background(colors.cellDim).padding(horizontal = 7.dp, vertical = 2.dp),
@@ -80,7 +97,7 @@ fun LiveGuideScreen(vm: LiveViewModel, nav: @Composable () -> Unit, onFullScreen
         // Glass and Liquid: the grid runs off the right edge and stops 12dp above the bottom, so the last row's border shows; GuideGrid splits it into 5–9 whole rows.
         val grid = (if (backdrop != null) LIQUID_GRID else GLASS_GRID).copy(gap = if (rows > 5) 2.dp else 4.dp)
         GuideGrid(vm, state, grid, onFullScreen, onLeftAtStart = { state.railOpen = true }, rows = rows,
-            modifier = Modifier.padding(start = 24.dp, top = if (backdrop != null) 320.dp else 306.dp, bottom = 12.dp).fillMaxSize().glass(blur = false).padding(inset)) // no backdrop patch on the grid: the performance gate (ledger)
+            modifier = Modifier.padding(start = 24.dp, top = gridTop, bottom = 12.dp).fillMaxSize().glass(blur = false).padding(inset)) // no backdrop patch on the grid: the performance gate (ledger)
         if (state.railOpen) CategoryRail(vm, state)
         GuideMenus(vm, state)
     }
@@ -88,7 +105,7 @@ fun LiveGuideScreen(vm: LiveViewModel, nav: @Composable () -> Unit, onFullScreen
 
 /** The hero reads focus, guide and stream format itself, so a key press recomposes only it and the rows, not the screen. */
 @Composable
-private fun GuideHero(vm: LiveViewModel, modifier: Modifier) {
+private fun GuideHero(vm: LiveViewModel, modifier: Modifier, size: HeaderSize) {
     val channels by vm.channels.collectAsState()
     val programmes by vm.programmes.collectAsState()
     val now by vm.now.collectAsState()
@@ -98,5 +115,5 @@ private fun GuideHero(vm: LiveViewModel, modifier: Modifier) {
     val previewingId by vm.previewingId.collectAsState()
     val formats by vm.player.formats.collectAsState()
     val hero = channels.find { it.id == focused?.id } ?: focused // the list has the renamed copy
-    Hero(hero, hero?.displayName(strip).orEmpty(), programmes[focused?.id].orEmpty(), now, logoSource, heroBadges(focused?.id, previewingId, formats), modifier)
+    Hero(hero, hero?.displayName(strip).orEmpty(), programmes[focused?.id].orEmpty(), now, logoSource, heroBadges(focused?.id, previewingId, formats), modifier, size)
 }
