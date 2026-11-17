@@ -248,6 +248,18 @@ class BackupTest {
         assertEquals(7, back.guideRows); assertTrue(back.multiLineGuide)
     }
 
+    @Test fun guideOrderWithoutUserSourcesSurvivesBackup() {
+        val order = listOf(org.imdtv.iptvtv.data.settings.GuideKind.OPEN_SOURCE, org.imdtv.iptvtv.data.settings.GuideKind.PLAYLIST)
+        val s = org.imdtv.iptvtv.data.settings.AppSettings(guideOrder = order)
+        assertEquals(order, decodeBackup(encodeBackup(Backup(playlists = emptyList(), settings = BSettings.of(s)))).settings.toAppSettings(null).guideOrder)
+    }
+
+    @Test fun oldBackupGuideOrderGainsUserSources() {
+        val g = org.imdtv.iptvtv.data.settings.GuideKind.entries.associateBy { it.name }
+        val old = BSettings(guideOrder = listOf("PLAYLIST", "OPEN_SOURCE"), guideKinds = null)
+        assertEquals(listOf(g["PLAYLIST"], g["USER"], g["OPEN_SOURCE"]), old.toAppSettings(null).guideOrder)
+    }
+
     @Test fun backupHasRecordingSettingsButNoSmbPassword() {
         val s = org.imdtv.iptvtv.data.settings.AppSettings(recordingOn = true, smbServer = "nas-box", smbUser = "me", smbPassword = "s3cretpw", endLateMin = 10)
         val json = encodeBackup(Backup(playlists = emptyList(), settings = BSettings.of(s)))

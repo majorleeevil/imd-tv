@@ -25,11 +25,19 @@ fun epgShareCode(country: String?): String? = when {
     else -> country
 }
 
-/** Sources used per Guide source order (spec §5.1): all of the first kind by priority, then the next kind. */
-fun selectSources(sources: List<EpgSourceEntity>, order: List<GuideKind>): List<EpgSourceEntity> = order.flatMap { k ->
-    val origin = if (k == GuideKind.PLAYLIST) ORIGIN_PLAYLIST else ORIGIN_EPGSHARE
-    sources.filter { it.origin == origin }.sortedBy { it.priority }
+/**
+ * epgshare01 files are open-source; a URL the playlist supplies ([own]) is the playlist's; any other was added by the user.
+ * [own] null = not known (tests, callers without the playlist): every non-epgshare01 source counts as the playlist's.
+ */
+fun guideKindOf(s: EpgSourceEntity, own: Set<String>?): GuideKind = when {
+    s.origin == ORIGIN_EPGSHARE -> GuideKind.OPEN_SOURCE
+    s.origin != ORIGIN_PLAYLIST || own != null && s.url !in own -> GuideKind.USER
+    else -> GuideKind.PLAYLIST
 }
+
+/** Sources used per Guide source order (spec §5.1): all of the first kind by priority, then the next kind. */
+fun selectSources(sources: List<EpgSourceEntity>, order: List<GuideKind>, own: Set<String>? = null): List<EpgSourceEntity> =
+    order.flatMap { k -> sources.filter { guideKindOf(it, own) == k }.sortedBy { it.priority } }
 
 /** Keeps one EPGSHARE source per epgshare01 file for the countries of the provider's shown categories (spec §5.2). */
 class EpgShareSources(

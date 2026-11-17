@@ -74,7 +74,7 @@ fun EpgGroupRows(vm: SettingsViewModel, first: Modifier, sourcesOpener: Modifier
     val updating by vm.guideUpdating.collectAsState()
     SettingRow("Update now", if (updating) "Updating guide… This can take a few minutes" else guideStatus(sources) ?: "Download the TV guide now",
         null, first, busy = updating) { vm.refreshGuide() }
-    PriorityRows("guides", s.guideOrder, GuideKind.entries, 2, { it.label }) { vm.setGuideOrder(it) }
+    PriorityRows("guides", s.guideOrder, GuideKind.entries, 3, { it.label }) { vm.setGuideOrder(it) }
     SwitchRow("Borrow guide from similar channels", "A channel with no guide uses one with the same name, e.g. Sport HEVC uses Sport",
         s.borrowSiblingGuide) { on -> vm.setBorrowSiblingGuide(on) }
     SettingRow(

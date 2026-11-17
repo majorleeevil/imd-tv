@@ -110,6 +110,10 @@ class ProviderRepository(
     /** The guide URLs the playlist itself supplies (Xtream's carry the login). */
     fun ownEpgUrls(p: ProviderEntity): List<String> = sourceFor(p).epgUrls()
 
+    /** Guide URLs that count as the playlist's (Settings › TV guide priority "Playlist"): its own and any typed with it. */
+    suspend fun playlistGuideUrls(providerId: Long): Set<String>? =
+        db.providerDao().get(providerId)?.let { p -> (p.epgOverrideUrls + ownEpgUrls(p)).toSet() }
+
     fun observeAll(): Flow<List<ProviderEntity>> = db.providerDao().observeAll()
 
     /** Inserts the provider with its EPG sources and default name rules; becomes active if none is. */

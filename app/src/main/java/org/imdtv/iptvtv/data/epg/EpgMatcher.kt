@@ -29,6 +29,8 @@ class EpgMatcher(
     /** Guide source and borrowing settings; read on each rematch so every caller follows them. */
     private val settings: suspend () -> AppSettings = { AppSettings() },
     private val now: () -> Long = System::currentTimeMillis,
+    /** The guide URLs the playlist supplies, which tell Playlist from Your EPG sources; null = not known (all Playlist). */
+    private val ownUrls: suspend (Long) -> Set<String>? = { null },
 ) {
 
     suspend fun rematch(providerId: Long, mode: List<GuideKind>? = null, borrow: Boolean? = null): MatchResult {
@@ -43,7 +45,7 @@ class EpgMatcher(
     private suspend fun rematchWith(providerId: Long, mode: List<GuideKind>, borrow: Boolean): MatchResult = withContext(Dispatchers.Default) {
         val epg = db.epgDao()
         val normaliser = NameNormaliser(db.ruleDao().nameRules(providerId))
-        val sources = selectSources(epg.sources(providerId), mode)
+        val sources = selectSources(epg.sources(providerId), mode, ownUrls(providerId))
 
         // Per source, in priority order: xmltv ids, exact (lightly normalised) names, and rule-normalised names.
         val ids = ArrayList<Pair<Long, Set<String>>>(sources.size)

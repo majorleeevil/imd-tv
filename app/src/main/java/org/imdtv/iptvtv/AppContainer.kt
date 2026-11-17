@@ -82,7 +82,7 @@ class AppContainer(context: Context) {
     val logoPack: LogoPackRepository by lazy { LogoPackRepository(db, logoDir) }
     val settings: SettingsRepository by lazy { SettingsRepository(prefs) }
     val epgImporter: EpgImporter by lazy { EpgImporter(db, http, XmltvParser()) }
-    val epgMatcher: EpgMatcher by lazy { EpgMatcher(db, settings = { settings.settings.first() }) }
+    val epgMatcher: EpgMatcher by lazy { EpgMatcher(db, settings = { settings.settings.first() }, ownUrls = { providerRepository.playlistGuideUrls(it) }) }
     val epgShare: EpgShareSources by lazy {
         // The TV language's countries (user, 2026-11-11): English → UK, US, CA, AU, IE, NZ (~22 MB), not every shown country (~32 MB).
         EpgShareSources(db, countries = { countriesOfLanguage(tvLanguage()) }) { url ->

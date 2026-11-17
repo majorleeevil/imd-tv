@@ -39,6 +39,8 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
     private val matchLanguage = booleanPreferencesKey("match_tv_language")
     private val logoOrder = stringPreferencesKey("logo_order")
     private val guideOrder = stringPreferencesKey("guide_order")
+    /** Since "Your EPG sources" became a kind: an order here may leave it out on purpose; one under [guideOrder] predates it. */
+    private val guideKinds = stringPreferencesKey("guide_kinds")
     // Single-choice settings before 2026-11-12, read once to seed the orders.
     private val oldLogoSource = stringPreferencesKey("logo_source")
     private val oldGuideSource = stringPreferencesKey("guide_source")
@@ -96,7 +98,9 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
             lastLiveChannelId = this[lastChannel],
             matchTvLanguage = this[matchLanguage] ?: d.matchTvLanguage,
             logoOrder = order(this[logoOrder] ?: this[oldLogoSource]?.let(OLD_LOGO::get), LogoKind.entries) ?: d.logoOrder,
-            guideOrder = order(this[guideOrder] ?: this[oldGuideSource]?.let(OLD_GUIDE::get), GuideKind.entries) ?: d.guideOrder,
+            guideOrder = order(this[guideKinds], GuideKind.entries)
+                ?: order(this[guideOrder] ?: this[oldGuideSource]?.let(OLD_GUIDE::get), GuideKind.entries)?.let(::withUserGuides)
+                ?: d.guideOrder,
             borrowSiblingGuide = this[borrowSibling] ?: d.borrowSiblingGuide,
             hideHeaderChannels = this[hideHeaders] ?: d.hideHeaderChannels,
             showDateTime = this[showDateTime] ?: d.showDateTime,
@@ -144,7 +148,7 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
         this[pastDays] = s.epgPastDays
         this[matchLanguage] = s.matchTvLanguage
         this[logoOrder] = s.logoOrder.joinToString(",") { it.name }
-        this[guideOrder] = s.guideOrder.joinToString(",") { it.name }
+        this[guideKinds] = s.guideOrder.joinToString(",") { it.name }
         this[borrowSibling] = s.borrowSiblingGuide
         this[hideHeaders] = s.hideHeaderChannels
         this[showDateTime] = s.showDateTime

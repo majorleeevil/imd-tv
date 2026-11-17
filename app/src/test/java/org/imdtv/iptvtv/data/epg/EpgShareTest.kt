@@ -50,6 +50,20 @@ class EpgShareTest {
         assertEquals(listOf(3L, 1L, 2L), selectSources(all, listOf(O, P)).map { it.id })  // the reverse (user, 2026-11-12)
     }
 
+    @Test fun userSourcesAreToldApartByOwnUrls() {
+        val pl = src(1, ORIGIN_PLAYLIST, 0); val hand = src(2, ORIGIN_PLAYLIST, 1); val e = src(3, ORIGIN_EPGSHARE, 0)
+        val own = setOf("u1")
+        assertEquals(GuideKind.PLAYLIST, guideKindOf(pl, own)); assertEquals(GuideKind.USER, guideKindOf(hand, own))
+        assertEquals(GuideKind.OPEN_SOURCE, guideKindOf(e, own))
+        assertEquals(GuideKind.PLAYLIST, guideKindOf(hand, null))  // unknown own urls: the old behaviour
+        val all = listOf(e, hand, pl)
+        val P = GuideKind.PLAYLIST; val U = GuideKind.USER; val O = GuideKind.OPEN_SOURCE
+        assertEquals(listOf(2L, 1L), selectSources(all, listOf(U, P), own).map { it.id })
+        assertEquals(listOf(1L, 2L, 3L), selectSources(all, listOf(P, U, O), own).map { it.id })
+        assertEquals(listOf(1L, 3L), selectSources(all, listOf(P, O), own).map { it.id })
+        assertEquals(listOf(1L, 2L), selectSources(all, listOf(P), null).map { it.id })
+    }
+
     private suspend fun category(p: Long, remoteId: String, country: String, hidden: Boolean, kind: Kind = Kind.LIVE) =
         db.categoryDao().upsert(listOf(CategoryEntity(providerId = p, kind = kind, remoteId = remoteId, name = remoteId, country = country, hidden = hidden)))
 

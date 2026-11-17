@@ -13,6 +13,7 @@ import org.imdtv.iptvtv.data.settings.HeaderSize
 import org.imdtv.iptvtv.data.settings.LogoKind
 import org.imdtv.iptvtv.data.settings.ThemeColour
 import org.imdtv.iptvtv.data.settings.themeIdOf
+import org.imdtv.iptvtv.data.settings.withUserGuides
 
 const val BACKUP_VERSION = 1
 
@@ -108,6 +109,8 @@ data class BSettings(
     val headerSize: String = AppSettings().headerSize.name,
     val previewFade: Boolean = AppSettings().previewFade,
     val themeDark: Boolean = AppSettings().themeDark,
+    /** The guide order with "Your EPG sources"; absent in older backups, whose [guideOrder] then gets it added. */
+    val guideKinds: List<String>? = null,
 ) {
     fun toAppSettings(lastLiveChannelId: Long?): AppSettings {
         val d = AppSettings()
@@ -129,7 +132,8 @@ data class BSettings(
             lastLiveChannelId = lastLiveChannelId,
             matchTvLanguage = matchTvLanguage,
             logoOrder = logoOrder.mapNotNull { n -> LogoKind.entries.find { it.name == n } }.distinct().ifEmpty { d.logoOrder },
-            guideOrder = guideOrder.mapNotNull { n -> GuideKind.entries.find { it.name == n } }.distinct().ifEmpty { d.guideOrder },
+            guideOrder = guideKinds?.let(::guideKindsOf)?.ifEmpty { null }
+                ?: guideKindsOf(guideOrder).ifEmpty { null }?.let(::withUserGuides) ?: d.guideOrder,
             borrowSiblingGuide = borrowSiblingGuide,
             hideHeaderChannels = hideHeaderChannels,
             showDateTime = showDateTime,
@@ -155,12 +159,14 @@ data class BSettings(
             s.borrowSiblingGuide, s.hideHeaderChannels, s.showDateTime, s.showPing, s.subtitlesOn, s.subtitleLanguage,
             guideRows = s.guideRows, multiLineGuide = s.multiLineGuide,
             zapLeftRight = s.zapLeftRight, backToFullScreen = s.backToFullScreen, showChannelNumbers = s.showChannelNumbers, clock24h = s.clock24h, playerClock = s.playerClock, liveSubtitlesOn = s.liveSubtitlesOn,
-            headerSize = s.headerSize.name, previewFade = s.previewFade, themeDark = s.themeDark,
+            headerSize = s.headerSize.name, previewFade = s.previewFade, themeDark = s.themeDark, guideKinds = s.guideOrder.map { it.name },
             recordingOn = s.recordingOn, recordTo = s.recordTo.name, startEarlyMin = s.startEarlyMin, endLateMin = s.endLateMin,
             keepAwake = s.keepAwake, smbServer = s.smbServer, smbShare = s.smbShare, smbFolder = s.smbFolder, smbUser = s.smbUser,
         )
     }
 }
+
+private fun guideKindsOf(names: List<String>) = names.mapNotNull { n -> GuideKind.entries.find { it.name == n } }.distinct()
 
 private val backupJson = Json { ignoreUnknownKeys = true; prettyPrint = true; encodeDefaults = true }
 

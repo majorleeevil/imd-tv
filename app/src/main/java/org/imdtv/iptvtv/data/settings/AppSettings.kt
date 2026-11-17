@@ -25,10 +25,20 @@ enum class AudioDecoder { HARDWARE, SOFTWARE }
 enum class LogoKind(val label: String) { PLAYLIST("Playlist"), OPEN_SOURCE("Open-source logos"), PACK("My logo pack") }
 
 /** Where the guide can come from; the setting is an order of these (spec §5.1, reversible since 2026-11-12). */
-enum class GuideKind(val label: String) { PLAYLIST("Playlist"), OPEN_SOURCE("Open-source guide") }
+enum class GuideKind(val label: String) { PLAYLIST("Playlist"), USER("Your EPG sources"), OPEN_SOURCE("Open-source guide") }
 
 val DEFAULT_LOGO_ORDER = listOf(LogoKind.PLAYLIST, LogoKind.OPEN_SOURCE)
-val DEFAULT_GUIDE_ORDER = listOf(GuideKind.PLAYLIST, GuideKind.OPEN_SOURCE)
+val DEFAULT_GUIDE_ORDER = listOf(GuideKind.PLAYLIST, GuideKind.USER, GuideKind.OPEN_SOURCE)
+
+/**
+ * An order saved before "Your EPG sources" was its own kind (2026-11-17): those sources ranked with the playlist's,
+ * so the new kind goes right after Playlist (nothing changes), or last when Playlist wasn't in the order.
+ */
+fun withUserGuides(old: List<GuideKind>): List<GuideKind> = when {
+    GuideKind.USER in old -> old
+    GuideKind.PLAYLIST in old -> old.toMutableList().apply { add(indexOf(GuideKind.PLAYLIST) + 1, GuideKind.USER) }
+    else -> old + GuideKind.USER
+}
 
 val EPG_INTERVALS = listOf(6, 12, 24, 48)
 val START_EARLY = listOf(0, 1, 2, 5, 10)

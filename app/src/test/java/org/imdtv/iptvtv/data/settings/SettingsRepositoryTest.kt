@@ -78,25 +78,40 @@ class SettingsRepositoryTest {
         assertEquals(listOf(GuideKind.OPEN_SOURCE, GuideKind.PLAYLIST), s.guideOrder); assertFalse(s.borrowSiblingGuide)
     }
 
-    @Test fun defaultsArePlaylistThenOpenSource() = runTest {
+    @Test fun defaultsArePlaylistUserThenOpenSource() = runTest {
         assertEquals(listOf(LogoKind.PLAYLIST, LogoKind.OPEN_SOURCE), repo.settings.first().logoOrder)
-        assertEquals(listOf(GuideKind.PLAYLIST, GuideKind.OPEN_SOURCE), repo.settings.first().guideOrder)
+        assertEquals(listOf(GuideKind.PLAYLIST, GuideKind.USER, GuideKind.OPEN_SOURCE), repo.settings.first().guideOrder)
     }
 
     /** Settings saved by the single-choice options before 2026-11-12 keep their meaning. */
     @Test fun oldChoicesMigrate() = runTest {
         prefs.edit { it[stringPreferencesKey("logo_source")] = "MY_PACK_FILLED"; it[stringPreferencesKey("guide_source")] = "EPGSHARE" }
         assertEquals(listOf(LogoKind.PACK, LogoKind.OPEN_SOURCE, LogoKind.PLAYLIST), repo.settings.first().logoOrder)
-        assertEquals(listOf(GuideKind.OPEN_SOURCE), repo.settings.first().guideOrder)
+        assertEquals(listOf(GuideKind.OPEN_SOURCE, GuideKind.USER), repo.settings.first().guideOrder)
         prefs.edit { it[stringPreferencesKey("logo_source")] = "TV_LOGOS"; it[stringPreferencesKey("guide_source")] = "PLAYLIST" }
         assertEquals(listOf(LogoKind.OPEN_SOURCE), repo.settings.first().logoOrder)
-        assertEquals(listOf(GuideKind.PLAYLIST), repo.settings.first().guideOrder)
+        assertEquals(listOf(GuideKind.PLAYLIST, GuideKind.USER), repo.settings.first().guideOrder)
     }
 
     @Test fun badOrdersFallBack() = runTest {
         prefs.edit { it[stringPreferencesKey("logo_order")] = "BOGUS,,PLAYLIST,PLAYLIST"; it[stringPreferencesKey("guide_order")] = "" }
         assertEquals(listOf(LogoKind.PLAYLIST), repo.settings.first().logoOrder)
-        assertEquals(listOf(GuideKind.PLAYLIST, GuideKind.OPEN_SOURCE), repo.settings.first().guideOrder)
+        assertEquals(DEFAULT_GUIDE_ORDER, repo.settings.first().guideOrder)
+    }
+
+    private suspend fun oldGuideOrder(v: String) = prefs.edit { it[stringPreferencesKey("guide_order")] = v }.let { repo.settings.first().guideOrder }
+
+    @Test fun oldGuideOrdersGainUserSources() = runTest {
+        val P = GuideKind.PLAYLIST; val U = GuideKind.USER; val O = GuideKind.OPEN_SOURCE
+        assertEquals(listOf(P, U, O), oldGuideOrder("PLAYLIST,OPEN_SOURCE"))
+        assertEquals(listOf(O, P, U), oldGuideOrder("OPEN_SOURCE,PLAYLIST"))
+        assertEquals(listOf(O, U), oldGuideOrder("OPEN_SOURCE"))
+    }
+
+    @Test fun leavingUserSourcesOutIsKept() = runTest {
+        val order = listOf(GuideKind.PLAYLIST, GuideKind.OPEN_SOURCE)
+        repo.update { it.copy(guideOrder = order) }
+        assertEquals(order, repo.settings.first().guideOrder)
     }
 
     @Test fun guideSettingsRoundTripAndClamp() = runTest {
