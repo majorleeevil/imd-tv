@@ -30,7 +30,7 @@ class SettingsRepositoryTest {
 
     @Test fun updateRoundTripsEveryField() = runTest {
         val s = AppSettings(ThemeId.CELESTIAL_GLASS, true, AudioDecoder.HARDWARE, false, false, true, 24, true, false, 14, 0, 42L, true)
-            .copy(subtitlesOn = true, subtitleLanguage = "fr", zapLeftRight = true, backToFullScreen = true, showChannelNumbers = false)
+            .copy(subtitlesOn = true, subtitleLanguage = "fr", zapLeftRight = true, backToFullScreen = true, showChannelNumbers = false, clock24h = false, playerClock = true, liveSubtitlesOn = true, headerSize = HeaderSize.SMALL, previewFade = false)
         repo.update { s }
         assertEquals(s, repo.settings.first())
     }
@@ -39,6 +39,11 @@ class SettingsRepositoryTest {
         repo.update { it.copy(subtitleLanguage = "fr") }
         repo.update { it.copy(subtitleLanguage = null) }
         assertEquals(null, repo.settings.first().subtitleLanguage)
+    }
+
+    @Test fun unknownHeaderSizeFallsBackToLarge() = runTest {
+        prefs.edit { it[stringPreferencesKey("header_size")] = "HUGE" }
+        assertEquals(HeaderSize.LARGE, repo.settings.first().headerSize)
     }
 
     @Test fun themeRoundTrips() = runTest {

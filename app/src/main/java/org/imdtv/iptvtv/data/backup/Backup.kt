@@ -9,6 +9,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import org.imdtv.iptvtv.data.settings.AppSettings
 import org.imdtv.iptvtv.data.settings.AudioDecoder
 import org.imdtv.iptvtv.data.settings.GuideKind
+import org.imdtv.iptvtv.data.settings.HeaderSize
 import org.imdtv.iptvtv.data.settings.LogoKind
 import org.imdtv.iptvtv.data.settings.ThemeColour
 import org.imdtv.iptvtv.data.settings.themeIdOf
@@ -95,6 +96,11 @@ data class BSettings(
     val zapLeftRight: Boolean = AppSettings().zapLeftRight,
     val backToFullScreen: Boolean = AppSettings().backToFullScreen,
     val showChannelNumbers: Boolean = AppSettings().showChannelNumbers,
+    val clock24h: Boolean = AppSettings().clock24h,
+    val playerClock: Boolean = AppSettings().playerClock,
+    val liveSubtitlesOn: Boolean = AppSettings().liveSubtitlesOn,
+    val headerSize: String = AppSettings().headerSize.name,
+    val previewFade: Boolean = AppSettings().previewFade,
 ) {
     fun toAppSettings(lastLiveChannelId: Long?): AppSettings {
         val d = AppSettings()
@@ -105,7 +111,8 @@ data class BSettings(
             audioDecoder = AudioDecoder.entries.find { it.name == audioDecoder } ?: d.audioDecoder,
             lastChannelOnStart = lastChannelOnStart,
             confirmExit = confirmExit,
-            zapLeftRight = zapLeftRight, backToFullScreen = backToFullScreen, showChannelNumbers = showChannelNumbers,
+            zapLeftRight = zapLeftRight, backToFullScreen = backToFullScreen, showChannelNumbers = showChannelNumbers, clock24h = clock24h, playerClock = playerClock, liveSubtitlesOn = liveSubtitlesOn,
+            headerSize = HeaderSize.entries.find { it.name == headerSize } ?: d.headerSize, previewFade = previewFade,
             startOnBoot = startOnBoot,
             epgUpdateIntervalHours = epgUpdateIntervalHours,
             epgUpdateOnStart = epgUpdateOnStart,
@@ -140,7 +147,8 @@ data class BSettings(
             s.epgPastDays, s.matchTvLanguage, s.logoOrder.map { it.name }, s.guideOrder.map { it.name },
             s.borrowSiblingGuide, s.hideHeaderChannels, s.showDateTime, s.showPing, s.subtitlesOn, s.subtitleLanguage,
             guideRows = s.guideRows, multiLineGuide = s.multiLineGuide,
-            zapLeftRight = s.zapLeftRight, backToFullScreen = s.backToFullScreen, showChannelNumbers = s.showChannelNumbers,
+            zapLeftRight = s.zapLeftRight, backToFullScreen = s.backToFullScreen, showChannelNumbers = s.showChannelNumbers, clock24h = s.clock24h, playerClock = s.playerClock, liveSubtitlesOn = s.liveSubtitlesOn,
+            headerSize = s.headerSize.name, previewFade = s.previewFade,
             recordingOn = s.recordingOn, recordTo = s.recordTo.name, startEarlyMin = s.startEarlyMin, endLateMin = s.endLateMin,
             keepAwake = s.keepAwake, smbServer = s.smbServer, smbShare = s.smbShare, smbFolder = s.smbFolder, smbUser = s.smbUser,
         )

@@ -35,6 +35,9 @@ val START_EARLY = listOf(0, 1, 2, 5, 10)
 val END_LATE = listOf(0, 2, 5, 10, 15, 30)
 
 /** App-wide settings (spec §2.1). Per-playlist data lives in Room. */
+/** Guide header size: a smaller header leaves the guide taller. */
+enum class HeaderSize(val label: String) { LARGE("Large"), MEDIUM("Medium"), SMALL("Small") }
+
 data class AppSettings(
     val theme: ThemeId = ThemeId.CELESTIAL_GLASS,
     val autoplayOnScroll: Boolean = false,
@@ -84,6 +87,12 @@ data class AppSettings(
     /** Back in the live TV guide opens the playing channel full screen instead of going to the menu. */
     val backToFullScreen: Boolean = false,
     val showChannelNumbers: Boolean = true,
+    /** 13:05 instead of 1.05pm. */
+    val clock24h: Boolean = true,
+    val playerClock: Boolean = false,
+    val liveSubtitlesOn: Boolean = false,
+    val headerSize: HeaderSize = HeaderSize.LARGE,
+    val previewFade: Boolean = true,
 ) {
     fun clamped() = copy(
         epgUpdateIntervalHours = epgUpdateIntervalHours.takeIf { it in EPG_INTERVALS } ?: 12,

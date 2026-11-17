@@ -28,13 +28,16 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import org.imdtv.iptvtv.ui.use24Hour
 
 private val time = DateTimeFormatter.ofPattern("h.mma", Locale.UK)
 private val dayTime = DateTimeFormatter.ofPattern("d MMM, h.mma", Locale.UK)
+private val time24 = DateTimeFormatter.ofPattern("HH:mm", Locale.UK)
+private val dayTime24 = DateTimeFormatter.ofPattern("d MMM, HH:mm", Locale.UK)
 
 fun updatedLabel(lastSync: Long?): String {
     val t = Instant.ofEpochMilli(lastSync ?: return "Not updated yet").atZone(ZoneId.systemDefault())
-    return "Updated " + (if (t.toLocalDate() == LocalDate.now()) time else dayTime).format(t).lowercase(Locale.UK)
+    return "Updated " + (if (t.toLocalDate() == LocalDate.now()) (if (use24Hour) time24 else time) else (if (use24Hour) dayTime24 else dayTime)).format(t).lowercase(Locale.UK)
 }
 
 private fun ProviderEntity.typeLabel() = when (type) { ProviderType.XTREAM -> "Xtream"; ProviderType.M3U -> "M3U"; ProviderType.STALKER -> "Stalker" }

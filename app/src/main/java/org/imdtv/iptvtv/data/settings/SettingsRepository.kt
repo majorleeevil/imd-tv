@@ -23,6 +23,11 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
     private val zapLeftRight = booleanPreferencesKey("zap_left_right")
     private val backToFullScreen = booleanPreferencesKey("back_to_full_screen")
     private val showChannelNumbers = booleanPreferencesKey("show_channel_numbers")
+    private val clock24h = booleanPreferencesKey("clock_24h")
+    private val playerClock = booleanPreferencesKey("player_clock")
+    private val liveSubtitlesOn = booleanPreferencesKey("live_subtitles_on")
+    private val headerSize = stringPreferencesKey("header_size")
+    private val previewFade = booleanPreferencesKey("preview_fade")
     private val startOnBoot = booleanPreferencesKey("start_on_boot")
     private val interval = intPreferencesKey("epg_update_interval_hours")
     private val epgOnStart = booleanPreferencesKey("epg_update_on_start")
@@ -75,6 +80,11 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
             zapLeftRight = this[zapLeftRight] ?: d.zapLeftRight,
             backToFullScreen = this[backToFullScreen] ?: d.backToFullScreen,
             showChannelNumbers = this[showChannelNumbers] ?: d.showChannelNumbers,
+            clock24h = this[clock24h] ?: d.clock24h,
+            playerClock = this[playerClock] ?: d.playerClock,
+            liveSubtitlesOn = this[liveSubtitlesOn] ?: d.liveSubtitlesOn,
+            headerSize = HeaderSize.entries.find { it.name == this[headerSize] } ?: d.headerSize,
+            previewFade = this[previewFade] ?: d.previewFade,
             startOnBoot = this[startOnBoot] ?: d.startOnBoot,
             epgUpdateIntervalHours = this[interval] ?: d.epgUpdateIntervalHours,
             epgUpdateOnStart = this[epgOnStart] ?: d.epgUpdateOnStart,
@@ -118,6 +128,11 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
         this[zapLeftRight] = s.zapLeftRight
         this[backToFullScreen] = s.backToFullScreen
         this[showChannelNumbers] = s.showChannelNumbers
+        this[clock24h] = s.clock24h
+        this[playerClock] = s.playerClock
+        this[liveSubtitlesOn] = s.liveSubtitlesOn
+        this[headerSize] = s.headerSize.name
+        this[previewFade] = s.previewFade
         this[startOnBoot] = s.startOnBoot
         this[interval] = s.epgUpdateIntervalHours
         this[epgOnStart] = s.epgUpdateOnStart

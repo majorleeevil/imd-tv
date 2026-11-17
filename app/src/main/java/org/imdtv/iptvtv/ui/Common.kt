@@ -112,8 +112,13 @@ private fun NavClock(showDate: Boolean) {
         color = Color.White, modifier = Modifier.padding(start = 14.dp))
 }
 
+// shortcut: global, not state; screens pick it up on their next recomposition (clock ticks each minute)
+@Volatile var use24Hour = true
+
 private val clock = DateTimeFormatter.ofPattern("h.mma", Locale.UK)
-fun clockTime(t: Long): String = clock.format(Instant.ofEpochMilli(t).atZone(ZoneId.systemDefault())).lowercase()
+private val clock24 = DateTimeFormatter.ofPattern("HH:mm", Locale.UK)
+fun clockTime(t: Long): String =
+    (if (use24Hour) clock24 else clock).format(Instant.ofEpochMilli(t).atZone(ZoneId.systemDefault())).lowercase()
 
 private val day = DateTimeFormatter.ofPattern("EEE d/M", Locale.UK)
 /** "Fri 13/11". */

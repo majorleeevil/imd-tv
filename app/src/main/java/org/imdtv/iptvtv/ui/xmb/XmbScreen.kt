@@ -65,6 +65,8 @@ import org.imdtv.iptvtv.data.db.ChannelEntity
 import org.imdtv.iptvtv.data.model.Kind
 import org.imdtv.iptvtv.ui.ChannelLogo
 import org.imdtv.iptvtv.ui.clockTime
+import org.imdtv.iptvtv.ui.use24Hour
+import java.util.Locale
 import org.imdtv.iptvtv.ui.live.GuideMenu
 import org.imdtv.iptvtv.ui.live.GuideMenus
 import org.imdtv.iptvtv.ui.live.LiveViewModel
@@ -78,6 +80,7 @@ import org.imdtv.iptvtv.ui.vod.VodItem
 import org.imdtv.iptvtv.ui.vod.VodViewModel
 
 private val CLOCK = DateTimeFormatter.ofPattern("d/M H:mm")
+private val CLOCK12 = DateTimeFormatter.ofPattern("d/M h.mma", Locale.UK)
 private val ICONS = mapOf(XmbColumn.SETTINGS to R.drawable.ic_tab_settings, XmbColumn.SEARCH to R.drawable.ic_tab_search, XmbColumn.LIVE to R.drawable.ic_tab_live,
     XmbColumn.MOVIES to R.drawable.ic_tab_movies, XmbColumn.SERIES to R.drawable.ic_tab_series, XmbColumn.RECORDINGS to R.drawable.ic_tab_recordings)
 private val LABELS = mapOf(XmbColumn.SETTINGS to "Settings", XmbColumn.SEARCH to "Search", XmbColumn.LIVE to "Live TV", XmbColumn.MOVIES to "Movies",
@@ -220,7 +223,7 @@ fun XmbScreen(
             .clickable(remember { MutableInteractionSource() }, indication = null, onClick = click)
             .focusable(),
     ) {
-        Text(CLOCK.format(Instant.ofEpochMilli(now).atZone(ZoneId.systemDefault())), fontSize = 13.sp, color = Color.White,
+        Text((if (use24Hour) CLOCK else CLOCK12).format(Instant.ofEpochMilli(now).atZone(ZoneId.systemDefault())), fontSize = 13.sp, color = Color.White,
             modifier = Modifier.align(Alignment.TopEnd).padding(top = 22.dp, end = 30.dp)
                 .border(1.dp, Color(0x66FFFFFF), RoundedCornerShape(3.dp)).padding(horizontal = 18.dp, vertical = 4.dp).width(160.dp))
 

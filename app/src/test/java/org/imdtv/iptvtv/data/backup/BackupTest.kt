@@ -28,6 +28,7 @@ import org.imdtv.iptvtv.data.repo.FakeSource
 import org.imdtv.iptvtv.data.repo.ProviderRepository
 import org.imdtv.iptvtv.data.repo.channel
 import org.imdtv.iptvtv.data.repo.live
+import org.imdtv.iptvtv.data.settings.HeaderSize
 import org.imdtv.iptvtv.data.settings.SettingsRepository
 import org.imdtv.iptvtv.data.settings.ThemeId
 
@@ -82,7 +83,7 @@ class BackupTest {
         providers.addEpgSource(p, "http://guide/uk.xml", "UK guide")
         db.providerDao().setCategoryStrip(p, "UK|")
         db.epgDao().sources(p).first().let { db.epgDao().setOffset(it.id, 60) }
-        settings.update { it.copy(theme = ThemeId.LIQUID_GLASS, confirmExit = false, epgDaysToKeep = 3, zapLeftRight = true, backToFullScreen = true, showChannelNumbers = false) }
+        settings.update { it.copy(theme = ThemeId.LIQUID_GLASS, confirmExit = false, epgDaysToKeep = 3, zapLeftRight = true, backToFullScreen = true, showChannelNumbers = false, clock24h = false, playerClock = true, liveSubtitlesOn = true, headerSize = HeaderSize.SMALL, previewFade = false) }
         return p
     }
 
