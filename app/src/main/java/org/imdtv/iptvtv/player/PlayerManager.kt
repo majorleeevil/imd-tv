@@ -94,11 +94,13 @@ class PlayerManager(private val context: Context) {
     }
 
     private var subtitlesOn = false
+    private var liveSubtitlesOn = false
     private var subtitleLanguage = java.util.Locale.getDefault().language
 
     /** The Subtitles setting; [language] null = the TV's language. Applies now and to every title played after. */
-    fun setSubtitles(on: Boolean, language: String?) {
+    fun setSubtitles(on: Boolean, language: String?, liveOn: Boolean = false) {
         subtitlesOn = on
+        liveSubtitlesOn = liveOn
         subtitleLanguage = language ?: java.util.Locale.getDefault().language
         applySubtitles(player)
     }
@@ -106,6 +108,7 @@ class PlayerManager(private val context: Context) {
     /** Movies and series follow the Subtitles setting; live channels keep Media3's own text defaults (spec: live unchanged). */
     private fun applySubtitles(p: ExoPlayer) {
         p.trackSelectionParameters = if (vod) subtitleParams(p.trackSelectionParameters, subtitlesOn, subtitleLanguage)
+            else if (liveSubtitlesOn) liveSubtitleParams(p.trackSelectionParameters, subtitleLanguage)
             else liveTextParams(p.trackSelectionParameters, liveDefaults)
     }
     private val liveDefaults by lazy { TrackSelectionParameters.Builder(context).build() }
@@ -411,6 +414,10 @@ fun subtitleParams(base: TrackSelectionParameters, on: Boolean, language: String
         .setSelectUndeterminedTextLanguage(false)
         .setPreferredTextLanguage(if (on) language else null)
         .build()
+
+/** Live with "Subtitles on live TV": the subtitle language, also taking tracks with no language (live CEA-608 is often "und"). */
+fun liveSubtitleParams(base: TrackSelectionParameters, language: String): TrackSelectionParameters =
+    subtitleParams(base, true, language).buildUpon().setSelectUndeterminedTextLanguage(true).build()
 
 /** Live: the text selection a fresh player has ([defaults]), whatever the Subtitles setting; the last title's choice dropped. */
 fun liveTextParams(base: TrackSelectionParameters, defaults: TrackSelectionParameters): TrackSelectionParameters =

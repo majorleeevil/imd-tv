@@ -121,6 +121,14 @@ class PlayerManagerTest {
         assertFalse(p.selectUndeterminedTextLanguage)
     }
 
+    @Test
+    fun liveSubtitlesTakeUndeterminedLanguage() {
+        val p = liveSubtitleParams(base, language = "de")
+        assertEquals(listOf("de"), p.preferredTextLanguages)
+        assertTrue(p.selectUndeterminedTextLanguage)
+        assertFalse(TEXT in p.disabledTrackTypes)
+    }
+
     private fun withTextOverride(p: androidx.media3.common.TrackSelectionParameters) = p.buildUpon().addOverride(
         androidx.media3.common.TrackSelectionOverride(androidx.media3.common.TrackGroup(
             androidx.media3.common.Format.Builder().setSampleMimeType(androidx.media3.common.MimeTypes.APPLICATION_SUBRIP).setLanguage("fr").build()), 0),

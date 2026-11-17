@@ -183,6 +183,8 @@ fun SettingsScreen(vm: SettingsViewModel, onAddPlaylist: () -> Unit, onEditPlayl
                             if (s.recordingOn) "On ›" else "Off ›", Modifier.focusRequester(recordingOpener)) { park(); recordingOpen = true }
                         SwitchRow("Subtitles", "Movies and series that have them",
                             s.subtitlesOn) { on -> vm.update { it.copy(subtitlesOn = on) } }
+                        SwitchRow("Subtitles on live TV", "Show live channels' subtitles (in the subtitle language) when the stream has them",
+                            s.liveSubtitlesOn) { on -> vm.update { it.copy(liveSubtitlesOn = on) } }
                         if (s.subtitlesOn) {
                             val tv = java.util.Locale.getDefault().displayLanguage
                             ChoiceRow("Subtitle language", "Subtitles show only when the film has this language",
