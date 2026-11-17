@@ -27,6 +27,8 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.viewinterop.AndroidView
 import android.view.ViewGroup
 import androidx.core.view.updateLayoutParams
@@ -42,7 +44,7 @@ private val OK = setOf(Key.DirectionCenter, Key.Enter, Key.NumPadEnter)
 
 /** Full-screen playback. Live ([liveVm] set) adds the info overlay (OK opens, Back closes, 5s auto-hide) and Up/Down (or Left/Right) zapping. */
 @Composable
-fun PlayerScreen(player: PlayerManager, title: String, liveVm: LiveViewModel? = null, onGuide: () -> Unit = {}) {
+fun PlayerScreen(player: PlayerManager, title: String, liveVm: LiveViewModel? = null, onGuide: () -> Unit = {}, showClock: Boolean = false) {
     val live = liveVm != null
     val zapLeftRight = liveVm?.settings?.collectAsState()?.value?.zapLeftRight == true
     val focused = liveVm?.focused?.collectAsState()?.value
@@ -89,10 +91,21 @@ fun PlayerScreen(player: PlayerManager, title: String, liveVm: LiveViewModel? = 
             })
             if (overlay) LiveOverlay(liveVm, onGuide = onGuide, onPick = { liveVm.switchTo(it); overlay = false })
         }
+        if (showClock) PlayerClock(Modifier.align(Alignment.TopEnd).padding(top = 27.dp, end = 48.dp))
         error?.let {
             Text(it, color = Color.White, modifier = Modifier.align(Alignment.Center).background(Color(0xCC000000)).padding(24.dp))
         }
     }
+}
+
+/** Its own composable, so the minute tick recomposes only this Text. */
+@Composable
+private fun PlayerClock(modifier: Modifier) {
+    val now by androidx.compose.runtime.produceState(System.currentTimeMillis()) {
+        while (true) { delay(60_000 - System.currentTimeMillis() % 60_000); value = System.currentTimeMillis() }
+    }
+    Text(clockTime(now), fontSize = 14.sp, color = Color.White,
+        modifier = modifier.background(Color(0x99000000), RoundedCornerShape(50)).padding(horizontal = 14.dp, vertical = 4.dp))
 }
 
 /** Moves the controller's bottom bar (cog, time) and time bar into the TV-safe area; the dark backdrop stays full-screen. */
