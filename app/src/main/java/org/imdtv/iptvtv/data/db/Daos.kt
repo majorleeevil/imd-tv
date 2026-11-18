@@ -19,6 +19,7 @@ internal const val SQL_CHUNK = 900
 
 data class CategoryCount(val categoryId: Long?, val n: Int)
 data class GroupCount(val groupId: Long, val n: Int)
+data class RemoteRow(val id: Long, val remoteId: String)
 
 @Dao
 abstract class ProviderDao {
@@ -118,6 +119,8 @@ abstract class ChannelDao {
 
     @Query("SELECT * FROM channel WHERE providerId = :providerId")
     abstract suspend fun byProvider(providerId: Long): List<ChannelEntity>
+    /** Only the two columns a remoteId → id lookup needs (a big catalogue's full rows are slow to load on TV boxes). */
+    @Query("SELECT id, remoteId FROM channel WHERE providerId = :providerId") abstract suspend fun remoteIds(providerId: Long): List<RemoteRow>
 
     @Query("SELECT * FROM channel WHERE id = :id") abstract suspend fun get(id: Long): ChannelEntity?
     @Query("SELECT * FROM channel WHERE id IN (:ids)") abstract suspend fun byIds(ids: List<Long>): List<ChannelEntity>
@@ -192,6 +195,8 @@ abstract class MovieDao {
     @Update(entity = MovieEntity::class) abstract suspend fun updateFromProvider(list: List<MovieFromProvider>)
     @Query("SELECT * FROM movie WHERE providerId = :providerId")
     abstract suspend fun byProvider(providerId: Long): List<MovieEntity>
+    /** Only the two columns a remoteId → id lookup needs (a big catalogue's full rows are slow to load on TV boxes). */
+    @Query("SELECT id, remoteId FROM movie WHERE providerId = :providerId") abstract suspend fun remoteIds(providerId: Long): List<RemoteRow>
     @Query("SELECT * FROM movie WHERE categoryId = :categoryId ORDER BY name")
     abstract fun observeByCategory(categoryId: Long): Flow<List<MovieEntity>>
     @Query("SELECT * FROM movie WHERE categoryId = :categoryId ORDER BY name LIMIT :limit")
@@ -225,6 +230,8 @@ abstract class SeriesDao {
     @Update(entity = SeriesEntity::class) abstract suspend fun updateFromProvider(list: List<SeriesFromProvider>)
     @Query("SELECT * FROM series WHERE providerId = :providerId")
     abstract suspend fun byProvider(providerId: Long): List<SeriesEntity>
+    /** Only the two columns a remoteId → id lookup needs (a big catalogue's full rows are slow to load on TV boxes). */
+    @Query("SELECT id, remoteId FROM series WHERE providerId = :providerId") abstract suspend fun remoteIds(providerId: Long): List<RemoteRow>
     @Query("SELECT * FROM series WHERE categoryId = :categoryId ORDER BY name")
     abstract fun observeByCategory(categoryId: Long): Flow<List<SeriesEntity>>
     @Query("SELECT * FROM series WHERE categoryId = :categoryId ORDER BY name LIMIT :limit")

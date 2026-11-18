@@ -71,7 +71,7 @@ class SyncManager(
     private val context: Context,
     private val prefs: DataStore<Preferences>,
     private val backup: BackupRepository,
-    private val afterMirror: suspend (added: List<Long>) -> Unit,
+    private val afterMirror: suspend (org.imdtv.iptvtv.data.backup.MirrorResult) -> Unit,
     private val scope: CoroutineScope,
 ) {
     private val stateKey = stringPreferencesKey("sync_state")
@@ -264,6 +264,7 @@ class SyncManager(
         val key = Secrets.decrypt(m.key)?.unhex() ?: return@withLock run { problem.value = "Pair with the master again" }
         pulling.value = true
         try {
+            val t0 = System.currentTimeMillis()
             val headers = mapOf("X-Follower" to m.followerId, "X-Hash" to (m.lastHash?.takeIf { !force } ?: ""))
             var at = m
             var notCopied: String? = null
@@ -280,9 +281,12 @@ class SyncManager(
             when (status) {
                 304 -> Unit
                 200 -> {
+                    val t1 = System.currentTimeMillis()
                     val snap = decodeSnapshot(String(open(key, body.first)))
                     val r = backup.mirror(snap) {}
-                    afterMirror(r.added)
+                    val t2 = System.currentTimeMillis()
+                    afterMirror(r)
+                    Log.i(TAG, "Pull ${body.first.size} B: fetch ${t1 - t0} ms, apply ${t2 - t1} ms, after ${System.currentTimeMillis() - t2} ms (guide changed: ${r.guideChanged})")
                     // A playlist left out is tried again when the master changes or on Sync now (a forced pull).
                     at = at.copy(lastHash = body.second)
                     if (r.failed.isNotEmpty()) notCopied = "Not copied: ${r.failed.joinToString()}"

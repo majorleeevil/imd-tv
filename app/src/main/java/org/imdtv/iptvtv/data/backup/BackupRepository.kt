@@ -21,8 +21,11 @@ import org.imdtv.iptvtv.data.settings.SettingsRepository
 /** [applied]/[skipped] count categories, group members and favourites; skipped = remoteId no longer in the playlist. */
 data class RestoreResult(val applied: Int, val skipped: Int)
 
-/** [added]: new playlists' ids (they need a guide import); [failed]: playlists that couldn't be downloaded, with why. */
-data class MirrorResult(val added: List<Long>, val failed: List<String>)
+/**
+ * [added]: new playlists' ids (they need a guide import); [failed]: playlists that couldn't be downloaded, with why;
+ * [guideChanged]: something the guide matcher reads changed, so channels need rematching.
+ */
+data class MirrorResult(val added: List<Long>, val failed: List<String>, val guideChanged: Boolean)
 
 class BackupRepository(
     private val db: AppDatabase,
@@ -98,6 +101,7 @@ class BackupRepository(
     suspend fun mirror(s: org.imdtv.iptvtv.data.sync.SyncSnapshot, onProgress: (String) -> Unit): MirrorResult {
         val before = db.providerDao().ids().toSet()
         val failed = mutableListOf<String>()
+        val guideBefore = guideInputs()
         val wasActive = providers.activeProviderId.first()
         val ids = s.backup.playlists.mapIndexedNotNull { i, b ->
             try { s.logins.getOrNull(i).let { i to put(b, it?.username, it?.password, mirror = true, onProgress).first } }
@@ -111,8 +115,12 @@ class BackupRepository(
         if (wasActive !in keep) s.active?.let(ids::get)?.let { providers.setActive(it) }
         db.providerDao().ids().filter { it !in keep }.forEach { providers.remove(it) }
         restoreSettings(s.backup.settings)
-        return MirrorResult(keep.filter { it !in before }, failed)
+        return MirrorResult(keep.filter { it !in before }, failed, guideInputs() != guideBefore)
     }
+
+    /** What EpgMatcher.rematch reads besides the catalogue: each playlist's guide sources and the guide settings. */
+    private suspend fun guideInputs(): List<Any> = settings.settings.first().let { listOf(it.guideOrder, it.borrowSiblingGuide, it.guidesOff) } +
+        db.providerDao().ids().map { id -> id to db.epgDao().sources(id).map { it.url to it.priority }.sortedBy { it.first } }
 
     private suspend fun put(b: BPlaylist, username: String?, password: String?, mirror: Boolean, onProgress: (String) -> Unit): Pair<Long, RestoreResult> {
         val type = ProviderType.entries.find { it.name == b.type } ?: throw BackupException("Unknown playlist type ${b.type}")
@@ -167,7 +175,12 @@ class BackupRepository(
         })
         b.categories.forEach { if (cats.containsKey(it.kind to it.remoteId)) applied++ else skipped++ }
 
-        val channels = db.channelDao().byProvider(id).associate { it.remoteId to it.id }
+        val channels = db.channelDao().remoteIds(id).associate { it.remoteId to it.id }
+        // Movies and series loaded at most once, and only when a favourite or progress row needs them.
+        var movieIds: Map<String, Long>? = null
+        var seriesIds: Map<String, Long>? = null
+        suspend fun movies() = movieIds ?: db.movieDao().remoteIds(id).associate { it.remoteId to it.id }.also { movieIds = it }
+        suspend fun series() = seriesIds ?: db.seriesDao().remoteIds(id).associate { it.remoteId to it.id }.also { seriesIds = it }
         b.channelOrder.forEach { o ->
             if (cats[Kind.LIVE.name to o.category] == null) { skipped += o.channels.size; return@forEach }
             o.channels.forEachIndexed { i, r -> channels[r]?.let { db.channelDao().setSortOrder(it, i); applied++ } ?: skipped++ }
@@ -189,8 +202,8 @@ class BackupRepository(
             val kind = Kind.entries.find { it.name == kindName }
             val ids: Map<String, Long> = when (kind) {
                 Kind.LIVE -> channels
-                Kind.MOVIE -> db.movieDao().byProvider(id).associate { it.remoteId to it.id }
-                Kind.SERIES -> db.seriesDao().byProvider(id).associate { it.remoteId to it.id }
+                Kind.MOVIE -> movies()
+                Kind.SERIES -> series()
                 null -> emptyMap()
             }
             favs.forEach { f ->
@@ -200,11 +213,9 @@ class BackupRepository(
         }
 
         if (b.progress.isNotEmpty()) {
-            val movies = db.movieDao().byProvider(id).associate { it.remoteId to it.id }
-            val series = db.seriesDao().byProvider(id).associate { it.remoteId to it.id }
             b.progress.forEach { bp ->
                 val kind = Kind.entries.find { it.name == bp.kind }
-                val item = when (kind) { Kind.MOVIE -> movies[bp.remoteId]; Kind.SERIES -> series[bp.remoteId]; else -> null }
+                val item = when (kind) { Kind.MOVIE -> movies()[bp.remoteId]; Kind.SERIES -> series()[bp.remoteId]; else -> null }
                 if (kind != null && item != null) {
                     db.progressDao().upsert(org.imdtv.iptvtv.data.db.ProgressEntity(id, kind, item, bp.positionMs, bp.durationMs, bp.updatedAt, bp.completed, bp.episode))
                     applied++

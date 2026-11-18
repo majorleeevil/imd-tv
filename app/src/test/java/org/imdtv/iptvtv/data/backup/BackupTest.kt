@@ -346,4 +346,18 @@ class BackupTest {
         assertEquals(o, b.providers.activeProviderId.first())
         assertTrue(other > 0)
     }
+
+    @Test fun mirrorSaysWhetherTheGuideMatchingInputsChanged() = runTest {
+        val a = env()
+        a.customise()
+        val snap = a.backup.syncSnapshot()
+        val b = env()
+        assertTrue(b.backup.mirror(snap) {}.guideChanged)
+        assertFalse(b.backup.mirror(snap) {}.guideChanged)
+        // A change that doesn't touch matching (theme) needs no rematch; the guide order does.
+        val themed = snap.copy(backup = snap.backup.copy(settings = snap.backup.settings.copy(themeDark = false)))
+        assertFalse(b.backup.mirror(themed) {}.guideChanged)
+        val reordered = snap.copy(backup = snap.backup.copy(settings = snap.backup.settings.copy(guideKinds = snap.backup.settings.guideKinds!!.reversed())))
+        assertTrue(b.backup.mirror(reordered) {}.guideChanged)
+    }
 }
