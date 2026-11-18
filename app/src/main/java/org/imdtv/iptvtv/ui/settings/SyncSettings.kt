@@ -32,6 +32,7 @@ import org.imdtv.iptvtv.data.sync.FoundBox
 import org.imdtv.iptvtv.data.sync.PAIR_MS
 import org.imdtv.iptvtv.data.sync.SyncManager
 import org.imdtv.iptvtv.data.sync.SyncRole
+import org.imdtv.iptvtv.data.update.ScrollText
 import org.imdtv.iptvtv.ui.MenuFrame
 import org.imdtv.iptvtv.ui.MenuItem
 import org.imdtv.iptvtv.ui.clockTime
@@ -42,6 +43,18 @@ private const val SYNC_LIMITS = "• Both boxes must be on, with IMD TV open or 
     "• A follower gets the master's changes the next time it opens IMD TV (or within 6 hours) while the master can be reached.\n" +
     "• Changes made on a follower are replaced at its next sync.\n" +
     "• Logins are sent only to boxes you pair, on this network."
+
+private fun masterSteps(name: String) = "On each box that should copy this one:\n" +
+    "1. Open IMD TV › Settings › Backup & sync › Sync between boxes.\n" +
+    "2. Set This box to Follower.\n" +
+    "3. Choose Master, then pick $name.\n" +
+    "4. A code appears on this screen: type it on the other box and choose Pair.\n" +
+    "That box then copies this one. Add as many boxes as you like; they're listed under Followers."
+
+private const val FOLLOWER_STEPS = "1. On the box to copy, open IMD TV › Settings › Backup & sync › Sync between boxes and set This box to Master.\n" +
+    "2. Here, choose Master, then pick that box from the list.\n" +
+    "3. A code appears on that box's screen: type it here and choose Pair.\n" +
+    "This box then copies the master each time IMD TV opens and every 6 hours."
 
 private fun whenText(t: Long) = "${dayDate(t)} ${clockTime(t)}"
 
@@ -72,6 +85,7 @@ fun SyncPage(vm: SettingsViewModel, modifier: Modifier, first: FocusRequester, o
     val scope = rememberCoroutineScope()
     val muted = LocalTheme.current.colors.muted
     var limits by remember { mutableStateOf<SyncRole?>(null) }
+    var setup by remember { mutableStateOf<SyncRole?>(null) }
     var removing by remember { mutableStateOf<FollowerBox?>(null) }
     var listing by remember { mutableStateOf(false) }
     var chosen by remember { mutableStateOf<FoundBox?>(null) }
@@ -125,7 +139,7 @@ fun SyncPage(vm: SettingsViewModel, modifier: Modifier, first: FocusRequester, o
                 } }
             }
             if (m != null) {
-                SettingRow("Sync now", "Copy the master's playlists and settings now", null, busy = pulling) { if (!pulling) scope.launch { sync.pull() } }
+                SettingRow("Sync now", "Copy the master's playlists and settings now", null, busy = pulling) { if (!pulling) scope.launch { sync.pull(force = true) } }
                 SettingRow("Forget master", "Stop following ${m.name}", null) { parkMaster(); scope.launch { sync.forgetMaster() } }
             }
         }
@@ -133,9 +147,15 @@ fun SyncPage(vm: SettingsViewModel, modifier: Modifier, first: FocusRequester, o
 
     limits?.let { r ->
         MenuFrame("Before you turn on sync", onDismiss = { limits = null }) { f ->
-            Text(SYNC_LIMITS, fontSize = 14.sp, color = Color.White, modifier = Modifier.padding(bottom = 10.dp))
-            MenuItem("Turn on", Modifier.focusRequester(f)) { limits = null; parkFirst(); listing = false; chosen = null; scope.launch { sync.setRole(r) } }
+            ScrollText(SYNC_LIMITS, Modifier.focusRequester(f).padding(bottom = 10.dp))
+            MenuItem("Turn on", Modifier) { limits = null; setup = r; parkFirst(); listing = false; chosen = null; scope.launch { sync.setRole(r) } }
             MenuItem("Cancel", Modifier) { limits = null }
+        }
+    }
+    setup?.let { r ->
+        MenuFrame(if (r == SyncRole.MASTER) "Set up a follower" else "Pair with the master", onDismiss = { setup = null }) { f ->
+            ScrollText(if (r == SyncRole.MASTER) masterSteps(sync.boxName) else FOLLOWER_STEPS, Modifier.focusRequester(f).padding(bottom = 10.dp))
+            MenuItem("OK", Modifier) { setup = null }
         }
     }
     removing?.let { f ->

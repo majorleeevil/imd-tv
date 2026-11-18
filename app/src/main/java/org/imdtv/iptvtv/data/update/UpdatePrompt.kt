@@ -64,17 +64,24 @@ fun WhatsNewPrompt(updater: Updater) {
     val text = notes ?: return
     val close = { scope.launch { updater.closeWhatsNew() }; Unit }
     MenuFrame("What's new in IMD TV ${org.imdtv.iptvtv.BuildConfig.VERSION_NAME}", onDismiss = close) { first ->
-        val scroll = rememberScrollState()
-        var focused by remember { mutableStateOf(false) }
-        Text(text, fontSize = 15.sp, color = Color.White, modifier = Modifier.fillMaxWidth().heightIn(max = 300.dp)
-            .clip(RoundedCornerShape(8.dp)).background(if (focused) Color(0x1FFFFFFF) else Color.Transparent)
-            .onFocusChanged { focused = it.isFocused }.focusRequester(first)
-            .onPreviewKeyEvent { e ->
-                val step = when (e.key) { Key.DirectionDown -> 150f; Key.DirectionUp -> -150f; else -> return@onPreviewKeyEvent false }
-                if (if (step > 0) !scroll.canScrollForward else !scroll.canScrollBackward) return@onPreviewKeyEvent false
-                if (e.type == KeyEventType.KeyDown) scope.launch { scroll.animateScrollBy(step) }
-                true
-            }.focusable().verticalScroll(scroll).padding(8.dp))
+        ScrollText(text, Modifier.focusRequester(first))
         MenuItem("OK", Modifier.padding(top = 8.dp)) { close() }
     }
+}
+
+/** Pop-up text that Up/Down scroll while it's focused; at either end the key moves focus on (e.g. to OK). */
+@Composable
+fun ScrollText(text: String, modifier: Modifier = Modifier) {
+    val scroll = rememberScrollState()
+    val scope = rememberCoroutineScope()
+    var focused by remember { mutableStateOf(false) }
+    Text(text, fontSize = 15.sp, color = Color.White, modifier = modifier.fillMaxWidth().heightIn(max = 300.dp)
+        .clip(RoundedCornerShape(8.dp)).background(if (focused) Color(0x1FFFFFFF) else Color.Transparent)
+        .onFocusChanged { focused = it.isFocused }
+        .onPreviewKeyEvent { e ->
+            val step = when (e.key) { Key.DirectionDown -> 150f; Key.DirectionUp -> -150f; else -> return@onPreviewKeyEvent false }
+            if (if (step > 0) !scroll.canScrollForward else !scroll.canScrollBackward) return@onPreviewKeyEvent false
+            if (e.type == KeyEventType.KeyDown) scope.launch { scroll.animateScrollBy(step) }
+            true
+        }.focusable().verticalScroll(scroll).padding(8.dp))
 }

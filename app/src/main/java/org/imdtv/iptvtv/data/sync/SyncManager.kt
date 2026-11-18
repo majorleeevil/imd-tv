@@ -253,17 +253,18 @@ class SyncManager(
         if (status != 200) return false
         val (id, key) = String(body.first).split(' ').takeIf { it.size == 2 } ?: return false
         edit { it.copy(master = MasterBox(m.name, m.host, m.port, id, Secrets.encrypt(key)!!)) }
+        problem.value = null
         scope.launch { pull() }
         return true
     }
 
-    /** Pulls and mirrors the master's snapshot; quiet when the master can't be reached (the problem shows on its row). */
-    suspend fun pull() = pullLock.withLock {
+    /** Pulls and mirrors the master's snapshot; quiet when the master can't be reached (the problem shows on its row). [force]: even if unchanged. */
+    suspend fun pull(force: Boolean = false) = pullLock.withLock {
         val m = current().master?.takeIf { current().role == SyncRole.FOLLOWER } ?: return@withLock
         val key = Secrets.decrypt(m.key)?.unhex() ?: return@withLock run { problem.value = "Pair with the master again" }
         pulling.value = true
         try {
-            val headers = mapOf("X-Follower" to m.followerId, "X-Hash" to (m.lastHash ?: ""))
+            val headers = mapOf("X-Follower" to m.followerId, "X-Hash" to (m.lastHash?.takeIf { !force } ?: ""))
             var at = m
             var notCopied: String? = null
             val res = runCatching { request(m.host, m.port, SyncPath.SNAPSHOT, headers) }.getOrNull()
@@ -282,9 +283,9 @@ class SyncManager(
                     val snap = decodeSnapshot(String(open(key, body.first)))
                     val r = backup.mirror(snap) {}
                     afterMirror(r.added)
-                    // A playlist left out is tried again at the next pull, so the hash isn't kept.
-                    if (r.failed.isEmpty()) at = at.copy(lastHash = body.second)
-                    else notCopied = "Not copied: ${r.failed.joinToString()}"
+                    // A playlist left out is tried again when the master changes or on Sync now (a forced pull).
+                    at = at.copy(lastHash = body.second)
+                    if (r.failed.isNotEmpty()) notCopied = "Not copied: ${r.failed.joinToString()}"
                 }
                 403 -> return@withLock run { problem.value = "${m.name} no longer allows this box: choose it again to pair" }
                 else -> return@withLock run { problem.value = "Sync failed (${m.name} answered $status)" }
