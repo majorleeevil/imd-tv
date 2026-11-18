@@ -1,7 +1,11 @@
 package org.imdtv.iptvtv.ui.settings
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -27,7 +31,7 @@ import org.imdtv.iptvtv.ui.theme.LocalTheme
  * "Back up now" and "Restore" stay put while the list/form below them changes, so focus always has a row to return to.
  */
 @Composable
-fun BackupRows(vm: SettingsViewModel, first: Modifier, syncOpener: Modifier, onOpenSync: () -> Unit) {
+fun BackupRows(vm: SettingsViewModel, first: Modifier) {
     val status by vm.backupStatus.collectAsState()
     val files by vm.backupFiles.collectAsState()
     val pending by vm.pendingRestore.collectAsState()
@@ -47,9 +51,6 @@ fun BackupRows(vm: SettingsViewModel, first: Modifier, syncOpener: Modifier, onO
     SettingRow("Back up now", "Save playlists, categories, favourites and settings to a file — logins are never saved", null, first) { vm.backUpNow() }
     SettingRow("Backup folder", "Where backups are saved; OK to choose", settings.backupFolder?.substringAfterLast('/') ?: "Downloads",
         Modifier.focusRequester(folderRow)) { listing = false; browsing = BrowseMode.SAVE }
-    val syncState by vm.sync.state.collectAsState()
-    SettingRow("Sync between boxes", "One box (the master) keeps the others' playlists and settings the same",
-        syncRoleLabel(syncState.role) + " ›", syncOpener) { park(); onOpenSync() }
     browsing?.let { mode ->
         FolderBrowser(mode, park = ::park, onClose = { park(); browsing = null; if (mode == BrowseMode.RESTORE) refocusRestore = true },
             onFolder = { vm.setBackupFolder(it) }, onFile = { vm.openBackup(it); listing = false })
@@ -69,6 +70,17 @@ fun BackupRows(vm: SettingsViewModel, first: Modifier, syncOpener: Modifier, onO
             if (files.isEmpty()) Text("No backups in Downloads, your backup folder or on USB sticks", fontSize = 14.sp, color = LocalTheme.current.colors.muted)
             SettingRow("Browse for a backup…", "Find a backup file in any folder", "›") { park(); browsing = BrowseMode.RESTORE }
         }
+    }
+}
+
+/** Settings › Backup & sync › Backup & restore. */
+@Composable
+fun BackupPage(vm: SettingsViewModel, modifier: Modifier, first: FocusRequester, onClose: () -> Unit) {
+    BackHandler(onBack = onClose)
+    LaunchedEffect(Unit) { withFrameNanos { }; runCatching { first.requestFocus() } }
+    Column(modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text("Backup & restore", fontSize = 20.sp, color = Color.White, modifier = Modifier.padding(top = 6.dp, bottom = 18.dp))
+        BackupRows(vm, Modifier.focusRequester(first))
     }
 }
 

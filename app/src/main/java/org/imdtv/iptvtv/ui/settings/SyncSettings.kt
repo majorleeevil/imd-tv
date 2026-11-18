@@ -44,16 +44,17 @@ private const val SYNC_LIMITS = "• Both boxes must be on, with IMD TV open or 
     "• Changes made on a follower are replaced at its next sync.\n" +
     "• Logins are sent only to boxes you pair, on this network."
 
-private fun masterSteps(name: String) = "On each box that should copy this one:\n" +
-    "1. Open IMD TV › Settings › Backup & sync › Sync between boxes.\n" +
-    "2. Set This box to Follower.\n" +
-    "3. Choose Master, then pick $name.\n" +
-    "4. A code appears on this screen: type it on the other box and choose Pair.\n" +
-    "That box then copies this one. Add as many boxes as you like; they're listed under Followers."
+private const val MASTER_STEPS = "This box is now the master. To add a follower, go to the other box:\n" +
+    "1. On the other box, open IMD TV › Settings › Backup & sync › Sync.\n" +
+    "2. Set Role to Follower, then choose Turn on and OK.\n" +
+    "3. Still on the other box, choose Master, then pick this box from the list.\n" +
+    "4. A six-digit code appears on this screen. Type it on the other box and choose Pair.\n" +
+    "Repeat for as many boxes as you like; they're listed here under Followers."
 
-private const val FOLLOWER_STEPS = "1. On the box to copy, open IMD TV › Settings › Backup & sync › Sync between boxes and set This box to Master.\n" +
-    "2. Here, choose Master, then pick that box from the list.\n" +
-    "3. A code appears on that box's screen: type it here and choose Pair.\n" +
+private const val FOLLOWER_STEPS = "This box is now a follower. To pair it:\n" +
+    "1. On the box to copy, open IMD TV › Settings › Backup & sync › Sync and set Role to Master.\n" +
+    "2. Back on this box, choose Master, then pick that box from the list.\n" +
+    "3. A six-digit code appears on that box's screen. Type it here and choose Pair.\n" +
     "This box then copies the master each time IMD TV opens and every 6 hours."
 
 private fun whenText(t: Long) = "${dayDate(t)} ${clockTime(t)}"
@@ -74,7 +75,7 @@ fun PairingPrompt(sync: SyncManager) {
     }
 }
 
-/** Settings › Backup & sync › Sync between boxes. */
+/** Settings › Backup & sync › Sync. */
 @Composable
 fun SyncPage(vm: SettingsViewModel, modifier: Modifier, first: FocusRequester, onClose: () -> Unit) {
     BackHandler(onBack = onClose)
@@ -97,8 +98,8 @@ fun SyncPage(vm: SettingsViewModel, modifier: Modifier, first: FocusRequester, o
     val m = state.master
 
     Column(modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text("Sync between boxes", fontSize = 20.sp, color = Color.White, modifier = Modifier.padding(top = 6.dp, bottom = 18.dp))
-        ChoiceRow("This box", when (state.role) {
+        Text("Sync", fontSize = 20.sp, color = Color.White, modifier = Modifier.padding(top = 6.dp, bottom = 18.dp))
+        ChoiceRow("Role", when (state.role) {
                 SyncRole.OFF -> "One box (the master) keeps the others' playlists and settings the same"
                 SyncRole.MASTER -> "Other boxes copy this one"
                 SyncRole.FOLLOWER -> "This box copies the master"
@@ -111,7 +112,7 @@ fun SyncPage(vm: SettingsViewModel, modifier: Modifier, first: FocusRequester, o
             state.followers.forEach { f ->
                 SettingRow(f.name, f.lastSynced?.let { "Last synced ${whenText(it)}" } ?: "Not synced yet", "Remove") { removing = f }
             }
-            if (state.followers.isEmpty()) Text("No followers yet. On the other box choose Follower, then this box: ${sync.boxName}", fontSize = 14.sp, color = muted)
+            if (state.followers.isEmpty()) Text("No followers yet. On the other box, set Role to Follower, then choose Master and pick this box", fontSize = 14.sp, color = muted)
         }
         if (state.role == SyncRole.FOLLOWER) {
             SettingRow("Master", problem ?: m?.lastSynced?.let { "Last synced ${whenText(it)}" } ?: if (m != null) "Not synced yet" else "Not paired",
@@ -154,7 +155,7 @@ fun SyncPage(vm: SettingsViewModel, modifier: Modifier, first: FocusRequester, o
     }
     setup?.let { r ->
         MenuFrame(if (r == SyncRole.MASTER) "Set up a follower" else "Pair with the master", onDismiss = { setup = null }) { f ->
-            ScrollText(if (r == SyncRole.MASTER) masterSteps(sync.boxName) else FOLLOWER_STEPS, Modifier.focusRequester(f).padding(bottom = 10.dp))
+            ScrollText(if (r == SyncRole.MASTER) MASTER_STEPS else FOLLOWER_STEPS, Modifier.focusRequester(f).padding(bottom = 10.dp))
             MenuItem("OK", Modifier) { setup = null }
         }
     }

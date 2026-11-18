@@ -29,8 +29,8 @@ class WithLoginTest {
         assertEquals(true, urlHoldsAny("http://h/xmltv.php?username=al&password=p%40ss%20word", login))
         assertEquals(true, urlHoldsAny("http://h/al/x/epg.xml", login))
         assertEquals(false, urlHoldsAny("http://h/global/channels.xml", login)) // "al" inside a word isn't the login
-        val long = listOf("jon", "S3cretPw")
-        assertEquals(true, urlHoldsAny("http://h/epg/jon/S3cretPw.xml", long))
-        assertEquals(true, urlHoldsAny("http://h/epg.xml?auth=jon:S3cretPw", long))
+        val long = listOf("user1", "S3cretPw")
+        assertEquals(true, urlHoldsAny("http://h/epg/user1/S3cretPw.xml", long))
+        assertEquals(true, urlHoldsAny("http://h/epg.xml?auth=user1:S3cretPw", long))
     }
 }

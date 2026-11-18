@@ -77,6 +77,9 @@ fun SettingsScreen(vm: SettingsViewModel, onAddPlaylist: () -> Unit, onEditPlayl
     var syncOpen by remember { mutableStateOf(false) }
     var reopenSync by remember { mutableStateOf(false) }
     val syncOpener = remember { FocusRequester() }
+    var backupOpen by remember { mutableStateOf(false) }
+    var reopenBackup by remember { mutableStateOf(false) }
+    val backupOpener = remember { FocusRequester() }
     var reopenSources by remember { mutableStateOf(false) }
     val sourcesOpener = remember { FocusRequester() }
     var reopenPlaylist by remember { mutableStateOf<Long?>(null) }
@@ -118,6 +121,14 @@ fun SettingsScreen(vm: SettingsViewModel, onAddPlaylist: () -> Unit, onEditPlayl
         enterTarget.value = null
         reopenSync = false
     }
+    LaunchedEffect(backupOpen) {
+        if (backupOpen || !reopenBackup) return@LaunchedEffect
+        enterTarget.value = backupOpener
+        withFrameNanos { }
+        runCatching { backupOpener.requestFocus() }
+        enterTarget.value = null
+        reopenBackup = false
+    }
     LaunchedEffect(playlist) {
         val back = reopenPlaylist?.takeIf { playlist == null } ?: return@LaunchedEffect
         withFrameNanos { }
@@ -140,7 +151,7 @@ fun SettingsScreen(vm: SettingsViewModel, onAddPlaylist: () -> Unit, onEditPlayl
                     FocusBox(
                         onClick = { runCatching { rowsFocus.requestFocus() } },
                         modifier = if (g == group) Modifier.focusRequester(groupFocus) else Modifier,
-                        onFocused = { if (g != group) { page = null; playlist = null; sourcesOpen = false; recordingOpen = false; syncOpen = false }; group = g },
+                        onFocused = { if (g != group) { page = null; playlist = null; sourcesOpen = false; recordingOpen = false; syncOpen = false; backupOpen = false }; group = g },
                     ) { f ->
                         Text(
                             g.title, fontSize = 15.sp, color = if (f) Color.Black else if (g == group) Color.White else LocalTheme.current.colors.muted,
@@ -178,7 +189,8 @@ fun SettingsScreen(vm: SettingsViewModel, onAddPlaylist: () -> Unit, onEditPlayl
             if (sourcesOpen) EpgSourcesPage(vm, pane, rowsFocus, { park() }) { park(); reopenSources = true; sourcesOpen = false }
             if (recordingOpen) org.imdtv.iptvtv.recording.RecordingPage(vm, pane, rowsFocus) { park(); reopenRecording = true; recordingOpen = false }
             if (syncOpen) SyncPage(vm, pane, rowsFocus) { park(); reopenSync = true; syncOpen = false }
-            if (page == null && playlist == null && !sourcesOpen && !recordingOpen && !syncOpen) Column(pane.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            if (backupOpen) BackupPage(vm, pane, rowsFocus) { park(); reopenBackup = true; backupOpen = false }
+            if (page == null && playlist == null && !sourcesOpen && !recordingOpen && !syncOpen && !backupOpen) Column(pane.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 val syncNow by vm.sync.state.collectAsState()
                 syncNow.master?.takeIf { syncNow.role == org.imdtv.iptvtv.data.sync.SyncRole.FOLLOWER }?.let {
                     Text("Following ${it.name}: changes made here are replaced at the next sync.", fontSize = 14.sp, color = LocalTheme.current.colors.muted)
@@ -222,7 +234,12 @@ fun SettingsScreen(vm: SettingsViewModel, onAddPlaylist: () -> Unit, onEditPlayl
                             vm.update { it.copy(showPing = on) }
                         }
                     }
-                    SettingsGroup.BACKUP -> BackupRows(vm, first, Modifier.focusRequester(syncOpener)) { park(); syncOpen = true }
+                    SettingsGroup.BACKUP -> {
+                        SettingRow("Backup & restore", "Back up now, choose the backup folder, or restore a backup", "›",
+                            first.focusRequester(backupOpener)) { park(); backupOpen = true }
+                        SettingRow("Sync", "One box (the master) keeps the others' playlists and settings the same",
+                            syncRoleLabel(syncNow.role) + " ›", Modifier.focusRequester(syncOpener)) { park(); syncOpen = true }
+                    }
                     SettingsGroup.ABOUT -> AboutRows(first)
                 }
             }
