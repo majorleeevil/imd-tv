@@ -30,9 +30,35 @@ class SettingsRepositoryTest {
 
     @Test fun updateRoundTripsEveryField() = runTest {
         val s = AppSettings(ThemeId.CELESTIAL_GLASS, true, AudioDecoder.HARDWARE, false, false, true, 24, true, false, 14, 0, 42L, true)
-            .copy(subtitlesOn = true, subtitleLanguage = "fr", zapLeftRight = true, backToFullScreen = true, showChannelNumbers = false, themeDark = true, clock24h = false, playerClock = true, liveSubtitlesOn = true, headerSize = HeaderSize.SMALL, previewFade = false)
+            .copy(subtitlesOn = true, subtitleLanguage = "fr", zapLeftRight = true, backToFullScreen = true, showChannelNumbers = false, themeDark = true, clock24h = false, playerClock = PlayerClock.LIVE, liveSubtitlesOn = true, headerSize = HeaderSize.SMALL, previewFade = false,
+                showDate = false, themeLooks = mapOf("CELESTIAL_GLASS" to "TEAL;true;7;MEDIUM;false"), guidesOff = setOf("https://g/ie1.xml.gz"))
         repo.update { s }
         assertEquals(s, repo.settings.first())
+    }
+
+    @Test fun oldPlayerClockOnReadsUniversal() = runTest {
+        prefs.edit { it[androidx.datastore.preferences.core.booleanPreferencesKey("player_clock")] = true }
+        assertEquals(PlayerClock.ALL, repo.settings.first().playerClock)
+    }
+
+    @Test fun eachThemeKeepsItsOwnLook() {
+        val liquid = AppSettings().copy(headerSize = HeaderSize.MEDIUM, themeColour = ThemeColour.TEAL).withTheme(ThemeId.LIQUID_GLASS)
+        assertEquals(HeaderSize.LARGE, liquid.headerSize) // Celestial's Medium doesn't carry over
+        assertEquals(ThemeColour.DEFAULT, liquid.themeColour)
+        val back = liquid.copy(guideRows = 8).withTheme(ThemeId.CELESTIAL_GLASS)
+        assertEquals(HeaderSize.MEDIUM, back.headerSize)
+        assertEquals(ThemeColour.TEAL, back.themeColour)
+        assertEquals(5, back.guideRows)
+        assertEquals(8, back.withTheme(ThemeId.LIQUID_GLASS).guideRows)
+        assertEquals(AppSettings().copy(confirmExit = false), back.copy(confirmExit = false).resetAppearance())
+    }
+
+    @Test fun channelsInGuideFollowsHeaderSize() {
+        val med = AppSettings().withHeader(HeaderSize.MEDIUM)
+        assertEquals(7, med.guideRows)                        // 5 at Large ≈ 6.6 at Medium on a 1080p TV
+        assertEquals(5, med.withHeader(HeaderSize.LARGE).guideRows)
+        assertEquals((8..14).toList(), guideRowChoices(HeaderSize.SMALL, liquid = false))
+        assertEquals(14, AppSettings(guideRows = 9).withHeader(HeaderSize.SMALL).guideRows)
     }
 
     @Test fun subtitleLanguageClearsToNull() = runTest {
@@ -118,7 +144,8 @@ class SettingsRepositoryTest {
         assertEquals(5, repo.settings.first().guideRows); assertFalse(repo.settings.first().multiLineGuide)
         repo.update { it.copy(guideRows = 9, multiLineGuide = true) }
         assertEquals(9, repo.settings.first().guideRows); assertEquals(true, repo.settings.first().multiLineGuide)
-        assertEquals(5, AppSettings(guideRows = 10).clamped().guideRows)
+        assertEquals(10, AppSettings(guideRows = 10).clamped().guideRows) // valid with a smaller header
+        assertEquals(15, AppSettings(guideRows = 40).clamped().guideRows)
     }
 
     @Test fun hideHeaderChannelsRoundTrip() = runTest {

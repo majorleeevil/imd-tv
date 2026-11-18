@@ -29,6 +29,7 @@ import org.imdtv.iptvtv.data.repo.ProviderRepository
 import org.imdtv.iptvtv.data.repo.channel
 import org.imdtv.iptvtv.data.repo.live
 import org.imdtv.iptvtv.data.settings.HeaderSize
+import org.imdtv.iptvtv.data.settings.PlayerClock
 import org.imdtv.iptvtv.data.settings.SettingsRepository
 import org.imdtv.iptvtv.data.settings.ThemeId
 
@@ -83,7 +84,8 @@ class BackupTest {
         providers.addEpgSource(p, "http://guide/uk.xml", "UK guide")
         db.providerDao().setCategoryStrip(p, "UK|")
         db.epgDao().sources(p).first().let { db.epgDao().setOffset(it.id, 60) }
-        settings.update { it.copy(theme = ThemeId.LIQUID_GLASS, confirmExit = false, epgDaysToKeep = 3, zapLeftRight = true, backToFullScreen = true, showChannelNumbers = false, themeDark = true, clock24h = false, playerClock = true, liveSubtitlesOn = true, headerSize = HeaderSize.SMALL, previewFade = false) }
+        settings.update { it.copy(theme = ThemeId.LIQUID_GLASS, confirmExit = false, epgDaysToKeep = 3, zapLeftRight = true, backToFullScreen = true, showChannelNumbers = false, themeDark = true, clock24h = false, playerClock = PlayerClock.LIVE, liveSubtitlesOn = true, headerSize = HeaderSize.SMALL, previewFade = false,
+                showDate = false, themeLooks = mapOf("CELESTIAL_GLASS" to "TEAL;true;7;MEDIUM;false"), guidesOff = setOf("https://g/ie1.xml.gz")) }
         return p
     }
 
@@ -266,5 +268,82 @@ class BackupTest {
         assertTrue("nas-box" in json); assertFalse("s3cretpw" in json)
         val back = decodeBackup(json).settings.toAppSettings(null)
         assertEquals(s.copy(smbPassword = ""), back)
+    }
+
+    @Test fun mirrorReplacesUserDataKeepsCatalogueAndLocalSettings() = runTest {
+        val a = env()
+        val p = a.customise()
+        val snap = a.backup.syncSnapshot()
+        assertEquals(listOf(org.imdtv.iptvtv.data.sync.SLogin("alice-user", "s3cret-pw")), snap.logins)
+        val wire = org.imdtv.iptvtv.data.sync.decodeSnapshot(org.imdtv.iptvtv.data.sync.encodeSnapshot(snap))
+
+        val b = env()
+        val q = b.providers.add(xtream().copy(password = "old-pw")).also { b.providers.syncNow(it) }
+        val gone = b.providers.add(xtream().copy(name = "Gone", url = "http://g")).also { b.providers.syncNow(it) }
+        val ch = b.db.channelDao().byProvider(q).associateBy { it.remoteId }
+        b.db.favouriteDao().add(FavouriteEntity(q, Kind.LIVE, ch.getValue("3").id, 5))
+        b.db.customGroupDao().create(q, "Old")
+        b.db.channelDao().setSortOrder(ch.getValue("3").id, 0)
+        b.settings.update { it.copy(backupFolder = "/x", lastLiveChannelId = 7) }
+        val synced = b.db.providerDao().get(q)!!.lastSync
+
+        b.backup.mirror(wire) {}
+
+        assertEquals(listOf(q), b.db.providerDao().all().map { it.id })
+        assertEquals("s3cret-pw", b.db.providerDao().get(q)!!.password)
+        assertEquals(synced, b.db.providerDao().get(q)!!.lastSync) // no re-download
+        assertTrue(b.db.providerDao().get(gone) == null)
+        assertEquals(listOf<Int?>(null), b.db.channelDao().byProvider(q).filter { it.remoteId == "3" }.map { it.sortOrder })
+        assertEquals("/x", b.settings.settings.first().backupFolder)
+        assertEquals(7L, b.settings.settings.first().lastLiveChannelId)
+        b.settings.update { it.copy(backupFolder = null) }
+        assertEquals(a.snapshot(p), b.snapshot(q))
+    }
+
+    @Test fun mirrorAddsNewPlaylistWithItsLogin() = runTest {
+        val a = env()
+        a.customise()
+        val b = env()
+        b.backup.mirror(a.backup.syncSnapshot()) {}
+        val q = b.db.providerDao().all().single()
+        assertEquals("alice-user" to "s3cret-pw", q.username to q.password)
+        assertTrue(q.lastSync != null)
+    }
+
+    @Test fun mirrorSkipsAPlaylistThatCantDownload() = runTest {
+        val a = env()
+        a.customise()
+        val snap = a.backup.syncSnapshot()
+        val broken = snap.backup.playlists.single().copy(name = "Local", url = "http://localhost")
+        val two = snap.copy(backup = snap.backup.copy(playlists = listOf(broken) + snap.backup.playlists), logins = listOf(null) + snap.logins)
+        val b = env()
+        val prefs = androidx.datastore.preferences.core.PreferenceDataStoreFactory.create(scope = backgroundScope) { java.io.File(tmp.newFolder(), "f.preferences_pb") }
+        val providers = ProviderRepository(b.db, CatalogueSync(b.db), { p -> if (p.url == "http://localhost") throw java.io.IOException("refused") else catalogue }, prefs)
+        val r = BackupRepository(b.db, b.settings, providers).mirror(two) {}
+        assertEquals(listOf("Main"), b.db.providerDao().all().map { it.name })
+        assertEquals(1, r.added.size)
+        assertTrue(r.failed.single(), r.failed.single().startsWith("Local"))
+    }
+
+    @Test fun mirrorMovesOffARemovedActivePlaylistToTheMastersOne() = runTest {
+        val a = env()
+        val main = a.customise()
+        val other = a.providers.add(xtream().copy(name = "Other", url = "http://o")).also { a.providers.syncNow(it) }
+        a.providers.setActive(main)
+        val snap = a.backup.syncSnapshot()
+        assertEquals(snap.backup.playlists.indexOfFirst { it.name == "Main" }, snap.active)
+
+        val b = env()
+        val gone = b.providers.add(xtream().copy(name = "Gone", url = "http://g")).also { b.providers.syncNow(it) }
+        b.providers.setActive(gone)
+        b.backup.mirror(snap) {}
+        assertEquals("Main", b.db.providerDao().get(b.providers.activeProviderId.first()!!)!!.name)
+
+        // A follower's own choice stands while that playlist is still there.
+        val o = b.db.providerDao().all().first { it.name == "Other" }.id
+        b.providers.setActive(o)
+        b.backup.mirror(snap) {}
+        assertEquals(o, b.providers.activeProviderId.first())
+        assertTrue(other > 0)
     }
 }

@@ -1,5 +1,6 @@
 package org.imdtv.iptvtv.ui.settings
 
+import org.imdtv.iptvtv.data.settings.AppSettings
 import org.imdtv.iptvtv.ui.theme.LocalTheme
 import org.imdtv.iptvtv.ui.theme.LocalGlassBackdrop
 import org.imdtv.iptvtv.ui.theme.glass
@@ -51,7 +52,7 @@ import org.imdtv.iptvtv.ui.FocusBox
 
 enum class SettingsGroup(val title: String) {
     PLAYLISTS("Playlists"), CHANNELS("Channels & categories"), EPG("TV guide (EPG)"), PLAYBACK("Playback"),
-    APPEARANCE("Appearance"), BEHAVIOUR("App behaviour"), BACKUP("Backup & restore"), ABOUT("About"),
+    APPEARANCE("Appearance"), BEHAVIOUR("App behaviour"), BACKUP("Backup & sync"), ABOUT("About"),
 }
 
 @OptIn(ExperimentalComposeUiApi::class)
@@ -73,6 +74,9 @@ fun SettingsScreen(vm: SettingsViewModel, onAddPlaylist: () -> Unit, onEditPlayl
     var recordingOpen by remember { mutableStateOf(false) }
     var reopenRecording by remember { mutableStateOf(false) }
     val recordingOpener = remember { FocusRequester() }
+    var syncOpen by remember { mutableStateOf(false) }
+    var reopenSync by remember { mutableStateOf(false) }
+    val syncOpener = remember { FocusRequester() }
     var reopenSources by remember { mutableStateOf(false) }
     val sourcesOpener = remember { FocusRequester() }
     var reopenPlaylist by remember { mutableStateOf<Long?>(null) }
@@ -106,6 +110,14 @@ fun SettingsScreen(vm: SettingsViewModel, onAddPlaylist: () -> Unit, onEditPlayl
         enterTarget.value = null
         reopenRecording = false
     }
+    LaunchedEffect(syncOpen) {
+        if (syncOpen || !reopenSync) return@LaunchedEffect
+        enterTarget.value = syncOpener
+        withFrameNanos { }
+        runCatching { syncOpener.requestFocus() }
+        enterTarget.value = null
+        reopenSync = false
+    }
     LaunchedEffect(playlist) {
         val back = reopenPlaylist?.takeIf { playlist == null } ?: return@LaunchedEffect
         withFrameNanos { }
@@ -128,7 +140,7 @@ fun SettingsScreen(vm: SettingsViewModel, onAddPlaylist: () -> Unit, onEditPlayl
                     FocusBox(
                         onClick = { runCatching { rowsFocus.requestFocus() } },
                         modifier = if (g == group) Modifier.focusRequester(groupFocus) else Modifier,
-                        onFocused = { if (g != group) { page = null; playlist = null; sourcesOpen = false; recordingOpen = false }; group = g },
+                        onFocused = { if (g != group) { page = null; playlist = null; sourcesOpen = false; recordingOpen = false; syncOpen = false }; group = g },
                     ) { f ->
                         Text(
                             g.title, fontSize = 15.sp, color = if (f) Color.Black else if (g == group) Color.White else LocalTheme.current.colors.muted,
@@ -163,9 +175,14 @@ fun SettingsScreen(vm: SettingsViewModel, onAddPlaylist: () -> Unit, onEditPlayl
             playlist?.let { id ->
                 PlaylistPage(vm, id, pane, rowsFocus, { vm.playlistToReopen = it; onEditPlaylist(it) }, onDeletePlaylist, onUsePlaylist) { park(); reopenPlaylist = id; playlist = null }
             }
-            if (sourcesOpen) EpgSourcesPage(vm, pane, rowsFocus) { park(); reopenSources = true; sourcesOpen = false }
+            if (sourcesOpen) EpgSourcesPage(vm, pane, rowsFocus, { park() }) { park(); reopenSources = true; sourcesOpen = false }
             if (recordingOpen) org.imdtv.iptvtv.recording.RecordingPage(vm, pane, rowsFocus) { park(); reopenRecording = true; recordingOpen = false }
-            if (page == null && playlist == null && !sourcesOpen && !recordingOpen) Column(pane.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            if (syncOpen) SyncPage(vm, pane, rowsFocus) { park(); reopenSync = true; syncOpen = false }
+            if (page == null && playlist == null && !sourcesOpen && !recordingOpen && !syncOpen) Column(pane.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                val syncNow by vm.sync.state.collectAsState()
+                syncNow.master?.takeIf { syncNow.role == org.imdtv.iptvtv.data.sync.SyncRole.FOLLOWER }?.let {
+                    Text("Following ${it.name}: changes made here are replaced at the next sync.", fontSize = 14.sp, color = LocalTheme.current.colors.muted)
+                }
                 Text(group.title, fontSize = 20.sp, color = Color.White, modifier = Modifier.padding(top = 6.dp, bottom = 18.dp))
                 // The first row of a group takes rowsFocus, so OK/Right on a group lands on it.
                 val first = Modifier.focusRequester(rowsFocus)
@@ -178,49 +195,65 @@ fun SettingsScreen(vm: SettingsViewModel, onAddPlaylist: () -> Unit, onEditPlayl
                             s.autoplayOnScroll, first) { on -> vm.update { it.copy(autoplayOnScroll = on) } }
                         ChoiceRow("Audio decoder", "Software (FFmpeg) plays Dolby/DTS on any box; Hardware passes it to the TV",
                             listOf(AudioDecoder.SOFTWARE, AudioDecoder.HARDWARE), s.audioDecoder,
-                            { if (it == AudioDecoder.HARDWARE) "Hardware" else "Software" }) { d -> vm.update { it.copy(audioDecoder = d) } }
+                            { if (it == AudioDecoder.HARDWARE) "Hardware" else "Software" }, default = AppSettings().audioDecoder) { d -> vm.update { it.copy(audioDecoder = d) } }
+                        ChoiceRow("Change channel with", "Full screen live TV: the keys that go to the previous and next channel",
+                            listOf(false, true), s.zapLeftRight, { if (it) "Left / Right" else "Up / Down" }, default = AppSettings().zapLeftRight) { v -> vm.update { it.copy(zapLeftRight = v) } }
+                        // Always the other pair of arrows: picking one here flips Change channel with.
+                        ChoiceRow("View Previous Channel With", "Full screen live TV: Right or Down steps back through the channels you watched, Left or Up comes forward again",
+                            listOf(true, false), !s.zapLeftRight, { if (it) "Left / Right" else "Up / Down" }, default = !AppSettings().zapLeftRight) { v -> vm.update { it.copy(zapLeftRight = !v) } }
                         SettingRow("Recording", "Record live TV to the box, a USB drive or a network share",
                             if (s.recordingOn) "On ›" else "Off ›", Modifier.focusRequester(recordingOpener)) { park(); recordingOpen = true }
-                        SwitchRow("Subtitles", "Movies and series that have them",
-                            s.subtitlesOn) { on -> vm.update { it.copy(subtitlesOn = on) } }
-                        SwitchRow("Subtitles on live TV", "Show live channels' subtitles (in the subtitle language) when the stream has them",
-                            s.liveSubtitlesOn) { on -> vm.update { it.copy(liveSubtitlesOn = on) } }
-                        if (s.subtitlesOn) {
-                            val tv = java.util.Locale.getDefault().displayLanguage
-                            ChoiceRow("Subtitle language", "Subtitles show only when the film has this language",
-                                listOf<String?>(null) + org.imdtv.iptvtv.data.settings.SUBTITLE_LANGUAGES.sortedBy { java.util.Locale(it).displayLanguage },
-                                s.subtitleLanguage, { c -> c?.let { java.util.Locale(it).displayLanguage } ?: "TV language ($tv)" }) { l ->
-                                vm.update { it.copy(subtitleLanguage = l) }
-                            }
-                        }
+                        val subs = ChannelPage.SUBTITLES
+                        SettingRow(subs.title, subs.explanation, "›", Modifier.focusRequester(openers.getValue(subs))) { park(); page = subs }
                     }
-                    SettingsGroup.APPEARANCE -> AppearanceRows(s, first, onTheme = { t -> vm.update { it.copy(theme = t) } }, onColour = { c -> vm.update { it.copy(themeColour = c) } }, onChange = { f -> vm.update(f) })
+                    SettingsGroup.APPEARANCE -> AppearanceRows(s, first, Modifier.focusRequester(openers.getValue(ChannelPage.DATE_TIME)),
+                        onDateTime = { park(); page = ChannelPage.DATE_TIME }, onReset = { vm.notice.value = "Appearance settings reset to default" }, onChange = { f -> vm.update(f) })
                     SettingsGroup.BEHAVIOUR -> {
                         SwitchRow("Last channel on start", "Open the last live channel full screen when the app starts", s.lastChannelOnStart, first) { on ->
                             vm.update { it.copy(lastChannelOnStart = on) }
                         }
-                        ChoiceRow("Change channel with", "Full screen live TV: the keys that go to the previous and next channel",
-                            listOf(false, true), s.zapLeftRight, { if (it) "Left / Right" else "Up / Down" }) { v -> vm.update { it.copy(zapLeftRight = v) } }
                         ChoiceRow("Back in TV guide", "What Back does in the live TV guide while a channel is playing",
-                            listOf(false, true), s.backToFullScreen, { if (it) "Go to full screen" else "Go to the menu" }) { v -> vm.update { it.copy(backToFullScreen = v) } }
+                            listOf(false, true), s.backToFullScreen, { if (it) "Go to full screen" else "Go to the menu" }, default = AppSettings().backToFullScreen) { v -> vm.update { it.copy(backToFullScreen = v) } }
                         SwitchRow("Confirm exit", "Press Back twice at the top menu to leave the app", s.confirmExit) { on ->
                             vm.update { it.copy(confirmExit = on) }
                         }
                         StartOnBootRow(s.startOnBoot) { on -> vm.update { it.copy(startOnBoot = on) } }
-                        SwitchRow("Show date and time", "The clock (and date) at the top of the screen", s.showDateTime) { on ->
-                            vm.update { it.copy(showDateTime = on) }
-                        }
                         SwitchRow("Show ping", "Connection time to Cloudflare (1.1.1.1) in the top bar, checked every 30 seconds", s.showPing) { on ->
                             vm.update { it.copy(showPing = on) }
                         }
                     }
-                    SettingsGroup.BACKUP -> BackupRows(vm, first)
+                    SettingsGroup.BACKUP -> BackupRows(vm, first, Modifier.focusRequester(syncOpener)) { park(); syncOpen = true }
                     SettingsGroup.ABOUT -> AboutRows(first)
                 }
             }
         }
+        // In the view model: a reset can change the theme, which rebuilds this screen.
+        val notice by vm.notice.collectAsState()
+        LaunchedEffect(notice) { if (notice != null) { kotlinx.coroutines.delay(3_000); vm.notice.value = null } }
+        // The same bar as Manage channels' "5 channels hidden"; not focusable, so it never takes focus from the rows.
+        notice?.let { androidx.compose.ui.window.Popup(alignment = Alignment.BottomCenter) { org.imdtv.iptvtv.ui.InfoBar(it, Modifier.padding(bottom = 40.dp)) } }
         // Drawn last so a glass pane (Liquid Glass) never covers it.
         AppLogo(Modifier.align(Alignment.TopEnd).padding(top = 24.dp, end = 48.dp).size(64.dp))
+    }
+}
+
+/** Playback › Subtitles: movies & series (with their language) and live TV. */
+@Composable
+fun SubtitleRows(vm: SettingsViewModel, first: FocusRequester) {
+    val s by vm.settings.collectAsState()
+    SwitchRow("Movies & Series", "Subtitles for movies and series that have them", s.subtitlesOn, Modifier.focusRequester(first)) { on ->
+        vm.update { it.copy(subtitlesOn = on) }
+    }
+    if (s.subtitlesOn) {
+        val tv = java.util.Locale.getDefault().displayLanguage
+        ChoiceRow("Movies & Series Subtitle Language", "Subtitles show only when the film has this language",
+            listOf<String?>(null) + org.imdtv.iptvtv.data.settings.SUBTITLE_LANGUAGES.sortedBy { java.util.Locale(it).displayLanguage },
+            s.subtitleLanguage, { c -> c?.let { java.util.Locale(it).displayLanguage } ?: "TV language ($tv)" }, default = AppSettings().subtitleLanguage) { l ->
+            vm.update { it.copy(subtitleLanguage = l) }
+        }
+    }
+    SwitchRow("Live TV", "Show live channels' subtitles (in the subtitle language) when the stream has them", s.liveSubtitlesOn) { on ->
+        vm.update { it.copy(liveSubtitlesOn = on) }
     }
 }
 

@@ -154,7 +154,7 @@ class MainActivity : ComponentActivity() {
                 val nav = @androidx.compose.runtime.Composable {
                     TopNav(tab, onSelect = selectTab, Modifier.onFocusChanged { menuFocused = it.hasFocus }, menuFocus,
                         showClock = settings.showDateTime,
-                        showDate = settings.theme == ThemeId.CELESTIAL_PLUS || settings.theme == ThemeId.LIQUID_GLASS, pingMs = pingMs,
+                        showDate = settings.showDate, pingMs = pingMs,
                         tabs = org.imdtv.iptvtv.ui.visibleTabs(settings.recordingOn))
                 }
                 val themeId = LocalTheme.current.id
@@ -211,7 +211,8 @@ class MainActivity : ComponentActivity() {
                             vod.play(url, top.item, episode, startMs)
                             app.playFullScreen(title, live = false)
                         }, onOpen = app::open)
-                        is Screen.Player -> PlayerScreen(app.player, top.title, live.takeIf { top.live }, onGuide = { app.back() }, showClock = settings.playerClock)
+                        is Screen.Player -> PlayerScreen(app.player, top.title, live.takeIf { top.live }, onGuide = { app.back() }, showClock = settings.playerClock == org.imdtv.iptvtv.data.settings.PlayerClock.ALL ||
+                            settings.playerClock == org.imdtv.iptvtv.data.settings.PlayerClock.LIVE && top.live)
                     }
                     }
                     // Xcube 180: Live, Movies, Series and Settings are blades inside one frame (spec §6A.7).
@@ -224,6 +225,7 @@ class MainActivity : ComponentActivity() {
                         if ((app.stack.value.last() as? Screen.Player)?.live == true) app.back()
                     }
                     org.imdtv.iptvtv.ui.live.NumberEntryBox(live)
+                    org.imdtv.iptvtv.ui.settings.PairingPrompt((application as IptvApp).container.sync)
                     org.imdtv.iptvtv.data.update.UpdatePrompt((application as IptvApp).container.updater, (application as IptvApp).container.background)
                     org.imdtv.iptvtv.data.update.WhatsNewPrompt((application as IptvApp).container.updater)
                     if (exitHint) org.imdtv.iptvtv.ui.InfoBar(
@@ -252,5 +254,6 @@ class MainActivity : ComponentActivity() {
         app.player.toForeground()
         // TV boxes keep the app alive for days: check on every return to it, at most once an hour.
         lifecycleScope.launch { (application as IptvApp).container.updater.check() }
+        (application as IptvApp).container.sync.onForeground()
     }
 }

@@ -18,6 +18,22 @@ class TimelineTest {
     }
 
     @Test
+    fun cursorStepsThroughProgrammesAndBackToNow() {
+        val h = 60 * min
+        val base = 1000 * h
+        val now = base + 10 * min
+        fun p(s: Long, e: Long) = org.imdtv.iptvtv.data.repo.GuideProgramme("t", null, null, s, e)
+        val progs = listOf(p(base, base + h), p(base + h, base + 2 * h), p(base + 2 * h, base + 3 * h))
+        assertEquals(base + h, Timeline.stepCursor(progs, null, now, 1))          // now → next
+        assertEquals(base + 2 * h, Timeline.stepCursor(progs, base + h, now, 1))
+        assertEquals(base + h, Timeline.stepCursor(progs, base + 2 * h, now, -1))
+        assertNull(Timeline.stepCursor(progs, base + h, now, -1))                 // previous is on now
+        assertNull(Timeline.stepCursor(progs, null, now, -1))                     // can't move: same as at
+        assertEquals(base + 30 * min, Timeline.stepCursor(emptyList(), null, now, 1)) // no guide: half-hours
+        assertEquals(base + h, Timeline.stepCursor(emptyList(), base + 90 * min, now, -1))
+    }
+
+    @Test
     fun windowStartsAtPreviousHalfHour() {
         assertEquals(1800_000L * 3, Timeline.windowStart(1800_000L * 3 + 29 * min))
     }
@@ -46,5 +62,15 @@ class TimelineTest {
         assertEquals(false, zapRecordsRecent(org.imdtv.iptvtv.data.repo.RailEntry.Recent))
         assertEquals(true, zapRecordsRecent(org.imdtv.iptvtv.data.repo.RailEntry.Favourites))
         assertEquals(true, zapRecordsRecent(null))
+    }
+
+    @Test fun previousChannelStepsBackThroughWatchedOnes() {
+        val h = ChannelHistory<String> { it }
+        listOf("BBC 1", "ITV 1", "BBC 2").forEach(h::played)
+        assertEquals("ITV 1", h.step(1).also { h.played(it!!) }) // switching to it must not reorder the history
+        assertEquals("BBC 1", h.step(1)); assertNull(h.step(1))
+        assertEquals("ITV 1", h.step(-1))
+        h.played("C4") // a fresh channel goes to the newest end
+        assertEquals("BBC 2", h.step(1))
     }
 }

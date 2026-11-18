@@ -85,6 +85,8 @@ fun PlayerScreen(player: PlayerManager, title: String, liveVm: LiveViewModel? = 
                 if (overlay) return@onKeyEvent false
                 when {
                     e.key in OK -> { if (e.type == KeyEventType.KeyUp) overlay = true; true }
+                    // The other pair of arrows steps through the channels watched before (Playback › View Previous Channel With).
+                    zapDelta(e.key, !zapLeftRight) != null -> { if (e.type == KeyEventType.KeyDown) zapDelta(e.key, !zapLeftRight)?.let(liveVm::toPreviousChannel); true }
                     zapDelta(e.key, zapLeftRight) != null -> { if (e.type == KeyEventType.KeyDown) zapDelta(e.key, zapLeftRight)?.let(liveVm::zapBy); true }
                     else -> false
                 }

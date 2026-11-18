@@ -11,6 +11,7 @@ import org.imdtv.iptvtv.data.settings.AudioDecoder
 import org.imdtv.iptvtv.data.settings.GuideKind
 import org.imdtv.iptvtv.data.settings.HeaderSize
 import org.imdtv.iptvtv.data.settings.LogoKind
+import org.imdtv.iptvtv.data.settings.PlayerClock
 import org.imdtv.iptvtv.data.settings.ThemeColour
 import org.imdtv.iptvtv.data.settings.themeIdOf
 import org.imdtv.iptvtv.data.settings.withUserGuides
@@ -104,7 +105,12 @@ data class BSettings(
     val backToFullScreen: Boolean = AppSettings().backToFullScreen,
     val showChannelNumbers: Boolean = AppSettings().showChannelNumbers,
     val clock24h: Boolean = AppSettings().clock24h,
-    val playerClock: Boolean = AppSettings().playerClock,
+    /** Before Live TV only / Universal (true = Universal); read only when [playerClockMode] is absent. */
+    val playerClock: Boolean = false,
+    val playerClockMode: String? = null,
+    val showDate: Boolean = AppSettings().showDate,
+    val themeLooks: Map<String, String> = emptyMap(),
+    val guidesOff: List<String> = emptyList(),
     val liveSubtitlesOn: Boolean = AppSettings().liveSubtitlesOn,
     val headerSize: String = AppSettings().headerSize.name,
     val previewFade: Boolean = AppSettings().previewFade,
@@ -121,7 +127,9 @@ data class BSettings(
             audioDecoder = AudioDecoder.entries.find { it.name == audioDecoder } ?: d.audioDecoder,
             lastChannelOnStart = lastChannelOnStart,
             confirmExit = confirmExit,
-            zapLeftRight = zapLeftRight, backToFullScreen = backToFullScreen, showChannelNumbers = showChannelNumbers, clock24h = clock24h, playerClock = playerClock, liveSubtitlesOn = liveSubtitlesOn,
+            zapLeftRight = zapLeftRight, backToFullScreen = backToFullScreen, showChannelNumbers = showChannelNumbers, clock24h = clock24h,
+            playerClock = PlayerClock.entries.find { it.name == playerClockMode } ?: if (playerClock) PlayerClock.ALL else PlayerClock.OFF,
+            showDate = showDate, themeLooks = themeLooks, guidesOff = guidesOff.toSet(), liveSubtitlesOn = liveSubtitlesOn,
             headerSize = HeaderSize.entries.find { it.name == headerSize } ?: d.headerSize, previewFade = previewFade, themeDark = themeDark,
             startOnBoot = startOnBoot,
             epgUpdateIntervalHours = epgUpdateIntervalHours,
@@ -158,7 +166,8 @@ data class BSettings(
             s.epgPastDays, s.matchTvLanguage, s.logoOrder.map { it.name }, s.guideOrder.map { it.name },
             s.borrowSiblingGuide, s.hideHeaderChannels, s.showDateTime, s.showPing, s.subtitlesOn, s.subtitleLanguage,
             guideRows = s.guideRows, multiLineGuide = s.multiLineGuide,
-            zapLeftRight = s.zapLeftRight, backToFullScreen = s.backToFullScreen, showChannelNumbers = s.showChannelNumbers, clock24h = s.clock24h, playerClock = s.playerClock, liveSubtitlesOn = s.liveSubtitlesOn,
+            zapLeftRight = s.zapLeftRight, backToFullScreen = s.backToFullScreen, showChannelNumbers = s.showChannelNumbers, clock24h = s.clock24h,
+            playerClockMode = s.playerClock.name, showDate = s.showDate, themeLooks = s.themeLooks, guidesOff = s.guidesOff.toList(), liveSubtitlesOn = s.liveSubtitlesOn,
             headerSize = s.headerSize.name, previewFade = s.previewFade, themeDark = s.themeDark, guideKinds = s.guideOrder.map { it.name },
             recordingOn = s.recordingOn, recordTo = s.recordTo.name, startEarlyMin = s.startEarlyMin, endLateMin = s.endLateMin,
             keepAwake = s.keepAwake, smbServer = s.smbServer, smbShare = s.smbShare, smbFolder = s.smbFolder, smbUser = s.smbUser,

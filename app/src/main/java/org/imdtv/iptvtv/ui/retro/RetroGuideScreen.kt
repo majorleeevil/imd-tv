@@ -60,7 +60,8 @@ fun RetroGuideScreen(vm: LiveViewModel, onFullScreen: (ChannelEntity) -> Unit) {
                 verticalAlignment = Alignment.Top) {
                 AppLogo(Modifier.size(58.dp))
                 Column(Modifier.padding(start = 18.dp)) {
-                    Text(if (vm.settings.collectAsState().value.showDateTime) "${clockTime(now)} ${DATE.format(Instant.ofEpochMilli(now).atZone(ZoneId.systemDefault()))}" else "",
+                    val st = vm.settings.collectAsState().value
+                    Text(listOfNotNull(clockTime(now).takeIf { st.showDateTime }, DATE.format(Instant.ofEpochMilli(now).atZone(ZoneId.systemDefault())).takeIf { st.showDate }).joinToString(" "),
                         fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color.White)
                     Text(entry?.title.orEmpty().uppercase(), fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.White,
                         maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 4.dp))

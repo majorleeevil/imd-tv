@@ -98,18 +98,18 @@ fun TopNav(selected: Tab, onSelect: (Tab) -> Unit, modifier: Modifier = Modifier
                 }
             }
         }
-        if (showClock) NavClock(showDate)
+        if (showClock || showDate) NavClock(showClock, showDate)
         pingMs?.let { Text(pingLabel(it), fontSize = 12.sp, fontWeight = FontWeight.Medium, color = LocalTheme.current.colors.muted, modifier = Modifier.padding(start = 14.dp)) }
     }
 }
 
 /** Its own composable, so the minute tick recomposes only this Text, not the nav. */
 @Composable
-private fun NavClock(showDate: Boolean) {
+private fun NavClock(showClock: Boolean, showDate: Boolean) {
     val now by produceState(System.currentTimeMillis()) {
         while (true) { delay(60_000 - System.currentTimeMillis() % 60_000); value = System.currentTimeMillis() }
     }
-    Text(if (showDate) "${clockTime(now)} ${dayDate(now)}" else clockTime(now), fontSize = 12.sp, fontWeight = FontWeight.Medium,
+    Text(listOfNotNull(clockTime(now).takeIf { showClock }, dayDate(now).takeIf { showDate }).joinToString(" "), fontSize = 12.sp, fontWeight = FontWeight.Medium,
         color = Color.White, modifier = Modifier.padding(start = 14.dp))
 }
 

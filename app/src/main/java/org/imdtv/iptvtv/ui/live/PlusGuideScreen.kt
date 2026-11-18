@@ -101,8 +101,8 @@ fun PlusGuideScreen(vm: LiveViewModel, nav: @Composable () -> Unit, onFullScreen
                 .onPreviewKeyEvent { e -> if (e.type == KeyEventType.KeyDown && e.key == Key.DirectionDown) { toTabs(); true } else false }) { nav() }
         }
         if (!navFocused) AppLogo(Modifier.align(Alignment.TopCenter).padding(top = 6.dp).size(48.dp))
-        val dateTime = vm.settings.collectAsState().value.showDateTime
-        val status = listOfNotNull("${clockTime(now)} ${dayDate(now)}".takeIf { dateTime }, pingMs?.let(::pingLabel)).joinToString("   ")
+        val st = vm.settings.collectAsState().value
+        val status = listOfNotNull(clockTime(now).takeIf { st.showDateTime }, dayDate(now).takeIf { st.showDate }, pingMs?.let(::pingLabel)).joinToString("   ")
         if (!navFocused && status.isNotEmpty()) Text(status, fontSize = 12.sp,
             color = Color.White, modifier = Modifier.align(Alignment.TopEnd).padding(top = 16.dp, end = 40.dp))
 

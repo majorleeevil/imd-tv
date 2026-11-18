@@ -2,32 +2,55 @@ package org.imdtv.iptvtv.ui.settings
 
 import org.imdtv.iptvtv.data.settings.ThemeColour
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import org.imdtv.iptvtv.data.settings.AppSettings
-import org.imdtv.iptvtv.data.settings.GUIDE_ROWS
+import org.imdtv.iptvtv.data.settings.guideRowChoices
 import org.imdtv.iptvtv.data.settings.HeaderSize
+import org.imdtv.iptvtv.data.settings.PlayerClock
 import org.imdtv.iptvtv.data.settings.ThemeId
 
 @Composable
-fun AppearanceRows(s: AppSettings, first: Modifier, onTheme: (ThemeId) -> Unit, onColour: (ThemeColour) -> Unit,
+fun AppearanceRows(s: AppSettings, first: Modifier, dateTimeOpener: Modifier, onDateTime: () -> Unit, onReset: () -> Unit,
     onChange: ((AppSettings) -> AppSettings) -> Unit) {
-    ChoiceRow("Theme", "How the whole app looks", ThemeId.entries, s.theme, { it.label }, first, onPick = onTheme)
+    // Each theme keeps its own colour, mode, rows, header and fade (withTheme).
+    ChoiceRow("Theme", "How the whole app looks", ThemeId.entries, s.theme, { it.label }, first, default = AppSettings().theme, onPick = { t -> onChange { it.withTheme(t) } })
     // Only the two glass themes take a background colour.
     if (s.theme == ThemeId.CELESTIAL_GLASS || s.theme == ThemeId.LIQUID_GLASS) {
-        ChoiceRow("Theme colour", "Background colour of ${s.theme.label}", ThemeColour.entries, s.themeColour, { it.label }, onPick = onColour)
-        ChoiceRow("Theme mode", "Dark uses near-black versions of the theme colour", listOf(false, true), s.themeDark, { if (it) "Dark" else "Light" }, onPick = { d -> onChange { it.copy(themeDark = d) } })
-    }
-    if (s.theme == ThemeId.CELESTIAL_GLASS || s.theme == ThemeId.LIQUID_GLASS) {
-        ChoiceRow("Channels in guide", "How many channel rows the guide shows at once; more rows are shorter with smaller text", GUIDE_ROWS, s.guideRows, { "$it" }) { n -> onChange { it.copy(guideRows = n) } }
-        ChoiceRow("Header size", "A smaller header makes the guide taller, with more channels", HeaderSize.entries, s.headerSize, { it.label }) { h -> onChange { it.copy(headerSize = h) } }
+        ChoiceRow("Theme colour", "Background colour of ${s.theme.label}", ThemeColour.entries, s.themeColour, { it.label }, default = AppSettings().themeColour) { c -> onChange { it.copy(themeColour = c) } }
+        ChoiceRow("Theme mode", "Dark uses near-black versions of the theme colour", listOf(false, true), s.themeDark, { if (it) "Dark" else "Light" }, default = AppSettings().themeDark, onPick = { d -> onChange { it.copy(themeDark = d) } })
+        val rowChoices = guideRowChoices(s.headerSize, s.theme == ThemeId.LIQUID_GLASS)
+        ChoiceRow("Channels in guide", "How many channel rows the guide shows at once; more rows are shorter with smaller text", rowChoices, s.guideRows, { "$it" }, default = rowChoices.first()) { n -> onChange { it.copy(guideRows = n) } }
+        ChoiceRow("Header size", "A smaller header makes the guide taller, with more channels", HeaderSize.entries, s.headerSize, { it.label }, default = AppSettings().headerSize) { h -> onChange { it.withHeader(h) } }
         if (s.theme == ThemeId.CELESTIAL_GLASS) {
-            ChoiceRow("Preview fade", "Blend the preview into the background; off shows it as a framed box",
-                listOf(true, false), s.previewFade, { if (it) "On" else "Off" }) { on -> onChange { it.copy(previewFade = on) } }
+            SwitchRow("Preview fade", "Blend the preview into the background; off shows it as a framed box", s.previewFade) { on -> onChange { it.copy(previewFade = on) } }
         }
     }
-    ChoiceRow("Multi-line names", "Let channel names and programme titles wrap onto 2 lines in the guide. In Celestial Glass and Liquid Glass this needs taller rows: 5 channels in the guide (or 6 in Celestial Glass)",
-        listOf(false, true), s.multiLineGuide, { if (it) "On" else "Off" }) { on -> onChange { it.copy(multiLineGuide = on) } }
-    ChoiceRow("Channel numbers", "Show the number beside channel names", listOf(true, false), s.showChannelNumbers, { if (it) "Shown" else "Hidden" }, onPick = { n -> onChange { it.copy(showChannelNumbers = n) } })
-    ChoiceRow("24-hour clock", "13:05 instead of 1.05pm", listOf(true, false), s.clock24h, { if (it) "On" else "Off" }, onPick = { n -> onChange { it.copy(clock24h = n) } })
-    ChoiceRow("Clock in player", "Show the time in the top-right corner of full screen", listOf(true, false), s.playerClock, { if (it) "On" else "Off" }, onPick = { n -> onChange { it.copy(playerClock = n) } })
+    SwitchRow("Multi-line names", "Let channel names and programme titles wrap onto 2 lines in the guide. In Celestial Glass and Liquid Glass this needs taller rows: 5 channels in the guide (or 6 in Celestial Glass)",
+        s.multiLineGuide) { on -> onChange { it.copy(multiLineGuide = on) } }
+    val dt = org.imdtv.iptvtv.ui.settings.ChannelPage.DATE_TIME
+    SettingRow(dt.title, dt.explanation, "›", dateTimeOpener, onClick = onDateTime)
+    var confirmReset by remember { mutableStateOf(false) }
+    SettingRow("Reset appearance", if (confirmReset) "Press OK again to put every Appearance setting back to its default" else "Theme, colours, guide layout and clock back to their defaults", null) {
+        if (confirmReset) { onChange { it.resetAppearance() }; confirmReset = false; onReset() } else confirmReset = true
+    }
+
+}
+
+/** Appearance › Date and time. */
+@Composable
+fun DateTimeRows(vm: SettingsViewModel, first: FocusRequester) {
+    val s by vm.settings.collectAsState()
+    SwitchRow("Clock", "The time at the top of the screen", s.showDateTime, Modifier.focusRequester(first)) { on -> vm.update { it.copy(showDateTime = on) } }
+    SwitchRow("Date", "The date beside the clock", s.showDate) { on -> vm.update { it.copy(showDate = on) } }
+    SwitchRow("24-hour clock", "13:05 instead of 1.05pm", s.clock24h) { on -> vm.update { it.copy(clock24h = on) } }
+    ChoiceRow("Clock in player", "Show the time in the top-right corner of full screen", PlayerClock.entries, s.playerClock, { it.label }, default = AppSettings().playerClock) { c ->
+        vm.update { it.copy(playerClock = c) }
+    }
 }

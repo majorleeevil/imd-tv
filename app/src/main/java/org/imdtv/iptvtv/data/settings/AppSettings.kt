@@ -46,6 +46,9 @@ val END_LATE = listOf(0, 2, 5, 10, 15, 30)
 
 /** App-wide settings (spec §2.1). Per-playlist data lives in Room. */
 /** Guide header size: a smaller header leaves the guide taller. */
+/** Clock in the full-screen player. */
+enum class PlayerClock(val label: String) { OFF("Off"), LIVE("On (Live TV only)"), ALL("On (Universal)") }
+
 enum class HeaderSize(val label: String) { LARGE("Large"), MEDIUM("Medium"), SMALL("Small") }
 
 data class AppSettings(
@@ -69,9 +72,12 @@ data class AppSettings(
     val themeColour: ThemeColour = ThemeColour.DEFAULT,
     /** Celestial Glass / Liquid Glass: near-black versions of the theme colour. */
     val themeDark: Boolean = false,
+    /** The clock at the top of the screen. */
     val showDateTime: Boolean = true,
+    /** The date beside that clock. */
+    val showDate: Boolean = true,
     val showPing: Boolean = false,
-    /** Channel rows in the Celestial/Liquid Glass guide: one of [GUIDE_ROWS]. */
+    /** Channel rows the Celestial/Liquid Glass guide shows: one of [guideRowChoices] for the header size. */
     val guideRows: Int = 5,
     /** Channel names and programme titles may wrap onto 2 lines in the guide grid. */
     val multiLineGuide: Boolean = false,
@@ -101,22 +107,75 @@ data class AppSettings(
     val showChannelNumbers: Boolean = true,
     /** 13:05 instead of 1.05pm. */
     val clock24h: Boolean = true,
-    val playerClock: Boolean = false,
+    val playerClock: PlayerClock = PlayerClock.OFF,
     val liveSubtitlesOn: Boolean = false,
     val headerSize: HeaderSize = HeaderSize.LARGE,
     val previewFade: Boolean = true,
+    /** Other themes' [look]s by theme name, so a glass theme's colour/header/rows don't carry to another theme. */
+    val themeLooks: Map<String, String> = emptyMap(),
+    /** Open-source guide files (URLs) turned off in EPG sources: kept in the list, never imported or matched. */
+    val guidesOff: Set<String> = emptySet(),
 ) {
+    /** The per-theme appearance: colour, mode, guide rows, header size, preview fade. */
+    fun look() = listOf(themeColour.name, themeDark, guideRows, headerSize.name, previewFade).joinToString(";")
+
+    /** Switch theme: stash this theme's look, bring back [t]'s (defaults the first time). */
+    fun withTheme(t: ThemeId): AppSettings {
+        if (t == theme) return this
+        val looks = themeLooks + (theme.name to look())
+        val v = looks[t.name]?.split(';').orEmpty()
+        val d = AppSettings()
+        return copy(theme = t, themeLooks = looks - t.name,
+            themeColour = ThemeColour.entries.find { it.name == v.getOrNull(0) } ?: d.themeColour,
+            themeDark = v.getOrNull(1)?.toBooleanStrictOrNull() ?: d.themeDark,
+            guideRows = v.getOrNull(2)?.toIntOrNull() ?: d.guideRows,
+            headerSize = HeaderSize.entries.find { it.name == v.getOrNull(3) } ?: d.headerSize,
+            previewFade = v.getOrNull(4)?.toBooleanStrictOrNull() ?: d.previewFade,
+        ).clamped()
+    }
+
+    /** Header size change: Channels in guide follows, so the guide keeps about the same row height. */
+    fun withHeader(h: HeaderSize): AppSettings {
+        val liquid = theme == ThemeId.LIQUID_GLASS
+        val n = Math.round(guideRows / headerRowFactor(headerSize, liquid) * headerRowFactor(h, liquid))
+        val choices = guideRowChoices(h, liquid)
+        return copy(headerSize = h, guideRows = n.coerceIn(choices.first(), choices.last()))
+    }
+
+    /** Appearance › Reset: every Appearance setting (all themes' looks too) back to its default. */
+    fun resetAppearance() = AppSettings().let { d ->
+        copy(theme = d.theme, themeColour = d.themeColour, themeDark = d.themeDark, guideRows = d.guideRows, headerSize = d.headerSize,
+            previewFade = d.previewFade, themeLooks = emptyMap(), multiLineGuide = d.multiLineGuide, showDateTime = d.showDateTime,
+            showDate = d.showDate, clock24h = d.clock24h, playerClock = d.playerClock)
+    }
+
     fun clamped() = copy(
         epgUpdateIntervalHours = epgUpdateIntervalHours.takeIf { it in EPG_INTERVALS } ?: 12,
         epgDaysToKeep = epgDaysToKeep.coerceIn(1, 14),
         epgPastDays = epgPastDays.coerceIn(0, 7),
         startEarlyMin = startEarlyMin.takeIf { it in START_EARLY } ?: 2,
         endLateMin = endLateMin.takeIf { it in END_LATE } ?: 5,
-        guideRows = guideRows.takeIf { it in GUIDE_ROWS } ?: 5,
+        guideRows = guideRows.coerceIn(GUIDE_ROWS.first(), 15),
     )
 }
 
+/** Channels in guide choices with the Large header. */
 val GUIDE_ROWS = listOf(5, 6, 7, 8, 9)
+
+/**
+ * How many more rows a header size fits than Large, on a 540dp-tall TV (1080p): the grid starts [shift] higher
+ * (LiveGuideScreen: grid top 306dp Glass / 334dp Liquid, 12dp foot).
+ */
+fun headerRowFactor(h: HeaderSize, liquid: Boolean): Float {
+    val area = 540f - (if (liquid) 334f else 306f) - 12f
+    return (area + headerShiftDp(h)) / area
+}
+
+fun headerShiftDp(h: HeaderSize) = when (h) { HeaderSize.LARGE -> 0f; HeaderSize.MEDIUM -> 70f; HeaderSize.SMALL -> 130f }
+
+/** Large's 5–9 rows, scaled to the header size (e.g. Small in Celestial Glass: 8–14). */
+fun guideRowChoices(h: HeaderSize, liquid: Boolean): List<Int> =
+    headerRowFactor(h, liquid).let { f -> (Math.round(GUIDE_ROWS.first() * f)..Math.round(GUIDE_ROWS.last() * f)).toList() }
 
 /** The Subtitle language choices besides "TV language" (ISO 639-1); shown sorted by display name. */
 val SUBTITLE_LANGUAGES = listOf("ar", "bg", "cs", "da", "de", "el", "en", "es", "et", "fa", "fi", "fr", "he", "hi", "hr",

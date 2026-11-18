@@ -48,6 +48,7 @@ class EpgShareTest {
         assertEquals(listOf(1L, 2L, 3L), selectSources(all, listOf(P, O)).map { it.id })
         assertEquals(listOf(3L), selectSources(all, listOf(O)).map { it.id })
         assertEquals(listOf(3L, 1L, 2L), selectSources(all, listOf(O, P)).map { it.id })  // the reverse (user, 2026-11-12)
+        assertEquals(listOf(1L, 2L), selectSources(all, listOf(P, O), off = setOf(e0.url)).map { it.id }) // turned off in EPG sources
     }
 
     @Test fun userSourcesAreToldApartByOwnUrls() {

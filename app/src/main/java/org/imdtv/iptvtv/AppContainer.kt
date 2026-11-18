@@ -99,6 +99,13 @@ class AppContainer(context: Context) {
         org.imdtv.iptvtv.data.backup.BackupRepository(db, settings, providerRepository)
     }
 
+    val sync: org.imdtv.iptvtv.data.sync.SyncManager by lazy {
+        org.imdtv.iptvtv.data.sync.SyncManager(appContext, prefs, backup, afterMirror = { added ->
+            db.providerDao().ids().forEach { epgMatcher.rematch(it) }
+            if (added.isNotEmpty()) org.imdtv.iptvtv.work.EpgRefreshWorker.runNow(appContext)
+        }, background)
+    }
+
     val updater: org.imdtv.iptvtv.data.update.Updater by lazy { org.imdtv.iptvtv.data.update.Updater(appContext, http, json, prefs) }
 
     val search: org.imdtv.iptvtv.data.search.SearchRepository by lazy { org.imdtv.iptvtv.data.search.SearchRepository(db) }

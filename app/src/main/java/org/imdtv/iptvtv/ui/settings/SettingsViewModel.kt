@@ -60,6 +60,7 @@ data class LanguageRow(val language: String, val countries: List<CountryRow>)
 @OptIn(ExperimentalCoroutinesApi::class)
 class SettingsViewModel(app: Application) : AndroidViewModel(app) {
     private val c = (app as IptvApp).container
+    val sync get() = c.sync
     private val categoryRepo = CategoryRepository(c.db)
 
     val settings: StateFlow<AppSettings> = c.settings.settings.stateIn(viewModelScope, SharingStarted.Eagerly, AppSettings())
@@ -80,6 +81,13 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
         c.settings.update { it.copy(borrowSiblingGuide = on) }
         val m = c.epgMatcher.rematch(p, borrow = on)
         android.util.Log.i("IptvEpg", "Provider $p: ${m.matched} matched (${m.borrowed} borrowed), ${m.unmatched} unmatched")
+    }
+    /** A short message at the foot of Settings, e.g. after Reset appearance. */
+    val notice = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)
+
+    /** EPG sources › an open-source file On/Off; the refresh re-matches without (or with) it. */
+    fun setGuideOn(url: String, on: Boolean) {
+        viewModelScope.launch { c.settings.update { it.copy(guidesOff = if (on) it.guidesOff - url else it.guidesOff + url) }; EpgRefreshWorker.runNow(getApplication()) }
     }
     fun setGuideOrder(order: List<GuideKind>) {
         viewModelScope.launch { c.settings.update { it.copy(guideOrder = order) }; EpgRefreshWorker.runNow(getApplication()) }

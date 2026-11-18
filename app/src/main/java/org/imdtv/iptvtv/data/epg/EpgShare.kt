@@ -35,9 +35,9 @@ fun guideKindOf(s: EpgSourceEntity, own: Set<String>?): GuideKind = when {
     else -> GuideKind.PLAYLIST
 }
 
-/** Sources used per Guide source order (spec §5.1): all of the first kind by priority, then the next kind. */
-fun selectSources(sources: List<EpgSourceEntity>, order: List<GuideKind>, own: Set<String>? = null): List<EpgSourceEntity> =
-    order.flatMap { k -> sources.filter { guideKindOf(it, own) == k }.sortedBy { it.priority } }
+/** Sources used per Guide source order (spec §5.1): all of the first kind by priority, then the next; [off] URLs are skipped. */
+fun selectSources(sources: List<EpgSourceEntity>, order: List<GuideKind>, own: Set<String>? = null, off: Set<String> = emptySet()): List<EpgSourceEntity> =
+    order.flatMap { k -> sources.filter { it.url !in off && guideKindOf(it, own) == k }.sortedBy { it.priority } }
 
 /** Keeps one EPGSHARE source per epgshare01 file for the countries of the provider's shown categories (spec §5.2). */
 class EpgShareSources(

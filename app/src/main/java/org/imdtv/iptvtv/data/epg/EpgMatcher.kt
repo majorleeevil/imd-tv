@@ -35,17 +35,17 @@ class EpgMatcher(
 
     suspend fun rematch(providerId: Long, mode: List<GuideKind>? = null, borrow: Boolean? = null): MatchResult {
         val s = settings()
-        return rematchWith(providerId, mode ?: s.guideOrder, borrow ?: s.borrowSiblingGuide)
+        return rematchWith(providerId, mode ?: s.guideOrder, borrow ?: s.borrowSiblingGuide, s.guidesOff)
     }
 
     /**
      * Matching (~46k channels, tens of seconds on a TV box) runs outside any transaction, so user writes (favourites,
      * rename, manual links) aren't queued behind it; only replacing the automatic links is one short transaction.
      */
-    private suspend fun rematchWith(providerId: Long, mode: List<GuideKind>, borrow: Boolean): MatchResult = withContext(Dispatchers.Default) {
+    private suspend fun rematchWith(providerId: Long, mode: List<GuideKind>, borrow: Boolean, off: Set<String>): MatchResult = withContext(Dispatchers.Default) {
         val epg = db.epgDao()
         val normaliser = NameNormaliser(db.ruleDao().nameRules(providerId))
-        val sources = selectSources(epg.sources(providerId), mode, ownUrls(providerId))
+        val sources = selectSources(epg.sources(providerId), mode, ownUrls(providerId), off)
 
         // Per source, in priority order: xmltv ids, exact (lightly normalised) names, and rule-normalised names.
         val ids = ArrayList<Pair<Long, Set<String>>>(sources.size)

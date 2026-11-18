@@ -27,7 +27,7 @@ import org.imdtv.iptvtv.ui.theme.LocalTheme
  * "Back up now" and "Restore" stay put while the list/form below them changes, so focus always has a row to return to.
  */
 @Composable
-fun BackupRows(vm: SettingsViewModel, first: Modifier) {
+fun BackupRows(vm: SettingsViewModel, first: Modifier, syncOpener: Modifier, onOpenSync: () -> Unit) {
     val status by vm.backupStatus.collectAsState()
     val files by vm.backupFiles.collectAsState()
     val pending by vm.pendingRestore.collectAsState()
@@ -47,6 +47,9 @@ fun BackupRows(vm: SettingsViewModel, first: Modifier) {
     SettingRow("Back up now", "Save playlists, categories, favourites and settings to a file — logins are never saved", null, first) { vm.backUpNow() }
     SettingRow("Backup folder", "Where backups are saved; OK to choose", settings.backupFolder?.substringAfterLast('/') ?: "Downloads",
         Modifier.focusRequester(folderRow)) { listing = false; browsing = BrowseMode.SAVE }
+    val syncState by vm.sync.state.collectAsState()
+    SettingRow("Sync between boxes", "One box (the master) keeps the others' playlists and settings the same",
+        syncRoleLabel(syncState.role) + " ›", syncOpener) { park(); onOpenSync() }
     browsing?.let { mode ->
         FolderBrowser(mode, park = ::park, onClose = { park(); browsing = null; if (mode == BrowseMode.RESTORE) refocusRestore = true },
             onFolder = { vm.setBackupFolder(it) }, onFile = { vm.openBackup(it); listing = false })

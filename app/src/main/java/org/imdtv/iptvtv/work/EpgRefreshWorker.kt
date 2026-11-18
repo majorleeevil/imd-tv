@@ -45,7 +45,7 @@ class EpgRefreshWorker(context: Context, params: WorkerParameters) : CoroutineWo
             val all = c.db.epgDao().sources(p.id)
             // A guide picked by hand stays fed even when its kind isn't in the order.
             val picked = c.db.epgDao().links(p.id).filter { it.manual }.mapTo(HashSet()) { it.sourceId }
-            val sources = (selectSources(all, mode, c.providerRepository.playlistGuideUrls(p.id)) + all.filter { it.id in picked }).distinctBy { it.id }
+            val sources = (selectSources(all, mode, c.providerRepository.playlistGuideUrls(p.id), settings.guidesOff) + all.filter { it.id in picked }).distinctBy { it.id }
             // Open-source mode keeps epgshare01 files for the active playlist only: another one would lose all its links.
             if (sources.isEmpty() && p.id != active) continue
             for (s in sources) {

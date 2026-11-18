@@ -25,7 +25,11 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
     private val showChannelNumbers = booleanPreferencesKey("show_channel_numbers")
     private val themeDark = booleanPreferencesKey("theme_dark")
     private val clock24h = booleanPreferencesKey("clock_24h")
-    private val playerClock = booleanPreferencesKey("player_clock")
+    private val oldPlayerClock = booleanPreferencesKey("player_clock") // before Live TV only / Universal: true = Universal
+    private val playerClock = stringPreferencesKey("player_clock_mode")
+    private val showDate = booleanPreferencesKey("show_date")
+    private val themeLooks = stringPreferencesKey("theme_looks")
+    private val guidesOff = androidx.datastore.preferences.core.stringSetPreferencesKey("guides_off")
     private val liveSubtitlesOn = booleanPreferencesKey("live_subtitles_on")
     private val headerSize = stringPreferencesKey("header_size")
     private val previewFade = booleanPreferencesKey("preview_fade")
@@ -85,7 +89,11 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
             showChannelNumbers = this[showChannelNumbers] ?: d.showChannelNumbers,
             themeDark = this[themeDark] ?: d.themeDark,
             clock24h = this[clock24h] ?: d.clock24h,
-            playerClock = this[playerClock] ?: d.playerClock,
+            playerClock = PlayerClock.entries.find { it.name == this[playerClock] }
+                ?: this[oldPlayerClock]?.let { if (it) PlayerClock.ALL else PlayerClock.OFF } ?: d.playerClock,
+            showDate = this[showDate] ?: d.showDate,
+            guidesOff = this[guidesOff].orEmpty(),
+            themeLooks = this[themeLooks]?.split('|')?.mapNotNull { e -> e.split('=', limit = 2).takeIf { it.size == 2 }?.let { it[0] to it[1] } }?.toMap().orEmpty(),
             liveSubtitlesOn = this[liveSubtitlesOn] ?: d.liveSubtitlesOn,
             headerSize = HeaderSize.entries.find { it.name == this[headerSize] } ?: d.headerSize,
             previewFade = this[previewFade] ?: d.previewFade,
@@ -136,7 +144,10 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
         this[showChannelNumbers] = s.showChannelNumbers
         this[themeDark] = s.themeDark
         this[clock24h] = s.clock24h
-        this[playerClock] = s.playerClock
+        this[playerClock] = s.playerClock.name
+        this[showDate] = s.showDate
+        this[guidesOff] = s.guidesOff
+        this[themeLooks] = s.themeLooks.entries.joinToString("|") { "${it.key}=${it.value}" }
         this[liveSubtitlesOn] = s.liveSubtitlesOn
         this[headerSize] = s.headerSize.name
         this[previewFade] = s.previewFade

@@ -171,6 +171,7 @@ abstract class ChannelDao {
     )
     abstract suspend fun allByCategory(categoryId: Long): List<ChannelEntity>
     @Query("UPDATE channel SET sortOrder = :sortOrder WHERE id = :id") abstract suspend fun setSortOrder(id: Long, sortOrder: Int?)
+    @Query("UPDATE channel SET sortOrder = NULL WHERE providerId = :p") abstract suspend fun clearSortOrders(p: Long)
     @Query("UPDATE channel SET customName = :name WHERE id = :id") abstract suspend fun setCustomName(id: Long, name: String?)
 
     @Query("DELETE FROM channel WHERE id IN (:ids)")
@@ -390,6 +391,7 @@ abstract class CustomGroupDao {
     @Query("UPDATE custom_group SET placement = :placement WHERE id = :id") abstract suspend fun setPlacement(id: Long, placement: GroupPlacement)
     @Query("UPDATE custom_group SET sortOrder = :sortOrder WHERE id = :id") abstract suspend fun setSortOrder(id: Long, sortOrder: Int)
     @Query("DELETE FROM custom_group WHERE id = :id") abstract suspend fun delete(id: Long)
+    @Query("DELETE FROM custom_group WHERE providerId = :p") abstract suspend fun deleteForProvider(p: Long)
     @Query("SELECT * FROM custom_group WHERE providerId = :providerId ORDER BY sortOrder, name")
     abstract fun observe(providerId: Long): Flow<List<CustomGroupEntity>>
 

@@ -141,6 +141,9 @@ fun GuideGrid(
     val programmes by vm.programmes.collectAsState()
     val now by vm.now.collectAsState()
     val windowStart by vm.windowStart.collectAsState()
+    val cursor by vm.cursor.collectAsState()
+    val at = cursor?.takeIf { it > now } ?: now // the focused row highlights the programme on at
+    val recordingOn by vm.recordingOn.collectAsState()
     val focused by vm.focused.collectAsState()
     val strip by vm.strip.collectAsState()
     val marks by vm.marks.collectAsState()
@@ -172,7 +175,7 @@ fun GuideGrid(
                 modifier = if (listHeight != null) Modifier.height(listHeight) else Modifier.fillMaxSize()) {
                 itemsIndexed(channels, key = { _, ch -> ch.id }) { i, ch ->
                     GuideRow(
-                        ch, ch.displayName(strip), programmes[ch.id].orEmpty(), now, windowStart, style, isFocused = focused?.id == ch.id && !state.railOpen && state.heldFocus == null,
+                        ch, ch.displayName(strip), programmes[ch.id].orEmpty(), now, at, windowStart, style, isFocused = focused?.id == ch.id && !state.railOpen && state.heldFocus == null,
                         marked = { p -> (ch.id to p.start) in marks || ch.id in recordingOnChannel && p.start <= now && now < p.stop },
                         modifier = (if (i == state.focusIndex) Modifier.focusRequester(state.rowFocus) else Modifier)
                             .onPreviewKeyEvent { e ->
@@ -180,15 +183,19 @@ fun GuideGrid(
                                 if (vm.numberKey(e, false)) return@onPreviewKeyEvent true
                                 if (e.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
                                 when (e.key) {
-                                    Key.DirectionLeft -> { if (!vm.shiftTime(-1)) { state.focusIndex = i; onLeftAtStart() }; true }
-                                    Key.DirectionRight -> { vm.shiftTime(1); true }
+                                    Key.DirectionLeft -> { if (!vm.moveCursor(programmes[ch.id].orEmpty(), -1, style.windowMin)) { state.focusIndex = i; onLeftAtStart() }; true }
+                                    Key.DirectionRight -> { vm.moveCursor(programmes[ch.id].orEmpty(), 1, style.windowMin); true }
                                     Key.DirectionUp -> if (i == 0 && onUpAtTop != null) { onUpAtTop(); true } else false
                                     else -> false
                                 }
                             }
                             .onLongOk { state.focusIndex = i; state.menu = GuideMenu.Channel(ch) },
                         onFocused = { vm.focused.value = ch; state.focusIndex = i },
-                        onClick = { state.onOk(ch, onFullScreen) },
+                        onClick = {
+                            // A later programme highlighted: OK offers to record it (or cancel) instead of playing.
+                            val later = programmes[ch.id].orEmpty().firstOrNull { at > now && it.start <= at && at < it.stop }
+                            if (later != null && recordingOn) { state.focusIndex = i; state.menu = GuideMenu.Programme(ch, later) } else state.onOk(ch, onFullScreen)
+                        },
                     )
                 }
             }
@@ -203,7 +210,7 @@ fun GuideGrid(
 
 @Composable
 private fun GuideRow(
-    ch: ChannelEntity, name: String, progs: List<GuideProgramme>, now: Long, windowStart: Long, style: GridStyle, isFocused: Boolean,
+    ch: ChannelEntity, name: String, progs: List<GuideProgramme>, now: Long, at: Long, windowStart: Long, style: GridStyle, isFocused: Boolean,
     marked: (GuideProgramme) -> Boolean, modifier: Modifier, onFocused: () -> Unit, onClick: () -> Unit,
 ) {
     val colors = LocalTheme.current.colors
@@ -246,7 +253,7 @@ private fun GuideRow(
                 val span = Timeline.span(p.start, p.stop, windowStart, end) ?: continue
                 val isNow = p.start <= now && now < p.stop
                 val past = p.stop <= now
-                val focusedNow = isFocused && isNow
+                val focusedNow = isFocused && p.start <= at && at < p.stop // the highlighted programme (now, or Right's pick)
                 val cell = when {
                     // Boxed: separate opaque boxes with a small gap (spec §6A.4).
                     style.boxed -> Modifier.width(style.dpPerMin * span.lengthMin - 3.dp)

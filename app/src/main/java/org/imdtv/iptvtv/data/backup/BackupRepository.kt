@@ -21,6 +21,9 @@ import org.imdtv.iptvtv.data.settings.SettingsRepository
 /** [applied]/[skipped] count categories, group members and favourites; skipped = remoteId no longer in the playlist. */
 data class RestoreResult(val applied: Int, val skipped: Int)
 
+/** [added]: new playlists' ids (they need a guide import); [failed]: playlists that couldn't be downloaded, with why. */
+data class MirrorResult(val added: List<Long>, val failed: List<String>)
+
 class BackupRepository(
     private val db: AppDatabase,
     private val settings: SettingsRepository,
@@ -70,7 +73,48 @@ class BackupRepository(
      * Finds the playlist by (type, url) or adds it, sets the login and name strip, replaces its own EPG sources,
      * syncs, then applies categories, groups and favourites by remoteId. Throws what the sync throws.
      */
-    suspend fun restorePlaylist(b: BPlaylist, username: String?, password: String?, onProgress: (String) -> Unit): RestoreResult {
+    suspend fun restorePlaylist(b: BPlaylist, username: String?, password: String?, onProgress: (String) -> Unit): RestoreResult =
+        put(b, username, password, mirror = false, onProgress).second
+
+    /** The backup plus each playlist's login (M3U: the one in its address), for a sync follower. */
+    suspend fun syncSnapshot(): org.imdtv.iptvtv.data.sync.SyncSnapshot {
+        val all = db.providerDao().all()
+        val active = providers.activeProviderId.first()
+        return org.imdtv.iptvtv.data.sync.SyncSnapshot(
+            Backup(playlists = all.map { export(it) }, settings = BSettings.of(settings.settings.first())),
+            all.map { p ->
+                if (p.type == ProviderType.M3U) m3uLogin(p.url)?.let { org.imdtv.iptvtv.data.sync.SLogin(it.username, it.password) }
+                else p.username?.let { org.imdtv.iptvtv.data.sync.SLogin(it, p.password.orEmpty()) }
+            },
+            all.indexOfFirst { it.id == active }.takeIf { it >= 0 },
+        )
+    }
+
+    /**
+     * Sync follower: makes this box match [s]. Playlists already here keep their catalogue (no re-download); their
+     * favourites, groups and channel order are replaced, not merged; playlists [s] lacks are removed. A playlist that
+     * can't be downloaded here (e.g. a localhost address) is left out and named in [MirrorResult.failed]; the rest go on.
+     */
+    suspend fun mirror(s: org.imdtv.iptvtv.data.sync.SyncSnapshot, onProgress: (String) -> Unit): MirrorResult {
+        val before = db.providerDao().ids().toSet()
+        val failed = mutableListOf<String>()
+        val wasActive = providers.activeProviderId.first()
+        val ids = s.backup.playlists.mapIndexedNotNull { i, b ->
+            try { s.logins.getOrNull(i).let { i to put(b, it?.username, it?.password, mirror = true, onProgress).first } }
+            catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
+                failed += "${b.name} (${e.message ?: e::class.simpleName})"; null
+            }
+        }.toMap()
+        val keep = ids.values
+        // The playlist in use here is going: switch to the master's (else remove() would pick the first by name).
+        if (wasActive !in keep) s.active?.let(ids::get)?.let { providers.setActive(it) }
+        db.providerDao().ids().filter { it !in keep }.forEach { providers.remove(it) }
+        restoreSettings(s.backup.settings)
+        return MirrorResult(keep.filter { it !in before }, failed)
+    }
+
+    private suspend fun put(b: BPlaylist, username: String?, password: String?, mirror: Boolean, onProgress: (String) -> Unit): Pair<Long, RestoreResult> {
         val type = ProviderType.entries.find { it.name == b.type } ?: throw BackupException("Unknown playlist type ${b.type}")
         val format = StreamFormat.entries.find { it.name == b.streamFormat } ?: StreamFormat.TS
         val existing = db.providerDao().all().find { it.type == type && (it.url == b.url || m3uBackupUrl(it.url) == b.url) }
@@ -90,8 +134,15 @@ class BackupRepository(
         db.providerDao().setNameStrip(id, b.nameStrip)
         db.providerDao().setCategoryStrip(id, b.categoryStrip)
         restoreEpgSources(id, b.epgSources)
-        providers.syncNow(id, onProgress)
-        return db.withTransaction { applyUserData(id, b) }
+        if (!mirror || existing?.lastSync == null) providers.syncNow(id, onProgress)
+        return id to db.withTransaction {
+            if (mirror) {
+                db.favouriteDao().deleteForProvider(id)
+                db.customGroupDao().deleteForProvider(id)
+                db.channelDao().clearSortOrders(id)
+            }
+            applyUserData(id, b)
+        }
     }
 
     /** Sources kept by URL keep their id (and imported guide); the rest are added or removed. epgshare01 ones are untouched. */

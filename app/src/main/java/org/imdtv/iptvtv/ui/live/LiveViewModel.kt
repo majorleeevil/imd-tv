@@ -171,8 +171,10 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
         entry.value = null
         focused.value = null
         previewed.value = null
+        history.clear()
         guidePos = null
         timeShift.value = 0
+        cursor.value = null
         retroGuideOpen = false
         xmb = org.imdtv.iptvtv.ui.xmb.XmbState()
     }
@@ -180,14 +182,36 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
     fun select(e: RailEntry) {
         entry.value = e
         timeShift.value = 0
+        cursor.value = null
     }
 
-    fun shiftTime(by: Int): Boolean {
-        val next = timeShift.value + by
-        if (next < 0 || next > MAX_SHIFT) return false
-        timeShift.value = next
+    /** Start of the guide's highlighted programme; null = the one on now. Right/Left move it and the window follows. */
+    val cursor = MutableStateFlow<Long?>(null)
+
+    /** Right/Left on a guide row ([progs] = its programmes). False when it can't move (Left on now). */
+    fun moveCursor(progs: List<GuideProgramme>, dir: Int, windowMin: Int): Boolean {
+        val now = System.currentTimeMillis()
+        val to = Timeline.stepCursor(progs, cursor.value, now, dir)
+        if (to == cursor.value) return false
+        val base = Timeline.windowStart(now)
+        val ws = base + timeShift.value * HALF_HOUR
+        // Keep the highlighted programme's start on screen, clear of the last half-hour.
+        val shift = when {
+            to == null -> 0
+            to < ws || to >= ws + windowMin * 60_000L - HALF_HOUR -> ((to - base) / HALF_HOUR).toInt()
+            else -> timeShift.value
+        }
+        if (shift > MAX_SHIFT) return false
+        cursor.value = to
+        timeShift.value = shift
         return true
     }
+
+    /** Channels watched full screen, for the "View Previous Channel With" keys. */
+    private val history = ChannelHistory<ChannelEntity> { it.id }
+
+    /** [dir] 1 = one further back (Right/Down), -1 = towards the newest again (Left/Up). */
+    fun toPreviousChannel(dir: Int) { history.step(dir)?.let(::switchTo) }
 
     fun preview(ch: ChannelEntity) {
         previewed.value = ch
@@ -206,6 +230,7 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
 
     /** A channel started full screen (or zapped to): Recents and the last channel. Previews only set the last channel. */
     fun watched(ch: ChannelEntity) {
+        history.played(ch)
         viewModelScope.launch {
             c.db.recentDao().record(ch.providerId, ch.id, System.currentTimeMillis())
             c.settings.update { it.copy(lastLiveChannelId = ch.id) }
@@ -229,6 +254,7 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private fun zapTo(ch: ChannelEntity) {
+        history.played(ch) // also when zapping Recents, which skips watched()
         focused.value = ch
         preview(ch) // also writes lastLiveChannelId
         if (zapRecordsRecent(entry.value)) watched(ch)

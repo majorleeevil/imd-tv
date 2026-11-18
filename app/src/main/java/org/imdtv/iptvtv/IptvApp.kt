@@ -16,6 +16,7 @@ class IptvApp : Application() {
         // Once per old playlist: encrypt its login and take it out of saved links (no-op afterwards).
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
             org.imdtv.iptvtv.data.support.LogCollector.start(this@IptvApp)
+            container.sync.start()
             container.search // created here, not lazily on the main thread (it registers a Room observer)
             runCatching { container.providerRepository.sealOldRows() }.onFailure { android.util.Log.e("IptvApp", "Sealing logins failed", it) }
             // A fresh process runs no recording: alarms are set again (boot and updates clear them) and cut-off rows closed.

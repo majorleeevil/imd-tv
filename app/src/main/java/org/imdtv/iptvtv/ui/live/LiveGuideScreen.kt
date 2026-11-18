@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
@@ -37,7 +38,6 @@ import org.imdtv.iptvtv.data.db.ChannelEntity
 import org.imdtv.iptvtv.data.settings.HeaderSize
 import androidx.compose.foundation.border
 import androidx.compose.ui.platform.LocalDensity
-import kotlin.math.roundToInt
 
 @Composable
 fun LiveGuideScreen(vm: LiveViewModel, nav: @Composable () -> Unit, onFullScreen: (ChannelEntity) -> Unit) {
@@ -47,16 +47,15 @@ fun LiveGuideScreen(vm: LiveViewModel, nav: @Composable () -> Unit, onFullScreen
     val updating by vm.guideUpdating.collectAsState()
     val settings = vm.settings.collectAsState().value
     // Header size: everything below the nav moves up by [shift]; the grid gains rows of about the same height.
-    val shift = when (settings.headerSize) { HeaderSize.LARGE -> 0.dp; HeaderSize.MEDIUM -> 70.dp; HeaderSize.SMALL -> 130.dp }
+    val shift = org.imdtv.iptvtv.data.settings.headerShiftDp(settings.headerSize).dp
 
     var screen by remember { mutableStateOf(Size.Zero) }
     val colors = LocalTheme.current.colors // read here so a theme change re-rasterises the cached background
     val backdrop = LocalGlassBackdrop.current // Liquid Glass: same layout, glass panels over its backdrop
     val inset = if (backdrop != null) 12.dp else 0.dp
-    val gridTop = (if (backdrop != null) 320.dp else 306.dp) - shift
-    val screenH = with(LocalDensity.current) { screen.height.toDp() }
-    val rows = if (shift == 0.dp || screenH <= gridTop) settings.guideRows
-        else (settings.guideRows * (screenH - gridTop - 12.dp).value / (screenH - gridTop - shift - 12.dp).value).roundToInt().coerceAtMost(14)
+    // Liquid's fixed hero panel ends at 312dp - shift (plus its 6dp shadow): the "◀ category" line sits below that.
+    val gridTop = (if (backdrop != null) 334.dp else 306.dp) - shift
+    val rows = settings.guideRows // already counts the header size (AppSettings.withHeader)
     // Liquid's framed preview, also Glass's when Preview fade is off: 16:9, as tall as the hero panel.
     val boxed = backdrop != null || !settings.previewFade
     val boxH = 232.dp - shift
@@ -66,15 +65,17 @@ fun LiveGuideScreen(vm: LiveViewModel, nav: @Composable () -> Unit, onFullScreen
         onDrawBehind { drawImage(img) }
     }) {
         Preview(vm, visible = state.previewing, screen = screen,
-            edge = if (backdrop != null) PreviewEdge.RIM else if (boxed) PreviewEdge.NONE else PreviewEdge.FADE,
+            edge = if (boxed) PreviewEdge.RIM else PreviewEdge.FADE, // rounded like the rest of the glass themes
             // Boxed: a smaller framed preview clear of the description panel; top and height match the hero panel,
             // so the nav pill never overlaps it. Fade: full corner preview, shrunk with the header.
             modifier = Modifier.align(Alignment.TopEnd).then(
                 if (boxed) Modifier.padding(top = 80.dp, end = 30.dp).size(boxH * 16 / 9, boxH)
-                    .then(if (backdrop == null) Modifier.border(1.dp, Color(0x66FFFFFF)) else Modifier)
                 else Modifier.size((300.dp - shift) * 53 / 30, 300.dp - shift)))
         Box(Modifier.padding(start = 24.dp, top = 22.dp)) { nav() }
-        GuideHero(vm, Modifier.padding(start = 24.dp, top = 80.dp).width(450.dp)
+        // Medium/Small: the hero runs up to the preview, so the description fits beside the title.
+        val previewW = if (boxed) boxH * 16 / 9 + 30.dp else (300.dp - shift) * 53 / 30
+        GuideHero(vm, Modifier.padding(start = 24.dp, top = 80.dp)
+            .then(if (settings.headerSize == HeaderSize.LARGE) Modifier.width(450.dp) else Modifier.padding(end = previewW + 24.dp).fillMaxWidth())
             // Liquid Glass: a fixed-size panel, so moving focus doesn't re-rasterise it for each description length.
             .then(if (backdrop != null) Modifier.height(232.dp - shift) else Modifier).glass().padding(inset), settings.headerSize)
 
@@ -114,6 +115,8 @@ private fun GuideHero(vm: LiveViewModel, modifier: Modifier, size: HeaderSize) {
     val logoSource by vm.logoSource.collectAsState()
     val previewingId by vm.previewingId.collectAsState()
     val formats by vm.player.formats.collectAsState()
+    val cursor by vm.cursor.collectAsState()
     val hero = channels.find { it.id == focused?.id } ?: focused // the list has the renamed copy
-    Hero(hero, hero?.displayName(strip).orEmpty(), programmes[focused?.id].orEmpty(), now, logoSource, heroBadges(focused?.id, previewingId, formats), modifier, size)
+    Hero(hero, hero?.displayName(strip).orEmpty(), programmes[focused?.id].orEmpty(), now, logoSource, heroBadges(focused?.id, previewingId, formats), modifier, size,
+        at = cursor?.takeIf { it > now } ?: now)
 }

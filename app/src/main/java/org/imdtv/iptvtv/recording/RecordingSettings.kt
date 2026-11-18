@@ -1,5 +1,6 @@
 package org.imdtv.iptvtv.recording
 
+import org.imdtv.iptvtv.data.settings.AppSettings
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -66,7 +67,7 @@ fun RecordingPage(vm: SettingsViewModel, modifier: Modifier, first: FocusRequest
         if (!s.recordingOn) return@Column
         val usbLabel = if (drives.isEmpty()) "USB drive (none found)" else "USB drive"
         ChoiceRow("Save to", "Where new recordings go", RecStorage.entries, s.recordTo,
-            { when (it) { RecStorage.INTERNAL -> "Internal storage"; RecStorage.USB -> usbLabel; RecStorage.SMB -> "Network share" } }) { to ->
+            { when (it) { RecStorage.INTERNAL -> "Internal storage"; RecStorage.USB -> usbLabel; RecStorage.SMB -> "Network share" } }, default = AppSettings().recordTo) { to ->
             if (to == RecStorage.USB && drives.isEmpty()) vm.notice("Plug in a USB drive first") else vm.update { it.copy(recordTo = to) }
         }
         if (s.recordTo == RecStorage.USB && drives.size > 1) {
@@ -86,10 +87,10 @@ fun RecordingPage(vm: SettingsViewModel, modifier: Modifier, first: FocusRequest
             }
         }
         SettingRow("Free space", "Where recordings are saved", free?.let(::freeSpaceText) ?: "…") {}
-        ChoiceRow("Start early", "Guide times drift: scheduled recordings start this much earlier", START_EARLY, s.startEarlyMin, { "$it min" }) { m ->
+        ChoiceRow("Start early", "Guide times drift: scheduled recordings start this much earlier", START_EARLY, s.startEarlyMin, { "$it min" }, default = AppSettings().startEarlyMin) { m ->
             vm.update { it.copy(startEarlyMin = m) }
         }
-        ChoiceRow("End late", "…and end this much later", END_LATE, s.endLateMin, { "$it min" }) { m -> vm.update { it.copy(endLateMin = m) } }
+        ChoiceRow("End late", "…and end this much later", END_LATE, s.endLateMin, { "$it min" }, default = AppSettings().endLateMin) { m -> vm.update { it.copy(endLateMin = m) } }
         SwitchRow("Keep the box awake while recording", "Stops the box sleeping or turning Wi-Fi off mid-recording", s.keepAwake) { on ->
             vm.update { it.copy(keepAwake = on) }
         }

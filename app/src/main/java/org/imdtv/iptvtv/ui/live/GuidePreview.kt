@@ -93,14 +93,17 @@ fun Preview(vm: LiveViewModel, visible: Boolean, screen: Size, modifier: Modifie
         // Fade the picture into the background (mockup: left and bottom edges) by drawing the matching patch of
         // background over it with a transparency gradient. Static, so it's rasterised once.
         // RIM: the video surface can't be clipped, so the backdrop is painted over the four corners outside the
-        // rounded frame (one cached bitmap), then the glass edge.
+        // rounded frame (one cached bitmap), then the glass edge. Celestial Glass (no backdrop) paints its gradient there.
         val backdrop = LocalGlassBackdrop.current
-        if (edge == PreviewEdge.RIM && backdrop != null) Box(Modifier.fillMaxSize().drawWithCache {
+        if (edge == PreviewEdge.RIM) Box(Modifier.fillMaxSize().drawWithCache {
+            val bg = if (backdrop == null) backgroundBitmap(colors, this, size, origin, screen) else null
             val r = 16.dp.toPx()
             val frame = androidx.compose.ui.graphics.Path().apply { addRoundRect(androidx.compose.ui.geometry.RoundRect(0f, 0f, size.width, size.height, r, r)) }
             val corners = ImageBitmap(size.width.toInt().coerceAtLeast(1), size.height.toInt().coerceAtLeast(1))
             CanvasDrawScope().draw(this, layoutDirection, androidx.compose.ui.graphics.Canvas(corners), size) {
-                clipPath(frame, androidx.compose.ui.graphics.ClipOp.Difference) { translate(-origin.x, -origin.y) { drawImage(backdrop.sharp) } }
+                clipPath(frame, androidx.compose.ui.graphics.ClipOp.Difference) {
+                    if (bg != null) drawImage(bg) else translate(-origin.x, -origin.y) { drawImage(backdrop!!.sharp) }
+                }
             }
             onDrawBehind { drawImage(corners) }
         }.border(1.dp, Brush.linearGradient(listOf(Color(0xB3FFFFFF), Color(0x26FFFFFF))), RoundedCornerShape(16.dp)))
@@ -131,10 +134,13 @@ fun Preview(vm: LiveViewModel, visible: Boolean, screen: Size, modifier: Modifie
 
 @Composable
 fun Hero(ch: ChannelEntity?, name: String, progs: List<GuideProgramme>, now: Long, logoSource: List<LogoKind>, badges: List<String>, modifier: Modifier,
-         size: HeaderSize = HeaderSize.LARGE) {
+         size: HeaderSize = HeaderSize.LARGE, /** The highlighted programme's time (a later one after Right). */ at: Long = now) {
     if (ch == null) return
-    val cur = progs.firstOrNull { it.start <= now && now < it.stop }
-    Column(modifier) {
+    val cur = progs.firstOrNull { it.start <= at && at < it.stop }
+    val later = cur != null && cur.start > now
+    // Medium/Small: the description sits to the right of the title instead of under it, where it wouldn't fit.
+    val beside = size != HeaderSize.LARGE
+    Row(modifier, horizontalArrangement = Arrangement.spacedBy(24.dp)) { Column(if (beside) Modifier.width(300.dp) else Modifier) {
         val logo = @Composable {
             Box(Modifier.size(60.dp, 43.dp).clip(RoundedCornerShape(3.dp)).background(Color(0x33FFFFFF)), contentAlignment = Alignment.Center) {
                 ChannelLogo(ch, logoSource, Modifier.fillMaxSize().padding(4.dp))
@@ -152,7 +158,7 @@ fun Hero(ch: ChannelEntity?, name: String, progs: List<GuideProgramme>, now: Lon
         }
         Row(horizontalArrangement = Arrangement.spacedBy(7.dp), verticalAlignment = Alignment.CenterVertically) {
             if (cur != null) {
-                Text("${duration(cur.stop - cur.start)} · Started at ${clockTime(cur.start)}" + if (badges.isNotEmpty()) " ·" else "",
+                Text("${duration(cur.stop - cur.start)} · ${if (later) "Starts" else "Started"} at ${clockTime(cur.start)}" + if (badges.isNotEmpty()) " ·" else "",
                     fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
             } else {
                 Text(name, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
@@ -167,11 +173,16 @@ fun Hero(ch: ChannelEntity?, name: String, progs: List<GuideProgramme>, now: Lon
             Text(it, fontSize = 14.sp, lineHeight = 19.sp, color = Color(0xFFEAF0FF), maxLines = 3, overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.padding(top = 7.dp))
         }
-        if (cur != null && size != HeaderSize.SMALL) {
+        if (cur != null && !later && size != HeaderSize.SMALL) {
             val f = ((now - cur.start).toFloat() / (cur.stop - cur.start)).coerceIn(0f, 1f)
             Box(Modifier.padding(top = 9.dp).size(210.dp, 2.5.dp).clip(RoundedCornerShape(2.dp)).background(Color(0x24FFFFFF))) {
                 Box(Modifier.fillMaxHeight().fillMaxWidth(f).background(Color.White))
             }
+        }
+    }
+        if (beside) cur?.desc?.let {
+            Text(it, fontSize = 14.sp, lineHeight = 19.sp, color = Color(0xFFEAF0FF), maxLines = if (size == HeaderSize.SMALL) 3 else 6,
+                overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f).padding(top = 4.dp))
         }
     }
 }

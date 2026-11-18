@@ -18,6 +18,21 @@ object Timeline {
         if (e <= s) return null
         return Span(((s - from) / MIN).toInt(), ((e - s) / MIN).toInt())
     }
+
+    /**
+     * The guide's highlighted programme after Right ([dir] 1) or Left (-1) on a row: the start of the next/previous
+     * programme, null = the one on now. Returns [at] itself when it can't move (Left on now). A row without guide steps
+     * by half-hours.
+     */
+    fun stepCursor(progs: List<org.imdtv.iptvtv.data.repo.GuideProgramme>, at: Long?, now: Long, dir: Int): Long? {
+        val t = at?.takeIf { it > now } ?: now
+        val cur = progs.firstOrNull { it.start <= t && t < it.stop }
+        if (dir > 0) return cur?.stop ?: progs.firstOrNull { it.start > t }?.start ?: (windowStart(t) + HALF_HOUR)
+        if (at == null || t == now) return at
+        val from = cur?.start ?: t
+        val to = progs.lastOrNull { it.stop <= from }?.start ?: (windowStart(from - 1))
+        return to.takeIf { it > now }
+    }
 }
 
 enum class OkAction { PREVIEW, FULL_SCREEN }
@@ -36,3 +51,28 @@ fun zap(ids: List<Long>, currentId: Long, delta: Int): Long? {
 
 /** Zapping through Recently watched must not record recents: that would reorder the list being zapped and Down would bounce. */
 fun zapRecordsRecent(entry: org.imdtv.iptvtv.data.repo.RailEntry?): Boolean = entry != org.imdtv.iptvtv.data.repo.RailEntry.Recent
+
+/** Channels watched, oldest first (newest 20), and the one being viewed while stepping back through them. */
+class ChannelHistory<T>(private val max: Int = 20, private val key: (T) -> Any) {
+    private val list = ArrayList<T>()
+    private var at = -1
+
+    /** [ch] started playing. The one stepped to (or already newest) changes nothing; anything else moves to the newest end. */
+    fun played(ch: T) {
+        if (at in list.indices && key(list[at]) == key(ch)) return
+        list.removeAll { key(it) == key(ch) }
+        list.add(ch)
+        if (list.size > max) list.removeAt(0)
+        at = list.lastIndex
+    }
+
+    /** [dir] 1 = one older, -1 = one newer; null at either end. */
+    fun step(dir: Int): T? {
+        val to = at - dir
+        if (to !in list.indices) return null
+        at = to
+        return list[to]
+    }
+
+    fun clear() { list.clear(); at = -1 }
+}
