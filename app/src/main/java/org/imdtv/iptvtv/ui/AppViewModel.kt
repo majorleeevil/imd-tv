@@ -179,6 +179,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
             } catch (e: Exception) {
                 // Don't leave a half-added provider behind; the user will retry with corrected details.
                 id?.let { c.providerRepository.remove(it) }
+                android.util.Log.w("AppViewModel", "Add ${type.name} playlist failed", e) // for Send logs on the form
                 form.value = FormState(error = loadError(e))
             }
         }
@@ -194,6 +195,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
             form.value = FormState(result = r.summary())
         } catch (e: Exception) {
             c.providerRepository.update(old)
+            android.util.Log.w("AppViewModel", "Edit ${new.type.name} playlist failed", e)
             form.value = FormState(error = loadError(e) + " Your changes were not saved.")
         }
     }

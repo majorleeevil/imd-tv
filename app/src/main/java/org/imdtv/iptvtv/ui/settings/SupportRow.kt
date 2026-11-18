@@ -115,7 +115,12 @@ private const val LOG_PAGE_MS = 10 * 60 * 1000L
 private fun SendLogsRow() {
     var open by remember { mutableStateOf(false) }
     SettingRow("Send logs", "Send this app's log to support from your phone", null) { open = true }
-    if (!open) return
+    if (open) SendLogsPage { open = false }
+}
+
+/** The Send logs page; [extraSecrets] are scrubbed too (e.g. a login typed into an add that failed, so never saved). */
+@Composable
+fun SendLogsPage(extraSecrets: List<String> = emptyList(), onClose: () -> Unit) {
     val ctx = LocalContext.current
     val app = ctx.applicationContext as IptvApp
     var server by remember { mutableStateOf<LogServer?>(null) }
@@ -131,7 +136,7 @@ private fun SendLogsRow() {
                 val header = "IMD TV ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})\n${Build.MANUFACTURER} ${Build.MODEL}, Android ${Build.VERSION.RELEASE}\n" +
                     "Theme: ${c.settings.settings.first().theme}\nPlaylists: ${providers.size} ${providers.map { it.type }}\n\n"
                 // Stalker passwords hold "serial\ndeviceId": each line is a secret.
-                val secrets = providers.flatMap { listOfNotNull(it.username, it.password) }.flatMap { it.lines() }
+                val secrets = (providers.flatMap { listOfNotNull(it.username, it.password) } + extraSecrets).flatMap { it.lines() }
                 LogServer(addr, (header + scrubLog(prev + cur, secrets)).toByteArray()).also {
                     server = it // set at once so closing the page mid-build still stops it
                     val m = QRCodeWriter().encode(it.url, BarcodeFormat.QR_CODE, 0, 0, mapOf(EncodeHintType.MARGIN to 0))
@@ -142,10 +147,10 @@ private fun SendLogsRow() {
         server = s
         failed = s == null
         delay(LOG_PAGE_MS)
-        open = false
+        onClose()
     }
     DisposableEffect(Unit) { onDispose { server?.stop() } }
-    MenuFrame("Send logs", onDismiss = { open = false }) { first ->
+    MenuFrame("Send logs", onDismiss = onClose) { first ->
         val img = qr
         if (img != null) Box(Modifier.fillMaxWidth().padding(vertical = 8.dp), contentAlignment = Alignment.Center) {
             Image(img, contentDescription = "QR code for the log file", filterQuality = FilterQuality.None,
@@ -156,6 +161,6 @@ private fun SendLogsRow() {
             failed -> "No Wi-Fi or Ethernet address found. Connect the TV to your home network and try again"
             else -> "Preparing the log..."
         }, fontSize = 15.sp, color = Color.White, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp))
-        MenuItem("Close", Modifier.focusRequester(first)) { open = false }
+        MenuItem("Close", Modifier.focusRequester(first)) { onClose() }
     }
 }

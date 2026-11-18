@@ -75,9 +75,12 @@ private fun ProviderForm(vm: AppViewModel, editing: ProviderEntity?) {
     var agent by rememberSaveable { mutableStateOf(editing?.userAgent.orEmpty()) }
 
     var name by rememberSaveable { mutableStateOf(editing?.name.orEmpty()) }
+    var sendLogs by remember { mutableStateOf(false) }
     val ready = state.result != null
     val next = remember { FocusRequester() }
     val save = remember { FocusRequester() }
+    // What was typed may never have been saved (a failed add is removed), so the scrubber is given it directly.
+    if (sendLogs) org.imdtv.iptvtv.ui.settings.SendLogsPage(listOf(user, pass, deviceId)) { sendLogs = false; runCatching { save.requestFocus() } }
     LaunchedEffect(ready) { if (ready) runCatching { next.requestFocus() } } // Save has gone: focus Watch/Done, not the top
     // One 1080p screen (960×540 dp): labels sit beside the fields, progress and Watch on the right.
     // Scrolls only when the Name box is open on the tallest (Stalker) form.
@@ -118,6 +121,7 @@ private fun ProviderForm(vm: AppViewModel, editing: ProviderEntity?) {
                         }, Modifier.focusRequester(save)) { Text("Save") }
                         if (vm.canLeaveSetup && editing == null) Button(onClick = vm::refreshGuide) { Text("Refresh guide now") }
                         // Beside Save, not above it: a line above pushed Save off the bottom of the Stalker form.
+                        if (!state.busy && state.error != null) Button(onClick = { sendLogs = true }) { Text("Send logs") }
                         if (!state.busy) state.error?.let { Text(it, color = Color(0xFFFF8A80), fontSize = 13.sp, maxLines = 3, modifier = Modifier.weight(1f)) }
                     }
                 }
