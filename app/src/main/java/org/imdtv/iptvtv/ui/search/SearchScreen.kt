@@ -60,6 +60,7 @@ import androidx.tv.material3.Text
 import org.imdtv.iptvtv.R
 import org.imdtv.iptvtv.data.catalogue.displayName
 import org.imdtv.iptvtv.data.db.ChannelEntity
+import org.imdtv.iptvtv.ui.onLongOk
 import org.imdtv.iptvtv.data.search.Section
 import org.imdtv.iptvtv.ui.ChannelLogo
 import org.imdtv.iptvtv.ui.FocusBox
@@ -86,8 +87,13 @@ fun SearchScreen(
     textColor: Color = Color.White,
     /** False where the field is reached by moving onto it (Xcube's blade card): the keyboard waits for OK there. */
     openKeyboard: Boolean = true,
+    /** Long OK on a channel opens the guide's channel menu (favourites, categories, …). */
+    live: org.imdtv.iptvtv.ui.live.LiveViewModel? = null,
 ) {
     val colors = LocalTheme.current.colors
+    val menus = live?.let { remember(it) { org.imdtv.iptvtv.ui.live.GuideState(it, 0, androidx.compose.foundation.lazy.LazyListState(), false, previews = false) } }
+    if (live != null && menus != null) org.imdtv.iptvtv.ui.live.GuideMenus(live, menus)
+    fun Modifier.channelMenu(ch: ChannelEntity) = if (menus == null) this else onLongOk { menus.menu = org.imdtv.iptvtv.ui.live.GuideMenu.Channel(ch) }
     val query by vm.query.collectAsState()
     val results by vm.results.collectAsState()
     val logos by vm.logoSource.collectAsState()
@@ -156,13 +162,13 @@ fun SearchScreen(
                     @Suppress("UNCHECKED_CAST")
                     ResultList(title, s as Section<Any>, n, returnTo, back, firstResult.takeIf { firstSection == n }, textColor) { i, item, m ->
                         val name = if (item is ChannelEntity) item.displayName(strip2) else (item as VodItem).name
-                        ListBar(name, m) { vm.returnTo = n to i; if (item is ChannelEntity) onChannel(item) else onOpen(item as VodItem) }
+                        ListBar(name, if (item is ChannelEntity) m.channelMenu(item) else m) { vm.returnTo = n to i; if (item is ChannelEntity) onChannel(item) else onOpen(item as VodItem) }
                     }
                 }
             }
         } else Column(resultsGroup.verticalScroll(rememberScrollState()).padding(top = 14.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             ResultRow("Channels", r.channels, 0, returnTo, back, firstResult.takeIf { firstSection == 0 }) { i, ch, m ->
-                ChannelTile(ch, ch.displayName(strip), logos, m) { vm.returnTo = 0 to i; onChannel(ch) }
+                ChannelTile(ch, ch.displayName(strip), logos, m.channelMenu(ch)) { vm.returnTo = 0 to i; onChannel(ch) }
             }
             ResultRow("Movies", r.movies, 1, returnTo, back, firstResult.takeIf { firstSection == 1 }) { i, item, m -> Poster(item, m, caption = true, onFocused = {}) { vm.returnTo = 1 to i; onOpen(item) } }
             ResultRow("Series", r.series, 2, returnTo, back, firstResult.takeIf { firstSection == 2 }) { i, item, m -> Poster(item, m, caption = true, onFocused = {}) { vm.returnTo = 2 to i; onOpen(item) } }

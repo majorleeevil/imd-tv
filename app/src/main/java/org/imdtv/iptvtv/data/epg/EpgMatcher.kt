@@ -44,6 +44,8 @@ class EpgMatcher(
      */
     private suspend fun rematchWith(providerId: Long, mode: List<GuideKind>, borrow: Boolean, off: Set<String>): MatchResult = withContext(Dispatchers.Default) {
         val epg = db.epgDao()
+        val clock = System.currentTimeMillis(); val phases = StringBuilder()
+        fun phase(name: String) { phases.append(" $name=${System.currentTimeMillis() - clock}") }
         val normaliser = NameNormaliser(db.ruleDao().nameRules(providerId))
         val sources = selectSources(epg.sources(providerId), mode, ownUrls(providerId), off)
 
@@ -63,14 +65,15 @@ class EpgMatcher(
             names += index
         }
 
+        phase("index")
         val manualLinks = epg.links(providerId).filter { it.manual }
         val manual = manualLinks.mapTo(HashSet()) { it.channelId }
         val channels = db.channelDao().byProvider(providerId)
         // A guide that has run out (provider feeds sometimes stop hours early) gives way to a later source that still has one.
         val live = db.programmeDao().liveKeys(now()).toHashSet()
-        val links = ArrayList<EpgLinkEntity>()
-        for (c in channels) {
-            if (c.id in manual) continue
+        phase("live")
+        // Every core: the indexes above are only read here, and the name keys (regexes) are the slow part.
+        val links = ArrayList(channels.filter { it.id !in manual }.parallelStream().map { c ->
             // Same precedence as before (ids across sources, then names across sources); the first one still on air wins.
             val keys = NameKeys(c.name, normaliser)  // once per channel, not once per source
             val candidates = sequence {
@@ -82,8 +85,9 @@ class EpgMatcher(
                 if (first == null) first = l
                 if (ProgrammeEntity.key(l.sourceId, l.xmltvId) in live) { first = l; break }
             }
-            first?.let(links::add)
-        }
+            java.util.Optional.ofNullable(first)
+        }.filter { it.isPresent }.map { it.get() }.collect(java.util.stream.Collectors.toList()))
+        phase("match")
         val borrowed = if (!borrow) emptyList() else {
             val country = db.categoryDao().allKinds(providerId).associate { it.id to it.country }
             borrowSiblings(channels, { ch -> ch.categoryId?.let(country::get) }, links + manualLinks)
@@ -95,6 +99,8 @@ class EpgMatcher(
             epg.deleteAutoLinks(providerId)
             links.filter { it.channelId !in manualNow }.chunked(500).forEach { epg.upsertLinks(it) }
         }
+        phase("write")
+        android.util.Log.i(EpgImporter.TAG, "rematch $providerId phases (ms, cumulative):$phases")
         val matched = links.size + manual.size
         MatchResult(matched = matched, unmatched = channels.size - matched, borrowed = borrowed.size)
     }

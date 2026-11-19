@@ -219,7 +219,7 @@ fun XmbScreen(
                     else -> false
                 }
             }
-            .onLongOk { focusedChannel?.let { guide.menu = GuideMenu.Channel(it) } }
+            .onLongOk { (focusedChannel ?: searchHit as? ChannelEntity)?.let { guide.menu = GuideMenu.Channel(it) } }
             .clickable(remember { MutableInteractionSource() }, indication = null, onClick = click)
             .focusable(),
     ) {

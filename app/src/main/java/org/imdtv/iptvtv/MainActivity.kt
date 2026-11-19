@@ -102,7 +102,10 @@ class MainActivity : ComponentActivity() {
             val backdrop = if (themeId != ThemeId.LIQUID_GLASS) null else remember(conf.screenWidthDp, conf.screenHeightDp, themeColour, themeDark) {
                 with(density) { glassBackdrop(this, androidx.compose.ui.geometry.Size(conf.screenWidthDp.dp.toPx(), conf.screenHeightDp.dp.toPx()), themeColour.liquid.map { org.imdtv.iptvtv.ui.theme.themeStop(it, themeDark) }, themeDark) }
             }
-            CompositionLocalProvider(LocalTheme provides remember(themeId, themeColour, themeDark) { themeOf(themeId, themeColour, themeDark) }, LocalGlassBackdrop provides backdrop,
+            // Every screen is a fixed 10-foot layout in dp: a box's larger system text size (font scale) made text overrun it
+            // (guide hero over the timeline, user photo 2026-11-18), so text keeps its designed size.
+            CompositionLocalProvider(androidx.compose.ui.platform.LocalDensity provides androidx.compose.ui.unit.Density(density.density, 1f),
+                LocalTheme provides remember(themeId, themeColour, themeDark) { themeOf(themeId, themeColour, themeDark) }, LocalGlassBackdrop provides backdrop,
                 org.imdtv.iptvtv.ui.LocalShowNumbers provides app.settings.collectAsState().value.showChannelNumbers) {
             MaterialTheme(colorScheme = darkColorScheme()) {
             // Celestial Glass and Liquid Glass: every TV Text in Inter (the website's font). Inside MaterialTheme, which
@@ -170,7 +173,7 @@ class MainActivity : ComponentActivity() {
                         onLiveCategory = { e -> live.select(e); live.retroGuideOpen = true },
                         onVodCategory = { c -> vod.gridCategory.value = c },
                         menuFocus = menuFocus, onMenuFocused = { menuFocused = it },
-                        search = { org.imdtv.iptvtv.ui.search.SearchScreen(searchVm, {}, searchChannel, app::open, lists = true, textColor = LocalTheme.current.colors.panel) })
+                        search = { org.imdtv.iptvtv.ui.search.SearchScreen(searchVm, {}, searchChannel, app::open, live = live, lists = true, textColor = LocalTheme.current.colors.panel) })
                 }
                 Box(Modifier.fillMaxSize().background(Color.Black)) {
                     val full: (org.imdtv.iptvtv.data.db.ChannelEntity) -> Unit = { ch ->
@@ -197,10 +200,10 @@ class MainActivity : ComponentActivity() {
                             else -> VodHomeScreen(vod, nav, onOpen = app::open)
                         }
                         Screen.Search -> when {
-                            card != null -> org.imdtv.iptvtv.ui.search.SearchScreen(searchVm, {}, searchChannel, app::open, lists = true,
+                            card != null -> org.imdtv.iptvtv.ui.search.SearchScreen(searchVm, {}, searchChannel, app::open, live = live, lists = true,
                                 fieldModifier = { typing -> Modifier.bladeCard(card, typing) }, openKeyboard = false)
                             themeId == ThemeId.CELESTIAL_RETRO -> retroMenu(Tab.SEARCH)
-                            else -> org.imdtv.iptvtv.ui.search.SearchScreen(searchVm, nav, searchChannel, app::open)
+                            else -> org.imdtv.iptvtv.ui.search.SearchScreen(searchVm, nav, searchChannel, app::open, live = live)
                         }
                         Screen.Recordings -> when {
                             card != null -> org.imdtv.iptvtv.recording.RecordingsScreen(null, app::playRecording, Modifier.bladeCard(card))

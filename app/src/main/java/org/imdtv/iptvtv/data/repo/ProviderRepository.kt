@@ -1,5 +1,8 @@
 package org.imdtv.iptvtv.data.repo
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.sync.withLock
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.imdtv.iptvtv.data.db.login
 import org.imdtv.iptvtv.data.security.PASS_TOKEN
@@ -139,10 +142,40 @@ class ProviderRepository(
         return if (last == null || now() - last >= maxAge.inWholeMilliseconds) syncNow(providerId) else null
     }
 
-    suspend fun syncNow(providerId: Long, onProgress: (String) -> Unit = {}): SyncResult {
+    /** Switches loading [kind] off for [providerId] and removes what it had, at once (a full sync would fetch the rest first). */
+    suspend fun stopLoading(providerId: Long, kind: org.imdtv.iptvtv.data.model.Kind, contentOff: String) = withContext(Dispatchers.Default) {
+        db.providerDao().setContentOff(providerId, contentOff)
+        // A running sync re-reads the switches and removes this kind itself; clearing alongside it raced its reads (crash).
+        val lock = lockFor(providerId)
+        if (!lock.tryLock()) return@withContext
+        try { sync.clear(providerId, kind) } finally { lock.unlock() }
+        runAfterSync(providerId)
+    }
+
+    /** One catalogue job (sync or removal) per playlist at a time: two at once read rows the other is deleting. */
+    private val locks = java.util.concurrent.ConcurrentHashMap<Long, kotlinx.coroutines.sync.Mutex>()
+    private fun lockFor(providerId: Long) = locks.getOrPut(providerId) { kotlinx.coroutines.sync.Mutex() }
+
+    /** Per playlist, the kind a running sync is on (kinds sync in [Kind] order); absent when none runs. */
+    val syncing = kotlinx.coroutines.flow.MutableStateFlow<Map<Long, org.imdtv.iptvtv.data.model.Kind>>(emptyMap())
+
+    // Off the caller's thread: Settings calls from Main, and mapping/diffing 185k movies there froze the app (ANR).
+    suspend fun syncNow(providerId: Long, onProgress: (String) -> Unit = {}): SyncResult = withContext(Dispatchers.Default) {
         val p = db.providerDao().get(providerId) ?: throw NoSuchElementException("No provider $providerId")
-        val result = sync.sync(providerId, sourceFor(p), onProgress)
+        val result = lockFor(providerId).withLock { try {
+            // Each kind reads the switch as saved now: it may change while the sync runs.
+            sync.sync(providerId, sourceFor(p), { k -> db.providerDao().get(providerId)?.loads(k) ?: false }, onProgress) { k ->
+                syncing.value = syncing.value + (providerId to k)
+            }
+        } finally {
+            syncing.value = syncing.value - providerId
+        } }
         db.providerDao().setLastSync(providerId, now())
+        runAfterSync(providerId)
+        result
+    }
+
+    private suspend fun runAfterSync(providerId: Long) {
         try {
             afterSync(providerId)
         } catch (e: CancellationException) {
@@ -150,6 +183,5 @@ class ProviderRepository(
         } catch (e: Exception) {
             Log.w("ProviderRepository", "after-sync work failed: $e")
         }
-        return result
     }
 }

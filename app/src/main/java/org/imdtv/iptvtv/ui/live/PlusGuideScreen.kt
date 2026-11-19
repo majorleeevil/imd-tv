@@ -138,16 +138,15 @@ fun PlusGuideScreen(vm: LiveViewModel, nav: @Composable () -> Unit, onFullScreen
         }
         // The tabs and grid panel run to both sides and the bottom (user, 2026-11-12).
         Column(Modifier.padding(top = 232.dp).fillMaxSize()) {
-            val providerKeys = rail.orEmpty().filter { it.entry is RailEntry.Provider }.map { it.entry.key }
             CategoryTabs(
                 rail.orEmpty(), entry?.key, tabsFocus,
                 onPick = { vm.select(it) },
                 onDown = { scope.launch { state.enterFromTabs(channels.map { it.id }) } },
                 onUp = { focusManager.moveFocus(FocusDirection.Up) },
-                onLongPress = { e -> if (e is RailEntry.Provider) state.menu = GuideMenu.Category(e.category, horizontal = true) },
+                onLongPress = { e -> railMenu(e, horizontal = true)?.let { state.menu = it } },
                 move = state.railMove,
-                onMove = { d -> state.railMove?.let { vm.moveCategory(it.cat, d) } },
-                onMoveEnd = { cancel -> endRailMove(vm, state, providerKeys, cancel) },
+                onMove = { d -> state.railMove?.let { vm.moveRail(it.entry, d) } },
+                onMoveEnd = { cancel -> endRailMove(vm, state, rail.orEmpty(), cancel) },
                 modifier = Modifier.fillMaxWidth().height(26.dp),
             )
             // Panel full-bleed, content inside the TV-safe margin (overscan hides the outer edge).

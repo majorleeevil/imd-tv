@@ -43,15 +43,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.tv.material3.Text
 import kotlinx.coroutines.flow.first
-import org.imdtv.iptvtv.data.db.CategoryEntity
 import org.imdtv.iptvtv.ui.AppLogo
 import org.imdtv.iptvtv.ui.onLongOk
 import org.imdtv.iptvtv.data.repo.RailEntry
 import org.imdtv.iptvtv.data.repo.RailItem
 import org.imdtv.iptvtv.ui.FocusBox
 
-/** Rail move mode (spec §4.3): Up/Down moves, OK drops, Back puts it back. */
-internal class RailMove(val cat: CategoryEntity, val from: Int)
+/** Rail move mode (spec §4.3): Up/Down moves, OK drops, Back puts it back. [entry] is a provider or your category. */
+internal class RailMove(val entry: RailEntry, val from: Int)
 
 @Composable
 internal fun Rail(
@@ -63,7 +62,7 @@ internal fun Rail(
 ) {
     val start = items.indexOfFirst { it.entry.key == selectedKey }.coerceAtLeast(0)
     val state = rememberLazyListState(start)
-    val movingKey = move?.let { "c${it.cat.id}" }
+    val movingKey = move?.entry?.key
     val moveFocus = remember { FocusRequester() }
     val movingIndex = items.indexOfFirst { it.entry.key == (movingKey ?: keepKey) }
     val keyFocus = remember { FocusRequester() }
@@ -110,8 +109,8 @@ internal fun Rail(
                     modifier = (if (i == start) Modifier.focusRequester(focus) else Modifier)
                         .then(if (isMoving) Modifier.focusRequester(moveFocus) else Modifier)
                         .then(if (rc.entry.key == focusKey) Modifier.focusRequester(keyFocus) else Modifier)
-                        // Only provider categories have a menu; Favourites and user categories are managed in Settings.
-                        .then(if (rc.entry is RailEntry.Provider) Modifier.onLongOk { onLongPress(rc.entry) } else Modifier)
+                        // Provider and your categories have a menu; Favourites and Recently watched don't.
+                        .then(if (rc.entry is RailEntry.Provider || rc.entry is RailEntry.Custom) Modifier.onLongOk { onLongPress(rc.entry) } else Modifier)
                         .onPreviewKeyEvent { e -> if (e.type == KeyEventType.KeyDown && e.key == Key.DirectionRight) { onPick(rc.entry); true } else false },
                 ) { f ->
                     Row(
@@ -131,9 +130,19 @@ internal fun Rail(
 }
 
 /** Ends move mode; Back (cancel) puts the category back where it started. */
-internal fun endRailMove(vm: LiveViewModel, state: GuideState, providerKeys: List<String>, cancel: Boolean) {
-    state.railMove?.let { m -> if (cancel) vm.moveCategory(m.cat, m.from - providerKeys.indexOf("c${m.cat.id}")) }
+internal fun endRailMove(vm: LiveViewModel, state: GuideState, rail: List<RailItem>, cancel: Boolean) {
+    state.railMove?.let { m -> if (cancel) vm.moveRail(m.entry, m.from - rail.sameKindKeys(m.entry).indexOf(m.entry.key)) }
     state.railMove = null
+}
+
+/** Keys of the rail entries of [e]'s kind (provider categories, or your categories), in rail order. */
+internal fun List<RailItem>.sameKindKeys(e: RailEntry) = filter { it.entry::class == e::class }.map { it.entry.key }
+
+/** Long-press on a rail entry: the menu for a provider category or one of your categories. */
+internal fun railMenu(e: RailEntry, horizontal: Boolean = false): GuideMenu? = when (e) {
+    is RailEntry.Provider -> GuideMenu.Category(e.category, horizontal)
+    is RailEntry.Custom -> GuideMenu.Group(e.group, horizontal)
+    else -> null
 }
 
 /** The category rail wired to the guide: pick, long-press Move up/down/Hide, move mode, close (spec §4.3). */
@@ -141,15 +150,15 @@ internal fun endRailMove(vm: LiveViewModel, state: GuideState, providerKeys: Lis
 fun CategoryRail(vm: LiveViewModel, state: GuideState, modifier: Modifier = Modifier) {
     val rail by vm.rail.collectAsState()
     val entry by vm.entry.collectAsState()
-    val providerKeys = rail.orEmpty().filter { it.entry is RailEntry.Provider }.map { it.entry.key }
     Box(modifier) {
         Rail(rail.orEmpty(), entry?.key, state.railFocus, state.railMove,
-            keepKey = (state.menu as? GuideMenu.Category)?.let { "c${it.cat.id}" }, focusKey = state.railFocusKey,
+            keepKey = when (val m = state.menu) { is GuideMenu.Category -> "c${m.cat.id}"; is GuideMenu.Group -> "g${m.g.id}"; else -> null },
+            focusKey = state.railFocusKey,
             onFocusKeyDone = { state.railFocusKey = null },
             onPick = { vm.select(it); state.railOpen = false },
-            onLongPress = { e -> if (e is RailEntry.Provider) state.menu = GuideMenu.Category(e.category) },
-            onMove = { d -> state.railMove?.let { vm.moveCategory(it.cat, d) } },
-            onMoveEnd = { cancel -> endRailMove(vm, state, providerKeys, cancel) },
+            onLongPress = { e -> railMenu(e)?.let { state.menu = it } },
+            onMove = { d -> state.railMove?.let { vm.moveRail(it.entry, d) } },
+            onMoveEnd = { cancel -> endRailMove(vm, state, rail.orEmpty(), cancel) },
             onClose = { state.railOpen = false; state.refocus() })
     }
 }

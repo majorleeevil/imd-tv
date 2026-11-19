@@ -43,6 +43,7 @@ abstract class ProviderDao {
     suspend fun unsealed(): List<ProviderEntity> = allRaw().filter { !Secrets.isEncrypted(it.url) }
     @Query("UPDATE provider SET nameStrip = :s WHERE id = :id") abstract suspend fun setNameStrip(id: Long, s: String)
     @Query("UPDATE provider SET categoryStrip = :s WHERE id = :id") abstract suspend fun setCategoryStrip(id: Long, s: String)
+    @Query("UPDATE provider SET contentOff = :s WHERE id = :id") abstract suspend fun setContentOff(id: Long, s: String)
     @Query("UPDATE provider SET lastSync = :t WHERE id = :id") abstract suspend fun setLastSync(id: Long, t: Long)
     @Query("UPDATE provider SET maxConnections = :n WHERE id = :id") abstract suspend fun setMaxConnections(id: Long, n: Int?)
 
@@ -284,8 +285,11 @@ abstract class ProgrammeDao {
     /** Deletes programmes that ended before [t]. */
     @Query("DELETE FROM programme WHERE stop < :t") abstract suspend fun deleteBefore(t: Long)
     @Query("SELECT count(*) FROM programme") abstract suspend fun count(): Int
-    /** Guide channels ("sourceId|xmltvId") with a programme that hasn't finished yet. */
-    @Query("SELECT DISTINCT epgChannelKey FROM programme WHERE stop > :now") abstract suspend fun liveKeys(now: Long): List<String>
+    /** Guide channels ("sourceId|xmltvId") whose last programme hasn't finished yet. The latest start per channel comes
+     *  from the (epgChannelKey, start) index alone, then one row per channel: a full scan of every programme took 8–10 s. */
+    @Query("""SELECT p.epgChannelKey FROM (SELECT epgChannelKey, MAX(start) AS s FROM programme GROUP BY epgChannelKey) m
+        JOIN programme p ON p.epgChannelKey = m.epgChannelKey AND p.start = m.s WHERE p.stop > :now GROUP BY p.epgChannelKey""")
+    abstract suspend fun liveKeys(now: Long): List<String>
     @Query("DELETE FROM programme") abstract suspend fun deleteAll()
 }
 

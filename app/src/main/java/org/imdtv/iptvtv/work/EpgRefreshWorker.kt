@@ -60,8 +60,9 @@ class EpgRefreshWorker(context: Context, params: WorkerParameters) : CoroutineWo
                         c.db.epgDao().setStatus(s.id, epgErrorStatus(it))
                     }
             }
+            val t = System.currentTimeMillis()
             val m = c.epgMatcher.rematch(p.id, mode)
-            Log.i(EpgImporter.TAG, "Provider ${p.id}: ${m.matched} matched (${m.borrowed} borrowed), ${m.unmatched} unmatched")
+            Log.i(EpgImporter.TAG, "Provider ${p.id}: ${m.matched} matched (${m.borrowed} borrowed), ${m.unmatched} unmatched in ${System.currentTimeMillis() - t} ms")
         }
         return if (shouldRetry(attempted, failed)) Result.retry() else Result.success()
     }

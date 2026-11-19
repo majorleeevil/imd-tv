@@ -37,7 +37,11 @@ data class ProviderEntity(
     @ColumnInfo(defaultValue = "") val categoryStrip: String = "",
     /** Xtream user_info.max_connections, refreshed when recording needs it; null = unknown (M3U). */
     val maxConnections: Int? = null,
-)
+    /** Kinds (Kind names, comma-separated) this playlist doesn't load: never fetched, their data removed. */
+    @ColumnInfo(defaultValue = "") val contentOff: String = "",
+) {
+    fun loads(kind: org.imdtv.iptvtv.data.model.Kind) = kind.name !in contentOff.split(',')
+}
 
 @Entity(
     tableName = "category",

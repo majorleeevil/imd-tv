@@ -54,6 +54,7 @@ import org.imdtv.iptvtv.data.repo.GuideProgramme
 import org.imdtv.iptvtv.ui.FocusBox
 import org.imdtv.iptvtv.ui.clockTime
 import org.imdtv.iptvtv.ui.onLongOk
+import kotlinx.coroutines.launch
 import org.imdtv.iptvtv.ui.theme.LocalTheme
 
 /** How a theme draws the timeline grid. A field is added by the first theme that needs it. */
@@ -137,7 +138,27 @@ fun GuideGrid(
 ) {
     val multiLine = vm.settings.collectAsState().value.multiLineGuide
     val style = remember(base, multiLine) { base.forGuide(multiLine) }
-    val channels by vm.channels.collectAsState()
+    val listed by vm.channels.collectAsState()
+    val move = state.rowMove
+    val channels = move?.order ?: listed
+    androidx.activity.compose.BackHandler(enabled = move != null && !move.dropped) { state.rowMove = null }
+    androidx.compose.runtime.LaunchedEffect(listed) { if (state.rowMove?.dropped == true) state.rowMove = null }
+    // Keep the moved row clear of the list's edges, so the channel it is passing shows. Measured after the move is laid
+    // out: the list keeps its first visible item by key, so a row moving up past the top drags the view with it.
+    androidx.compose.runtime.LaunchedEffect(move?.order) {
+        val m = move?.takeIf { !it.dropped } ?: return@LaunchedEffect
+        androidx.compose.runtime.withFrameNanos { }
+        val j = m.order.indexOfFirst { it.id == m.ch.id }
+        val seen = state.list.layoutInfo.visibleItemsInfo.takeIf { it.isNotEmpty() } ?: return@LaunchedEffect
+        when {
+            // At the very top (j = 0) too: the list may still be scrolled down, leaving the row above the screen.
+            j <= seen.first().index -> state.list.scrollToItem((j - 1).coerceAtLeast(0))
+            j >= seen.last().index -> state.list.scrollToItem(seen.first().index + (j - seen.last().index) + if (j < m.order.lastIndex) 1 else 0)
+        }
+    }
+    if (move != null && !move.dropped) androidx.compose.ui.window.Popup(alignment = Alignment.BottomCenter) {
+        org.imdtv.iptvtv.ui.InfoBar("Up/Down to move · OK to drop · Back to cancel", Modifier.padding(bottom = 40.dp))
+    }
     val programmes by vm.programmes.collectAsState()
     val now by vm.now.collectAsState()
     val windowStart by vm.windowStart.collectAsState()
@@ -174,11 +195,13 @@ fun GuideGrid(
             LazyColumn(state = state.list, verticalArrangement = Arrangement.spacedBy(style.gap),
                 modifier = if (listHeight != null) Modifier.height(listHeight) else Modifier.fillMaxSize()) {
                 itemsIndexed(channels, key = { _, ch -> ch.id }) { i, ch ->
+                    val moving = move?.ch?.id == ch.id && !move.dropped
                     GuideRow(
-                        ch, ch.displayName(strip), programmes[ch.id].orEmpty(), now, at, windowStart, style, isFocused = focused?.id == ch.id && !state.railOpen && state.heldFocus == null,
+                        ch, (if (moving) "↕ " else "") + ch.displayName(strip), programmes[ch.id].orEmpty(), now, at, windowStart, style, isFocused = focused?.id == ch.id && !state.railOpen && state.heldFocus == null, moving = moving,
                         marked = { p -> (ch.id to p.start) in marks || ch.id in recordingOnChannel && p.start <= now && now < p.stop },
                         modifier = (if (i == state.focusIndex) Modifier.focusRequester(state.rowFocus) else Modifier)
                             .onPreviewKeyEvent { e ->
+                                if (moving && move != null) return@onPreviewKeyEvent moveKey(e, move, i, state, vm)
                                 if (state.railOpen) return@onPreviewKeyEvent true // rail is taking focus; don't move the guide behind it
                                 if (vm.numberKey(e, false)) return@onPreviewKeyEvent true
                                 if (e.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
@@ -208,25 +231,46 @@ fun GuideGrid(
     }
 }
 
+/** A key on the picked-up row: Up/Down carry it, OK (on release, so the press isn't also a click) drops it; the rest is swallowed. */
+private fun moveKey(e: androidx.compose.ui.input.key.KeyEvent, m: RowMove, i: Int, state: GuideState, vm: LiveViewModel): Boolean {
+    val down = e.type == KeyEventType.KeyDown
+    when (e.key) {
+        Key.DirectionUp, Key.DirectionDown -> if (down) {
+            val j = i + if (e.key == Key.DirectionUp) -1 else 1
+            if (j in m.order.indices) {
+                state.rowMove = m.copy(order = m.order.toMutableList().apply { add(j, removeAt(i)) })
+                state.focusIndex = j
+            }
+        }
+        Key.DirectionCenter, Key.Enter, Key.NumPadEnter -> if (!down) { vm.saveGuideOrder(m.ch, m.before, m.order); state.rowMove = m.copy(dropped = true) }
+        Key.Back, Key.Escape -> return false // to the BackHandler, which cancels the move
+        else -> {}
+    }
+    return true
+}
+
 @Composable
 private fun GuideRow(
     ch: ChannelEntity, name: String, progs: List<GuideProgramme>, now: Long, at: Long, windowStart: Long, style: GridStyle, isFocused: Boolean,
     marked: (GuideProgramme) -> Boolean, modifier: Modifier, onFocused: () -> Unit, onClick: () -> Unit,
+    /** Picked up by Move: the gold of every move (Settings, the category rail). */
+    moving: Boolean = false,
 ) {
     val colors = LocalTheme.current.colors
     Row(Modifier.height(style.rowHeight).then(if (style.rowDividers) Modifier.drawBehind {
         drawRect(Color(0x40FFFFFF), Offset(0f, size.height - 1.dp.toPx()), Size(size.width, 1.dp.toPx()))
     } else Modifier)) {
-        FocusBox(onClick = onClick, onFocused = onFocused, modifier = modifier.width(style.channelCol - 5.dp).fillMaxHeight()) { f ->
+        FocusBox(onClick = onClick, onFocused = onFocused, modifier = modifier.width(style.channelCol - 5.dp).fillMaxHeight()) { focusedBox ->
+            val f = focusedBox && !moving
             Row(
                 Modifier.fillMaxSize()
                     .graphicsLayer { val s = if (f && !style.boxed) 1.03f else 1f; scaleX = s; scaleY = s }
                     .then(if (f && !style.boxed) Modifier.shadow(14.dp, RoundedCornerShape(5.dp), ambientColor = Color(0xFFA0BEFF), spotColor = Color(0xFFA0BEFF)) else Modifier)
-                    .background(if (f) colors.focus else colors.cell, if (style.boxed) BOX else PILL)
+                    .background(if (moving) Color(0xFFE5A00D) else if (f) colors.focus else colors.cell, if (style.boxed) BOX else PILL)
                     .padding(horizontal = 11.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                val fg = if (f) colors.onFocus else Color.White
+                val fg = if (moving) Color.Black else if (f) colors.onFocus else Color.White
                 val number = (ch.customNumber ?: ch.number)?.takeIf { org.imdtv.iptvtv.ui.LocalShowNumbers.current }
                 if (style.numberFirst) {
                     Text(listOfNotNull(number, name).joinToString("  "), fontSize = style.sp(14f), fontWeight = style.font, color = fg, maxLines = style.lines,

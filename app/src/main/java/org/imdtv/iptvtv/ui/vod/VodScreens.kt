@@ -103,7 +103,13 @@ fun VodHomeScreen(vm: VodViewModel, nav: @Composable () -> Unit, onOpen: (VodIte
     Box(Modifier.fillMaxSize().themeBackground(LocalTheme.current.colors.vodBg)) {
         Backdrop(focused?.let { details[it.id]?.backdrop ?: it.poster })
         Box(Modifier.padding(start = 50.dp, top = 22.dp)) { nav() }
-        Row(Modifier.align(Alignment.TopEnd).padding(top = 25.dp, end = 50.dp), verticalAlignment = Alignment.CenterVertically) {
+        // On the search bar's line: the nav's clock and ping take the top right.
+        Row(Modifier.align(Alignment.TopEnd).padding(top = 66.dp, end = 50.dp), verticalAlignment = Alignment.CenterVertically) {
+            if (vm.updating.collectAsState().value) {
+                org.imdtv.iptvtv.ui.Spinner(size = 14.dp)
+                Text("Updating ${if (kind == Kind.MOVIE) "movies" else "series"}…", fontSize = 11.sp, color = Color.White,
+                    modifier = Modifier.padding(start = 6.dp, end = 16.dp))
+            }
             Text("Category", fontSize = 11.sp, color = LocalTheme.current.colors.muted)
             Text("◀ ${gridCat?.name ?: if (kind == Kind.MOVIE) "All Movies" else "All Series"}", fontSize = 11.sp, color = Color.White,
                 fontWeight = FontWeight.Medium, modifier = Modifier.padding(start = 4.dp).clip(RoundedCornerShape(10.dp))

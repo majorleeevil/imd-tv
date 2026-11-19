@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.sp
 import androidx.tv.material3.Text
 import org.imdtv.iptvtv.data.settings.AudioDecoder
 import org.imdtv.iptvtv.ui.AppLogo
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import org.imdtv.iptvtv.ui.FocusBox
 
 enum class SettingsGroup(val title: String) {
@@ -143,8 +144,22 @@ fun SettingsScreen(vm: SettingsViewModel, onAddPlaylist: () -> Unit, onEditPlayl
     LaunchedEffect(Unit) { withFrameNanos { }; runCatching { if (initialGroup != SettingsGroup.PLAYLISTS || editedPlaylist != null) rowsFocus.requestFocus() else groupFocus.requestFocus() } }
     BackHandler(enabled = inRows) { runCatching { groupFocus.requestFocus() } }
 
+    // How far the open page has scrolled (px, <= 0): the logo shows only at the top, so rows never pass under it.
+    // Every page's list reports through nested scroll; a new page starts at the top.
+    val scrolled = remember { mutableStateOf(0f) }
+    LaunchedEffect(group, page, playlist, sourcesOpen, recordingOpen, syncOpen, backupOpen) { scrolled.value = 0f }
+    val scrollWatch = remember {
+        object : androidx.compose.ui.input.nestedscroll.NestedScrollConnection {
+            override fun onPostScroll(consumed: androidx.compose.ui.geometry.Offset, available: androidx.compose.ui.geometry.Offset,
+                source: androidx.compose.ui.input.nestedscroll.NestedScrollSource): androidx.compose.ui.geometry.Offset {
+                scrolled.value = (scrolled.value + consumed.y).coerceAtMost(0f)
+                return androidx.compose.ui.geometry.Offset.Zero
+            }
+        }
+    }
+
     Box(Modifier.fillMaxSize().themeBackground(LocalTheme.current.colors.vodBg)) {
-        Row(Modifier.fillMaxSize().padding(48.dp), horizontalArrangement = Arrangement.spacedBy(32.dp)) {
+        Row(Modifier.fillMaxSize().padding(48.dp).nestedScroll(scrollWatch), horizontalArrangement = Arrangement.spacedBy(32.dp)) {
             Column(Modifier.width(260.dp).glass().padding(if (LocalGlassBackdrop.current != null) 12.dp else 0.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text("Settings", fontSize = 26.sp, fontWeight = FontWeight.SemiBold, color = Color.White, modifier = Modifier.padding(bottom = 16.dp))
                 SettingsGroup.entries.forEach { g ->
@@ -205,7 +220,7 @@ fun SettingsScreen(vm: SettingsViewModel, onAddPlaylist: () -> Unit, onEditPlayl
                     SettingsGroup.PLAYBACK -> {
                         SwitchRow("Autoplay while scrolling", "Preview the focused channel after a short pause; when off, press OK to preview",
                             s.autoplayOnScroll, first) { on -> vm.update { it.copy(autoplayOnScroll = on) } }
-                        ChoiceRow("Audio decoder", "Software (FFmpeg) plays Dolby/DTS on any box; Hardware passes it to the TV",
+                        ChoiceRow("Audio decoder", "Software (FFmpeg) plays Dolby/DTS on any box; Hardware uses the box or TV first, Software when they can't",
                             listOf(AudioDecoder.SOFTWARE, AudioDecoder.HARDWARE), s.audioDecoder,
                             { if (it == AudioDecoder.HARDWARE) "Hardware" else "Software" }, default = AppSettings().audioDecoder) { d -> vm.update { it.copy(audioDecoder = d) } }
                         ChoiceRow("Change channel with", "Full screen live TV: the keys that go to the previous and next channel",
@@ -250,7 +265,7 @@ fun SettingsScreen(vm: SettingsViewModel, onAddPlaylist: () -> Unit, onEditPlayl
         // The same bar as Manage channels' "5 channels hidden"; not focusable, so it never takes focus from the rows.
         notice?.let { androidx.compose.ui.window.Popup(alignment = Alignment.BottomCenter) { org.imdtv.iptvtv.ui.InfoBar(it, Modifier.padding(bottom = 40.dp)) } }
         // Drawn last so a glass pane (Liquid Glass) never covers it.
-        AppLogo(Modifier.align(Alignment.TopEnd).padding(top = 24.dp, end = 48.dp).size(64.dp))
+        if (scrolled.value > -1f) AppLogo(Modifier.align(Alignment.TopEnd).padding(top = 24.dp, end = 48.dp).size(64.dp))
     }
 }
 
@@ -275,15 +290,21 @@ fun SubtitleRows(vm: SettingsViewModel, first: FocusRequester) {
 }
 
 /** A setting: name, one-line grey explanation, and its current value on the right. */
+/** The row being moved, in every Settings list. */
+val MOVING = Color(0xFFE5A00D)
+
 @Composable
 fun SettingRow(
     title: String, explanation: String, value: String?, modifier: Modifier = Modifier, busy: Boolean = false,
     /** Non-null: a slider switch in that state instead of [value]. */
-    toggle: Boolean? = null, onClick: () -> Unit,
+    toggle: Boolean? = null,
+    /** Picked up to move: the gold row of every move in Settings (as provider categories). */
+    moving: Boolean = false, onClick: () -> Unit,
 ) {
-    FocusBox(onClick = onClick, modifier = modifier) { f ->
+    FocusBox(onClick = onClick, modifier = modifier) { focused ->
+        val f = focused || moving
         Row(
-            Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(if (f) Color.White else Color(0x14FFFFFF))
+            Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(if (moving) MOVING else if (f) Color.White else Color(0x14FFFFFF))
                 .padding(horizontal = 18.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {

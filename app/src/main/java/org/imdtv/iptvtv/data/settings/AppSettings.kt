@@ -77,6 +77,8 @@ data class AppSettings(
     /** The date beside that clock. */
     val showDate: Boolean = true,
     val showPing: Boolean = false,
+    /** The "Recently watched" category in the TV guide. */
+    val showRecent: Boolean = true,
     /** Channel rows the Celestial/Liquid Glass guide shows: one of [guideRowChoices] for the header size. */
     val guideRows: Int = 5,
     /** Channel names and programme titles may wrap onto 2 lines in the guide grid. */

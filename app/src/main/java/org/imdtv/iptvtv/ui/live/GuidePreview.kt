@@ -161,8 +161,10 @@ fun Hero(ch: ChannelEntity?, name: String, progs: List<GuideProgramme>, now: Lon
                 Text("${duration(cur.stop - cur.start)} · ${if (later) "Starts" else "Started"} at ${clockTime(cur.start)}" + if (badges.isNotEmpty()) " ·" else "",
                     fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
             } else {
-                Text(name, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
-                Text("No guide information", fontSize = 13.sp, color = LocalTheme.current.colors.muted)
+                // One line: a long name must not wrap "No guide information" down over the timeline.
+                Text(name, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false))
+                Text("No guide information", fontSize = 13.sp, color = LocalTheme.current.colors.muted, maxLines = 1, softWrap = false)
             }
             badges.forEach { b ->
                 Text(b, fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = Color.White,

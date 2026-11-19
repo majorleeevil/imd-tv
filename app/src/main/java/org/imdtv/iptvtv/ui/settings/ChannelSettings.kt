@@ -51,7 +51,6 @@ import org.imdtv.iptvtv.data.settings.LogoKind
 import org.imdtv.iptvtv.data.catalogue.parseStripList
 import org.imdtv.iptvtv.ui.FocusBox
 import org.imdtv.iptvtv.ui.onLongOk
-import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.focusable
 import org.imdtv.iptvtv.data.db.GroupPlacement
@@ -123,7 +122,12 @@ fun ChannelPageView(
         Text(page.title, fontSize = 20.sp, color = Color.White, modifier = Modifier.padding(top = 6.dp, bottom = 18.dp))
         when (page) {
             ChannelPage.CHANNEL_LOGOS -> { BackHandler(onBack = onClose); ChannelLogosPage(vm, first) }
-            ChannelPage.CATEGORIES -> { BackHandler(onBack = onClose); PageRows(listOf(ChannelPage.LANGUAGES, ChannelPage.YOUR_CATEGORIES, ChannelPage.PROVIDER_CATEGORIES, ChannelPage.CATEGORY_NAME_CLEANUP), vm, first, openers, onOpen) }
+            ChannelPage.CATEGORIES -> {
+                BackHandler(onBack = onClose)
+                PageRows(listOf(ChannelPage.LANGUAGES, ChannelPage.YOUR_CATEGORIES, ChannelPage.PROVIDER_CATEGORIES, ChannelPage.CATEGORY_NAME_CLEANUP), vm, first, openers, onOpen)
+                val s by vm.settings.collectAsState()
+                SwitchRow("Recently watched", "Show the Recently watched category in the TV guide", s.showRecent) { on -> vm.update { it.copy(showRecent = on) } }
+            }
             ChannelPage.PROVIDER_CATEGORIES -> { BackHandler(onBack = onClose); PageRows(listOf(ChannelPage.LIVE_CATEGORIES, ChannelPage.MOVIE_CATEGORIES, ChannelPage.SERIES_CATEGORIES), vm, first, openers, onOpen) }
             ChannelPage.LIVE_CATEGORIES -> CategoryListPage(vm, Kind.LIVE, first, onClose)
             ChannelPage.MOVIE_CATEGORIES -> CategoryListPage(vm, Kind.MOVIE, first, onClose)
@@ -448,12 +452,27 @@ private fun YourCategoriesPage(vm: SettingsViewModel, first: FocusRequester) {
     var moving by remember { mutableStateOf<Long?>(null) }
     // Channel order of one category (null id = Favourites) and its title; replaces the list while open.
     var ordering by remember { mutableStateOf<Pair<Long?, String>?>(null) }
-    ordering?.let { (id, title) -> BackHandler { ordering = null }; ChannelOrderPage(vm, id, title); return }
+    // Every row is replaced on open/close: park focus on a spot that stays (else it falls to the section list and Settings jumps to its root).
+    val parkSpot = remember { FocusRequester() }
+    val orderFirst = remember { FocusRequester() }
+    var parking by remember { mutableStateOf(false) }
+    fun showOrder(o: Pair<Long?, String>?) { parking = true; runCatching { parkSpot.requestFocus() }; ordering = o }
+    LaunchedEffect(ordering) {
+        if (!parking) return@LaunchedEffect
+        // The channel list loads a moment after the page opens: try each frame for ~½ s. An empty category has no row
+        // to focus, so focus stays parked until Back.
+        repeat(30) {
+            withFrameNanos { }
+            if (runCatching { (if (ordering != null) orderFirst else first).requestFocus() }.isSuccess) { parking = false; return@LaunchedEffect }
+        }
+    }
+    Box(Modifier.focusRequester(parkSpot).focusProperties { canFocus = parking }.focusable())
+    ordering?.let { (id, title) -> BackHandler { showOrder(null) }; ChannelOrderPage(vm, id, title, orderFirst); return }
     // While moving, this page's order leads (fast presses mustn't wait for the database); grouped by side of the list.
     var order by remember { mutableStateOf<List<org.imdtv.iptvtv.data.db.CustomGroupEntity>?>(null) }
     val groups = order ?: saved.sortedBy { it.placement.ordinal }
     fun drop() { moving = null; order?.let(vm::saveGroupOrder) }
-    BackHandler(enabled = moving != null) { drop() }
+    BackHandler(enabled = moving != null) { moving = null; order = null } // cancel: back where it was
     LaunchedEffect(saved) { if (moving == null) order = null }
     Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         EditRow("Add category", "Create a category of your own", null, "", Modifier.focusRequester(first)) {
@@ -461,25 +480,24 @@ private fun YourCategoriesPage(vm: SettingsViewModel, first: FocusRequester) {
         }
         Text("Add channels with a long press of OK in the guide.", fontSize = 12.sp, color = LocalTheme.current.colors.muted,
             modifier = Modifier.padding(top = 4.dp, bottom = 12.dp))
-        SettingRow("★ Favourites", "OK to change the order of your favourite channels", "›") { ordering = null to "Favourites" }
+        SettingRow("★ Favourites", "OK to change the order of your favourite channels", "›") { showOrder(null to "Favourites") }
         groups.forEach { g ->
             key(g.id) {
                 val isMoving = moving == g.id
-                val bring = remember { androidx.compose.foundation.relocation.BringIntoViewRequester() }
-                // Keep the row being moved on screen, as the provider category list does.
-                if (isMoving) LaunchedEffect(groups.indexOf(g)) { bring.bringIntoView() }
+                // No BringIntoViewRequester on the moving row: it drops focus to the Settings root (as on the channel order page).
+                // shortcut: a long list doesn't follow the moving row; make it a LazyColumn like ChannelOrderPage if users have many.
                 // OK opens Options (rename, delete, priority), a long OK picks it up to move (user, 2026-11-13).
                 SettingRow((if (isMoving) "↕ " else "") + g.name,
-                    if (isMoving) "Up/Down to move · OK to drop" else "OK for options · hold OK to move · ${g.placement.label()}", null,
+                    if (isMoving) "Up/Down to move · OK to drop · Back to cancel" else "OK for options · hold OK to move · ${g.placement.label()}", null,
                     // canFocus reads `moving` itself: the captured isMoving is stale when the lambda re-runs, which dropped focus.
-                    Modifier.bringIntoViewRequester(bring).focusProperties { canFocus = moving == null || moving == g.id }
+                    Modifier.focusProperties { canFocus = moving == null || moving == g.id }
                         .onLongOk { if (moving == null) { order = groups; moving = g.id } }
                         .onPreviewKeyEvent { e ->
                             if (!isMoving) return@onPreviewKeyEvent false
                             val d = when (e.key) { Key.DirectionUp -> -1; Key.DirectionDown -> 1; Key.DirectionLeft, Key.DirectionRight -> 0; else -> return@onPreviewKeyEvent false }
                             if (d != 0 && e.type == KeyEventType.KeyDown) moveWithin(groups, groups.indexOf(g), d) { it.placement }?.let { order = it }
                             true
-                        }) { if (isMoving) drop() else menu = GroupMenu.Options(g) }
+                        }, moving = isMoving) { if (isMoving) drop() else menu = GroupMenu.Options(g) }
             }
         }
     }
@@ -489,7 +507,7 @@ private fun YourCategoriesPage(vm: SettingsViewModel, first: FocusRequester) {
             "Rename…" to { menu = GroupMenu.Rename(m.g) },
             "Delete" to { menu = GroupMenu.Delete(m.g) },
             "Priority ›" to { menu = GroupMenu.Priority(m.g) },
-            "Channel order ›" to { menu = null; ordering = m.g.id to m.g.name },
+            "Channel order ›" to { menu = null; showOrder(m.g.id to m.g.name) },
         )) { menu = null }
         is GroupMenu.Rename -> TextPrompt("Rename “${m.g.name}”", m.g.name, "Name", onSave = { if (it.isNotBlank()) vm.renameGroup(m.g, it); menu = null }) { menu = null }
         is GroupMenu.Delete -> ContextMenu("Delete “${m.g.name}”? Its channels stay in their own categories", listOf(
@@ -505,29 +523,43 @@ private fun YourCategoriesPage(vm: SettingsViewModel, first: FocusRequester) {
 
 /** The channels of Favourites (id null) or one of your categories: OK picks one up, Up/Down moves it, OK drops it. */
 @Composable
-private fun ChannelOrderPage(vm: SettingsViewModel, groupId: Long?, title: String) {
+private fun ChannelOrderPage(vm: SettingsViewModel, groupId: Long?, title: String, first: FocusRequester) {
     val saved by remember(groupId) { vm.orderedChannels(groupId) }.collectAsState(emptyList())
     var picked by remember { mutableStateOf<Long?>(null) }
     var order by remember { mutableStateOf<List<org.imdtv.iptvtv.data.db.ChannelEntity>?>(null) }
     val channels = order ?: saved
     fun drop() { picked = null; order?.let { vm.saveChannelOrder(groupId, it) } }
-    BackHandler(enabled = picked != null) { drop() }
+    val list = rememberLazyListState()
+    val scope = rememberCoroutineScope()
+    BackHandler(enabled = picked != null) { // cancel: back where it was, with the list scrolled to it
+        val at = saved.indexOfFirst { it.id == picked }
+        picked = null; order = null
+        scope.launch { list.scrollToItem((at + 1 - 3).coerceAtLeast(0)) }
+    }
     LaunchedEffect(saved) { if (picked == null) order = null }
-    Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text("$title: OK to pick a channel up, Up/Down to move it, OK to drop it.", fontSize = 12.sp, color = LocalTheme.current.colors.muted,
-            modifier = Modifier.padding(bottom = 8.dp))
-        channels.forEach { ch ->
-            key(ch.id) {
-                val isPicked = picked == ch.id
-                SettingRow((if (isPicked) "↕ " else "") + ch.displayName(emptyList()), "", null,
-                    Modifier.focusProperties { canFocus = picked == null || picked == ch.id }
-                        .onPreviewKeyEvent { e ->
-                            if (!isPicked) return@onPreviewKeyEvent false
-                            val d = when (e.key) { Key.DirectionUp -> -1; Key.DirectionDown -> 1; Key.DirectionLeft, Key.DirectionRight -> 0; else -> return@onPreviewKeyEvent false }
-                            if (d != 0 && e.type == KeyEventType.KeyDown) moveWithin(channels, channels.indexOf(ch), d) { GroupPlacement.NORMAL }?.let { order = it }
-                            true
-                        }) { if (isPicked) drop() else { order = channels; picked = ch.id } }
-            }
+    val pickedIndex = channels.indexOfFirst { it.id == picked }
+    // Keep the row being moved on screen (+1 for the hint line above it), as provider categories do.
+    LaunchedEffect(pickedIndex) {
+        if (pickedIndex < 0) return@LaunchedEffect
+        val visible = list.layoutInfo.visibleItemsInfo.map { it.index }
+        if (pickedIndex + 1 !in visible.drop(1).dropLast(1)) list.scrollToItem((pickedIndex + 1 - 3).coerceAtLeast(0))
+    }
+    LazyColumn(state = list, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        item {
+            Text("$title: OK to pick a channel up, Up/Down to move it, OK to drop it.", fontSize = 12.sp, color = LocalTheme.current.colors.muted,
+                modifier = Modifier.padding(bottom = 8.dp))
+        }
+        items(channels, key = { it.id }) { ch ->
+            val isPicked = picked == ch.id
+            SettingRow((if (isPicked) "↕ " else "") + ch.displayName(emptyList()), if (isPicked) "Up/Down to move · OK to drop · Back to cancel" else "", null,
+                Modifier.then(if (ch.id == channels.first().id) Modifier.focusRequester(first) else Modifier)
+                    .focusProperties { canFocus = picked == null || picked == ch.id }
+                    .onPreviewKeyEvent { e ->
+                        if (!isPicked) return@onPreviewKeyEvent false
+                        val d = when (e.key) { Key.DirectionUp -> -1; Key.DirectionDown -> 1; Key.DirectionLeft, Key.DirectionRight -> 0; else -> return@onPreviewKeyEvent false }
+                        if (d != 0 && e.type == KeyEventType.KeyDown) moveWithin(channels, channels.indexOf(ch), d) { GroupPlacement.NORMAL }?.let { order = it }
+                        true
+                    }, moving = isPicked) { if (isPicked) drop() else { order = channels; picked = ch.id } }
         }
     }
 }

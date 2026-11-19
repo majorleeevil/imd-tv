@@ -31,6 +31,8 @@ class GuideState internal constructor(
     var railOpen by mutableStateOf(false)
     internal var menu by mutableStateOf<GuideMenu?>(null)
     internal var railMove by mutableStateOf<RailMove?>(null)
+    /** A channel picked up from its long-press menu: the guide shows [RowMove.order] until OK drops it or Back cancels. */
+    internal var rowMove by mutableStateOf<RowMove?>(null)
     /** A rail category to focus once its menu closes (it may have moved). */
     internal var railFocusKey by mutableStateOf<String?>(null)
     internal var restored = false
@@ -58,6 +60,9 @@ class GuideState internal constructor(
         }
     }
 }
+
+/** [dropped]: saved, shown until the saved order arrives (else the list jumps back for a moment). */
+internal data class RowMove(val ch: ChannelEntity, val before: List<ChannelEntity>, val order: List<ChannelEntity> = before, val dropped: Boolean = false)
 
 @Composable
 fun rememberGuideState(vm: LiveViewModel, previews: Boolean = true): GuideState {

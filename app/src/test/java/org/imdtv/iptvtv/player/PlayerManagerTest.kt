@@ -129,6 +129,12 @@ class PlayerManagerTest {
         assertFalse(TEXT in p.disabledTrackTypes)
     }
 
+    @Test
+    fun liveOffDisablesText() {
+        assertTrue(TEXT in liveOffParams(base).disabledTrackTypes)
+        assertFalse(TEXT in liveSubtitleParams(liveOffParams(base), "de").disabledTrackTypes) // switching on undoes it
+    }
+
     private fun withTextOverride(p: androidx.media3.common.TrackSelectionParameters) = p.buildUpon().addOverride(
         androidx.media3.common.TrackSelectionOverride(androidx.media3.common.TrackGroup(
             androidx.media3.common.Format.Builder().setSampleMimeType(androidx.media3.common.MimeTypes.APPLICATION_SUBRIP).setLanguage("fr").build()), 0),
@@ -156,12 +162,11 @@ class PlayerManagerTest {
     fun liveIgnoresTheSubtitlesSetting() {
         manager.setSubtitles(true, "fr")
         manager.play("http://x/live.ts", null) // live: no vod flag
-        val p = manager.player.trackSelectionParameters
-        assertTrue(p.preferredTextLanguages.isEmpty())
-        // A stream's "default" subtitles never switch on by themselves on live TV (forced ones still do).
-        assertEquals(androidx.media3.common.C.SELECTION_FLAG_DEFAULT, p.ignoredTextSelectionFlags)
+        // Live TV subtitles off: no text track at all, not even forced or TV-language ones (users, 2026-11-18).
+        assertTrue(TEXT in manager.player.trackSelectionParameters.disabledTrackTypes)
         manager.play("http://x/film.mkv", null, vod = true)
         assertEquals(listOf("fr"), manager.player.trackSelectionParameters.preferredTextLanguages)
+        assertFalse(TEXT in manager.player.trackSelectionParameters.disabledTrackTypes)
     }
 
     @Test

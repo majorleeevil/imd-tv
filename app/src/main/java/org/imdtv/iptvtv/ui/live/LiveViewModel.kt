@@ -36,6 +36,7 @@ import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.withLock
+import androidx.room.withTransaction
 import org.imdtv.iptvtv.IptvApp
 import org.imdtv.iptvtv.data.catalogue.parseStripList
 import org.imdtv.iptvtv.data.db.CategoryEntity
@@ -82,7 +83,9 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
 
     // Counts are observed too: a background re-sync can add categories while the guide is open.
     /** Null until first loaded, so the guide can tell "everything hidden" from "not loaded yet". */
-    val rail: StateFlow<List<RailItem>?> = providerId.flatMapLatest { railRepo.rail(it) }
+    val rail: StateFlow<List<RailItem>?> = combine(providerId.flatMapLatest { railRepo.rail(it) }, c.settings.settings.map { it.showRecent }.distinctUntilChanged()) { r, recent ->
+        if (recent) r else r.filter { it.entry != org.imdtv.iptvtv.data.repo.RailEntry.Recent }
+    }
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     val entry = MutableStateFlow<RailEntry?>(null)
@@ -474,6 +477,44 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
 
     /** Moves [delta] places among the categories the rail shows, so a step never vanishes behind a hidden one. */
     private val moveLock = kotlinx.coroutines.sync.Mutex()
+    fun setLiveSubtitles(on: Boolean) { viewModelScope.launch { c.settings.update { it.copy(liveSubtitlesOn = on) } } }
+
+    /** A channel moved in the guide: [order] is the list as shown after the move, [before] as it was. */
+    fun saveGuideOrder(ch: ChannelEntity, before: List<ChannelEntity>, order: List<ChannelEntity>) {
+        val at = entry.value ?: return
+        viewModelScope.launch { moveLock.withLock {
+            when (at) {
+                RailEntry.Favourites -> c.db.withTransaction { order.forEachIndexed { n, x -> c.db.favouriteDao().setSortOrder(x.providerId, Kind.LIVE, x.id, n) } }
+                is RailEntry.Custom -> c.db.withTransaction { order.forEachIndexed { n, x -> c.db.customGroupDao().setMemberOrder(at.group.id, x.id, n) } }
+                // The category also holds hidden channels: land on the place of the channel it was moved to.
+                is RailEntry.Provider -> {
+                    val target = before.getOrNull(order.indexOfFirst { it.id == ch.id }) ?: return@withLock
+                    val all = c.db.channelDao().allByCategory(at.category.id)
+                    CategoryRepository(c.db).moveChannel(at.category.id, ch.id, all.indexOfFirst { it.id == target.id } - all.indexOfFirst { it.id == ch.id })
+                }
+                RailEntry.Recent -> Unit
+            }
+        } }
+    }
+
+    fun moveRail(e: RailEntry, delta: Int) = when (e) {
+        is RailEntry.Provider -> moveCategory(e.category, delta)
+        is RailEntry.Custom -> moveGroup(e.group, delta)
+        else -> Unit
+    }
+
+    /** Moves one of your categories [delta] steps among those shown in the rail with the same placement. */
+    private fun moveGroup(g: CustomGroupEntity, delta: Int) {
+        viewModelScope.launch { moveLock.withLock {
+            val dao = c.db.customGroupDao()
+            val all = dao.observe(g.providerId).first().sortedBy { it.placement.ordinal } // the rail's order
+            val placement = all.associate { it.id to it.placement }
+            val shown = rail.value.orEmpty().mapNotNullTo(HashSet()) { (it.entry as? RailEntry.Custom)?.group?.id }
+            val order = stepAmong(all.map { it.id }, g.id, delta) { it in shown && placement[it] == placement[g.id] } ?: return@withLock
+            c.db.withTransaction { order.forEachIndexed { n, id -> dao.setSortOrder(id, n) } }
+        } }
+    }
+
     fun moveCategory(cat: CategoryEntity, delta: Int) {
         viewModelScope.launch { moveLock.withLock {
             val all = c.db.categoryDao().all(cat.providerId, Kind.LIVE)
@@ -496,4 +537,14 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
 sealed interface GuideChoice {
     data class Channel(val channel: ChannelEntity, val category: String?) : GuideChoice
     data class Source(val channel: SourceChannel) : GuideChoice
+}
+
+/** [all] with [item] moved [delta] steps among its [peer]s (others are stepped over); null when it can't move. */
+internal fun <T> stepAmong(all: List<T>, item: T, delta: Int, peer: (T) -> Boolean): List<T>? {
+    val peers = all.filter { it == item || peer(it) }
+    val i = peers.indexOf(item)
+    val j = (i + delta).coerceIn(peers.indices)
+    if (i < 0 || i == j) return null
+    val rest = all.filter { it != item }
+    return rest.toMutableList().apply { add(rest.indexOf(peers[j]) + if (delta > 0) 1 else 0, item) }
 }

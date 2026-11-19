@@ -48,6 +48,7 @@ class EpgImporter(
                     if (!resp.isSuccessful) throw IOException("EPG request failed: HTTP ${resp.code} ${resp.message}")
                     file.sink().buffer().use { it.writeAll(resp.body!!.source()) }
                 }
+                Log.i(TAG, "Downloaded ${logUrl(source.url)}: ${file.length() / 1024} KB in ${now() - t} ms")
                 // The generation from the database: a caller's copy of the source may be older than the last import.
                 val shown = db.epgDao().source(source.id)?.gen ?: return@withContext 0
                 importFile(source, shown, file, from, to, t, batchSize)
@@ -63,6 +64,7 @@ class EpgImporter(
      */
     private fun importFile(source: EpgSourceEntity, shown: Int, file: File, from: Long, to: Long, t: Long, batchSize: Int): Int =
         maybeGunzip(file.inputStream()).use { body ->
+            val started = System.currentTimeMillis()
             val gen = shown + 1
             dropOtherGens(source.id, shown) // leftovers of an import that failed half-way
             var stored = 0
@@ -94,7 +96,7 @@ class EpgImporter(
                 db.epgDao().setGenBlocking(source.id, gen, t)
             }
             dropOtherGens(source.id, gen)
-            Log.i(TAG, "Imported ${logUrl(source.url)}: $stored programmes, $skipped skipped")
+            Log.i(TAG, "Imported ${logUrl(source.url)}: $stored programmes, $skipped skipped in ${System.currentTimeMillis() - started} ms")
             stored
         }
 

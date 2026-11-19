@@ -229,9 +229,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     fun usePlaylist(id: Long) {
         viewModelScope.launch {
             player.stop()
-            c.providerRepository.setActive(id)
-            tab.value = Tab.LIVE
-            stack.value = listOf(Screen.Live)
+            c.providerRepository.setActive(id) // stays in Settings: the playlist page's switch shows it took
         }
     }
 

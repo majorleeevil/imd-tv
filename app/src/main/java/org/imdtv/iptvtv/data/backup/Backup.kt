@@ -41,6 +41,8 @@ data class BPlaylist(
     val progress: List<BProgress> = emptyList(),
     /** The user's channel order within live categories (older backups have none). */
     val channelOrder: List<BChannelOrder> = emptyList(),
+    /** Kinds the playlist doesn't load (older backups: all loaded). */
+    val contentOff: String = "",
 )
 
 /** [url] null = the playlist's own guide, whose URL carries the login: restored from the new login. */
@@ -112,6 +114,7 @@ data class BSettings(
     val themeLooks: Map<String, String> = emptyMap(),
     val guidesOff: List<String> = emptyList(),
     val liveSubtitlesOn: Boolean = AppSettings().liveSubtitlesOn,
+    val showRecent: Boolean = AppSettings().showRecent,
     val headerSize: String = AppSettings().headerSize.name,
     val previewFade: Boolean = AppSettings().previewFade,
     val themeDark: Boolean = AppSettings().themeDark,
@@ -129,7 +132,7 @@ data class BSettings(
             confirmExit = confirmExit,
             zapLeftRight = zapLeftRight, backToFullScreen = backToFullScreen, showChannelNumbers = showChannelNumbers, clock24h = clock24h,
             playerClock = PlayerClock.entries.find { it.name == playerClockMode } ?: if (playerClock) PlayerClock.ALL else PlayerClock.OFF,
-            showDate = showDate, themeLooks = themeLooks, guidesOff = guidesOff.toSet(), liveSubtitlesOn = liveSubtitlesOn,
+            showDate = showDate, themeLooks = themeLooks, guidesOff = guidesOff.toSet(), liveSubtitlesOn = liveSubtitlesOn, showRecent = showRecent,
             headerSize = HeaderSize.entries.find { it.name == headerSize } ?: d.headerSize, previewFade = previewFade, themeDark = themeDark,
             startOnBoot = startOnBoot,
             epgUpdateIntervalHours = epgUpdateIntervalHours,
@@ -167,7 +170,7 @@ data class BSettings(
             s.borrowSiblingGuide, s.hideHeaderChannels, s.showDateTime, s.showPing, s.subtitlesOn, s.subtitleLanguage,
             guideRows = s.guideRows, multiLineGuide = s.multiLineGuide,
             zapLeftRight = s.zapLeftRight, backToFullScreen = s.backToFullScreen, showChannelNumbers = s.showChannelNumbers, clock24h = s.clock24h,
-            playerClockMode = s.playerClock.name, showDate = s.showDate, themeLooks = s.themeLooks, guidesOff = s.guidesOff.toList(), liveSubtitlesOn = s.liveSubtitlesOn,
+            playerClockMode = s.playerClock.name, showDate = s.showDate, themeLooks = s.themeLooks, guidesOff = s.guidesOff.toList(), liveSubtitlesOn = s.liveSubtitlesOn, showRecent = s.showRecent,
             headerSize = s.headerSize.name, previewFade = s.previewFade, themeDark = s.themeDark, guideKinds = s.guideOrder.map { it.name },
             recordingOn = s.recordingOn, recordTo = s.recordTo.name, startEarlyMin = s.startEarlyMin, endLateMin = s.endLateMin,
             keepAwake = s.keepAwake, smbServer = s.smbServer, smbShare = s.smbShare, smbFolder = s.smbFolder, smbUser = s.smbUser,

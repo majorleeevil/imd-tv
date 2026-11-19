@@ -60,7 +60,7 @@ internal fun CategoryTabs(
     val colors = LocalTheme.current.colors
     val selected = items.indexOfFirst { it.entry.key == selectedKey }.coerceAtLeast(0)
     val state = rememberLazyListState((selected - 2).coerceAtLeast(0))
-    val movingKey = move?.let { "c${it.cat.id}" }
+    val movingKey = move?.entry?.key
     val movingIndex = items.indexOfFirst { it.entry.key == movingKey }
     val moveFocus = remember { FocusRequester() }
     LaunchedEffect(movingKey) { if (movingKey != null) { withFrameNanos { }; runCatching { moveFocus.requestFocus() } } }
@@ -103,7 +103,7 @@ internal fun CategoryTabs(
                 onFocused = { if (!isSelected && move == null) onPick(item.entry) },
                 modifier = (if (isSelected) Modifier.focusRequester(focus) else Modifier)
                     .then(if (isMoving) Modifier.focusRequester(moveFocus) else Modifier)
-                    .then(if (item.entry is RailEntry.Provider) Modifier.onLongOk { onLongPress(item.entry) } else Modifier)
+                    .then(if (item.entry is RailEntry.Provider || item.entry is RailEntry.Custom) Modifier.onLongOk { onLongPress(item.entry) } else Modifier)
                     .width(tabWidth(width)).fillMaxHeight(),
             ) { f ->
                 val nextSelected = items.getOrNull(i + 1)?.entry?.key == selectedKey

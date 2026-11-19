@@ -69,6 +69,8 @@ fun LiveOverlay(vm: LiveViewModel, onGuide: () -> Unit, onPick: (ChannelEntity) 
     val progress = cur?.let { ((now - it.start).toFloat() / (it.stop - it.start)).coerceIn(0f, 1f) }
 
     val guideFocus = remember { FocusRequester() }
+    val menus = remember(vm) { GuideState(vm, 0, androidx.compose.foundation.lazy.LazyListState(), false, previews = false) }
+    GuideMenus(vm, menus)
     LaunchedEffect(Unit) { withFrameNanos { }; runCatching { guideFocus.requestFocus() } }
 
     Box(Modifier.fillMaxSize()) {
@@ -130,6 +132,14 @@ fun LiveOverlay(vm: LiveViewModel, onGuide: () -> Unit, onPick: (ChannelEntity) 
                     OverlayCard(onClick = onGuide, modifier = Modifier.focusRequester(guideFocus)) { f ->
                         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                             Text("TV guide", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = if (f) LocalTheme.current.colors.onFocus else Color.White)
+                        }
+                    }
+                }
+                // Subtitles, record, favourite and add to category, at hand while watching.
+                item(key = "settings") {
+                    OverlayCard(onClick = { menus.menu = GuideMenu.Player(ch) }) { f ->
+                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Text("Settings", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = if (f) LocalTheme.current.colors.onFocus else Color.White)
                         }
                     }
                 }

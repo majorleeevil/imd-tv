@@ -92,6 +92,11 @@ class VodViewModel(app: Application) : AndroidViewModel(app) {
 
     private val categoryStrip = provider.map { org.imdtv.iptvtv.data.catalogue.parseStripList(it?.categoryStrip.orEmpty()) }.distinctUntilChanged()
 
+    /** The playlist is updating and hasn't finished this tab's kind yet (it is loaded, and kinds sync in order). */
+    val updating: StateFlow<Boolean> = combine(provider, c.providerRepository.syncing, kind) { p, s, k ->
+        p != null && p.loads(k) && (s[p.id]?.let { it.ordinal <= k.ordinal } ?: false)
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
     /** Every progress row of the active playlist (movies and episodes; small), newest first. */
     val progress: StateFlow<List<ProgressEntity>> = providerId.flatMapLatest { c.db.progressDao().observe(it) }
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())

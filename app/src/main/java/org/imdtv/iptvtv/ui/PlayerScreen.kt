@@ -93,6 +93,7 @@ fun PlayerScreen(player: PlayerManager, title: String, liveVm: LiveViewModel? = 
             })
             if (overlay) LiveOverlay(liveVm, onGuide = onGuide, onPick = { liveVm.switchTo(it); overlay = false })
         }
+        if (player.buffering.collectAsState().value && error == null) Spinner(Modifier.align(Alignment.Center), size = 40.dp)
         if (showClock) PlayerClock(Modifier.align(Alignment.TopEnd).padding(top = 27.dp, end = 48.dp))
         error?.let {
             Text(it, color = Color.White, modifier = Modifier.align(Alignment.Center).background(Color(0xCC000000)).padding(24.dp))

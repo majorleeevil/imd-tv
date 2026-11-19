@@ -58,7 +58,8 @@ class PlayerManager(private val context: Context) {
     private fun build(d: AudioDecoder): ExoPlayer = ExoPlayer.Builder(
         context,
         // SOFTWARE (PREFER): the FFmpeg audio renderer handles AC3/E-AC3/DTS that many TV boxes can't decode.
-        // HARDWARE (OFF): the platform decoders, or passthrough to the TV/receiver.
+        // HARDWARE (ON): the platform decoders or passthrough to the TV/receiver first; FFmpeg only for audio the box can't
+        // play (with OFF, Dolby channels were silent or failed on boxes/TVs without Dolby; Reddit, 2026-11-19).
         // Video stays on the hardware decoders either way: the FFmpeg artifact also ships a software video renderer.
         object : DefaultRenderersFactory(context) {
             override fun buildVideoRenderers(
@@ -69,7 +70,7 @@ class PlayerManager(private val context: Context) {
                 eventHandler, eventListener, allowedVideoJoiningTimeMs, out)
         }.setExtensionRendererMode(
             if (d == AudioDecoder.SOFTWARE) DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER
-            else DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF,
+            else DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON,
         ),
     ).build()
 
@@ -86,7 +87,7 @@ class PlayerManager(private val context: Context) {
         if (wantedDecoder == audioDecoder) return
         val old = player
         old.removeListener(listener)
-        player = build(wantedDecoder).also { it.addListener(listener); applySubtitles(it) }
+        player = build(wantedDecoder).also { it.addListener(listener); it.addAnalyticsListener(diagnostics); applySubtitles(it) }
         audioDecoder = wantedDecoder
         view?.let { PlayerView.switchTargetView(player, null, it) }
         old.release()
@@ -105,13 +106,12 @@ class PlayerManager(private val context: Context) {
         applySubtitles(player)
     }
 
-    /** Movies and series follow the Subtitles setting; live channels keep Media3's own text defaults (spec: live unchanged). */
+    /** Movies and series follow the Subtitles setting, live channels "Subtitles › Live TV". */
     private fun applySubtitles(p: ExoPlayer) {
         p.trackSelectionParameters = if (vod) subtitleParams(p.trackSelectionParameters, subtitlesOn, subtitleLanguage)
             else if (liveSubtitlesOn) liveSubtitleParams(p.trackSelectionParameters, subtitleLanguage)
-            else liveTextParams(p.trackSelectionParameters, liveDefaults)
+            else liveOffParams(p.trackSelectionParameters)
     }
-    private val liveDefaults by lazy { TrackSelectionParameters.Builder(context).build() }
     /** The stream loaded now is a movie/episode (else live). */
     private var vod = false
 
@@ -124,6 +124,10 @@ class PlayerManager(private val context: Context) {
     private val _playingUrl = MutableStateFlow<String?>(null)
     /** The stream loaded now; null once stopped (including while the app is in the background). */
     val playingUrl: StateFlow<String?> = _playingUrl
+
+    private val _buffering = MutableStateFlow(false)
+    /** Loading (a new stream starting or a rebuffer): full screen shows a spinner instead of a bare black screen. */
+    val buffering: StateFlow<Boolean> = _buffering
 
     private val _formats = MutableStateFlow(StreamFormats.UNKNOWN)
     /** The selected video/audio formats of the stream playing now; all-null after [play] of a new URL and [stop]. */
@@ -158,6 +162,7 @@ class PlayerManager(private val context: Context) {
             override fun onPlaybackStateChanged(state: Int) {
                 Log.i(TAG, "state ${arrayOf("?", "IDLE", "BUFFERING", "READY", "ENDED")[state]} ${tail(url)}")
                 if (state == Player.STATE_READY) retries = 0
+                _buffering.value = state == Player.STATE_BUFFERING
             }
 
             override fun onIsPlayingChanged(isPlaying: Boolean) = onPlayingChanged(isPlaying)
@@ -167,7 +172,13 @@ class PlayerManager(private val context: Context) {
             override fun onVideoSizeChanged(videoSize: VideoSize) = readFormats()
 
             override fun onPlayerError(error: PlaybackException) = streamError(error)
+
+            override fun onRenderedFirstFrame() {
+                if (attachedAt > 0) Log.i(TAG, "first frame ${android.os.SystemClock.elapsedRealtime() - attachedAt} ms after attach")
+                attachedAt = 0
+            }
         }
+    private var attachedAt = 0L
 
     @androidx.annotation.VisibleForTesting
     internal fun streamError(error: PlaybackException) {
@@ -183,6 +194,21 @@ class PlayerManager(private val context: Context) {
     }
 
     init { player.addListener(listener) }
+
+    // Silent hiccups (users' "jumps back a second", 2026-11-18): a dropped connection that Media3 retries by itself.
+    private val diagnostics = object : androidx.media3.exoplayer.analytics.AnalyticsListener {
+        override fun onLoadError(t: androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime, l: androidx.media3.exoplayer.source.LoadEventInfo,
+            m: androidx.media3.exoplayer.source.MediaLoadData, e: java.io.IOException, wasCanceled: Boolean) =
+            Log.w(TAG, "load error (retried by the player) ${tail(url)}: $e").let { }
+        override fun onAudioUnderrun(t: androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime, bufferSize: Int, bufferSizeMs: Long, elapsedSinceLastFeedMs: Long) =
+            Log.w(TAG, "audio underrun ${elapsedSinceLastFeedMs} ms since last feed ${tail(url)}").let { }
+        override fun onDroppedVideoFrames(t: androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime, droppedFrames: Int, elapsedMs: Long) =
+            Log.w(TAG, "dropped $droppedFrames video frames ${tail(url)}").let { }
+        override fun onAudioDecoderInitialized(t: androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime, decoderName: String,
+            initializedTimestampMs: Long, initializationDurationMs: Long) =
+            Log.i(TAG, "audio decoder $decoderName ($audioDecoder setting)").let { }
+    }
+    init { player.addAnalyticsListener(diagnostics) }
 
     /** [login] fills the Xtream placeholders in [url] (saved links hold no login); [url] itself stays the key for comparisons. */
     /** [startMs]: a movie/episode starts there (resume), applied when the stream loads, also after the guard or a portal link. */
@@ -333,6 +359,7 @@ class PlayerManager(private val context: Context) {
     /** Moves the player to [view] without re-preparing, so playback continues uninterrupted. */
     fun attach(view: PlayerView) {
         if (this.view === view) return
+        attachedAt = android.os.SystemClock.elapsedRealtime()
         PlayerView.switchTargetView(player, this.view, view)
         this.view?.keepScreenOn = false
         this.view = view
@@ -419,17 +446,10 @@ fun subtitleParams(base: TrackSelectionParameters, on: Boolean, language: String
 fun liveSubtitleParams(base: TrackSelectionParameters, language: String): TrackSelectionParameters =
     subtitleParams(base, true, language).buildUpon().setSelectUndeterminedTextLanguage(true).build()
 
-/** Live: the text selection a fresh player has ([defaults]), whatever the Subtitles setting; the last title's choice dropped. */
-fun liveTextParams(base: TrackSelectionParameters, defaults: TrackSelectionParameters): TrackSelectionParameters =
-    base.buildUpon()
-        .clearOverridesOfType(C.TRACK_TYPE_TEXT)
-        .setTrackTypeDisabled(C.TRACK_TYPE_TEXT, false)
-        .setPreferredTextLanguages(*defaults.preferredTextLanguages.toTypedArray())
-        .setPreferredTextRoleFlags(defaults.preferredTextRoleFlags)
-        // A stream marking subtitles "default" doesn't switch them on (user, 2026-11-14); forced ones still show.
-        .setIgnoredTextSelectionFlags(defaults.ignoredTextSelectionFlags or C.SELECTION_FLAG_DEFAULT)
-        .setSelectUndeterminedTextLanguage(defaults.selectUndeterminedTextLanguage)
-        .build()
+/** Live with "Subtitles on live TV" off: no text track at all. Media3's defaults still picked TV-language, forced and
+ *  caption-setting tracks (users saw subtitles with the setting off, 2026-11-18). */
+fun liveOffParams(base: TrackSelectionParameters): TrackSelectionParameters =
+    base.buildUpon().clearOverridesOfType(C.TRACK_TYPE_TEXT).setTrackTypeDisabled(C.TRACK_TYPE_TEXT, true).build()
 
 /** True once the playback position hasn't moved for [startMs] (before it first moves) or [playingMs] (after); then it
  *  starts counting again. */

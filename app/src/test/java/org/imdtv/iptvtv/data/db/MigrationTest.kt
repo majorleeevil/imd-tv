@@ -16,6 +16,15 @@ class MigrationTest {
     @get:Rule
     val helper = MigrationTestHelper(InstrumentationRegistry.getInstrumentation(), AppDatabase::class.java)
 
+    @Test fun v11ToV14AddsContentOffWithoutTheV13Index() {
+        helper.createDatabase(DB, 11).use { db ->
+            db.execSQL("INSERT INTO provider (id,name,type,url,username,password,userAgent,streamFormat,epgOverrideUrls,lastSync,nameStrip,categoryStrip) VALUES (1,'p','XTREAM','http://x','u','pw',NULL,'TS','',NULL,'','')")
+        }
+        helper.runMigrationsAndValidate(DB, 14, true, AppDatabase.MIGRATION_11_14).use { db ->
+            db.query("SELECT name, contentOff FROM provider").use { c -> c.moveToFirst(); assertEquals("p", c.getString(0)); assertEquals("", c.getString(1)) }
+        }
+    }
+
     @Test fun v1ToV2KeepsRowsAndAddsColumns() {
         helper.createDatabase(DB, 1).use { db ->
             db.execSQL("INSERT INTO provider (id,name,type,url,username,password,userAgent,streamFormat,epgOverrideUrls,lastSync) VALUES (1,'p','XTREAM','http://x','u','pw',NULL,'TS','',NULL)")

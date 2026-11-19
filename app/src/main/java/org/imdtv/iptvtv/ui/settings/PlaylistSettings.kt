@@ -72,9 +72,14 @@ fun PlaylistPage(
     Column(modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(p.name, fontSize = 20.sp, color = Color.White, modifier = Modifier.padding(top = 6.dp, bottom = 18.dp))
         SettingRow("Edit", "Name, URL, login and user agent", null, Modifier.focusRequester(first)) { onEdit(id) }
-        if (activeId == id) SettingRow("In use", "This is the playlist the app is showing", null) { }
-        else SettingRow("Use this playlist", "Show this playlist's channels, films and series", null) { onUse(id) }
+        // One playlist is in use at a time: switching another on switches this one off, so On can't be switched off here.
+        SwitchRow("Use this playlist", if (activeId == id) "The app is showing this playlist" else "Show this playlist's channels, films and series",
+            activeId == id) { if (it) onUse(id) }
         SettingRow("Update playlist now", update[id] ?: updatedLabel(p.lastSync), null) { vm.updatePlaylist(id) }
+        listOf(org.imdtv.iptvtv.data.model.Kind.LIVE to "Live TV", org.imdtv.iptvtv.data.model.Kind.MOVIE to "Movies", org.imdtv.iptvtv.data.model.Kind.SERIES to "Series").forEach { (kind, label) ->
+            val on = p.loads(kind)
+            SwitchRow(label, if (on) "Load $label from this playlist" else "Not loaded from this playlist", on) { vm.setLoads(p, kind, it) }
+        }
         SettingRow(
             "Delete playlist",
             if (confirmDelete) "Delete ${p.name}? Its channels, favourites, your categories and guide links are removed. OK to confirm."

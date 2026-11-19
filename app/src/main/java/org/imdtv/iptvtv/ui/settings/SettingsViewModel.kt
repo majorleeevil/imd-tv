@@ -1,5 +1,6 @@
 package org.imdtv.iptvtv.ui.settings
 
+import android.util.Log
 import androidx.room.withTransaction
 import android.app.Application
 import android.net.Uri
@@ -119,9 +120,25 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
     /** Progress, then the result line, of "Update playlist now", per playlist. */
     val playlistUpdate = MutableStateFlow<Map<Long, String>>(emptyMap())
     private val updating = mutableSetOf<Long>()
+    /** Asked for again while updating (e.g. Movies then Series switched on): the running update read the old switches. */
+    private val again = mutableSetOf<Long>()
+
+    /** Turns loading [kind] from [p] on (then updates the playlist so it's fetched now) or off (removed at once). */
+    fun setLoads(p: org.imdtv.iptvtv.data.db.ProviderEntity, kind: Kind, on: Boolean) {
+        viewModelScope.launch {
+            // The row passed in can be stale after a quick second toggle: start from what's saved.
+            val saved = c.db.providerDao().get(p.id)?.contentOff ?: p.contentOff
+            val off = saved.split(',').filter { it.isNotEmpty() && it != kind.name } + listOfNotNull(kind.name.takeIf { !on })
+            if (on) { c.db.providerDao().setContentOff(p.id, off.joinToString(",")); updatePlaylist(p.id) }
+            else try { c.providerRepository.stopLoading(p.id, kind, off.joinToString(",")) } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
+                Log.w("SettingsViewModel", "Removing $kind failed", e) // the next update removes it; never crash the app
+            }
+        }
+    }
 
     fun updatePlaylist(id: Long) {
-        if (!updating.add(id)) return // a second OK while it runs would start a second full sync
+        if (!updating.add(id)) { again += id; return } // runs once more when this one ends, not two full syncs at once
         fun show(text: String) { playlistUpdate.value = playlistUpdate.value + (id to text) }
         show("Updating…")
         viewModelScope.launch {
@@ -135,6 +152,7 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
                 show("Update failed: ${e.message ?: e::class.simpleName}")
             } finally {
                 updating.remove(id)
+                if (again.remove(id)) updatePlaylist(id)
             }
         }
     }

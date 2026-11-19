@@ -18,11 +18,15 @@ internal sealed interface GuideMenu {
     data class ChangeLogo(val ch: ChannelEntity) : GuideMenu
     data class UseGuideFrom(val ch: ChannelEntity) : GuideMenu
     data class RecordLater(val ch: ChannelEntity) : GuideMenu
+    /** The full-screen overlay's Settings card: subtitles, record, favourite, add to category. */
+    data class Player(val ch: ChannelEntity) : GuideMenu
     /** OK on a later programme highlighted in the guide. */
     data class Programme(val ch: ChannelEntity, val p: org.imdtv.iptvtv.data.repo.GuideProgramme) : GuideMenu
     data class CancelRecording(val ch: ChannelEntity, val p: org.imdtv.iptvtv.data.repo.GuideProgramme) : GuideMenu
     /** [horizontal]: Celestial Plus tabs, so the steps read left/right. */
     data class Category(val cat: CategoryEntity, val horizontal: Boolean = false) : GuideMenu
+    /** One of your categories (rename, delete and priority stay in Settings). */
+    data class Group(val g: org.imdtv.iptvtv.data.db.CustomGroupEntity, val horizontal: Boolean = false) : GuideMenu
 }
 
 /** The long-press menus of a channel row and a rail category, shared by every theme. */
@@ -57,8 +61,25 @@ fun GuideMenus(vm: LiveViewModel, state: GuideState) {
             add("Rename" to { state.menu = GuideMenu.Rename(m.ch) })
             add("Change logo…" to { state.menu = GuideMenu.ChangeLogo(m.ch) })
             add("Use guide from…" to { state.menu = GuideMenu.UseGuideFrom(m.ch) })
+            // Picks the channel up in place, as categories move: arrows carry it, OK drops, Back cancels.
+            if (entry != null && entry != RailEntry.Recent) add("Move" to { state.rowMove = RowMove(m.ch, vm.channels.value); state.menu = null })
             add("Hide" to { state.refocusOnChange = true; vm.hide(m.ch); state.menu = null })
         }) { state.menu = null }
+        is GuideMenu.Player -> {
+            val subtitles = vm.settings.collectAsState().value.liveSubtitlesOn
+            ContextMenu(m.ch.displayName(strip), buildList {
+                // Stays open: the label shows the new state.
+                add("Subtitles: ${if (subtitles) "On" else "Off"}" to { vm.setLiveSubtitles(!subtitles) })
+                if (recordingOn) {
+                    val rec = recordingOnChannel[m.ch.id]
+                    if (rec != null) add("Stop recording" to { vm.stopRecording(rec); state.menu = null })
+                    else add("Record now" to { vm.recordNow(m.ch); state.menu = null })
+                }
+                val fav = m.ch.id in favourites
+                add((if (fav) "Remove from Favourites" else "Add to Favourites") to { vm.toggleFavourite(m.ch); state.menu = null })
+                add("Add to category…" to { state.menu = GuideMenu.AddTo(m.ch) })
+            }) { state.menu = null }
+        }
         is GuideMenu.AddTo -> ContextMenu("Add ${m.ch.displayName(strip)} to",
             groups.map { g -> g.name to { vm.addToGroup(m.ch, g.id); state.menu = null } } +
                 ("New category…" to { state.menu = GuideMenu.NewGroup(m.ch) })) { state.menu = null }
@@ -95,13 +116,20 @@ fun GuideMenus(vm: LiveViewModel, state: GuideState) {
         )) { state.menu = null }
         is GuideMenu.Category -> {
             // Move picks the category up in place (arrows carry it, OK drops, Back cancels), as in Settings; no stepping in a box.
-            val provider = rail.orEmpty().filter { it.entry is RailEntry.Provider }
-            val key = "c${m.cat.id}"
-            val at = provider.indexOfFirst { it.entry.key == key }
+            val e = RailEntry.Provider(m.cat)
+            val provider = rail.orEmpty().sameKindKeys(e)
+            val key = e.key
+            val at = provider.indexOf(key)
             ContextMenu("${m.cat.name.ifEmpty { "Uncategorised" }}  ·  ${at + 1} of ${provider.size}", listOf(
-                "Move" to { state.railMove = RailMove(m.cat, at); state.menu = null },
+                "Move" to { state.railMove = RailMove(e, at); state.menu = null },
                 "Hide" to { vm.hideCategory(m.cat); state.menu = null; state.railOpen = false; state.refocus() },
             )) { state.menu = null; state.railFocusKey = key }
+        }
+        is GuideMenu.Group -> {
+            val e = RailEntry.Custom(m.g)
+            ContextMenu(m.g.name, listOf(
+                "Move" to { state.railMove = RailMove(e, rail.orEmpty().sameKindKeys(e).indexOf(e.key)); state.menu = null },
+            )) { state.menu = null; state.railFocusKey = e.key }
         }
     }
 }

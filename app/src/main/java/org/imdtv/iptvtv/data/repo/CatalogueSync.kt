@@ -48,19 +48,39 @@ class CatalogueSync(
      * Kinds are fetched and written one after another to bound peak memory on low-RAM TV boxes.
      * Each kind is fully fetched before its transaction, so a failure keeps that kind's cached data.
      */
-    suspend fun sync(providerId: Long, source: PlaylistSource, onProgress: (String) -> Unit = {}): SyncResult {
+    /**
+     * A kind [loads] says no to isn't fetched; it syncs as empty, which removes what was there. [loads] is asked again
+     * at the end, so a kind switched off while this sync runs (before, during or after its turn) is removed too.
+     */
+    suspend fun sync(providerId: Long, source: PlaylistSource, loads: suspend (Kind) -> Boolean = { true }, onProgress: (String) -> Unit = {},
+                     onKind: (Kind) -> Unit = {}): SyncResult {
+        suspend fun kind(k: Kind, fetch: suspend () -> KindResult): KindResult {
+            onKind(k)
+            if (!loads(k)) { clear(providerId, k); return KindResult(0, 0, 0) }
+            return fetch()
+        }
         onProgress("Downloading channels…")
-        val live = syncLive(providerId, source.liveCategories(), source.liveChannels())
+        val live = kind(Kind.LIVE) { syncLive(providerId, source.liveCategories(), source.liveChannels()) }
         onProgress("Downloading movies… · ${live.items} channels saved")
-        val vod = syncMovies(providerId, source.vodCategories(), source.movies())
+        val vod = kind(Kind.MOVIE) { syncMovies(providerId, source.vodCategories(), source.movies()) }
         onProgress("Downloading series… · ${live.items} channels, ${vod.items} movies saved")
-        val ser = syncSeries(providerId, source.seriesCategories(), source.series())
+        val ser = kind(Kind.SERIES) { syncSeries(providerId, source.seriesCategories(), source.series()) }
+        Kind.entries.forEach { if (!loads(it)) clear(providerId, it) } // switched off mid-sync; cheap when already empty
         return SyncResult(
             categories = live.categories + vod.categories + ser.categories,
             channels = live.items, movies = vod.items, series = ser.items,
             newlyHidden = live.newlyHidden + vod.newlyHidden + ser.newlyHidden,
             skipped = source.skipped(),
         )
+    }
+
+    /** Removes one kind of [providerId]'s catalogue (with its favourites/progress) without fetching anything. */
+    suspend fun clear(providerId: Long, kind: Kind) {
+        when (kind) {
+            Kind.LIVE -> syncLive(providerId, emptyList(), emptyList())
+            Kind.MOVIE -> syncMovies(providerId, emptyList(), emptyList())
+            Kind.SERIES -> syncSeries(providerId, emptyList(), emptyList())
+        }
     }
 
     /** Items with no category, or one the provider didn't list, go to a synthetic "Uncategorised" category. */

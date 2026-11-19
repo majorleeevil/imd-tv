@@ -197,11 +197,32 @@ class CatalogueSyncTest {
     }
 
     @Test
+    fun kindSwitchedOffDuringItsFetchIsRemovedAfterwards() = runTest {
+        val p = db.insertTestProvider()
+        var asked = 0 // on when the movies step starts, off by the time it ends (switched off mid-sync)
+        sync.sync(p, FakeSource(movieList = listOf(Movie("501", null, "Film", null, null, null, "http://h/m.mkv"))),
+            loads = { it != Kind.MOVIE || asked++ == 0 })
+        assertTrue(db.movieDao().byProvider(p).isEmpty())
+    }
+
+    @Test
+    fun kindSwitchedOffIsRemovedAndNotFetched() = runTest {
+        val p = db.insertTestProvider()
+        sync.sync(p, FakeSource(channels = listOf(channel("101", "A"))))
+        val r = sync.sync(p, FakeSource(channels = listOf(channel("101", "A"))), loads = { it != Kind.LIVE })
+        assertEquals(0, r.channels)
+        assertTrue(db.channelDao().byProvider(p).isEmpty())
+        assertTrue(db.categoryDao().byRemoteIds(p, Kind.LIVE).isEmpty())
+    }
+
+    @Test
     fun reportsProgressPerKind() = runTest {
         val p = db.insertTestProvider()
         val src = FakeSource(channels = listOf(channel("101", "A"), channel("102", "B")))
         val steps = mutableListOf<String>()
-        sync.sync(p, src) { steps += it }
+        val kinds = mutableListOf<Kind>()
+        sync.sync(p, src, onProgress = { steps += it }, onKind = { kinds += it })
+        assertEquals(listOf(Kind.LIVE, Kind.MOVIE, Kind.SERIES), kinds)
         assertEquals(
             listOf(
                 "Downloading channels…",
