@@ -20,6 +20,8 @@ sealed interface RailEntry {
 
     data object Favourites : RailEntry { override val key = "fav"; override val title = "★ Favourites" }
     data object Recent : RailEntry { override val key = "recent"; override val title = "Recently watched" }
+    /** Channels with catch-up; OK on one lists its past programmes. */
+    data object CatchUp : RailEntry { override val key = "catchup"; override val title = "Catch-up" }
     data class Custom(val group: CustomGroupEntity) : RailEntry {
         override val key get() = "g${group.id}"
         override val title get() = group.name
@@ -43,12 +45,12 @@ class RailRepository(private val db: AppDatabase) {
     ) { strip, items -> if (strip.isEmpty()) items else items.map { i -> (i.entry as? RailEntry.Provider)?.let { RailItem(RailEntry.Provider(it.category.cleaned(strip)), i.count) } ?: i } }
 
     private fun railRaw(providerId: Long): Flow<List<RailItem>> = combine(
-        combine(db.channelDao().observeFavourites(providerId), db.recentDao().observe(providerId), ::Pair),
+        combine(db.channelDao().observeFavourites(providerId), db.recentDao().observe(providerId), db.channelDao().observeArchive(providerId), ::Triple),
         db.customGroupDao().observe(providerId),
         db.customGroupDao().observeCounts(providerId),
         db.categoryDao().observeVisible(providerId, Kind.LIVE),
         db.channelDao().observeCounts(providerId),
-    ) { (favs, recents), groups, groupCounts, cats, catCounts ->
+    ) { (favs, recents, archive), groups, groupCounts, cats, catCounts ->
         val gn = groupCounts.associate { it.groupId to it.n }
         val cn = catCounts.associate { it.categoryId to it.n }
         buildList {
@@ -56,6 +58,7 @@ class RailRepository(private val db: AppDatabase) {
             groupsAt(GroupPlacement.TOP)
             add(RailItem(RailEntry.Favourites, favs.size))
             add(RailItem(RailEntry.Recent, recents.size))
+            add(RailItem(RailEntry.CatchUp, archive.size))
             groupsAt(GroupPlacement.NORMAL)
             cats.forEach { add(RailItem(RailEntry.Provider(it), cn[it.id] ?: 0)) }
             groupsAt(GroupPlacement.BOTTOM)
@@ -65,6 +68,7 @@ class RailRepository(private val db: AppDatabase) {
     fun channels(providerId: Long, entry: RailEntry): Flow<List<ChannelEntity>> = when (entry) {
         RailEntry.Favourites -> db.channelDao().observeFavourites(providerId)
         RailEntry.Recent -> db.recentDao().observe(providerId)
+        RailEntry.CatchUp -> db.channelDao().observeArchive(providerId)
         is RailEntry.Custom -> db.customGroupDao().observeChannels(entry.group.id)
         is RailEntry.Provider -> db.channelDao().observeByCategory(entry.category.id)
     }

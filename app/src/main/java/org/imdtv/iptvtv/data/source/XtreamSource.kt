@@ -90,6 +90,12 @@ class XtreamSource(
         json.decodeFromString(XAuthResponse.serializer(), get(null)).userInfo?.maxConnections?.takeIf { it > 0 }
     } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { null }
 
+    /** The server's time zone (server_info.timezone), which catch-up start times are in; null when unknown or the call fails. */
+    suspend fun serverTimeZone(): java.util.TimeZone? = try {
+        json.decodeFromString(XAuthResponse.serializer(), get(null)).serverInfo?.timezone
+            ?.takeIf { it in java.util.TimeZone.getAvailableIDs() }?.let(java.util.TimeZone::getTimeZone)
+    } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { null }
+
     private suspend fun <T> call(action: String, strategy: DeserializationStrategy<T>, vararg params: Pair<String, String>): T {
         ensureAuth()
         return json.decodeFromString(strategy, get(action, *params))
@@ -140,6 +146,7 @@ class XtreamSource(
                 number = s.num,
                 tvgId = s.epgChannelId,
                 streamUrl = streamUrl("live", "$id.$liveExt"),
+                archiveDays = s.tvArchiveDuration?.takeIf { s.tvArchive == 1 && it > 0 },
             )
         }
 

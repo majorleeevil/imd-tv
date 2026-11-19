@@ -69,8 +69,11 @@ private fun ProviderForm(vm: AppViewModel, editing: ProviderEntity?) {
     var url by rememberSaveable { mutableStateOf(editing?.url.orEmpty()) }
     var user by rememberSaveable { mutableStateOf(editing?.username.orEmpty()) }
     var pass by rememberSaveable { mutableStateOf(editing?.password.orEmpty().substringBefore('\n')) }
-    // Stalker keeps "serial\ndeviceId" in the password column (StalkerLogin); the form shows them as two fields.
-    var deviceId by rememberSaveable { mutableStateOf(editing?.takeIf { it.type == ProviderType.STALKER }?.password.orEmpty().substringAfter('\n', "")) }
+    // Stalker keeps "serial\ndeviceId\ndeviceId2\nmodel" in the password column (StalkerLogin); the form shows them as separate fields.
+    val stalkerEdit = editing?.takeIf { it.type == ProviderType.STALKER }?.let { org.imdtv.iptvtv.data.source.StalkerLogin.from(it.username, it.password) }
+    var deviceId by rememberSaveable { mutableStateOf(stalkerEdit?.deviceId.orEmpty()) }
+    var deviceId2 by rememberSaveable { mutableStateOf(stalkerEdit?.deviceId2.orEmpty()) }
+    var model by rememberSaveable { mutableStateOf(stalkerEdit?.model.orEmpty()) }
     var epg by rememberSaveable { mutableStateOf("") }
     var agent by rememberSaveable { mutableStateOf(editing?.userAgent.orEmpty()) }
 
@@ -80,7 +83,7 @@ private fun ProviderForm(vm: AppViewModel, editing: ProviderEntity?) {
     val next = remember { FocusRequester() }
     val save = remember { FocusRequester() }
     // What was typed may never have been saved (a failed add is removed), so the scrubber is given it directly.
-    if (sendLogs) org.imdtv.iptvtv.ui.settings.SendLogsPage(listOf(user, pass, deviceId)) { sendLogs = false; runCatching { save.requestFocus() } }
+    if (sendLogs) org.imdtv.iptvtv.ui.settings.SendLogsPage(listOf(user, pass, deviceId, deviceId2)) { sendLogs = false; runCatching { save.requestFocus() } }
     LaunchedEffect(ready) { if (ready) runCatching { next.requestFocus() } } // Save has gone: focus Watch/Done, not the top
     // One 1080p screen (960×540 dp): labels sit beside the fields, progress and Watch on the right.
     // Scrolls only when the Name box is open on the tallest (Stalker) form.
@@ -99,6 +102,8 @@ private fun ProviderForm(vm: AppViewModel, editing: ProviderEntity?) {
                     FormField("MAC address\ne.g. 00:1A:79:12:34:56", user, KeyboardType.Password) { user = it }
                     FormField("Serial (optional)", pass, KeyboardType.Password) { pass = it }
                     FormField("Device ID (optional)", deviceId, KeyboardType.Password) { deviceId = it }
+                    FormField("Device ID 2 (optional)\nBlank = same as Device ID", deviceId2, KeyboardType.Password) { deviceId2 = it }
+                    FormField("STB model (optional)\nBlank = MAG250", model, KeyboardType.Password) { model = it }
                 } else if (type == ProviderType.XTREAM) {
                     // The password keyboard has the number row many providers' usernames need.
                     FormField("Username", user, KeyboardType.Password) { user = it }
@@ -116,7 +121,7 @@ private fun ProviderForm(vm: AppViewModel, editing: ProviderEntity?) {
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                         Button(onClick = {
                             if (state.busy) return@Button
-                            val secret = if (type == ProviderType.STALKER) org.imdtv.iptvtv.data.source.StalkerLogin(user, pass, deviceId).packed().orEmpty() else pass
+                            val secret = if (type == ProviderType.STALKER) org.imdtv.iptvtv.data.source.StalkerLogin(user, pass, deviceId, deviceId2, model).packed().orEmpty() else pass
                             vm.save(type, url, user, secret, epg, agent, editing, name)
                         }, Modifier.focusRequester(save)) { Text("Save") }
                         if (vm.canLeaveSetup && editing == null) Button(onClick = vm::refreshGuide) { Text("Refresh guide now") }

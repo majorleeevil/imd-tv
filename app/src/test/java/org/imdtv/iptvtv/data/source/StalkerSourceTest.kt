@@ -183,4 +183,15 @@ class StalkerSourceTest {
         assertEquals("SN\nDEV", StalkerLogin("m", "SN", "DEV").packed()); assertNull(StalkerLogin("m", " ", null).packed())
         assertEquals(StalkerLogin("M", null, "DEV"), StalkerLogin.from("m", StalkerLogin("m", null, "DEV").packed()))
     }
+
+    @Test fun stalkerLoginPackingIsBackwardCompatible() {
+        assertEquals(StalkerLogin("M", "SN"), StalkerLogin.from("m", "SN"))
+        assertEquals(StalkerLogin("M", "SN", "DEV"), StalkerLogin.from("m", "SN\nDEV"))
+        assertEquals(StalkerLogin("M", "SN", "DEV", "DEV2", "MAG322"), StalkerLogin.from("m", "SN\nDEV\nDEV2\nMAG322"))
+        assertEquals(StalkerLogin("M", null, null, null, "MAG322"), StalkerLogin.from("m", "\n\n\nMAG322"))
+        val l = StalkerLogin("M", "SN", null, "D2", "MAG322")
+        assertEquals("SN\n\nD2\nMAG322", l.packed()); assertEquals(l, StalkerLogin.from("M", l.packed()))
+        assertEquals("SN\nDEV", StalkerLogin("M", "SN", "DEV", " ", "").packed())
+        assertEquals("SN", StalkerLogin("M", "SN", null, null, null).packed())
+    }
 }

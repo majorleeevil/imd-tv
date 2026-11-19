@@ -32,7 +32,8 @@ fun AppearanceRows(s: AppSettings, first: Modifier, dateTimeOpener: Modifier, on
             SwitchRow("Preview fade", "Blend the preview into the background; off shows it as a framed box", s.previewFade) { on -> onChange { it.copy(previewFade = on) } }
         }
     }
-    SwitchRow("Multi-line names", "Let channel names and programme titles wrap onto 2 lines in the guide. In Celestial Glass and Liquid Glass this needs taller rows: 5 channels in the guide (or 6 in Celestial Glass)",
+    ChoiceRow("Movies & Series rows", "How many rows of posters the Movies and Series pages show at once; 2 rows uses smaller posters", listOf(false, true), s.vodTwoRows, { if (it) "2 rows" else "1 row" }, default = AppSettings().vodTwoRows, onPick = { v -> onChange { it.copy(vodTwoRows = v) } })
+    SwitchRow("Multi-line names","Let channel names and programme titles wrap onto 2 lines in the guide. In Celestial Glass and Liquid Glass this needs taller rows: 5 channels in the guide (or 6 in Celestial Glass)",
         s.multiLineGuide) { on -> onChange { it.copy(multiLineGuide = on) } }
     val dt = org.imdtv.iptvtv.ui.settings.ChannelPage.DATE_TIME
     SettingRow(dt.title, dt.explanation, "›", dateTimeOpener, onClick = onDateTime)

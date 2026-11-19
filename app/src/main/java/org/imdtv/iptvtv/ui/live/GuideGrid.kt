@@ -217,7 +217,9 @@ fun GuideGrid(
                         onClick = {
                             // A later programme highlighted: OK offers to record it (or cancel) instead of playing.
                             val later = programmes[ch.id].orEmpty().firstOrNull { at > now && it.start <= at && at < it.stop }
-                            if (later != null && recordingOn) { state.focusIndex = i; state.menu = GuideMenu.Programme(ch, later) } else state.onOk(ch, onFullScreen)
+                            // In Catch-up, OK lists the channel's past programmes.
+                            if (vm.entry.value == org.imdtv.iptvtv.data.repo.RailEntry.CatchUp) { state.focusIndex = i; state.menu = GuideMenu.CatchUp(ch) }
+                            else if (later != null && recordingOn) { state.focusIndex = i; state.menu = GuideMenu.Programme(ch, later) } else state.onOk(ch, onFullScreen)
                         },
                     )
                 }

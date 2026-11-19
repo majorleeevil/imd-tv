@@ -161,6 +161,10 @@ abstract class ChannelDao {
            WHERE ch.providerId = :providerId AND ch.hidden = 0 ORDER BY f.sortOrder, f.addedAt DESC"""
     )
     abstract fun observeFavourites(providerId: Long): Flow<List<ChannelEntity>>
+
+    /** Channels with catch-up (the provider keeps past programmes), for the rail's Catch-up entry. */
+    @Query("SELECT * FROM channel WHERE providerId = :providerId AND hidden = 0 AND archiveDays > 0 ORDER BY number IS NULL, number, name")
+    abstract fun observeArchive(providerId: Long): Flow<List<ChannelEntity>>
     @Query("UPDATE channel SET hidden = :hidden WHERE id = :id") abstract suspend fun setHidden(id: Long, hidden: Boolean)
     @Query("UPDATE channel SET hidden = :hidden WHERE id IN (:ids)") abstract suspend fun setHiddenForIds(ids: List<Long>, hidden: Boolean)
     /** Every channel of a category, hidden ones included (Settings › Manage channels), in guide order. */
@@ -469,6 +473,6 @@ abstract class RecentDao {
 }
 
 data class ChannelFromProvider(val id: Long, val name: String, val logo: String?, val number: Int?, val tvgId: String?, val streamUrl: String, val categoryId: Long?,
-                               val drmType: String? = null, val drmKey: String? = null)
+                               val drmType: String? = null, val drmKey: String? = null, val archiveDays: Int? = null)
 data class MovieFromProvider(val id: Long, val name: String, val poster: String?, val year: Int?, val rating: Double?, val streamUrl: String?, val categoryId: Long?)
 data class SeriesFromProvider(val id: Long, val name: String, val poster: String?, val year: Int?, val rating: Double?, val categoryId: Long?)

@@ -49,6 +49,9 @@ val END_LATE = listOf(0, 2, 5, 10, 15, 30)
 /** Clock in the full-screen player. */
 enum class PlayerClock(val label: String) { OFF("Off"), LIVE("On (Live TV only)"), ALL("On (Universal)") }
 
+/** Full-screen picture shape: the stream's own, forced 16:9 or 4:3, or zoomed to fill the screen. */
+enum class VideoAspect(val label: String) { AUTO("Auto"), WIDE("16:9"), STANDARD("4:3"), FILL("Fill") }
+
 enum class HeaderSize(val label: String) { LARGE("Large"), MEDIUM("Medium"), SMALL("Small") }
 
 data class AppSettings(
@@ -111,6 +114,8 @@ data class AppSettings(
     val clock24h: Boolean = true,
     val playerClock: PlayerClock = PlayerClock.OFF,
     val liveSubtitlesOn: Boolean = false,
+    val videoAspect: VideoAspect = VideoAspect.AUTO,
+    val vodTwoRows: Boolean = false,
     val headerSize: HeaderSize = HeaderSize.LARGE,
     val previewFade: Boolean = true,
     /** Other themes' [look]s by theme name, so a glass theme's colour/header/rows don't carry to another theme. */

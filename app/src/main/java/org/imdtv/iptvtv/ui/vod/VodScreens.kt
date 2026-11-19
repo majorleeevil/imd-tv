@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.offset
@@ -68,13 +70,19 @@ import org.imdtv.iptvtv.ui.onLongOk
 import org.imdtv.iptvtv.ui.FocusBox
 import org.imdtv.iptvtv.ui.duration
 import org.imdtv.iptvtv.ui.live.RailCategory
+import org.imdtv.iptvtv.ui.live.SectionRowBox
+import org.imdtv.iptvtv.ui.live.otherPlaylistItems
+import org.imdtv.iptvtv.ui.live.toggled
 
 private val leftKey: (androidx.compose.ui.input.key.KeyEvent) -> Boolean = { it.type == KeyEventType.KeyDown && it.key == Key.DirectionLeft }
 
 /** Movies/Series home (mockup 02 screen 1): backdrop + hero for the focused item, rows per category, ← opens the rail. */
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
-fun VodHomeScreen(vm: VodViewModel, nav: @Composable () -> Unit, onOpen: (VodItem) -> Unit) {
+/** [twoRows]: Appearance › Movies & Series rows = 2 rows (smaller posters). [onUsePlaylist]: a category of another
+ *  playlist was picked in the rail; switch to that playlist. */
+fun VodHomeScreen(vm: VodViewModel, nav: @Composable () -> Unit, onOpen: (VodItem) -> Unit, twoRows: Boolean = false,
+                  onUsePlaylist: (CategoryEntity) -> Unit = {}) {
     val kind by vm.kind.collectAsState()
     val cats by vm.categories.collectAsState()
     val favs by vm.favourites.collectAsState()
@@ -149,9 +157,18 @@ fun VodHomeScreen(vm: VodViewModel, nav: @Composable () -> Unit, onOpen: (VodIte
                     }
                 } }
             } else {
-                LazyColumn(Modifier.fillMaxSize()) {
+                // The focused row scrolls to the top, whole: the TV pivot left the row above half showing under the hero.
+                // Bottom padding lets the last row reach the top too. Rows keep the TV scroll sideways ([sideways]).
+                val sideways = androidx.compose.foundation.gestures.LocalBringIntoViewSpec.current
+                val poster = if (twoRows) 90.dp else 165.dp
+                val gap = if (twoRows) 8.dp else 18.dp
+                val density = androidx.compose.ui.platform.LocalDensity.current
+                val rowSpec = remember(density) { with(density) { rowToTop((ROW_TITLE + 12.dp).toPx()) } }
+                BoxWithConstraints(Modifier.fillMaxSize()) { androidx.compose.runtime.CompositionLocalProvider(androidx.compose.foundation.gestures.LocalBringIntoViewSpec provides rowSpec) {
+                LazyColumn(Modifier.fillMaxSize(), contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                    bottom = (maxHeight - rowHeight(poster, gap)).coerceAtLeast(0.dp))) {
                     if (favs.isNotEmpty()) item(key = "fav") {
-                        PosterRow("★ Favourites", favs, firstItem, vm, onOpen, openRail, claim)
+                        PosterRow("★ Favourites", favs, firstItem, vm, onOpen, openRail, claim, poster = poster, gap = gap, sideways = sideways)
                     }
                     itemsIndexed(cats, key = { _, c -> c.category.id }) { i, rc ->
                         val cont = rc.category.id == VodViewModel.CONTINUE_ID
@@ -159,14 +176,17 @@ fun VodHomeScreen(vm: VodViewModel, nav: @Composable () -> Unit, onOpen: (VodIte
                             else produceState<List<VodItem>?>(null, rc.category.id) { value = vm.inCategory(rc.category.id) }
                         val rows by vm.progress.collectAsState()
                         PosterRow(rc.category.name.ifEmpty { "Uncategorised" }, items, firstItem.takeIf { i == 0 && favs.isEmpty() }, vm, onOpen, openRail, claim,
-                            progress = { if (cont) progressFraction(it, rows) else null })
+                            progress = { if (cont) progressFraction(it, rows) else null }, poster = poster, gap = gap, sideways = sideways)
                     }
-                }
+                } } }
             }
         }
         if (railOpen) VodRail(cats, gridCat?.id, railFocus,
             onPick = { vm.gridCategory.value = it; railOpen = false },
-            onClose = { railOpen = false; refocus++ })
+            onClose = { railOpen = false; refocus++ },
+            others = vm.otherPlaylists.collectAsState().value, expanded = vm.expandedPlaylists.collectAsState().value,
+            onToggle = { id -> vm.expandedPlaylists.value = vm.expandedPlaylists.value.toggled(id) },
+            onPickOther = { cat -> vm.openAfterSwitch(cat); onUsePlaylist(cat); railOpen = false })
     }
 }
 
@@ -178,11 +198,20 @@ private fun rowToTop(padPx: Float) = object : androidx.compose.foundation.gestur
     override fun calculateScrollDistance(offset: Float, size: Float, containerSize: Float) = offset - padPx
 }
 
+private val ROW_TITLE = 18.dp
+/** Title + gap + the LazyRow's 6dp focus padding top and bottom + poster with its 3dp frame + [gap] below. */
+private fun rowHeight(poster: androidx.compose.ui.unit.Dp, gap: androidx.compose.ui.unit.Dp) = ROW_TITLE + 6.dp + 12.dp + poster + 6.dp + gap
+
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 private fun PosterRow(title: String, items: List<VodItem>?, focus: FocusRequester?, vm: VodViewModel, onOpen: (VodItem) -> Unit, openRail: () -> Unit, claim: @Composable () -> Unit,
-                      progress: (VodItem) -> Float? = { null }) {
-    Column(Modifier.padding(bottom = 18.dp)) {
-        Text(title, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Color.White, modifier = Modifier.padding(bottom = 6.dp))
+                      progress: (VodItem) -> Float? = { null }, poster: androidx.compose.ui.unit.Dp = 165.dp, gap: androidx.compose.ui.unit.Dp = 18.dp,
+                      sideways: androidx.compose.foundation.gestures.BringIntoViewSpec) {
+    Column(Modifier.padding(bottom = gap)) {
+        // Fixed line height: the column's scroll-to-top offset counts on it ([ROW_TITLE]).
+        Text(title, fontSize = 14.sp, lineHeight = 18.sp, maxLines = 1, fontWeight = FontWeight.SemiBold, color = Color.White, modifier = Modifier.height(ROW_TITLE))
+        Spacer(Modifier.height(6.dp))
+        androidx.compose.runtime.CompositionLocalProvider(androidx.compose.foundation.gestures.LocalBringIntoViewSpec provides sideways) {
         // Padding leaves room for the focused poster's 1.06× scale and outline, which a LazyRow would clip.
         LazyRow(horizontalArrangement = Arrangement.spacedBy(11.dp), contentPadding = androidx.compose.foundation.layout.PaddingValues(start = 8.dp, end = 50.dp, top = 6.dp, bottom = 6.dp),
             modifier = Modifier.padding(start = 0.dp).offset(x = (-8).dp)) {
@@ -193,8 +222,9 @@ private fun PosterRow(title: String, items: List<VodItem>?, focus: FocusRequeste
                 if (i == 0 && focus != null) claim()
                 Poster(item, Modifier.then(if (i == 0 && focus != null) Modifier.focusRequester(focus) else Modifier)
                     .onPreviewKeyEvent { if (i == 0 && leftKey(it)) { openRail(); true } else false },
-                    progress = item?.let(progress), onFocused = { item?.let { vm.focused.value = it } }, onClick = { item?.let(onOpen) })
+                    progress = item?.let(progress), height = poster, onFocused = { item?.let { vm.focused.value = it } }, onClick = { item?.let(onOpen) })
             }
+        }
         }
     }
 }
@@ -202,14 +232,16 @@ private fun PosterRow(title: String, items: List<VodItem>?, focus: FocusRequeste
 /** [item] null = a placeholder card while its row loads. */
 @Composable
 /** [progress] 0–1 draws a watched-so-far bar along the bottom. */
-fun Poster(item: VodItem?, modifier: Modifier = Modifier, caption: Boolean = false, progress: Float? = null, onFocused: () -> Unit, onClick: () -> Unit) {
-    FocusBox(onClick = onClick, onFocused = onFocused, modifier = modifier) { f -> Column(Modifier.width(116.dp)) {
+fun Poster(item: VodItem?, modifier: Modifier = Modifier, caption: Boolean = false, progress: Float? = null,
+           height: androidx.compose.ui.unit.Dp = 165.dp, onFocused: () -> Unit, onClick: () -> Unit) {
+    val width = height * 2 / 3
+    FocusBox(onClick = onClick, onFocused = onFocused, modifier = modifier) { f -> Column(Modifier.width(width + 6.dp)) {
         // A placeholder that already has focus becomes this item without a focus change: report it now.
         if (f && item != null) LaunchedEffect(item.id) { onFocused() }
         Box(
             Modifier.graphicsLayer { val s = if (f) 1.06f else 1f; scaleX = s; scaleY = s }
                 .border(2.dp, if (f) Color.White else Color.Transparent, RoundedCornerShape(8.dp)).padding(3.dp)
-                .size(110.dp, 165.dp).clip(RoundedCornerShape(6.dp)).background(LocalTheme.current.colors.vodCard),
+                .size(width, height).clip(RoundedCornerShape(6.dp)).background(LocalTheme.current.colors.vodCard),
             contentAlignment = Alignment.BottomStart,
         ) {
             if (item != null) {
@@ -262,7 +294,8 @@ private fun Hero(item: VodItem, d: VodDetail?, modifier: Modifier, extra: String
 }
 
 @Composable
-private fun VodRail(cats: List<RailCategory>, selectedId: Long?, focus: FocusRequester, onPick: (CategoryEntity?) -> Unit, onClose: () -> Unit) {
+private fun VodRail(cats: List<RailCategory>, selectedId: Long?, focus: FocusRequester, onPick: (CategoryEntity?) -> Unit, onClose: () -> Unit,
+                    others: List<org.imdtv.iptvtv.data.repo.OtherPlaylist>, expanded: Set<Long>, onToggle: (Long) -> Unit, onPickOther: (CategoryEntity) -> Unit) {
     val start = (cats.indexOfFirst { it.category.id == selectedId } + 1).coerceAtLeast(0)
     val state = rememberLazyListState(start)
     Column(
@@ -283,6 +316,9 @@ private fun VodRail(cats: List<RailCategory>, selectedId: Long?, focus: FocusReq
                         rc?.let { Text(it.count.toString(), fontSize = 11.sp, color = if (f) fg else LocalTheme.current.colors.muted) }
                     }
                 }
+            }
+            otherPlaylistItems(others, expanded, onToggle, onPickOther) { title, trailing, header, nested, onClick ->
+                SectionRowBox(title, trailing, header, nested, onClick, Color.White, Color.Black)
             }
         }
     }

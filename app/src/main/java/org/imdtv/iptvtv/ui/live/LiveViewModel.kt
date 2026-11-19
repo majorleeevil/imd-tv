@@ -90,6 +90,22 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
 
     val entry = MutableStateFlow<RailEntry?>(null)
 
+    /** The rail's sections for the other playlists (Live on), and which are opened (this session only). */
+    val otherPlaylists: StateFlow<List<org.imdtv.iptvtv.data.repo.OtherPlaylist>> =
+        org.imdtv.iptvtv.data.repo.otherPlaylists(c.db, c.providerRepository.activeProviderId, flowOf(Kind.LIVE))
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList()) // only while a rail shows: counts re-run on every sync write
+    val expandedPlaylists = MutableStateFlow<Set<Long>>(emptySet())
+    /** The rail entry to open once the playlist switched to by [usePlaylistAt] has loaded its rail. */
+    private var pendingEntryKey: String? = null
+
+    /** Makes [providerId] the active playlist (as Settings › Use this playlist does) and opens its live category [categoryId]. */
+    fun usePlaylistAt(providerId: Long, categoryId: Long?) {
+        player.stop()
+        resetForPlaylistSwitch()
+        pendingEntryKey = categoryId?.let { "c$it" }
+        viewModelScope.launch { c.providerRepository.setActive(providerId) }
+    }
+
     /** The selected entry's channels tagged with its key, so the guide can tell a stale list from the new one. */
     // Keyed on the provider too: "fav" is the same key in every playlist.
     private val hideHeaders = c.settings.settings.map { it.hideHeaderChannels }.distinctUntilChanged()
@@ -161,7 +177,8 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
             // Also moves off an entry that vanished or belongs to a previously active provider.
             rail.filterNotNull().collect { list ->
                 val entries = list.map { it.entry }
-                entry.value = entries.firstOrNull { it.key == entry.value?.key }
+                entry.value = entries.firstOrNull { it.key == pendingEntryKey }?.also { pendingEntryKey = null }
+                    ?: entries.firstOrNull { it.key == entry.value?.key }
                     ?: entries.firstOrNull { it is RailEntry.Provider && it.category.id == playing?.categoryId }
                     ?: entries.firstOrNull()
             }
@@ -208,6 +225,33 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
         cursor.value = to
         timeShift.value = shift
         return true
+    }
+
+    // --- Catch-up (Xtream) ---
+
+    /** [ch]'s past programmes still in its catch-up window, newest first. */
+    suspend fun catchUpProgrammes(ch: ChannelEntity): List<org.imdtv.iptvtv.data.repo.GuideProgramme> {
+        val days = ch.archiveDays ?: return emptyList()
+        val now = System.currentTimeMillis()
+        return guide.programmes(ch.providerId, listOf(ch), now - days * 86_400_000L, now)[ch.id].orEmpty()
+            .filter { it.stop <= now }.sortedByDescending { it.start }
+    }
+
+    /** Title for the full-screen player a catch-up programme opens in (movie controls: it can be paused and seeked). */
+    val openCatchUp = kotlinx.coroutines.flow.MutableSharedFlow<String>(extraBufferCapacity = 1)
+
+    fun playCatchUp(ch: ChannelEntity, p: org.imdtv.iptvtv.data.repo.GuideProgramme) {
+        viewModelScope.launch {
+            val prov = c.db.providerDao().get(ch.providerId) ?: return@launch
+            // Start times are in the server's time zone; the TV's is the best guess when the server doesn't say.
+            val zone = (c.sourceFor(prov) as? org.imdtv.iptvtv.data.source.XtreamSource)?.serverTimeZone() ?: java.util.TimeZone.getDefault()
+            val urls = org.imdtv.iptvtv.data.source.catchUpUrls(ch.streamUrl, p.start, p.stop, zone)
+            if (urls.isEmpty()) return@launch
+            previewed.value = null
+            // vod: seekable, and not the live .ts reconnect path or the live stall watchdog.
+            player.play(urls[0], prov.userAgent, prov.login(), vod = true, fallbackUrl = urls[1])
+            openCatchUp.tryEmit("${ch.displayName(strip.value)} · ${p.title}")
+        }
     }
 
     /** Channels watched full screen, for the "View Previous Channel With" keys. */
@@ -478,6 +522,7 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
     /** Moves [delta] places among the categories the rail shows, so a step never vanishes behind a hidden one. */
     private val moveLock = kotlinx.coroutines.sync.Mutex()
     fun setLiveSubtitles(on: Boolean) { viewModelScope.launch { c.settings.update { it.copy(liveSubtitlesOn = on) } } }
+    fun setVideoAspect(a: org.imdtv.iptvtv.data.settings.VideoAspect) { viewModelScope.launch { c.settings.update { it.copy(videoAspect = a) } } }
 
     /** A channel moved in the guide: [order] is the list as shown after the move, [before] as it was. */
     fun saveGuideOrder(ch: ChannelEntity, before: List<ChannelEntity>, order: List<ChannelEntity>) {
@@ -492,7 +537,7 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
                     val all = c.db.channelDao().allByCategory(at.category.id)
                     CategoryRepository(c.db).moveChannel(at.category.id, ch.id, all.indexOfFirst { it.id == target.id } - all.indexOfFirst { it.id == ch.id })
                 }
-                RailEntry.Recent -> Unit
+                RailEntry.Recent, RailEntry.CatchUp -> Unit
             }
         } }
     }

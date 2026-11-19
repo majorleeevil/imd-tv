@@ -33,6 +33,10 @@ import androidx.compose.ui.viewinterop.AndroidView
 import android.view.ViewGroup
 import androidx.core.view.updateLayoutParams
 import androidx.media3.ui.PlayerView
+import androidx.media3.ui.AspectRatioFrameLayout
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
+import org.imdtv.iptvtv.data.settings.VideoAspect
 import kotlinx.coroutines.delay
 import org.imdtv.iptvtv.data.catalogue.displayName
 import org.imdtv.iptvtv.player.PlayerManager
@@ -44,7 +48,8 @@ private val OK = setOf(Key.DirectionCenter, Key.Enter, Key.NumPadEnter)
 
 /** Full-screen playback. Live ([liveVm] set) adds the info overlay (OK opens, Back closes, 5s auto-hide) and Up/Down (or Left/Right) zapping. */
 @Composable
-fun PlayerScreen(player: PlayerManager, title: String, liveVm: LiveViewModel? = null, onGuide: () -> Unit = {}, showClock: Boolean = false) {
+fun PlayerScreen(player: PlayerManager, title: String, liveVm: LiveViewModel? = null, onGuide: () -> Unit = {}, showClock: Boolean = false,
+                 aspect: VideoAspect = VideoAspect.AUTO) {
     val live = liveVm != null
     val zapLeftRight = liveVm?.settings?.collectAsState()?.value?.zapLeftRight == true
     val focused = liveVm?.focused?.collectAsState()?.value
@@ -58,10 +63,11 @@ fun PlayerScreen(player: PlayerManager, title: String, liveVm: LiveViewModel? = 
 
     var overlay by remember { mutableStateOf(false) }
     var lastKey by remember { mutableLongStateOf(0L) }
+    var menuOpen by remember { mutableStateOf(false) }
     val keys = remember { FocusRequester() }
     BackHandler(enabled = overlay) { overlay = false }
-    LaunchedEffect(overlay, lastKey) {
-        if (overlay) { delay(5_000); overlay = false }
+    LaunchedEffect(overlay, lastKey, menuOpen) {
+        if (overlay) { if (!menuOpen) { delay(5_000); overlay = false } }
         else if (live) { withFrameNanos { }; runCatching { keys.requestFocus() } }
     }
 
@@ -69,6 +75,8 @@ fun PlayerScreen(player: PlayerManager, title: String, liveVm: LiveViewModel? = 
         Modifier.fillMaxSize().background(Color.Black)
             .onPreviewKeyEvent { lastKey = System.nanoTime(); liveVm?.numberKey(it, true) == true },
     ) {
+        // 16:9 / 4:3: the view is boxed to that shape and the picture stretched to fill it; Fill zooms and crops.
+        val box = when (aspect) { VideoAspect.WIDE -> 16f / 9; VideoAspect.STANDARD -> 4f / 3; else -> null }
         AndroidView(
             factory = { ctx -> PlayerView(ctx).also {
                 it.useController = !live
@@ -76,8 +84,13 @@ fun PlayerScreen(player: PlayerManager, title: String, liveVm: LiveViewModel? = 
                 player.attach(it)
                 if (live) it.isFocusable = false else it.requestFocus()
             } },
+            update = { it.resizeMode = when (aspect) {
+                VideoAspect.AUTO -> AspectRatioFrameLayout.RESIZE_MODE_FIT
+                VideoAspect.FILL -> AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+                else -> AspectRatioFrameLayout.RESIZE_MODE_FILL
+            } },
             onRelease = { player.detach(it) },
-            modifier = Modifier.fillMaxSize(),
+            modifier = if (box == null) Modifier.fillMaxSize() else Modifier.align(Alignment.Center).fillMaxHeight().aspectRatio(box, matchHeightConstraintsFirst = true),
         )
         if (liveVm != null) {
             // Key target while the overlay is closed. OK opens on key-up, so the same press can't also click the TV guide card.
@@ -91,7 +104,7 @@ fun PlayerScreen(player: PlayerManager, title: String, liveVm: LiveViewModel? = 
                     else -> false
                 }
             })
-            if (overlay) LiveOverlay(liveVm, onGuide = onGuide, onPick = { liveVm.switchTo(it); overlay = false })
+            if (overlay) LiveOverlay(liveVm, onGuide = onGuide, onPick = { liveVm.switchTo(it); overlay = false }, onMenuOpen = { menuOpen = it })
         }
         if (player.buffering.collectAsState().value && error == null) Spinner(Modifier.align(Alignment.Center), size = 40.dp)
         if (showClock) PlayerClock(Modifier.align(Alignment.TopEnd).padding(top = 27.dp, end = 48.dp))

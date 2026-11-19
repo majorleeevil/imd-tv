@@ -131,9 +131,9 @@ class CatalogueSync(
             val catId = c.idByRemote[resolve(ch.categoryRemoteId)]
             val old = existing[ch.remoteId]
             if (old == null) fresh += ChannelEntity(providerId = providerId, categoryId = catId, remoteId = ch.remoteId, name = ch.name,
-                logo = ch.logo, number = ch.number, tvgId = ch.tvgId, streamUrl = ch.streamUrl, drmType = ch.drm?.type, drmKey = ch.drm?.key)
-            else ChannelFromProvider(old.id, ch.name, ch.logo, ch.number, ch.tvgId, ch.streamUrl, catId, ch.drm?.type, ch.drm?.key).let { n ->
-                if (n != ChannelFromProvider(old.id, old.name, old.logo, old.number, old.tvgId, old.streamUrl, old.categoryId, old.drmType, old.drmKey)) changed += n
+                logo = ch.logo, number = ch.number, tvgId = ch.tvgId, streamUrl = ch.streamUrl, drmType = ch.drm?.type, drmKey = ch.drm?.key, archiveDays = ch.archiveDays)
+            else ChannelFromProvider(old.id, ch.name, ch.logo, ch.number, ch.tvgId, ch.streamUrl, catId, ch.drm?.type, ch.drm?.key, ch.archiveDays).let { n ->
+                if (n != ChannelFromProvider(old.id, old.name, old.logo, old.number, old.tvgId, old.streamUrl, old.categoryId, old.drmType, old.drmKey, old.archiveDays)) changed += n
             }
         }
         fresh.chunked(WRITE_CHUNK).forEach { dao.upsert(it) }

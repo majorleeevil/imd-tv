@@ -18,6 +18,8 @@ internal sealed interface GuideMenu {
     data class ChangeLogo(val ch: ChannelEntity) : GuideMenu
     data class UseGuideFrom(val ch: ChannelEntity) : GuideMenu
     data class RecordLater(val ch: ChannelEntity) : GuideMenu
+    /** The channel's past programmes still in its catch-up window; picking one plays it. */
+    data class CatchUp(val ch: ChannelEntity) : GuideMenu
     /** The full-screen overlay's Settings card: subtitles, record, favourite, add to category. */
     data class Player(val ch: ChannelEntity) : GuideMenu
     /** OK on a later programme highlighted in the guide. */
@@ -54,6 +56,7 @@ fun GuideMenus(vm: LiveViewModel, state: GuideState) {
                 else add("Record now" to { vm.recordNow(m.ch); state.menu = null })
                 add("Record a later programme…" to { state.menu = GuideMenu.RecordLater(m.ch) })
             }
+            if (m.ch.archiveDays != null) add("Catch-up…" to { state.menu = GuideMenu.CatchUp(m.ch) })
             add("Add to category…" to { state.menu = GuideMenu.AddTo(m.ch) })
             (entry as? RailEntry.Custom)?.let { e ->
                 add("Remove from ${e.group.name}" to { state.refocusOnChange = true; vm.removeFromGroup(m.ch, e.group.id); state.menu = null })
@@ -62,7 +65,7 @@ fun GuideMenus(vm: LiveViewModel, state: GuideState) {
             add("Change logo…" to { state.menu = GuideMenu.ChangeLogo(m.ch) })
             add("Use guide from…" to { state.menu = GuideMenu.UseGuideFrom(m.ch) })
             // Picks the channel up in place, as categories move: arrows carry it, OK drops, Back cancels.
-            if (entry != null && entry != RailEntry.Recent) add("Move" to { state.rowMove = RowMove(m.ch, vm.channels.value); state.menu = null })
+            if (entry != null && entry != RailEntry.Recent && entry != RailEntry.CatchUp) add("Move" to { state.rowMove = RowMove(m.ch, vm.channels.value); state.menu = null })
             add("Hide" to { state.refocusOnChange = true; vm.hide(m.ch); state.menu = null })
         }) { state.menu = null }
         is GuideMenu.Player -> {
@@ -70,11 +73,15 @@ fun GuideMenus(vm: LiveViewModel, state: GuideState) {
             ContextMenu(m.ch.displayName(strip), buildList {
                 // Stays open: the label shows the new state.
                 add("Subtitles: ${if (subtitles) "On" else "Off"}" to { vm.setLiveSubtitles(!subtitles) })
+                // Steps Auto → 16:9 → 4:3 → Fill; global and remembered.
+                val aspect = vm.settings.collectAsState().value.videoAspect
+                add("Aspect ratio: ${aspect.label}" to { vm.setVideoAspect(org.imdtv.iptvtv.data.settings.VideoAspect.entries.let { it[(aspect.ordinal + 1) % it.size] }) })
                 if (recordingOn) {
                     val rec = recordingOnChannel[m.ch.id]
                     if (rec != null) add("Stop recording" to { vm.stopRecording(rec); state.menu = null })
                     else add("Record now" to { vm.recordNow(m.ch); state.menu = null })
                 }
+                if (m.ch.archiveDays != null) add("Catch-up…" to { state.menu = GuideMenu.CatchUp(m.ch) })
                 val fav = m.ch.id in favourites
                 add((if (fav) "Remove from Favourites" else "Add to Favourites") to { vm.toggleFavourite(m.ch); state.menu = null })
                 add("Add to category…" to { state.menu = GuideMenu.AddTo(m.ch) })
@@ -89,6 +96,16 @@ fun GuideMenus(vm: LiveViewModel, state: GuideState) {
             onSave = { vm.rename(m.ch, it); state.menu = null }) { state.menu = null }
         is GuideMenu.ChangeLogo -> LogoPicker(vm, m.ch, m.ch.displayName(strip)) { state.menu = null }
         is GuideMenu.UseGuideFrom -> GuidePicker(vm, m.ch, strip) { state.menu = null }
+        is GuideMenu.CatchUp -> {
+            val list by androidx.compose.runtime.produceState<List<org.imdtv.iptvtv.data.repo.GuideProgramme>?>(null, m.ch) { value = vm.catchUpProgrammes(m.ch) }
+            val progs = list ?: return
+            val today = org.imdtv.iptvtv.ui.dayDate(System.currentTimeMillis())
+            ContextMenu("Catch-up on ${m.ch.displayName(strip)}", if (progs.isEmpty()) listOf("No past programmes in the guide" to { state.menu = null })
+                else progs.map { p ->
+                    val day = org.imdtv.iptvtv.ui.dayDate(p.start).takeIf { it != today }?.let { "$it " }.orEmpty()
+                    "$day${org.imdtv.iptvtv.ui.clockTime(p.start)}  ${p.title}" to { vm.playCatchUp(m.ch, p); state.menu = null }
+                }) { state.menu = null }
+        }
         is GuideMenu.RecordLater -> {
             val list by androidx.compose.runtime.produceState<List<org.imdtv.iptvtv.data.repo.GuideProgramme>?>(null, m.ch) { value = vm.upcoming(m.ch) }
             val progs = list ?: return

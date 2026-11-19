@@ -94,6 +94,8 @@ data class ChannelEntity(
     val drmKey: String? = null,
     /** The user's place in its category (Settings › Manage channels); null = by number, after any placed ones. */
     val sortOrder: Int? = null,
+    /** Catch-up: days of past programmes the provider keeps (Xtream tv_archive_duration); null = none. */
+    val archiveDays: Int? = null,
 ) {
     fun drm(): org.imdtv.iptvtv.data.source.Drm? = drmType?.let { org.imdtv.iptvtv.data.source.Drm(it, drmKey) }
 }

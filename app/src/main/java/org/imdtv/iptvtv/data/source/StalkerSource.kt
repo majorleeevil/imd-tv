@@ -31,13 +31,17 @@ import java.net.URLEncoder
 /** A Stalker portal problem; [message] is shown to the user as is. */
 class StalkerException(message: String) : Exception(message)
 
-/** The box identity a Stalker portal knows the user by. Stored as provider username = MAC, password = "serial\ndeviceId". */
-data class StalkerLogin(val mac: String, val serial: String? = null, val deviceId: String? = null) {
-    fun packed(): String? = listOf(serial.orEmpty().trim(), deviceId.orEmpty().trim()).takeIf { l -> l.any { it.isNotEmpty() } }?.joinToString("\n")
+/** The box identity a Stalker portal knows the user by. Stored as provider username = MAC, password = "serial\ndeviceId[\ndeviceId2[\nmodel]]". */
+data class StalkerLogin(
+    val mac: String, val serial: String? = null, val deviceId: String? = null,
+    val deviceId2: String? = null, val model: String? = null,
+) {
+    fun packed(): String? = listOf(serial, deviceId, deviceId2, model).map { it.orEmpty().trim() }
+        .dropLastWhile { it.isEmpty() }.takeIf { it.isNotEmpty() }?.joinToString("\n")
 
     companion object {
-        fun from(username: String?, password: String?) = password.orEmpty().split('\n', limit = 2).let {
-            StalkerLogin(username.orEmpty().trim().uppercase(), it[0].trim().ifEmpty { null }, it.getOrNull(1)?.trim()?.ifEmpty { null })
+        fun from(username: String?, password: String?) = password.orEmpty().split('\n', limit = 4).map { it.trim().ifEmpty { null } }.let {
+            StalkerLogin(username.orEmpty().trim().uppercase(), it[0], it.getOrNull(1), it.getOrNull(2), it.getOrNull(3))
         }
     }
 }
@@ -127,8 +131,8 @@ class StalkerClient(
         val id = login.deviceId.orEmpty()
         val js = try {
             request(ep, tok, listOf("type" to "stb", "action" to "get_profile", "hd" to "1", "ver" to "ImageDescription: 0.2.18-r23-250; ImageDate: Wed Aug 29 10:49:53 EEST 2018; PORTAL version: 5.6.2; API Version: JS API version: 343; STB API version: 146; Player Engine version: 0x58c",
-                "num_banks" to "2", "sn" to login.serial.orEmpty(), "stb_type" to "MAG250", "image_version" to "218", "video_out" to "hdmi",
-                "device_id" to id, "device_id2" to id, "signature" to "", "auth_second_step" to "1", "hw_version" to "1.7-BD-00", "not_valid_token" to "0"))
+                "num_banks" to "2", "sn" to login.serial.orEmpty(), "stb_type" to (login.model ?: "MAG250"), "image_version" to "218", "video_out" to "hdmi",
+                "device_id" to id, "device_id2" to (login.deviceId2 ?: id), "signature" to "", "auth_second_step" to "1", "hw_version" to "1.7-BD-00", "not_valid_token" to "0"))
         } catch (e: Expired) { throw StalkerException("The portal didn't accept this MAC address") }
         val o = js as? JsonObject ?: throw StalkerException("The portal didn't accept this MAC address")
         (o.str("block_msg") ?: o.str("msg").takeIf { o.str("id") == null })?.let { throw StalkerException("Portal: $it") }
@@ -141,7 +145,7 @@ class StalkerClient(
         }.build()
         val req = Request.Builder().url(url)
             .header("User-Agent", agent)
-            .header("X-User-Agent", "Model: MAG250; Link: WiFi")
+            .header("X-User-Agent", "Model: ${login.model ?: "MAG250"}; Link: WiFi")
             .header("Referer", "$base/c/")
             .header("Cookie", "mac=${URLEncoder.encode(login.mac, "UTF-8")}; stb_lang=en; timezone=${URLEncoder.encode(java.util.TimeZone.getDefault().id, "UTF-8")}")
             .apply { tok?.let { header("Authorization", "Bearer $it") } }

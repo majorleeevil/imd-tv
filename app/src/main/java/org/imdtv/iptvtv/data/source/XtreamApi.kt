@@ -62,7 +62,10 @@ typealias LDouble = @Serializable(with = LenientDoubleSerializer::class) Double?
 typealias LString = @Serializable(with = LenientStringSerializer::class) String?
 
 @Serializable
-data class XAuthResponse(@SerialName("user_info") val userInfo: XUserInfo? = null)
+data class XAuthResponse(@SerialName("user_info") val userInfo: XUserInfo? = null, @SerialName("server_info") val serverInfo: XServerInfo? = null)
+
+@Serializable
+data class XServerInfo(val timezone: LString = null)
 
 @Serializable
 data class XUserInfo(val auth: LInt = null, val status: LString = null, val message: LString = null,
@@ -82,6 +85,8 @@ data class XLiveStream(
     @SerialName("stream_icon") val streamIcon: LString = null,
     @SerialName("epg_channel_id") val epgChannelId: LString = null,
     @SerialName("category_id") val categoryId: LString = null,
+    @SerialName("tv_archive") val tvArchive: LInt = null,
+    @SerialName("tv_archive_duration") val tvArchiveDuration: LInt = null,
 )
 
 @Serializable

@@ -127,6 +127,16 @@ class VodViewModel(app: Application) : AndroidViewModel(app) {
 
     /** Category shown as a full poster grid (picked from the rail); null = home rows. */
     val gridCategory = MutableStateFlow<CategoryEntity?>(null)
+
+    /** The rail's sections for the other playlists (this tab's kind on), and which are opened (this session only). */
+    val otherPlaylists: StateFlow<List<org.imdtv.iptvtv.data.repo.OtherPlaylist>> =
+        org.imdtv.iptvtv.data.repo.otherPlaylists(c.db, c.providerRepository.activeProviderId, kind)
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList()) // only while a rail shows: counts re-run on every sync write
+    val expandedPlaylists = MutableStateFlow<Set<Long>>(emptySet())
+    private var pendingGrid: CategoryEntity? = null
+
+    /** Opens [cat]'s grid once its playlist (being switched to) has loaded its categories. */
+    fun openAfterSwitch(cat: CategoryEntity) { pendingGrid = cat; gridCategory.value = null; focused.value = null }
     val grid: StateFlow<List<VodItem>> = gridCategory
         .flatMapLatest { cat -> if (cat?.id == CONTINUE_ID) continueWatching else kotlinx.coroutines.flow.flow { emit(cat?.let { inCategory(it.id, GRID_LIMIT) } ?: emptyList()) } }
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
@@ -148,6 +158,7 @@ class VodViewModel(app: Application) : AndroidViewModel(app) {
         // Leave a grid whose category vanished or belongs to a previously active provider.
         viewModelScope.launch {
             categories.collect { list ->
+                pendingGrid?.let { p -> list.find { it.category.id == p.id }?.let { gridCategory.value = it.category; pendingGrid = null } }
                 gridCategory.value?.let { g -> if (list.none { it.category.id == g.id }) gridCategory.value = null }
             }
         }

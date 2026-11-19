@@ -66,8 +66,8 @@ class PlayerManager(private val context: Context) {
                 context: Context, extensionRendererMode: Int, mediaCodecSelector: MediaCodecSelector,
                 enableDecoderFallback: Boolean, eventHandler: Handler, eventListener: VideoRendererEventListener,
                 allowedVideoJoiningTimeMs: Long, out: ArrayList<Renderer>,
-            ) = super.buildVideoRenderers(context, EXTENSION_RENDERER_MODE_OFF, mediaCodecSelector, enableDecoderFallback,
-                eventHandler, eventListener, allowedVideoJoiningTimeMs, out)
+            ) { out += StreamAspectVideoRenderer(context, codecAdapterFactory, mediaCodecSelector, allowedVideoJoiningTimeMs,
+                enableDecoderFallback, eventHandler, eventListener) }
         }.setExtensionRendererMode(
             if (d == AudioDecoder.SOFTWARE) DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER
             else DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON,
@@ -144,7 +144,7 @@ class PlayerManager(private val context: Context) {
             frameRate = v?.frameRate?.takeIf { it > 0f },
             audioChannels = a?.channelCount?.takeIf { it != Format.NO_VALUE },
         )
-        if (f != _formats.value) Log.i(TAG, "formats $f ${a?.sampleMimeType} ${tail(url)}")
+        if (f != _formats.value) Log.i(TAG, "formats $f ${a?.sampleMimeType} stream par ${v?.pixelWidthHeightRatio} ${tail(url)}")
         _formats.value = f
     }
     private var userAgent: String? = null
@@ -169,7 +169,10 @@ class PlayerManager(private val context: Context) {
 
             override fun onTracksChanged(tracks: Tracks) = readFormats()
 
-            override fun onVideoSizeChanged(videoSize: VideoSize) = readFormats()
+            override fun onVideoSizeChanged(videoSize: VideoSize) {
+                if (videoSize.width > 0) Log.i(TAG, "video ${videoSize.width}x${videoSize.height} par ${videoSize.pixelWidthHeightRatio} ${tail(url)}")
+                readFormats()
+            }
 
             override fun onPlayerError(error: PlaybackException) = streamError(error)
 
@@ -183,6 +186,7 @@ class PlayerManager(private val context: Context) {
     @androidx.annotation.VisibleForTesting
     internal fun streamError(error: PlaybackException) {
         Log.w(TAG, "error ${error.errorCodeName} ${tail(url)} (retry ${retries + 1}/$MAX_RETRIES)", error)
+        fallback?.let { f -> fallback = null; Log.i(TAG, "trying the other link form"); return play(f, userAgent, login, vod, drm, guarded = false) }
         if (!scheduleRetry()) _errors.tryEmit(error)
     }
 
@@ -212,8 +216,13 @@ class PlayerManager(private val context: Context) {
 
     /** [login] fills the Xtream placeholders in [url] (saved links hold no login); [url] itself stays the key for comparisons. */
     /** [startMs]: a movie/episode starts there (resume), applied when the stream loads, also after the guard or a portal link. */
-    fun play(url: String, userAgent: String?, login: Login? = null, vod: Boolean = false, drm: Drm? = null, startMs: Long = 0) =
+    /** [fallbackUrl]: played instead when [url] fails (catch-up's second link form), without the usual retries first. */
+    fun play(url: String, userAgent: String?, login: Login? = null, vod: Boolean = false, drm: Drm? = null, startMs: Long = 0,
+             fallbackUrl: String? = null) {
+        fallback = fallbackUrl
         play(url, userAgent, login, vod, drm, guarded = true, startMs)
+    }
+    private var fallback: String? = null
 
     /** Asked before a provider stream starts (a recording may hold the login's only connection); true = not now. It
      *  gets a retry that plays without asking again. */
@@ -335,6 +344,7 @@ class PlayerManager(private val context: Context) {
 
     /** A recording (file path or smb://) from [startMs]; no guard: it uses no provider connection. */
     fun playRecording(location: String, startMs: Long) {
+        fallback = null
         handler.removeCallbacks(retry)
         resolving?.cancel()
         retries = 0
@@ -408,6 +418,7 @@ class PlayerManager(private val context: Context) {
     var beforeStop: () -> Unit = {}
 
     fun stop() {
+        fallback = null
         beforeStop()
         handler.removeCallbacks(retry)
         handler.removeCallbacks(watchdog)
@@ -481,3 +492,26 @@ fun playErrorText(e: PlaybackException): String = (e.cause as? StreamProblem)?.m
     in 6000..6999 -> "DRM error (${e.errorCodeName}): the licence or keys were refused, or this device can't play this DRM"
     else -> e.errorCodeName
 }
+
+/**
+ * Media3's video renderer with the stream's pixel aspect ratio kept. On Android 11+ Media3 takes the decoder's
+ * sar-width/sar-height over the stream's; decoders on some boxes (Thomson 140, Kickpi KP1, issue #1) report 1:1 for
+ * anamorphic SD, so 16:9 SD at 720x576 showed as ~5:4 with bars.
+ */
+@OptIn(UnstableApi::class)
+private class StreamAspectVideoRenderer(
+    context: Context, adapters: androidx.media3.exoplayer.mediacodec.MediaCodecAdapter.Factory, selector: MediaCodecSelector,
+    joiningMs: Long, fallback: Boolean, handler: Handler, listener: VideoRendererEventListener,
+) : androidx.media3.exoplayer.video.MediaCodecVideoRenderer(context, adapters, selector, joiningMs, fallback, handler, listener,
+    DefaultRenderersFactory.MAX_DROPPED_VIDEO_FRAME_COUNT_TO_NOTIFY) {
+    override fun onOutputFormatChanged(format: Format, mediaFormat: android.media.MediaFormat?) {
+        if (mediaFormat != null && android.os.Build.VERSION.SDK_INT >= 29 && decoderSarIsSquare(mediaFormat) && format.pixelWidthHeightRatio != 1f) {
+            mediaFormat.removeKey(SAR_W); mediaFormat.removeKey(SAR_H)
+        }
+        super.onOutputFormatChanged(format, mediaFormat)
+    }
+    private fun decoderSarIsSquare(m: android.media.MediaFormat) =
+        m.containsKey(SAR_W) && m.containsKey(SAR_H) && m.getInteger(SAR_W) == m.getInteger(SAR_H)
+    private companion object { const val SAR_W = "sar-width"; const val SAR_H = "sar-height" }
+}
+

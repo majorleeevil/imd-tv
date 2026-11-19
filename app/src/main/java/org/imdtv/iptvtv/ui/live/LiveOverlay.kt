@@ -51,7 +51,7 @@ import org.imdtv.iptvtv.ui.clockTime
 
 /** TiviMate-style info overlay over live full screen (spec §4.2). Focus starts on the TV guide card. */
 @Composable
-fun LiveOverlay(vm: LiveViewModel, onGuide: () -> Unit, onPick: (ChannelEntity) -> Unit) {
+fun LiveOverlay(vm: LiveViewModel, onGuide: () -> Unit, onPick: (ChannelEntity) -> Unit, onMenuOpen: (Boolean) -> Unit = {}) {
     val entry by vm.entry.collectAsState()
     val now by vm.now.collectAsState()
     val focused by vm.focused.collectAsState()
@@ -71,6 +71,10 @@ fun LiveOverlay(vm: LiveViewModel, onGuide: () -> Unit, onPick: (ChannelEntity) 
     val guideFocus = remember { FocusRequester() }
     val menus = remember(vm) { GuideState(vm, 0, androidx.compose.foundation.lazy.LazyListState(), false, previews = false) }
     GuideMenus(vm, menus)
+    // Keys in a menu (a dialog) don't reach the full-screen timer: hold the overlay open while one shows.
+    val menuOpen = menus.menu != null
+    LaunchedEffect(menuOpen) { onMenuOpen(menuOpen) }
+    androidx.compose.runtime.DisposableEffect(Unit) { onDispose { onMenuOpen(false) } }
     LaunchedEffect(Unit) { withFrameNanos { }; runCatching { guideFocus.requestFocus() } }
 
     Box(Modifier.fillMaxSize()) {

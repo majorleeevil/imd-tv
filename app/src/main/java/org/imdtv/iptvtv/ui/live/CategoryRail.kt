@@ -59,6 +59,8 @@ internal fun Rail(
     keepKey: String?, focusKey: String?, onFocusKeyDone: () -> Unit,
     onPick: (RailEntry) -> Unit, onLongPress: (RailEntry) -> Unit, onMove: (Int) -> Unit, onMoveEnd: (cancel: Boolean) -> Unit,
     onClose: () -> Unit,
+    others: List<org.imdtv.iptvtv.data.repo.OtherPlaylist> = emptyList(), expanded: Set<Long> = emptySet(),
+    onToggle: (Long) -> Unit = {}, onPickOther: (org.imdtv.iptvtv.data.db.CategoryEntity) -> Unit = {},
 ) {
     val start = items.indexOfFirst { it.entry.key == selectedKey }.coerceAtLeast(0)
     val state = rememberLazyListState(start)
@@ -125,6 +127,9 @@ internal fun Rail(
                     }
                 }
             }
+            if (move == null) otherPlaylistItems(others, expanded, onToggle, onPickOther) { title, trailing, header, nested, onClick ->
+                SectionRowBox(title, trailing, header, nested, onClick, LocalTheme.current.colors.focus, LocalTheme.current.colors.onFocus)
+            }
         }
     }
 }
@@ -150,6 +155,8 @@ internal fun railMenu(e: RailEntry, horizontal: Boolean = false): GuideMenu? = w
 fun CategoryRail(vm: LiveViewModel, state: GuideState, modifier: Modifier = Modifier) {
     val rail by vm.rail.collectAsState()
     val entry by vm.entry.collectAsState()
+    val others by vm.otherPlaylists.collectAsState()
+    val expanded by vm.expandedPlaylists.collectAsState()
     Box(modifier) {
         Rail(rail.orEmpty(), entry?.key, state.railFocus, state.railMove,
             keepKey = when (val m = state.menu) { is GuideMenu.Category -> "c${m.cat.id}"; is GuideMenu.Group -> "g${m.g.id}"; else -> null },
@@ -159,6 +166,26 @@ fun CategoryRail(vm: LiveViewModel, state: GuideState, modifier: Modifier = Modi
             onLongPress = { e -> railMenu(e)?.let { state.menu = it } },
             onMove = { d -> state.railMove?.let { vm.moveRail(it.entry, d) } },
             onMoveEnd = { cancel -> endRailMove(vm, state, rail.orEmpty(), cancel) },
-            onClose = { state.railOpen = false; state.refocus() })
+            onClose = { state.railOpen = false; state.refocus() },
+            others = others, expanded = expanded, onToggle = { id -> vm.expandedPlaylists.value = vm.expandedPlaylists.value.toggled(id) },
+            onPickOther = { cat -> vm.usePlaylistAt(cat.providerId, cat.id); state.railOpen = false })
+    }
+}
+
+/** A playlist header or nested category row in a rail's playlist sections; Right acts like OK, as on the other rows. */
+@Composable
+internal fun SectionRowBox(title: String, trailing: String, header: Boolean, nested: Boolean, onClick: () -> Unit, focusBg: Color, focusFg: Color) {
+    FocusBox(onClick = onClick, modifier = Modifier.padding(top = if (header) 10.dp else 0.dp)
+        .onPreviewKeyEvent { e -> if (e.type == KeyEventType.KeyDown && e.key == Key.DirectionRight) { onClick(); true } else false }) { f ->
+        Row(
+            Modifier.fillMaxWidth().clip(RoundedCornerShape(5.dp)).background(if (f) focusBg else Color.Transparent)
+                .padding(start = if (nested) 25.dp else 11.dp, end = 11.dp, top = 8.dp, bottom = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            val fg = if (f) focusFg else Color.White
+            Text(title, fontSize = 14.sp, fontWeight = if (header) FontWeight.SemiBold else FontWeight.Normal, color = fg, maxLines = 1,
+                overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+            Text(trailing, fontSize = if (header) 14.sp else 11.sp, color = if (f) fg else LocalTheme.current.colors.muted)
+        }
     }
 }

@@ -176,6 +176,8 @@ class MainActivity : ComponentActivity() {
                         search = { org.imdtv.iptvtv.ui.search.SearchScreen(searchVm, {}, searchChannel, app::open, live = live, lists = true, textColor = LocalTheme.current.colors.panel) })
                 }
                 Box(Modifier.fillMaxSize().background(Color.Black)) {
+                    // A catch-up programme picked in a guide menu opens with the movie controls (pause, seek).
+                    androidx.compose.runtime.LaunchedEffect(live) { live.openCatchUp.collect { app.playFullScreen(it, live = false) } }
                     val full: (org.imdtv.iptvtv.data.db.ChannelEntity) -> Unit = { ch ->
                         live.preview(ch)
                         live.watched(ch)
@@ -195,9 +197,9 @@ class MainActivity : ComponentActivity() {
                             else -> if (card != null) XcubeLive(live, card, full) else LiveGuideScreen(live, nav, full)
                         }
                         else when {
-                            card != null -> XcubeVod(vod, card, app::open)
+                            card != null -> XcubeVod(vod, card, app::open, onUsePlaylist = { live.usePlaylistAt(it.providerId, null) })
                             themeId == ThemeId.CELESTIAL_RETRO && grid == null -> retroMenu(tab)
-                            else -> VodHomeScreen(vod, nav, onOpen = app::open)
+                            else -> VodHomeScreen(vod, nav, onOpen = app::open, twoRows = settings.vodTwoRows, onUsePlaylist = { live.usePlaylistAt(it.providerId, null) })
                         }
                         Screen.Search -> when {
                             card != null -> org.imdtv.iptvtv.ui.search.SearchScreen(searchVm, {}, searchChannel, app::open, live = live, lists = true,
@@ -215,7 +217,7 @@ class MainActivity : ComponentActivity() {
                             app.playFullScreen(title, live = false)
                         }, onOpen = app::open)
                         is Screen.Player -> PlayerScreen(app.player, top.title, live.takeIf { top.live }, onGuide = { app.back() }, showClock = settings.playerClock == org.imdtv.iptvtv.data.settings.PlayerClock.ALL ||
-                            settings.playerClock == org.imdtv.iptvtv.data.settings.PlayerClock.LIVE && top.live)
+                            settings.playerClock == org.imdtv.iptvtv.data.settings.PlayerClock.LIVE && top.live, aspect = settings.videoAspect)
                     }
                     }
                     // Xcube 180: Live, Movies, Series and Settings are blades inside one frame (spec §6A.7).

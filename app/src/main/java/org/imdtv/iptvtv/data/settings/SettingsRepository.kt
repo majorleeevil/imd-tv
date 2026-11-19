@@ -31,6 +31,8 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
     private val themeLooks = stringPreferencesKey("theme_looks")
     private val guidesOff = androidx.datastore.preferences.core.stringSetPreferencesKey("guides_off")
     private val liveSubtitlesOn = booleanPreferencesKey("live_subtitles_on")
+    private val videoAspect = stringPreferencesKey("video_aspect")
+    private val vodTwoRows = booleanPreferencesKey("vod_two_rows")
     private val headerSize = stringPreferencesKey("header_size")
     private val previewFade = booleanPreferencesKey("preview_fade")
     private val startOnBoot = booleanPreferencesKey("start_on_boot")
@@ -96,6 +98,8 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
             guidesOff = this[guidesOff].orEmpty(),
             themeLooks = this[themeLooks]?.split('|')?.mapNotNull { e -> e.split('=', limit = 2).takeIf { it.size == 2 }?.let { it[0] to it[1] } }?.toMap().orEmpty(),
             liveSubtitlesOn = this[liveSubtitlesOn] ?: d.liveSubtitlesOn,
+            videoAspect = VideoAspect.entries.find { it.name == this[videoAspect] } ?: d.videoAspect,
+            vodTwoRows = this[vodTwoRows] ?: d.vodTwoRows,
             headerSize = HeaderSize.entries.find { it.name == this[headerSize] } ?: d.headerSize,
             previewFade = this[previewFade] ?: d.previewFade,
             startOnBoot = this[startOnBoot] ?: d.startOnBoot,
@@ -151,6 +155,8 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
         this[guidesOff] = s.guidesOff
         this[themeLooks] = s.themeLooks.entries.joinToString("|") { "${it.key}=${it.value}" }
         this[liveSubtitlesOn] = s.liveSubtitlesOn
+        this[videoAspect] = s.videoAspect.name
+        this[vodTwoRows] = s.vodTwoRows
         this[headerSize] = s.headerSize.name
         this[previewFade] = s.previewFade
         this[startOnBoot] = s.startOnBoot

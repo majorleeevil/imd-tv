@@ -1,5 +1,8 @@
 package org.imdtv.iptvtv.ui.retro
 
+import org.imdtv.iptvtv.ui.live.toggled
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -59,7 +62,8 @@ private val RETRO_TABS = listOf(Tab.SEARCH to "SEARCH", Tab.LIVE to "TV GUIDE", 
     Tab.RECORDINGS to "RECORDINGS", Tab.SETTINGS to "SETTINGS")
 
 /** One bar's title and what picking it opens. */
-private class Bar(val title: String, val live: RailEntry?, val vod: CategoryEntity?)
+/** [other]: a category of another playlist (picking it switches playlist); [toggle]: that playlist's header bar. */
+private class Bar(val title: String, val live: RailEntry?, val vod: CategoryEntity?, val other: CategoryEntity? = null, val toggle: Long? = null)
 
 /**
  * Celestial Retro menu (spec §6A.5): icon tabs, then nine numbered category bars per page, 0 MORE… and BACK.
@@ -79,8 +83,18 @@ fun RetroMenuScreen(
     val rail by live.rail.collectAsState()
     val cats by vod.categories.collectAsState()
     val entry by live.entry.collectAsState()
-    val all = if (tab == Tab.LIVE) rail.orEmpty().map { Bar(it.entry.title, it.entry, null) }
-        else cats.map { Bar(it.category.name.ifEmpty { "Uncategorised" }, null, it.category) }
+    val others by (if (tab == Tab.LIVE) live.otherPlaylists else vod.otherPlaylists).collectAsState()
+    val expandedFlow = if (tab == Tab.LIVE) live.expandedPlaylists else vod.expandedPlaylists
+    val expanded by expandedFlow.collectAsState()
+    val all = (if (tab == Tab.LIVE) rail.orEmpty().map { Bar(it.entry.title, it.entry, null) }
+        else cats.map { Bar(it.category.name.ifEmpty { "Uncategorised" }, null, it.category) }) +
+        // Then the other playlists, each a header bar with its categories under it when opened.
+        others.flatMap { o ->
+            val open = o.provider.id in expanded
+            listOf(Bar("${o.provider.name} ${if (open) "⌃" else "⌄"}", null, null, toggle = o.provider.id)) +
+                if (open) o.categories.map { (c, _) -> Bar("   " + c.name.ifEmpty { "Uncategorised" }, null, null, other = c) } else emptyList()
+        }
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
     var page by remember(tab) { mutableIntStateOf(-1) } // -1: not placed yet (the list may still be loading)
     var focusRow by remember(tab) { mutableIntStateOf(0) }
     var refocus by remember { mutableIntStateOf(0) }
@@ -136,6 +150,14 @@ fun RetroMenuScreen(
             pg.items.forEachIndexed { i, b ->
                 RetroBar("${i + 1}", b.title.uppercase(), bars[i], colors) {
                     b.live?.let(onLiveCategory); b.vod?.let(onVodCategory)
+                    b.toggle?.let { id -> expandedFlow.value = expandedFlow.value.toggled(id) }
+                    b.other?.let { c ->
+                        if (tab == Tab.LIVE) {
+                            live.usePlaylistAt(c.providerId, c.id)
+                            // Opens the guide on that category once the switched-to playlist's rail has it.
+                            scope.launch { live.entry.first { it?.key == "c${c.id}" }?.let(onLiveCategory) }
+                        } else { vod.openAfterSwitch(c); live.usePlaylistAt(c.providerId, null) } // the grid opens when it loads
+                    }
                 }
             }
             if (pg.hasMore) RetroBar("0", "MORE…", bars[RETRO_PAGE], colors) { turn(pg.page + 1) }

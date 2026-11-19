@@ -17,6 +17,8 @@ data class Channel(
     val tvgId: String?,
     val streamUrl: String,
     val drm: org.imdtv.iptvtv.data.source.Drm? = null,
+    /** Days of past programmes the provider keeps (Xtream tv_archive_duration); null = no catch-up. */
+    val archiveDays: Int? = null,
 )
 
 data class Movie(

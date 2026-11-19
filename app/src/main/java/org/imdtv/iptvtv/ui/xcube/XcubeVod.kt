@@ -1,5 +1,8 @@
 package org.imdtv.iptvtv.ui.xcube
 
+import org.imdtv.iptvtv.ui.live.otherPlaylistItems
+import org.imdtv.iptvtv.ui.live.SectionRowBox
+import org.imdtv.iptvtv.ui.live.toggled
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -57,7 +60,10 @@ private val CARD_TEXT = Color(0xFF1A3A0E)
 
 /** Xcube 180 Movies/Series blade (spec §6A.7): title card, backdrop + plot, category list, 3-column poster grid. */
 @Composable
-fun XcubeVod(vm: VodViewModel, card: XcubeCard, onOpen: (VodItem) -> Unit) {
+/** [onUsePlaylist]: OK on a category of another playlist; switch to that playlist (its grid opens when loaded). */
+fun XcubeVod(vm: VodViewModel, card: XcubeCard, onOpen: (VodItem) -> Unit, onUsePlaylist: (org.imdtv.iptvtv.data.db.CategoryEntity) -> Unit = {}) {
+    val others by vm.otherPlaylists.collectAsState()
+    val expanded by vm.expandedPlaylists.collectAsState()
     val cats by vm.categories.collectAsState()
     val selected by vm.gridCategory.collectAsState()
     val grid by vm.grid.collectAsState()
@@ -130,6 +136,11 @@ fun XcubeVod(vm: VodViewModel, card: XcubeCard, onOpen: (VodItem) -> Unit) {
                             Text("  " + c.category.name, fontSize = 14.sp, color = fg, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         }
                     }
+                }
+                // Other playlists switch on OK only: these rows don't select on focus like the ones above.
+                otherPlaylistItems(others, expanded, { id -> vm.expandedPlaylists.value = vm.expandedPlaylists.value.toggled(id) },
+                    { c -> vm.openAfterSwitch(c); onUsePlaylist(c) }) { title, trailing, header, nested, onClick ->
+                    SectionRowBox(title, trailing, header, nested, onClick, Color(0xFFE8F5D8), CARD_TEXT)
                 }
             }
             LazyVerticalGrid(GridCells.Fixed(3), Modifier.fillMaxSize(), contentPadding = PaddingValues(6.dp),
