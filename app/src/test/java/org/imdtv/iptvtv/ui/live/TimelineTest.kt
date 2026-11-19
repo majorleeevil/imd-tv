@@ -73,4 +73,17 @@ class TimelineTest {
         h.played("C4") // a fresh channel goes to the newest end
         assertEquals("BBC 2", h.step(1))
     }
+
+    @Test fun pastCursorStepsThroughAiredProgrammesWithinTheArchive() {
+        fun p(s: Long, e: Long) = org.imdtv.iptvtv.data.repo.GuideProgramme("t", null, null, s, e)
+        val progs = listOf(p(0, 100), p(100, 200), p(200, 300), p(300, 400)) // 300–400 is on now
+        val now = 350L
+        assertEquals(100L, Timeline.stepPast(progs, 200, now, -1, 50))   // Left: the one before
+        assertEquals(200L, Timeline.stepPast(progs, 200, now, -1, 150))  // Left at the archive limit: stays
+        assertEquals(200L, Timeline.stepPast(progs, 100, now, 1, 0))     // Right: the next aired one
+        assertEquals(null, Timeline.stepPast(progs, 200, now, 1, 0))     // Right onto now: back to now
+        assertEquals(200L, Timeline.stepPast(progs, now, now, -1, 0))    // from now: the one before now's
+        assertEquals(100L, Timeline.cursorAt(100, now, past = true))
+        assertEquals(now, Timeline.cursorAt(100, now, past = false))     // a stale later cursor that is now in the past
+    }
 }

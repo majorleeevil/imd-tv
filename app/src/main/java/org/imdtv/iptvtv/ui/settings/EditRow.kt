@@ -1,5 +1,8 @@
 package org.imdtv.iptvtv.ui.settings
 
+import androidx.compose.ui.res.stringResource
+import org.imdtv.iptvtv.R
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -35,7 +38,7 @@ import org.imdtv.iptvtv.ui.FocusBox
 @Composable
 fun EditRow(
     title: String, explanation: String, value: String?, initial: String, modifier: Modifier = Modifier,
-    keyboard: KeyboardType = KeyboardType.Text, secret: Boolean = false, onDraft: ((String?) -> Unit)? = null, saveLabel: String = "Save", onSave: (String) -> Unit,
+    keyboard: KeyboardType = KeyboardType.Text, secret: Boolean = false, onDraft: ((String?) -> Unit)? = null, saveLabel: String = stringResource(R.string.set_a_save), onSave: (String) -> Unit,
 ) {
     var editing by remember { mutableStateOf(false) }
     var text by remember { mutableStateOf(initial) }
@@ -53,7 +56,7 @@ fun EditRow(
             Field("", text, keyboard, secret, modifier = Modifier.focusRequester(fieldFocus).focusProperties { down = saveFocus }) { text = it; onDraft?.invoke(it) }
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.padding(bottom = 6.dp)) {
                 PillButton(saveLabel, Modifier.focusRequester(saveFocus)) { onSave(text.trim()); close() }
-                PillButton("Cancel") { close() }
+                PillButton(stringResource(R.string.set_a_cancel)) { close() }
             }
         }
     }

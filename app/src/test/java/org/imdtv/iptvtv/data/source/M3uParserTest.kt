@@ -98,4 +98,30 @@ class M3uParserTest {
         assertEquals("http://h/c.m3u8" to mapOf("User-Agent" to "Mozilla/5.0 (X11, Linux)", "Referer" to "https://s/"), splitStreamHeaders(e.url))
         assertEquals("C", e.name)
     }
+
+    private fun cu(text: String) = M3uParser.catchUp(parse(text).entries.single())
+
+    @Test
+    fun catchUpAttributesPerChannel() {
+        val r = cu("#EXTM3U\n#EXTINF:-1 CATCHUP=\"append\" catchup-source=\"?utc={utc}\" catchup-days=\"3\",A\nhttp://h/1\n")
+        assertEquals(3, r.first)
+        assertEquals("append|?utc={utc}", r.second)
+    }
+
+    @Test
+    fun catchUpDaysFallbacksAndDefaults() {
+        assertEquals(5 to null, cu("#EXTM3U\n#EXTINF:-1 tvg-rec=\"5\",A\nhttp://h/1\n"))
+        assertEquals(2 to null, cu("#EXTM3U\n#EXTINF:-1 timeshift=\"2\",A\nhttp://h/1\n"))
+        assertEquals(7 to "shift|", cu("#EXTM3U\n#EXTINF:-1 catchup=\"shift\",A\nhttp://h/1\n"))
+    }
+
+    @Test
+    fun catchUpHeaderDefaultsYieldToTheChannel() {
+        val es = parse("#EXTM3U catchup=\"shift\" catchup-days=\"4\"\n#EXTINF:-1,A\nhttp://h/1\n#EXTINF:-1 catchup=\"flussonic\" catchup-days=\"1\",B\nhttp://h/2\n").entries
+        assertEquals(4 to "shift|", M3uParser.catchUp(es[0]))
+        assertEquals(1 to "flussonic|", M3uParser.catchUp(es[1]))
+    }
+
+    @Test
+    fun noCatchUpMeansNulls() = assertEquals(null to null, cu("#EXTM3U\n#EXTINF:-1 tvg-id=\"x\",A\nhttp://h/1\n"))
 }

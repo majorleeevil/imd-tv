@@ -1,6 +1,8 @@
 package org.imdtv.iptvtv.ui.search
 
 import androidx.compose.foundation.background
+import androidx.annotation.StringRes
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -128,7 +130,7 @@ fun SearchScreen(
         ) {
             Icon(painterResource(R.drawable.ic_tab_search), null, tint = Color.White, modifier = Modifier.size(20.dp))
             Box(Modifier.padding(start = 12.dp).weight(1f)) {
-                if (query.isEmpty()) Text("Search channels, films and series", fontSize = 18.sp, color = LocalTheme.current.colors.muted)
+                if (query.isEmpty()) Text(stringResource(R.string.vod_search_hint), fontSize = 18.sp, color = LocalTheme.current.colors.muted)
                 BasicTextField(
                     query, { vm.query.value = it }, singleLine = true, readOnly = !editing,
                     textStyle = androidx.tv.material3.LocalTextStyle.current.merge(TextStyle(color = Color.White, fontSize = 18.sp)), cursorBrush = SolidColor(Color.White),
@@ -149,7 +151,7 @@ fun SearchScreen(
         }
         val r = results
         if (r == null) {
-            Text("Type or say part of a name", fontSize = 15.sp, color = if (lists) textColor else colors.muted, modifier = Modifier.padding(top = 14.dp))
+            Text(stringResource(R.string.vod_search_prompt), fontSize = 15.sp, color = if (lists) textColor else colors.muted, modifier = Modifier.padding(top = 14.dp))
             return@Column
         }
         // Up out of the top results goes to the field: the wide field's far-off centre made focus search pick the nav tab.
@@ -157,21 +159,21 @@ fun SearchScreen(
         val firstSection = listOf(r.channels.items, r.movies.items, r.series.items).indexOfFirst { it.isNotEmpty() }
         if (lists) Row(resultsGroup.padding(top = 14.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
             val strip2 = strip
-            listOf(Triple("Channels", r.channels, 0), Triple("Movies", r.movies, 1), Triple("Series", r.series, 2)).forEach { (title, s, n) ->
+            listOf(Triple(R.string.vod_search_channels, r.channels, 0), Triple(R.string.vod_search_movies, r.movies, 1), Triple(R.string.vod_search_series, r.series, 2)).forEach { (title, s, n) ->
                 Column(Modifier.weight(1f)) {
                     @Suppress("UNCHECKED_CAST")
                     ResultList(title, s as Section<Any>, n, returnTo, back, firstResult.takeIf { firstSection == n }, textColor) { i, item, m ->
                         val name = if (item is ChannelEntity) item.displayName(strip2) else (item as VodItem).name
-                        ListBar(name, if (item is ChannelEntity) m.channelMenu(item) else m) { vm.returnTo = n to i; if (item is ChannelEntity) onChannel(item) else onOpen(item as VodItem) }
+                        ListBar(name, if (item is ChannelEntity) m.channelMenu(item) else m, vod = item !is ChannelEntity) { vm.returnTo = n to i; if (item is ChannelEntity) onChannel(item) else onOpen(item as VodItem) }
                     }
                 }
             }
         } else Column(resultsGroup.verticalScroll(rememberScrollState()).padding(top = 14.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            ResultRow("Channels", r.channels, 0, returnTo, back, firstResult.takeIf { firstSection == 0 }) { i, ch, m ->
+            ResultRow(R.string.vod_search_channels, R.string.vod_search_no_channels, r.channels, 0, returnTo, back, firstResult.takeIf { firstSection == 0 }) { i, ch, m ->
                 ChannelTile(ch, ch.displayName(strip), logos, m.channelMenu(ch)) { vm.returnTo = 0 to i; onChannel(ch) }
             }
-            ResultRow("Movies", r.movies, 1, returnTo, back, firstResult.takeIf { firstSection == 1 }) { i, item, m -> Poster(item, m, caption = true, onFocused = {}) { vm.returnTo = 1 to i; onOpen(item) } }
-            ResultRow("Series", r.series, 2, returnTo, back, firstResult.takeIf { firstSection == 2 }) { i, item, m -> Poster(item, m, caption = true, onFocused = {}) { vm.returnTo = 2 to i; onOpen(item) } }
+            ResultRow(R.string.vod_search_movies, R.string.vod_search_no_movies, r.movies, 1, returnTo, back, firstResult.takeIf { firstSection == 1 }) { i, item, m -> Poster(item, m, caption = true, onFocused = {}) { vm.returnTo = 1 to i; onOpen(item) } }
+            ResultRow(R.string.vod_search_series, R.string.vod_search_no_series, r.series, 2, returnTo, back, firstResult.takeIf { firstSection == 2 }) { i, item, m -> Poster(item, m, caption = true, onFocused = {}) { vm.returnTo = 2 to i; onOpen(item) } }
         }
     }
 }
@@ -179,12 +181,12 @@ fun SearchScreen(
 /** "Channels  12" or "Channels  50 of 312" over a row of tiles; [returnTo] in this section gets [back]. */
 @Composable
 private fun <T> ResultRow(
-    title: String, s: Section<T>, section: Int, returnTo: Pair<Int, Int>?, back: FocusRequester, first: FocusRequester?,
+    @StringRes title: Int, @StringRes none: Int, s: Section<T>, section: Int, returnTo: Pair<Int, Int>?, back: FocusRequester, first: FocusRequester?,
     tile: @Composable (Int, T, Modifier) -> Unit,
 ) {
-    val count = if (s.total > s.items.size) "${s.items.size} of ${s.total}" else "${s.total}"
-    Text("$title  $count", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
-    if (s.items.isEmpty()) { Text("No ${title.lowercase()} found", fontSize = 13.sp, color = LocalTheme.current.colors.muted); return }
+    val count = if (s.total > s.items.size) stringResource(R.string.vod_search_count_of, s.items.size, s.total) else "${s.total}"
+    Text(stringResource(R.string.vod_search_heading, stringResource(title), count), fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
+    if (s.items.isEmpty()) { Text(stringResource(none), fontSize = 13.sp, color = LocalTheme.current.colors.muted); return }
     val start = returnTo?.takeIf { it.first == section }?.second?.coerceIn(0, s.items.size - 1)
     val state = rememberLazyListState(initialFirstVisibleItemIndex = start ?: 0)
     LazyRow(state = state, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -205,7 +207,7 @@ private fun ChannelTile(ch: ChannelEntity, name: String, logos: List<org.imdtv.i
             Box(Modifier.fillMaxWidth().size(width = 152.dp, height = 72.dp).clip(RoundedCornerShape(6.dp)).background(LocalTheme.current.colors.vodCard).padding(6.dp)) {
                 ChannelLogo(ch, logos, Modifier.fillMaxSize())
             }
-            Text(name, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = if (f) Color.Black else Color.White, maxLines = 1,
+            Text(name, fontSize = 13.sp * org.imdtv.iptvtv.ui.LocalTitleScale.current, fontWeight = FontWeight.Medium, color = if (f) Color.Black else Color.White, maxLines = 1,
                 overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 6.dp))
             Text((ch.customNumber ?: ch.number)?.toString()?.takeIf { org.imdtv.iptvtv.ui.LocalShowNumbers.current } ?: " ", fontSize = 11.sp, color = if (f) Color(0xFF555555) else LocalTheme.current.colors.muted)
         }
@@ -215,12 +217,12 @@ private fun ChannelTile(ch: ChannelEntity, name: String, logos: List<org.imdtv.i
 /** Retro/Xcube: a section as a vertical list of bars under its count. */
 @Composable
 private fun <T> ResultList(
-    title: String, s: Section<T>, section: Int, returnTo: Pair<Int, Int>?, back: FocusRequester, first: FocusRequester?,
+    @StringRes title: Int, s: Section<T>, section: Int, returnTo: Pair<Int, Int>?, back: FocusRequester, first: FocusRequester?,
     textColor: Color, bar: @Composable (Int, T, Modifier) -> Unit,
 ) {
-    val count = if (s.total > s.items.size) "${s.items.size} of ${s.total}" else "${s.total}"
-    Text("${title.uppercase()}  $count", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = textColor, modifier = Modifier.padding(bottom = 6.dp))
-    if (s.items.isEmpty()) { Text("None found", fontSize = 13.sp, color = textColor); return }
+    val count = if (s.total > s.items.size) stringResource(R.string.vod_search_count_of, s.items.size, s.total) else "${s.total}"
+    Text(stringResource(R.string.vod_search_heading, stringResource(title).uppercase(), count), fontSize = 15.sp, fontWeight = FontWeight.Bold, color = textColor, modifier = Modifier.padding(bottom = 6.dp))
+    if (s.items.isEmpty()) { Text(stringResource(R.string.vod_search_none_found), fontSize = 13.sp, color = textColor); return }
     val start = returnTo?.takeIf { it.first == section }?.second?.coerceIn(0, s.items.size - 1)
     val state = rememberLazyListState(initialFirstVisibleItemIndex = start ?: 0)
     LazyColumn(state = state, verticalArrangement = Arrangement.spacedBy(3.dp)) {
@@ -232,10 +234,10 @@ private fun <T> ResultList(
 }
 
 @Composable
-private fun ListBar(title: String, modifier: Modifier, onClick: () -> Unit) {
+private fun ListBar(title: String, modifier: Modifier, vod: Boolean, onClick: () -> Unit) {
     val colors = LocalTheme.current.colors
     FocusBox(onClick = onClick, modifier = modifier) { f ->
-        Text(title, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = if (f) colors.onFocus else Color.White, maxLines = 1,
+        Text(title, fontSize = 14.sp * (if (vod) org.imdtv.iptvtv.ui.LocalVodTitleScale.current else org.imdtv.iptvtv.ui.LocalTitleScale.current), fontWeight = FontWeight.Bold, color = if (f) colors.onFocus else Color.White, maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.fillMaxWidth().background(if (f) colors.focus else colors.cell, RoundedCornerShape(3.dp)).padding(horizontal = 10.dp, vertical = 6.dp))
     }

@@ -46,7 +46,7 @@ class SearchViewModel(app: Application) : AndroidViewModel(app) {
     /** null = nothing searched. */
     val results: StateFlow<SearchResults?> = searchFlow(query, c.search.version) { q ->
         val p = c.providerRepository.activeProviderId.first() ?: return@searchFlow SearchResults.EMPTY
-        val strip = parseStripList(c.db.providerDao().get(p)?.nameStrip.orEmpty())
+        val strip = org.imdtv.iptvtv.data.catalogue.channelStrip(c.db.providerDao().get(p)?.nameStrip, c.settings.settings.first().removeNameSymbols)
         c.search.universal(p, strip, q)
     }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
@@ -56,14 +56,14 @@ class SearchViewModel(app: Application) : AndroidViewModel(app) {
     // Observed, so tiles follow an edit of Channel name clean-up while this (activity-long) VM lives.
     val strip: StateFlow<List<String>> = c.providerRepository.activeProviderId
         .flatMapLatest { p -> p?.let { c.db.providerDao().observe(it) } ?: kotlinx.coroutines.flow.flowOf(null) }
-        .map { parseStripList(it?.nameStrip.orEmpty()) }.distinctUntilChanged()
+        .combine(c.settings.settings.map { it.removeNameSymbols }.distinctUntilChanged()) { p, sym -> org.imdtv.iptvtv.data.catalogue.channelStrip(p?.nameStrip, sym) }.distinctUntilChanged()
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     /** Builds the name indexes while the user starts typing (the first build takes seconds on a Chromecast). */
     fun warm() {
         viewModelScope.launch {
             val p = c.providerRepository.activeProviderId.first() ?: return@launch
-            c.search.warm(p, parseStripList(c.db.providerDao().get(p)?.nameStrip.orEmpty()))
+            c.search.warm(p, org.imdtv.iptvtv.data.catalogue.channelStrip(c.db.providerDao().get(p)?.nameStrip, c.settings.settings.first().removeNameSymbols))
         }
     }
 

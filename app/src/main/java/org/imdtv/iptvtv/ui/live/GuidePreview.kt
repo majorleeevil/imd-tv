@@ -1,5 +1,8 @@
 package org.imdtv.iptvtv.ui.live
 
+import androidx.compose.ui.res.stringResource
+import org.imdtv.iptvtv.R
+
 import androidx.compose.ui.graphics.drawscope.clipPath
 import org.imdtv.iptvtv.ui.theme.LocalGlassBackdrop
 import androidx.compose.runtime.setValue
@@ -127,55 +130,67 @@ fun Preview(vm: LiveViewModel, visible: Boolean, screen: Size, modifier: Modifie
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(Modifier.size(5.dp).clip(CircleShape).background(Color(0xFFFF3B3B)))
-            Text("  LIVE", fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
+            Text(stringResource(R.string.live_badge_live), fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
         }
     }
 }
 
 @Composable
 fun Hero(ch: ChannelEntity?, name: String, progs: List<GuideProgramme>, now: Long, logoSource: List<LogoKind>, badges: List<String>, modifier: Modifier,
-         size: HeaderSize = HeaderSize.LARGE, /** The highlighted programme's time (a later one after Right). */ at: Long = now) {
+         size: HeaderSize = HeaderSize.LARGE, /** The highlighted programme's time (a later one after Right). */ at: Long = now,
+         /** Celestial Glass: title, meta line and description stacked across the hero's width (Sky Glass style). */ sky: Boolean = false) {
     if (ch == null) return
     val cur = progs.firstOrNull { it.start <= at && at < it.stop }
     val later = cur != null && cur.start > now
+    val aired = cur != null && cur.stop <= now // catch-up: a past programme highlighted
     // Medium/Small: the description sits to the right of the title instead of under it, where it wouldn't fit.
-    val beside = size != HeaderSize.LARGE
+    val beside = size != HeaderSize.LARGE && !sky
+    // The header's title follows Header size (Large header = large title); Title size scales the rows.
+    val ts = org.imdtv.iptvtv.data.settings.TitleSize.valueOf(size.name).scale
     Row(modifier, horizontalArrangement = Arrangement.spacedBy(24.dp)) { Column(if (beside) Modifier.width(300.dp) else Modifier) {
+        // Sky, Small: a smaller logo so logo row, meta line and one description line fit the small header.
         val logo = @Composable {
-            Box(Modifier.size(60.dp, 43.dp).clip(RoundedCornerShape(3.dp)).background(Color(0x33FFFFFF)), contentAlignment = Alignment.Center) {
+            Box(if (sky && size == HeaderSize.SMALL) Modifier.size(50.dp, 36.dp) else Modifier.size(60.dp, 43.dp).clip(RoundedCornerShape(3.dp)).background(Color(0x33FFFFFF)), contentAlignment = Alignment.Center) {
                 ChannelLogo(ch, logoSource, Modifier.fillMaxSize().padding(4.dp))
             }
         }
         // Small header: logo beside a smaller title, so the hero fits in ~75dp.
-        if (size == HeaderSize.SMALL) Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 5.dp)) {
+        // Sky, Medium: the same, so the description fits under the meta line.
+        if (size == HeaderSize.SMALL || sky && size == HeaderSize.MEDIUM) Row(verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(bottom = if (sky && size == HeaderSize.SMALL) 2.dp else 5.dp)) {
             logo()
-            Text(cur?.title ?: name, fontSize = 24.sp, color = Color.White, maxLines = 1,
+            Text(cur?.title ?: name, fontSize = 31.sp * ts, color = Color.White, maxLines = 1,
                 overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(start = 12.dp))
         } else {
             logo()
-            Text(cur?.title ?: name, fontSize = 31.sp, color = Color.White, maxLines = 1,
+            Text(cur?.title ?: name, fontSize = 31.sp * ts, color = Color.White, maxLines = 1,
                 overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 9.dp, bottom = 5.dp))
         }
         Row(horizontalArrangement = Arrangement.spacedBy(7.dp), verticalAlignment = Alignment.CenterVertically) {
             if (cur != null) {
-                Text("${duration(cur.stop - cur.start)} · ${if (later) "Starts" else "Started"} at ${clockTime(cur.start)}" + if (badges.isNotEmpty()) " ·" else "",
+                Text(duration(cur.stop - cur.start).let { dur ->
+                    val at = clockTime(cur.start)
+                    if (later) stringResource(R.string.live_hero_starts_at, dur, at) else if (aired) stringResource(R.string.live_hero_aired_at, dur, at) else stringResource(R.string.live_hero_started_at, dur, at)
+                } +
+                    (if (aired && org.imdtv.iptvtv.ui.dayDate(cur.start) != org.imdtv.iptvtv.ui.dayDate(now)) " · ${org.imdtv.iptvtv.ui.dayDate(cur.start)}" else "") + if (badges.isNotEmpty()) " ·" else "",
                     fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
             } else {
                 // One line: a long name must not wrap "No guide information" down over the timeline.
                 Text(name, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f, fill = false))
-                Text("No guide information", fontSize = 13.sp, color = LocalTheme.current.colors.muted, maxLines = 1, softWrap = false)
+                Text(stringResource(R.string.live_no_guide_info), fontSize = 13.sp, color = LocalTheme.current.colors.muted, maxLines = 1, softWrap = false)
             }
             badges.forEach { b ->
                 Text(b, fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = Color.White,
                     modifier = Modifier.border(1.dp, Color(0xB3FFFFFF), RoundedCornerShape(3.dp)).padding(horizontal = 4.dp, vertical = 1.dp))
             }
         }
-        if (size == HeaderSize.LARGE) cur?.desc?.let {
-            Text(it, fontSize = 14.sp, lineHeight = 19.sp, color = Color(0xFFEAF0FF), maxLines = 3, overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.padding(top = 7.dp))
+        if (size == HeaderSize.LARGE || sky) cur?.desc?.let {
+            Text(it, fontSize = 14.sp, lineHeight = 19.sp, color = Color(0xFFEAF0FF),
+                maxLines = if (!sky) 3 else if (size == HeaderSize.SMALL) 1 else 2, overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.padding(top = if (sky && size != HeaderSize.LARGE) 2.dp else 7.dp))
         }
-        if (cur != null && !later && size != HeaderSize.SMALL) {
+        if (cur != null && !later && !aired && size != HeaderSize.SMALL) {
             val f = ((now - cur.start).toFloat() / (cur.stop - cur.start)).coerceIn(0f, 1f)
             Box(Modifier.padding(top = 9.dp).size(210.dp, 2.5.dp).clip(RoundedCornerShape(2.dp)).background(Color(0x24FFFFFF))) {
                 Box(Modifier.fillMaxHeight().fillMaxWidth(f).background(Color.White))

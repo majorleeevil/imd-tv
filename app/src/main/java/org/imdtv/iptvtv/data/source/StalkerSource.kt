@@ -1,5 +1,6 @@
 package org.imdtv.iptvtv.data.source
 
+import org.imdtv.iptvtv.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -29,7 +30,7 @@ import java.net.URLDecoder
 import java.net.URLEncoder
 
 /** A Stalker portal problem; [message] is shown to the user as is. */
-class StalkerException(message: String) : Exception(message)
+class StalkerException(message: String, @androidx.annotation.StringRes override val resId: Int? = null, override val args: List<Any> = emptyList()) : Exception(message), UiMessage
 
 /** The box identity a Stalker portal knows the user by. Stored as provider username = MAC, password = "serial\ndeviceId[\ndeviceId2[\nmodel]]". */
 data class StalkerLogin(
@@ -101,7 +102,7 @@ class StalkerClient(
         val (ep, tok) = session(null)
         return try { request(ep, tok, params.toList()) } catch (e: Expired) {
             val (ep2, tok2) = session(tok) // the token ran out or the portal restarted: one fresh login, then give up
-            try { request(ep2, tok2, params.toList()) } catch (e: Expired) { throw StalkerException("The portal stopped accepting this box. Check the MAC address.") }
+            try { request(ep2, tok2, params.toList()) } catch (e: Expired) { throw StalkerException("The portal stopped accepting this box. Check the MAC address.", R.string.set_b_st_stopped) }
         }
     }
 
@@ -113,7 +114,7 @@ class StalkerClient(
     }
 
     private suspend fun handshake(): Pair<String, String> {
-        if (base.toHttpUrlOrNull() == null) throw StalkerException("Enter the portal address, e.g. http://portal.example.com/c/")
+        if (base.toHttpUrlOrNull() == null) throw StalkerException("Enter the portal address, e.g. http://portal.example.com/c/", R.string.set_b_st_enter_address)
         var last: Exception? = null
         for (path in listOf("/portal.php", "/server/load.php", "/stalker_portal/server/load.php")) {
             val ep = base + path
@@ -123,8 +124,8 @@ class StalkerClient(
             profile(ep, tok)
             return ep to tok
         }
-        throw StalkerException(if (last is IOException && last.message?.startsWith("HTTP") != true) "Couldn't reach the portal: ${last.message}"
-            else "No Stalker portal found at $base")
+        throw if (last is IOException && last.message?.startsWith("HTTP") != true) StalkerException("Couldn't reach the portal: ${last.message}", R.string.set_b_st_unreachable, listOf(last.message ?: ""))
+            else StalkerException("No Stalker portal found at $base", R.string.set_b_st_none_found, listOf(base))
     }
 
     private suspend fun profile(ep: String, tok: String) {
@@ -133,9 +134,9 @@ class StalkerClient(
             request(ep, tok, listOf("type" to "stb", "action" to "get_profile", "hd" to "1", "ver" to "ImageDescription: 0.2.18-r23-250; ImageDate: Wed Aug 29 10:49:53 EEST 2018; PORTAL version: 5.6.2; API Version: JS API version: 343; STB API version: 146; Player Engine version: 0x58c",
                 "num_banks" to "2", "sn" to login.serial.orEmpty(), "stb_type" to (login.model ?: "MAG250"), "image_version" to "218", "video_out" to "hdmi",
                 "device_id" to id, "device_id2" to (login.deviceId2 ?: id), "signature" to "", "auth_second_step" to "1", "hw_version" to "1.7-BD-00", "not_valid_token" to "0"))
-        } catch (e: Expired) { throw StalkerException("The portal didn't accept this MAC address") }
-        val o = js as? JsonObject ?: throw StalkerException("The portal didn't accept this MAC address")
-        (o.str("block_msg") ?: o.str("msg").takeIf { o.str("id") == null })?.let { throw StalkerException("Portal: $it") }
+        } catch (e: Expired) { throw StalkerException("The portal didn't accept this MAC address", R.string.set_b_st_mac) }
+        val o = js as? JsonObject ?: throw StalkerException("The portal didn't accept this MAC address", R.string.set_b_st_mac)
+        (o.str("block_msg") ?: o.str("msg").takeIf { o.str("id") == null })?.let { throw StalkerException("Portal: $it", R.string.set_b_st_portal_says, listOf(it)) }
     }
 
     private suspend fun request(ep: String, tok: String?, params: List<Pair<String, String>>): JsonElement = withContext(Dispatchers.IO) {
@@ -184,7 +185,7 @@ class StalkerClient(
                 "forced_storage" to "undefined", "disable_ad" to "0", "download" to "0")
         } catch (e: StalkerException) { throw e } catch (e: IOException) { null }
         val fallback = cmdUrl(link.cmd)?.takeIf { "localhost" !in it } // some portals' cmd is already the stream
-        return cmdUrl((js as? JsonObject)?.str("cmd")) ?: fallback ?: throw StalkerException("The portal didn't give a stream link for this item")
+        return cmdUrl((js as? JsonObject)?.str("cmd")) ?: fallback ?: throw StalkerException("The portal didn't give a stream link for this item", R.string.set_b_st_no_link)
     }
 }
 
@@ -323,7 +324,7 @@ class StalkerLinks(
     /** The real stream URL for [link], with the portal's user agent as a link header; other links come back unchanged. */
     suspend fun resolve(link: String): String {
         val l = StalkerLink.parse(link) ?: return link
-        val p = provider(l.providerId) ?: throw StalkerException("This playlist was removed")
+        val p = provider(l.providerId) ?: throw StalkerException("This playlist was removed", R.string.set_b_st_removed)
         val c = client(p)
         return withStreamHeaders(c.createLink(l), mapOf("User-Agent" to c.agent))
     }

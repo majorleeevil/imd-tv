@@ -1,5 +1,8 @@
 package org.imdtv.iptvtv.ui.live
 
+import androidx.compose.ui.res.stringResource
+import org.imdtv.iptvtv.R
+
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -28,14 +31,14 @@ fun GuidePicker(vm: LiveViewModel, ch: ChannelEntity, strip: List<String>, onDis
     LaunchedEffect(ch.id) { manual = vm.hasManualGuide(ch) }
     LaunchedEffect(ch.id, query) { donors = vm.donors(ch, query) }
     androidx.compose.runtime.DisposableEffect(ch.id) { onDispose { vm.clearDonors() } }
-    MenuFrame("Guide for ${ch.displayName(strip)}", onDismiss) { first ->
-        if (manual) MenuItem("Use automatic guide", Modifier.focusRequester(first)) { vm.useAutomaticGuide(ch); onDismiss() }
+    MenuFrame(stringResource(R.string.live_picker_title, ch.displayName(strip)), onDismiss) { first ->
+        if (manual) MenuItem(stringResource(R.string.live_picker_automatic), Modifier.focusRequester(first)) { vm.useAutomaticGuide(ch); onDismiss() }
         // A row that opens the box on OK, so scrolling past it never opens the keyboard (user, 2026-11-10).
-        EditRow("Search channels", if (query.isBlank()) "Type part of a channel name" else "“$query”", null, query,
+        EditRow(stringResource(R.string.live_picker_search), if (query.isBlank()) stringResource(R.string.live_picker_search_hint) else "“$query”", null, query,
             if (manual) Modifier else Modifier.focusRequester(first)) { query = it.trim() }
         when (val d = donors) {
-            null -> Note("Looking…")
-            emptyList<GuideChoice>() -> Note(if (query.isBlank()) "No same-name channel has a guide — search for one" else "No channel with a guide matches")
+            null -> Note(stringResource(R.string.live_looking))
+            emptyList<GuideChoice>() -> Note(if (query.isBlank()) stringResource(R.string.live_picker_none_same) else stringResource(R.string.live_picker_none_match))
             else -> d.forEach { choice ->
                 when (choice) {
                     is GuideChoice.Channel -> MenuItem(choice.channel.displayName(strip) + (choice.category?.let { " · $it" }.orEmpty()), Modifier) {

@@ -1,6 +1,9 @@
 package org.imdtv.iptvtv.recording
 
 import androidx.compose.foundation.background
+import androidx.annotation.StringRes
+import org.imdtv.iptvtv.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -28,7 +31,7 @@ sealed interface Prompt {
     /** Decision 10: Record now needs the connection the player holds. */
     data class RecordNowStopsWatching(val channel: String, val onRecord: () -> Unit) : Prompt
     /** [leavePlayer]: playback was stopped for a recording; a full-screen live player returns to the guide. */
-    data class Notice(val text: String, val leavePlayer: Boolean = false) : Prompt
+    data class Notice(val text: String, val leavePlayer: Boolean = false, @StringRes val res: Int = 0, val args: List<Any> = emptyList()) : Prompt
 }
 
 /** Shows the repository's current [Prompt]; drawn last over every screen. [onLeavePlayer] returns a live player to the guide. */
@@ -41,26 +44,26 @@ fun PromptHost(repo: RecordingRepository, onLeavePlayer: () -> Unit) {
         is Prompt.StartsSoon -> {
             // No answer = record: the prompt just goes away at the start.
             LaunchedEffect(q) { delay((q.deadline - System.currentTimeMillis()).coerceAtLeast(0)); clear(q) }
-            MenuFrame("Recording starts soon", onDismiss = { clear(q) }) { first ->
-                Body("Recording ${q.title} on ${q.channel} starts in 1 minute. Your login allows one stream, so watching will stop.")
-                MenuItem("Record", Modifier.focusRequester(first)) { clear(q) }
-                MenuItem("Keep watching", Modifier) { repo.keepWatching(q.id) }
+            MenuFrame(stringResource(R.string.vod_rec_starts_soon), onDismiss = { clear(q) }) { first ->
+                Body(stringResource(R.string.vod_rec_starts_soon_body, q.title, q.channel))
+                MenuItem(stringResource(R.string.vod_rec_record), Modifier.focusRequester(first)) { clear(q) }
+                MenuItem(stringResource(R.string.vod_rec_keep_watching), Modifier) { repo.keepWatching(q.id) }
             }
         }
-        is Prompt.StopRecordingToWatch -> MenuFrame("Stop recording?", onDismiss = { repo.keepRecording() }) { first ->
-            Body("Watching needs your only connection, so recording ${q.title} will stop. Stop recording?")
-            MenuItem("Keep recording", Modifier.focusRequester(first)) { repo.keepRecording() }
-            MenuItem("Stop recording", Modifier) { clear(q); q.onStop() }
+        is Prompt.StopRecordingToWatch -> MenuFrame(stringResource(R.string.vod_rec_stop_q), onDismiss = { repo.keepRecording() }) { first ->
+            Body(stringResource(R.string.vod_rec_stop_to_watch_body, q.title))
+            MenuItem(stringResource(R.string.vod_rec_keep_recording), Modifier.focusRequester(first)) { repo.keepRecording() }
+            MenuItem(stringResource(R.string.vod_rec_stop_recording), Modifier) { clear(q); q.onStop() }
         }
-        is Prompt.RecordNowStopsWatching -> MenuFrame("Record ${q.channel}?", onDismiss = { clear(q) }) { first ->
-            Body("Recording needs your only connection, so watching will stop.")
-            MenuItem("Record", Modifier.focusRequester(first)) { clear(q); q.onRecord(); onLeavePlayer() }
-            MenuItem("Cancel", Modifier) { clear(q) }
+        is Prompt.RecordNowStopsWatching -> MenuFrame(stringResource(R.string.vod_rec_record_channel_q, q.channel), onDismiss = { clear(q) }) { first ->
+            Body(stringResource(R.string.vod_rec_record_now_body))
+            MenuItem(stringResource(R.string.vod_rec_record), Modifier.focusRequester(first)) { clear(q); q.onRecord(); onLeavePlayer() }
+            MenuItem(stringResource(R.string.vod_cancel), Modifier) { clear(q) }
         }
         is Prompt.Notice -> {
             LaunchedEffect(q) { if (q.leavePlayer) onLeavePlayer(); delay(4_000); clear(q) }
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
-                Text(q.text, fontSize = 14.sp, color = Color.White, modifier = Modifier.padding(bottom = 40.dp)
+                Text(if (q.res != 0) stringResource(q.res, *q.args.toTypedArray()) else q.text, fontSize = 14.sp, color = Color.White, modifier = Modifier.padding(bottom = 40.dp)
                     .background(Color(0xCC1A1C24), RoundedCornerShape(20.dp)).padding(horizontal = 20.dp, vertical = 9.dp))
             }
         }

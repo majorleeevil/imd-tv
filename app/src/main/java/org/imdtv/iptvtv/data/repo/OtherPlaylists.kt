@@ -18,7 +18,7 @@ import org.imdtv.iptvtv.data.model.Kind
 data class OtherPlaylist(val provider: ProviderEntity, val categories: List<Pair<CategoryEntity, Int>>)
 
 /**
- * The other playlists for the category rails, in name order. A playlist with [kind] switched off (0.5.1 per-playlist
+ * The other playlists for the category rails, in name order. A playlist switched off ("Use this playlist") or with [kind] switched off (0.5.1 per-playlist
  * switches) or with nothing to show is left out; hidden categories stay hidden.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -27,13 +27,13 @@ fun otherPlaylists(db: AppDatabase, activeId: Flow<Long?>, kind: Flow<Kind>): Fl
         activeId, kind,
         // Only what the sections show: the provider row also changes on every sync (lastSync).
         db.providerDao().observeAll().distinctUntilChanged { a, b -> a.map(::sectionKey) == b.map(::sectionKey) },
-    ) { active, k, providers -> k to providers.filter { it.id != active && it.loads(k) } }
+    ) { active, k, providers -> k to providers.filter { it.id != active && it.enabled && it.loads(k) } }
         .flatMapLatest { (k, list) ->
             if (list.isEmpty()) flowOf(emptyList())
             else combine(list.map { p -> section(db, p, k) }) { s -> s.filter { it.categories.isNotEmpty() } }
         }
 
-private fun sectionKey(p: ProviderEntity) = listOf(p.id, p.name, p.contentOff, p.categoryStrip)
+private fun sectionKey(p: ProviderEntity) = listOf(p.id, p.name, p.contentOff, p.categoryStrip, p.enabled)
 
 private fun section(db: AppDatabase, p: ProviderEntity, k: Kind): Flow<OtherPlaylist> {
     val counts = when (k) {

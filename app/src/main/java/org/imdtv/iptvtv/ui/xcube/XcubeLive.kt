@@ -1,6 +1,8 @@
 package org.imdtv.iptvtv.ui.xcube
 
 import androidx.compose.foundation.background
+import org.imdtv.iptvtv.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -100,7 +102,7 @@ fun ChannelCard(ch: ChannelEntity?, name: String, progs: List<GuideProgramme>, n
     val cur = progs.firstOrNull { it.start <= now && now < it.stop }
     val next = progs.firstOrNull { it.start >= (cur?.stop ?: now) }
     Column(modifier.clip(RoundedCornerShape(10.dp)).background(Brush.verticalGradient(listOf(Color(0xFFF4F8F0), Color(0xFFD5E8C8))))) {
-        Text(name, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = CARD_TEXT, maxLines = 1, overflow = TextOverflow.Ellipsis,
+        Text(name, fontSize = 16.sp * org.imdtv.iptvtv.ui.LocalTitleScale.current, fontWeight = FontWeight.SemiBold, color = CARD_TEXT, maxLines = 1, overflow = TextOverflow.Ellipsis,
             modifier = Modifier.fillMaxWidth().background(Brush.horizontalGradient(listOf(Color(0xFFE9D58A), Color(0xFFF8F3D0))))
                 .padding(horizontal = 12.dp, vertical = 5.dp))
         Row(Modifier.padding(10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -108,7 +110,7 @@ fun ChannelCard(ch: ChannelEntity?, name: String, progs: List<GuideProgramme>, n
                 if (ch != null) ChannelLogo(ch, logoSource, Modifier.fillMaxSize().padding(4.dp))
             }
             Column(Modifier.weight(1f)) {
-                Text(cur?.title ?: "No guide information", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = CARD_TEXT,
+                Text(cur?.title ?: stringResource(R.string.vod_no_guide_info), fontSize = 14.sp * org.imdtv.iptvtv.ui.LocalTitleScale.current, fontWeight = FontWeight.SemiBold, color = CARD_TEXT,
                     maxLines = 1, overflow = TextOverflow.Ellipsis)
                 if (cur != null) {
                     Text("${clockTime(cur.start)} – ${clockTime(cur.stop)}", fontSize = 12.sp, color = CARD_TEXT.copy(alpha = .8f))
@@ -126,7 +128,7 @@ fun ChannelCard(ch: ChannelEntity?, name: String, progs: List<GuideProgramme>, n
             }
         }
         next?.let {
-            Text("Next: ${clockTime(it.start)} ${it.title}", fontSize = 12.sp, color = CARD_TEXT.copy(alpha = .8f), maxLines = 1,
+            Text(stringResource(R.string.vod_next_programme, clockTime(it.start), it.title), fontSize = 12.sp, color = CARD_TEXT.copy(alpha = .8f), maxLines = 1,
                 overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(start = 12.dp, end = 12.dp, bottom = 8.dp))
         }
     }

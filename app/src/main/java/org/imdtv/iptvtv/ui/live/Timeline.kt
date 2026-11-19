@@ -33,6 +33,22 @@ object Timeline {
         val to = progs.lastOrNull { it.stop <= from }?.start ?: (windowStart(from - 1))
         return to.takeIf { it > now }
     }
+
+    /** The highlighted time: [cursor] when it is later than now or in the [past] (catch-up), else now. */
+    fun cursorAt(cursor: Long?, now: Long, past: Boolean): Long = cursor?.takeIf { past || it > now } ?: now
+
+    /**
+     * Left/Right among past programmes (catch-up): the start of the previous/next one. Left stays on [at] when the one
+     * before starts before [limit] (or isn't known); null = Right reached the programme on now.
+     */
+    fun stepPast(progs: List<org.imdtv.iptvtv.data.repo.GuideProgramme>, at: Long, now: Long, dir: Int, limit: Long): Long? {
+        val cur = progs.firstOrNull { it.start <= at && at < it.stop }
+        if (dir > 0) {
+            val next = progs.firstOrNull { it.start >= (cur?.stop ?: (at + 1)) } ?: return null
+            return next.start.takeIf { next.stop <= now }
+        }
+        return progs.lastOrNull { it.stop <= (cur?.start ?: at) && it.start >= limit }?.start ?: at
+    }
 }
 
 enum class OkAction { PREVIEW, FULL_SCREEN }

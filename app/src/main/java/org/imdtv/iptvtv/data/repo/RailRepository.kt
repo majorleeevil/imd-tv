@@ -17,11 +17,11 @@ import org.imdtv.iptvtv.data.model.Kind
 sealed interface RailEntry {
     val key: String
     val title: String
+    /** String resource for a fixed, app-defined title (0 = [title] is data: a category or group name). */
+    @get:androidx.annotation.StringRes val titleRes: Int get() = 0
 
-    data object Favourites : RailEntry { override val key = "fav"; override val title = "★ Favourites" }
-    data object Recent : RailEntry { override val key = "recent"; override val title = "Recently watched" }
-    /** Channels with catch-up; OK on one lists its past programmes. */
-    data object CatchUp : RailEntry { override val key = "catchup"; override val title = "Catch-up" }
+    data object Favourites : RailEntry { override val key = "fav"; override val title = "★ Favourites"; override val titleRes = org.imdtv.iptvtv.R.string.live_rail_favourites }
+    data object Recent : RailEntry { override val key = "recent"; override val title = "Recently watched"; override val titleRes = org.imdtv.iptvtv.R.string.live_rail_recent }
     data class Custom(val group: CustomGroupEntity) : RailEntry {
         override val key get() = "g${group.id}"
         override val title get() = group.name
@@ -29,6 +29,7 @@ sealed interface RailEntry {
     data class Provider(val category: CategoryEntity) : RailEntry {
         override val key get() = "c${category.id}"
         override val title get() = category.name.ifEmpty { "Uncategorised" }
+        override val titleRes get() = if (category.name.isEmpty()) org.imdtv.iptvtv.R.string.live_uncategorised else 0
     }
 }
 
@@ -45,12 +46,12 @@ class RailRepository(private val db: AppDatabase) {
     ) { strip, items -> if (strip.isEmpty()) items else items.map { i -> (i.entry as? RailEntry.Provider)?.let { RailItem(RailEntry.Provider(it.category.cleaned(strip)), i.count) } ?: i } }
 
     private fun railRaw(providerId: Long): Flow<List<RailItem>> = combine(
-        combine(db.channelDao().observeFavourites(providerId), db.recentDao().observe(providerId), db.channelDao().observeArchive(providerId), ::Triple),
+        combine(db.channelDao().observeFavourites(providerId), db.recentDao().observe(providerId), ::Pair),
         db.customGroupDao().observe(providerId),
         db.customGroupDao().observeCounts(providerId),
         db.categoryDao().observeVisible(providerId, Kind.LIVE),
         db.channelDao().observeCounts(providerId),
-    ) { (favs, recents, archive), groups, groupCounts, cats, catCounts ->
+    ) { (favs, recents), groups, groupCounts, cats, catCounts ->
         val gn = groupCounts.associate { it.groupId to it.n }
         val cn = catCounts.associate { it.categoryId to it.n }
         buildList {
@@ -58,7 +59,6 @@ class RailRepository(private val db: AppDatabase) {
             groupsAt(GroupPlacement.TOP)
             add(RailItem(RailEntry.Favourites, favs.size))
             add(RailItem(RailEntry.Recent, recents.size))
-            add(RailItem(RailEntry.CatchUp, archive.size))
             groupsAt(GroupPlacement.NORMAL)
             cats.forEach { add(RailItem(RailEntry.Provider(it), cn[it.id] ?: 0)) }
             groupsAt(GroupPlacement.BOTTOM)
@@ -68,7 +68,6 @@ class RailRepository(private val db: AppDatabase) {
     fun channels(providerId: Long, entry: RailEntry): Flow<List<ChannelEntity>> = when (entry) {
         RailEntry.Favourites -> db.channelDao().observeFavourites(providerId)
         RailEntry.Recent -> db.recentDao().observe(providerId)
-        RailEntry.CatchUp -> db.channelDao().observeArchive(providerId)
         is RailEntry.Custom -> db.customGroupDao().observeChannels(entry.group.id)
         is RailEntry.Provider -> db.channelDao().observeByCategory(entry.category.id)
     }

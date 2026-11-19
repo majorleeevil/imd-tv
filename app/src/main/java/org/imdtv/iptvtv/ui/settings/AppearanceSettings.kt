@@ -1,5 +1,8 @@
 package org.imdtv.iptvtv.ui.settings
 
+import androidx.compose.ui.res.stringResource
+import org.imdtv.iptvtv.R
+
 import org.imdtv.iptvtv.data.settings.ThemeColour
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -15,43 +18,63 @@ import org.imdtv.iptvtv.data.settings.guideRowChoices
 import org.imdtv.iptvtv.data.settings.HeaderSize
 import org.imdtv.iptvtv.data.settings.PlayerClock
 import org.imdtv.iptvtv.data.settings.ThemeId
+import org.imdtv.iptvtv.data.settings.TitleSize
 
+private fun AppSettings.glass() = theme == ThemeId.CELESTIAL_GLASS || theme == ThemeId.LIQUID_GLASS
+
+/** Appearance › App: theme, its colour and mode, Date and time ›, Reset appearance. */
 @Composable
-fun AppearanceRows(s: AppSettings, first: Modifier, dateTimeOpener: Modifier, onDateTime: () -> Unit, onReset: () -> Unit,
-    onChange: ((AppSettings) -> AppSettings) -> Unit) {
+fun AppearanceAppRows(vm: SettingsViewModel, first: FocusRequester, openers: Map<ChannelPage, FocusRequester>, onOpen: (ChannelPage) -> Unit) {
+    val s by vm.settings.collectAsState()
     // Each theme keeps its own colour, mode, rows, header and fade (withTheme).
-    ChoiceRow("Theme", "How the whole app looks", ThemeId.entries, s.theme, { it.label }, first, default = AppSettings().theme, onPick = { t -> onChange { it.withTheme(t) } })
+    ChoiceRow(stringResource(R.string.set_a_theme), stringResource(R.string.set_a_theme_expl), ThemeId.entries, s.theme, { stringResource(it.labelRes) }, Modifier.focusRequester(first), default = AppSettings().theme, onPick = { t -> vm.update { it.withTheme(t) } })
     // Only the two glass themes take a background colour.
-    if (s.theme == ThemeId.CELESTIAL_GLASS || s.theme == ThemeId.LIQUID_GLASS) {
-        ChoiceRow("Theme colour", "Background colour of ${s.theme.label}", ThemeColour.entries, s.themeColour, { it.label }, default = AppSettings().themeColour) { c -> onChange { it.copy(themeColour = c) } }
-        ChoiceRow("Theme mode", "Dark uses near-black versions of the theme colour", listOf(false, true), s.themeDark, { if (it) "Dark" else "Light" }, default = AppSettings().themeDark, onPick = { d -> onChange { it.copy(themeDark = d) } })
+    if (s.glass()) {
+        ChoiceRow(stringResource(R.string.set_a_theme_colour), stringResource(R.string.set_a_theme_colour_expl, stringResource(s.theme.labelRes)), ThemeColour.entries, s.themeColour, { stringResource(it.labelRes) }, default = AppSettings().themeColour) { c -> vm.update { it.copy(themeColour = c) } }
+        ChoiceRow(stringResource(R.string.set_a_theme_mode), stringResource(R.string.set_a_theme_mode_expl), listOf(false, true), s.themeDark, { if (it) stringResource(R.string.set_a_mode_dark) else stringResource(R.string.set_a_mode_light) }, default = AppSettings().themeDark, onPick = { d -> vm.update { it.copy(themeDark = d) } })
+    }
+    val dt = ChannelPage.DATE_TIME
+    SettingRow(stringResource(dt.titleRes), stringResource(dt.explanationRes), "›", Modifier.focusRequester(openers.getValue(dt))) { onOpen(dt) }
+    var confirmReset by remember { mutableStateOf(false) }
+    val resetNotice = stringResource(R.string.set_b_appearance_reset)
+    SettingRow(stringResource(R.string.set_a_reset_appearance), if (confirmReset) stringResource(R.string.set_a_reset_appearance_confirm) else stringResource(R.string.set_a_reset_appearance_expl), null) {
+        if (confirmReset) { vm.update { it.resetAppearance() }; confirmReset = false; vm.notice.value = resetNotice } else confirmReset = true
+    }
+}
+
+/** Appearance › Live TV: guide rows, header size, preview fade (glass themes), multi-line names, title size. */
+@Composable
+fun AppearanceLiveRows(vm: SettingsViewModel, first: FocusRequester) {
+    val s by vm.settings.collectAsState()
+    val f = Modifier.focusRequester(first)
+    if (s.glass()) {
         val rowChoices = guideRowChoices(s.headerSize, s.theme == ThemeId.LIQUID_GLASS)
-        ChoiceRow("Channels in guide", "How many channel rows the guide shows at once; more rows are shorter with smaller text", rowChoices, s.guideRows, { "$it" }, default = rowChoices.first()) { n -> onChange { it.copy(guideRows = n) } }
-        ChoiceRow("Header size", "A smaller header makes the guide taller, with more channels", HeaderSize.entries, s.headerSize, { it.label }, default = AppSettings().headerSize) { h -> onChange { it.withHeader(h) } }
+        ChoiceRow(stringResource(R.string.set_a_guide_rows), stringResource(R.string.set_a_guide_rows_expl), rowChoices, s.guideRows, { "$it" }, f, default = rowChoices.first()) { n -> vm.update { it.copy(guideRows = n) } }
+        ChoiceRow(stringResource(R.string.set_a_header_size), stringResource(R.string.set_a_header_size_expl), HeaderSize.entries, s.headerSize, { stringResource(it.labelRes) }, default = AppSettings().headerSize) { h -> vm.update { it.withHeader(h) } }
         if (s.theme == ThemeId.CELESTIAL_GLASS) {
-            SwitchRow("Preview fade", "Blend the preview into the background; off shows it as a framed box", s.previewFade) { on -> onChange { it.copy(previewFade = on) } }
+            SwitchRow(stringResource(R.string.set_a_preview_fade), stringResource(R.string.set_a_preview_fade_expl), s.previewFade) { on -> vm.update { it.copy(previewFade = on) } }
         }
     }
-    ChoiceRow("Movies & Series rows", "How many rows of posters the Movies and Series pages show at once; 2 rows uses smaller posters", listOf(false, true), s.vodTwoRows, { if (it) "2 rows" else "1 row" }, default = AppSettings().vodTwoRows, onPick = { v -> onChange { it.copy(vodTwoRows = v) } })
-    SwitchRow("Multi-line names","Let channel names and programme titles wrap onto 2 lines in the guide. In Celestial Glass and Liquid Glass this needs taller rows: 5 channels in the guide (or 6 in Celestial Glass)",
-        s.multiLineGuide) { on -> onChange { it.copy(multiLineGuide = on) } }
-    val dt = org.imdtv.iptvtv.ui.settings.ChannelPage.DATE_TIME
-    SettingRow(dt.title, dt.explanation, "›", dateTimeOpener, onClick = onDateTime)
-    var confirmReset by remember { mutableStateOf(false) }
-    SettingRow("Reset appearance", if (confirmReset) "Press OK again to put every Appearance setting back to its default" else "Theme, colours, guide layout and clock back to their defaults", null) {
-        if (confirmReset) { onChange { it.resetAppearance() }; confirmReset = false; onReset() } else confirmReset = true
-    }
+    SwitchRow(stringResource(R.string.set_a_multi_line), stringResource(R.string.set_a_multi_line_expl), s.multiLineGuide, if (s.glass()) Modifier else f) { on -> vm.update { it.copy(multiLineGuide = on) } }
+    ChoiceRow(stringResource(R.string.set_a_title_size), stringResource(R.string.set_a_title_size_live_expl), TitleSize.entries, s.titleSize, { stringResource(it.labelRes) }, default = AppSettings().titleSize, onPick = { v -> vm.update { it.copy(titleSize = v) } })
+}
 
+/** Appearance › Movies & Series: rows and its own title size. */
+@Composable
+fun AppearanceVodRows(vm: SettingsViewModel, first: FocusRequester) {
+    val s by vm.settings.collectAsState()
+    ChoiceRow(stringResource(R.string.set_a_vod_rows), stringResource(R.string.set_a_vod_rows_expl), listOf(false, true), s.vodTwoRows, { if (it) stringResource(R.string.set_a_vod_rows_2) else stringResource(R.string.set_a_vod_rows_1) }, Modifier.focusRequester(first), default = AppSettings().vodTwoRows, onPick = { v -> vm.update { it.copy(vodTwoRows = v) } })
+    ChoiceRow(stringResource(R.string.set_a_title_size), stringResource(R.string.set_a_title_size_vod_expl), TitleSize.entries, s.vodTitleSize, { stringResource(it.labelRes) }, default = AppSettings().vodTitleSize, onPick = { v -> vm.update { it.copy(vodTitleSize = v) } })
 }
 
 /** Appearance › Date and time. */
 @Composable
 fun DateTimeRows(vm: SettingsViewModel, first: FocusRequester) {
     val s by vm.settings.collectAsState()
-    SwitchRow("Clock", "The time at the top of the screen", s.showDateTime, Modifier.focusRequester(first)) { on -> vm.update { it.copy(showDateTime = on) } }
-    SwitchRow("Date", "The date beside the clock", s.showDate) { on -> vm.update { it.copy(showDate = on) } }
-    SwitchRow("24-hour clock", "13:05 instead of 1.05pm", s.clock24h) { on -> vm.update { it.copy(clock24h = on) } }
-    ChoiceRow("Clock in player", "Show the time in the top-right corner of full screen", PlayerClock.entries, s.playerClock, { it.label }, default = AppSettings().playerClock) { c ->
+    SwitchRow(stringResource(R.string.set_a_clock), stringResource(R.string.set_a_clock_expl), s.showDateTime, Modifier.focusRequester(first)) { on -> vm.update { it.copy(showDateTime = on) } }
+    SwitchRow(stringResource(R.string.set_a_date), stringResource(R.string.set_a_date_expl), s.showDate) { on -> vm.update { it.copy(showDate = on) } }
+    SwitchRow(stringResource(R.string.set_a_clock_24h), stringResource(R.string.set_a_clock_24h_expl), s.clock24h) { on -> vm.update { it.copy(clock24h = on) } }
+    ChoiceRow(stringResource(R.string.set_a_player_clock), stringResource(R.string.set_a_player_clock_expl), PlayerClock.entries, s.playerClock, { stringResource(it.labelRes) }, default = AppSettings().playerClock) { c ->
         vm.update { it.copy(playerClock = c) }
     }
 }

@@ -10,6 +10,8 @@ class IptvApp : Application() {
     lateinit var container: AppContainer
         private set
 
+    override fun attachBaseContext(base: android.content.Context) = super.attachBaseContext(org.imdtv.iptvtv.ui.AppLanguage.wrap(base))
+
     override fun onCreate() {
         super.onCreate()
         container = AppContainer(this)

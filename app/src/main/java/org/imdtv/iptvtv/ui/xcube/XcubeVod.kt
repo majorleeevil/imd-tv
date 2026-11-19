@@ -1,6 +1,7 @@
 package org.imdtv.iptvtv.ui.xcube
 
 import org.imdtv.iptvtv.ui.live.otherPlaylistItems
+import androidx.compose.ui.res.stringResource
 import org.imdtv.iptvtv.ui.live.SectionRowBox
 import org.imdtv.iptvtv.ui.live.toggled
 import androidx.compose.foundation.background
@@ -92,12 +93,12 @@ fun XcubeVod(vm: VodViewModel, card: XcubeCard, onOpen: (VodItem) -> Unit, onUse
     Column(Modifier.fillMaxSize()) {
         Row(Modifier.fillMaxWidth().height(204.dp), horizontalArrangement = Arrangement.spacedBy(18.dp)) {
           Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            org.imdtv.iptvtv.ui.search.SearchBar(query, { vm.query.value = it }, "Search ${selected?.name ?: "All"}…",
+            org.imdtv.iptvtv.ui.search.SearchBar(query, { vm.query.value = it }, stringResource(R.string.vod_search_in, selected?.name ?: stringResource(R.string.vod_all)),
                 Modifier.width(360.dp), color = Color.White, background = Color(0x33000000), onSide = card.onBlade)
             FocusBox(onClick = { item?.let(onOpen) }, modifier = Modifier.bladeCard(card)) { f ->
                 Column(Modifier.width(360.dp).clip(RoundedCornerShape(10.dp)).border(2.dp, if (f) Color.White else Color.Transparent, RoundedCornerShape(10.dp))
                     .background(Brush.verticalGradient(listOf(Color(0xFFF4F8F0), Color(0xFFD5E8C8))))) {
-                    Text(item?.name ?: "—", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = CARD_TEXT, maxLines = 1,
+                    Text(item?.name ?: "—", fontSize = 16.sp * org.imdtv.iptvtv.ui.LocalVodTitleScale.current, fontWeight = FontWeight.SemiBold, color = CARD_TEXT, maxLines = 1,
                         overflow = TextOverflow.Ellipsis, modifier = Modifier.fillMaxWidth()
                             .background(Brush.horizontalGradient(listOf(Color(0xFFE9D58A), Color(0xFFF8F3D0)))).padding(horizontal = 12.dp, vertical = 5.dp))
                     Row(Modifier.padding(10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -145,7 +146,7 @@ fun XcubeVod(vm: VodViewModel, card: XcubeCard, onOpen: (VodItem) -> Unit, onUse
             }
             LazyVerticalGrid(GridCells.Fixed(3), Modifier.fillMaxSize(), contentPadding = PaddingValues(6.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (matches?.isEmpty() == true) item { Text("No matches", fontSize = 14.sp, color = Color.White) }
+                if (matches?.isEmpty() == true) item { Text(stringResource(R.string.vod_no_matches), fontSize = 14.sp, color = Color.White) }
                 items(shown, key = { it.id }) { v ->
                     Poster(v, if (v.id == restoreId) Modifier.focusRequester(restore) else Modifier,
                         onFocused = { vm.focused.value = v }, onClick = { onOpen(v) })

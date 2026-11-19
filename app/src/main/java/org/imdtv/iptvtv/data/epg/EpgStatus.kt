@@ -1,5 +1,8 @@
 package org.imdtv.iptvtv.data.epg
 
+import android.content.Context
+import org.imdtv.iptvtv.R
+
 import androidx.room.withTransaction
 import org.imdtv.iptvtv.data.db.AppDatabase
 import java.time.Instant
@@ -11,6 +14,13 @@ fun epgOkStatus(at: Long, programmes: Int, zone: ZoneId): String {
     val time = Instant.ofEpochMilli(at).atZone(zone).format(DateTimeFormatter.ofPattern("HH:mm"))
     val n = if (programmes < 1000) "$programmes" else "${programmes / 1000}k"
     return "OK · $time · $n programmes"
+}
+
+/** As [epgOkStatus], in the app's language. Keep the leading "OK" in every translation: [org.imdtv.iptvtv.ui.settings.guideStatus] tells errors apart by it. */
+fun epgOkStatus(context: Context, at: Long, programmes: Int, zone: ZoneId): String {
+    val time = Instant.ofEpochMilli(at).atZone(zone).format(DateTimeFormatter.ofPattern("HH:mm"))
+    val n = if (programmes < 1000) "$programmes" else "${programmes / 1000}k"
+    return context.getString(R.string.set_a_epg_ok_status, time, n)
 }
 
 fun epgErrorStatus(e: Throwable): String = (e.message ?: e::class.simpleName ?: "Error").take(120)

@@ -1,5 +1,6 @@
 package org.imdtv.iptvtv.ui.settings
 
+import org.imdtv.iptvtv.R
 import android.util.Log
 import androidx.room.withTransaction
 import android.app.Application
@@ -72,6 +73,7 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
     fun recordingOff() { viewModelScope.launch { c.settings.update { it.copy(recordingOn = false) }; c.recordings.turnOff() } }
     suspend fun recordingFreeBytes(s: AppSettings): Long? = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { c.recordingStore(s)?.freeBytes() }
     suspend fun testShare(s: AppSettings): String? = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { org.imdtv.iptvtv.recording.testShare(c.smbSettings(s)) }
+    private fun str(@androidx.annotation.StringRes id: Int, vararg a: Any): String = getApplication<Application>().getString(id, *a)
     fun notice(text: String) { c.recordings.prompt.value = org.imdtv.iptvtv.recording.Prompt.Notice(text) }
 
     val guideUpdating: StateFlow<Boolean> = EpgRefreshWorker.updating(app).stateIn(viewModelScope, SharingStarted.Eagerly, false)
@@ -137,10 +139,12 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    fun setEnabled(id: Long, on: Boolean) { viewModelScope.launch { c.db.providerDao().setEnabled(id, on) } }
+
     fun updatePlaylist(id: Long) {
         if (!updating.add(id)) { again += id; return } // runs once more when this one ends, not two full syncs at once
         fun show(text: String) { playlistUpdate.value = playlistUpdate.value + (id to text) }
-        show("Updating…")
+        show(str(R.string.set_b_updating))
         viewModelScope.launch {
             try {
                 val r = c.providerRepository.syncNow(id) { show(it) }
@@ -149,7 +153,7 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
                 show(r.summary())
             } catch (e: Exception) {
                 if (e is kotlinx.coroutines.CancellationException) throw e
-                show("Update failed: ${e.message ?: e::class.simpleName}")
+                show(str(R.string.set_b_update_failed, e.message ?: e::class.simpleName ?: ""))
             } finally {
                 updating.remove(id)
                 if (again.remove(id)) updatePlaylist(id)
@@ -186,6 +190,10 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
 
     fun setHidden(cat: CategoryEntity, hidden: Boolean) { viewModelScope.launch { c.db.categoryDao().setHidden(cat.id, hidden) } }
     fun channelsIn(categoryId: Long) = c.db.channelDao().observeAllByCategory(categoryId)
+    fun mergeCounts(categoryId: Long) = c.db.channelDao().observeMergeCounts(categoryId).map { l -> l.associate { it.id to it.n } }
+    suspend fun mergedMembers(head: org.imdtv.iptvtv.data.db.ChannelEntity) = org.imdtv.iptvtv.data.repo.ChannelMerge.members(c.db.channelDao(), head)
+    suspend fun setMerged(member: org.imdtv.iptvtv.data.db.ChannelEntity, head: org.imdtv.iptvtv.data.db.ChannelEntity, on: Boolean) =
+        if (on) org.imdtv.iptvtv.data.repo.ChannelMerge.merge(c.db, member, head) else org.imdtv.iptvtv.data.repo.ChannelMerge.unmergeOne(c.db, member)
     fun setChannelsHidden(ids: List<Long>, hidden: Boolean) { viewModelScope.launch { c.db.channelDao().setHiddenForIds(ids, hidden) } }
     fun setAllHidden(hidden: Boolean) = launchFor { c.db.categoryDao().setHiddenForKind(it, categoryKind.value, hidden) }
     // One move at a time: quick presses each read the order the last one wrote.
@@ -242,21 +250,40 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
     val zipFiles = MutableStateFlow<List<SharedFile>>(emptyList())
     fun refreshZips() { viewModelScope.launch { zipFiles.value = listSharedFiles(getApplication(), setOf("zip")) } }
     fun importPack(uri: Uri, name: String?) = launchFor { p ->
-        if (packStatus.value == "Importing…") return@launchFor  // a second OK while one runs
-        if (name?.endsWith(".zip", ignoreCase = true) != true) { packStatus.value = "That isn't a .zip file"; return@launchFor }
-        packStatus.value = "Importing…"
+        if (packStatus.value == str(R.string.set_b_importing)) return@launchFor  // a second OK while one runs
+        if (name?.endsWith(".zip", ignoreCase = true) != true) { packStatus.value = str(R.string.set_b_not_zip); return@launchFor }
+        packStatus.value = str(R.string.set_b_importing)
         packStatus.value = try {
-            val r = c.logoPack.import(p) { getApplication<Application>().contentResolver.openInputStream(uri) ?: throw PackException("This zip could not be read") }
-            "Matched ${r.matched} of ${r.images} images"
+            val r = c.logoPack.import(p) { getApplication<Application>().contentResolver.openInputStream(uri) ?: throw PackException(str(R.string.set_b_zip_unreadable)) }
+            str(R.string.set_b_logo_matched, r.matched, r.images)
         } catch (e: PackException) {
-            e.message
+            if (e.res != 0) str(e.res) else e.message
         } catch (e: java.io.IOException) {
-            "This zip could not be read"
+            str(R.string.set_b_zip_unreadable)
         }
     }
     fun removePack() = launchFor { c.logoPack.remove(it); packStatus.value = null }
 
-    fun setNameStrip(s: String) = launchFor { c.db.providerDao().setNameStrip(it, s) }
+    fun setNameStrip(s: String) = launchFor { c.db.providerDao().setNameStrip(it, s); remerge(listOf(it)) } // clean-up rules decide merges too
+
+    /** Settings › Channels › Merge channels and its Merge options. Changing what decides a merge re-runs every playlist's. */
+    val merging: StateFlow<Boolean> = org.imdtv.iptvtv.data.repo.ChannelMerge.running.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+    fun setMergeChannels(on: Boolean) = remergeAfter { it.copy(mergeChannels = on) }
+    fun setMergeAcross(on: Boolean) = remergeAfter { it.copy(mergeAcross = on) }
+    fun setMergeBy(by: org.imdtv.iptvtv.data.settings.MergeBy) = remergeAfter { it.copy(mergeBy = by) } // decides which row is kept
+    /** Merge options › Playlists: one playlist's own switch. */
+    fun setPlaylistMerge(id: Long, on: Boolean) = viewModelScope.launch {
+        c.db.providerDao().setMergeOn(id, on)
+        remerge(listOf(id))
+    }
+    private fun remergeAfter(f: (AppSettings) -> AppSettings) = viewModelScope.launch {
+        c.settings.update(f)
+        remerge(c.db.providerDao().ids())
+    }
+    private suspend fun remerge(ids: List<Long>) {
+        val s = c.settings.settings.first()
+        ids.forEach { org.imdtv.iptvtv.data.repo.ChannelMerge.applyAuto(c.db, it, org.imdtv.iptvtv.data.repo.MergeOptions(s.mergeChannels, s.mergeAcross, s.mergeBy == org.imdtv.iptvtv.data.settings.MergeBy.RESOLUTION)) }
+    }
 
     /** The clean-up text being typed (null when not editing), so the preview follows it before Save. */
     val stripDraft = MutableStateFlow<String?>(null)
@@ -324,10 +351,10 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
 
     fun backUpNow() {
         if (restoreRunning.value) return
-        backupStatus.value = "Saving…"
+        backupStatus.value = str(R.string.set_b_saving)
         viewModelScope.launch {
             backupStatus.value = try { writeBackup(getApplication(), kotlinx.coroutines.withContext(Dispatchers.Default) { encodeBackup(c.backup.create()) }, settings.value.backupFolder) }
-            catch (e: Exception) { "Couldn't save the backup: ${e.message ?: e::class.simpleName}" }
+            catch (e: Exception) { str(R.string.set_b_backup_save_failed, e.message ?: e::class.simpleName ?: "") }
         }
     }
 
@@ -342,9 +369,9 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
                 pendingRestore.value = kotlinx.coroutines.withContext(Dispatchers.Default) { decodeBackup(text) }
                 backupStatus.value = null
             } catch (e: BackupException) {
-                backupStatus.value = e.message
+                backupStatus.value = e.localized(getApplication())
             } catch (e: java.io.IOException) {
-                backupStatus.value = "Not a readable backup file"
+                backupStatus.value = str(R.string.set_b_backup_unreadable)
             }
         }
     }
@@ -371,24 +398,24 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
             b.playlists.forEachIndexed { i, pl ->
                 val login = logins[i]
                 if (needsLogin(pl) && login == null && !hasSavedLogin(pl)) return@forEachIndexed
-                backupStatus.value = "Restoring ${pl.name}…"
+                backupStatus.value = str(R.string.set_b_restoring, pl.name)
                 try {
-                    val r = c.backup.restorePlaylist(pl, login?.first, login?.second) { backupStatus.value = "${pl.name}: $it" }
+                    val r = c.backup.restorePlaylist(pl, login?.first, login?.second) { backupStatus.value = str(R.string.set_b_playlist_progress, pl.name, it) }
                     c.db.providerDao().all().find { it.url == pl.url && it.type.name == pl.type }?.let { c.epgMatcher.rematch(it.id) }
                     applied += r.applied; skipped += r.skipped
                 } catch (e: Exception) {
                     if (e is kotlinx.coroutines.CancellationException) throw e
-                    failed += "${pl.name} (${e.message ?: e::class.simpleName})"
+                    failed += "${pl.name} (${(e as? BackupException)?.localized(getApplication()) ?: e.message ?: e::class.simpleName})"
                 }
             }
             c.backup.restoreSettings(b.settings)
             EpgRefreshWorker.runNow(getApplication())
-            backupStatus.value = "Restored $applied settings, skipped $skipped that no longer exist" +
-                (if (failed.isEmpty()) "" else ". Not restored: ${failed.joinToString()}")
+            backupStatus.value = if (failed.isEmpty()) str(R.string.set_b_restored, applied, skipped)
+                else str(R.string.set_b_restored_failed, applied, skipped, failed.joinToString())
             pendingRestore.value = null
           } catch (e: Exception) {
             if (e is kotlinx.coroutines.CancellationException) throw e
-            backupStatus.value = "Restore failed: ${e.message ?: e::class.simpleName}"
+            backupStatus.value = str(R.string.set_b_restore_failed, e.message ?: e::class.simpleName ?: "")
           } finally {
             restoreRunning.value = false // else Restore stays blocked until the app restarts
           }

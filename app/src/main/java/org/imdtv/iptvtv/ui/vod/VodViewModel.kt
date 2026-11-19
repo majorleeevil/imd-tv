@@ -1,6 +1,7 @@
 package org.imdtv.iptvtv.ui.vod
 
 import org.imdtv.iptvtv.data.db.login
+import org.imdtv.iptvtv.R
 
 import android.app.Application
 import android.util.Log
@@ -73,7 +74,7 @@ fun progressFraction(item: VodItem, rows: List<ProgressEntity>): Float? =
         ?.let { (it.positionMs.toFloat() / it.durationMs).coerceIn(0f, 1f) }
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class VodViewModel(app: Application) : AndroidViewModel(app) {
+class VodViewModel(private val app: Application) : AndroidViewModel(app) {
     private val c = (app as IptvApp).container
     val player get() = c.playerManager
 
@@ -115,7 +116,7 @@ class VodViewModel(app: Application) : AndroidViewModel(app) {
             combine(c.db.categoryDao().observeVisible(p, k), counts, categoryStrip, continueWatching) { cats, n, strip, cont ->
                 val byId = n.associate { it.categoryId to it.n }
                 // Continue watching is a category too, so every theme's rows, rails and lists show it first.
-                listOfNotNull(cont.takeIf { it.isNotEmpty() }?.let { RailCategory(CategoryEntity(CONTINUE_ID, p, k, "", "Continue watching"), it.size) }) +
+                listOfNotNull(cont.takeIf { it.isNotEmpty() }?.let { RailCategory(CategoryEntity(CONTINUE_ID, p, k, "", app.getString(R.string.vod_continue_watching)), it.size) }) +
                     cats.map { RailCategory(it.cleaned(strip), byId[it.id] ?: 0) }.filter { it.count > 0 }
             }
         }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())

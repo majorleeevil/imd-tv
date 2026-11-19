@@ -1,5 +1,6 @@
 package org.imdtv.iptvtv.data.update
 
+import org.imdtv.iptvtv.R
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -120,7 +121,7 @@ class Updater(private val context: Context, private val http: OkHttpClient, priv
         error.value = null
         val file = File(context.cacheDir, APK_NAME)
         try {
-            progress.value = "Downloading…"
+            progress.value = context.getString(R.string.set_b_downloading)
             http.newCall(Request.Builder().url(u.apkUrl).build()).execute().use { r ->
                 if (!r.isSuccessful) throw IOException("download failed (HTTP ${r.code})")
                 val body = r.body!!
@@ -129,11 +130,11 @@ class Updater(private val context: Context, private val http: OkHttpClient, priv
                     val buf = ByteArray(64 * 1024); var done = 0L; var n: Int
                     while (input.read(buf).also { n = it } >= 0) {
                         out.write(buf, 0, n); done += n
-                        if (total > 0) progress.value = "Downloading… ${done * 100 / total}%"
+                        if (total > 0) progress.value = context.getString(R.string.set_b_downloading_pct, (done * 100 / total).toInt())
                     }
                 } }
             }
-            progress.value = "Installing…"
+            progress.value = context.getString(R.string.set_b_installing)
             val installer = context.packageManager.packageInstaller
             val id = installer.createSession(PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL))
             installer.openSession(id).use { s ->
@@ -146,7 +147,7 @@ class Updater(private val context: Context, private val http: OkHttpClient, priv
         } catch (e: Exception) {
             if (e is CancellationException) throw e
             Log.w("Updater", "Update failed", e)
-            failed("Update failed: ${e.message ?: e.javaClass.simpleName}. Check your connection and try again.")
+            failed(context.getString(R.string.set_b_update_failed_retry, e.message ?: e.javaClass.simpleName))
         } finally {
             file.delete()
         }
@@ -179,7 +180,7 @@ class UpdateReceiver : BroadcastReceiver() {
             }
             PackageInstaller.STATUS_SUCCESS -> updater.waitingForUser() // the app restarts as the new version
             PackageInstaller.STATUS_FAILURE_ABORTED -> updater.waitingForUser() // the user pressed Cancel
-            else -> updater.failed("The update didn't install (${intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE) ?: "error $status"}).")
+            else -> updater.failed(context.getString(R.string.set_b_install_failed, intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE) ?: context.getString(R.string.set_b_install_error, status)))
         }
     }
 }

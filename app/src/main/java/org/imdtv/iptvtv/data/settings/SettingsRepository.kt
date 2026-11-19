@@ -32,7 +32,13 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
     private val guidesOff = androidx.datastore.preferences.core.stringSetPreferencesKey("guides_off")
     private val liveSubtitlesOn = booleanPreferencesKey("live_subtitles_on")
     private val videoAspect = stringPreferencesKey("video_aspect")
+    private val mergeChannels = booleanPreferencesKey("merge_channels")
+    private val mergeAcross = booleanPreferencesKey("merge_across")
+    private val mergeBy = stringPreferencesKey("merge_by")
     private val vodTwoRows = booleanPreferencesKey("vod_two_rows")
+    private val titleSize = stringPreferencesKey("title_size")
+    private val vodTitleSize = stringPreferencesKey("vod_title_size")
+    private val catchUpOn = booleanPreferencesKey("catch_up_on")
     private val headerSize = stringPreferencesKey("header_size")
     private val previewFade = booleanPreferencesKey("preview_fade")
     private val startOnBoot = booleanPreferencesKey("start_on_boot")
@@ -52,6 +58,7 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
     private val oldGuideSource = stringPreferencesKey("guide_source")
     private val borrowSibling = booleanPreferencesKey("borrow_sibling_guide")
     private val hideHeaders = booleanPreferencesKey("hide_header_channels")
+    private val nameSymbols = booleanPreferencesKey("remove_name_symbols")
     private val showDateTime = booleanPreferencesKey("show_date_time")
     private val showPing = booleanPreferencesKey("show_ping")
     private val showRecent = booleanPreferencesKey("show_recent")
@@ -99,7 +106,13 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
             themeLooks = this[themeLooks]?.split('|')?.mapNotNull { e -> e.split('=', limit = 2).takeIf { it.size == 2 }?.let { it[0] to it[1] } }?.toMap().orEmpty(),
             liveSubtitlesOn = this[liveSubtitlesOn] ?: d.liveSubtitlesOn,
             videoAspect = VideoAspect.entries.find { it.name == this[videoAspect] } ?: d.videoAspect,
+            mergeChannels = this[mergeChannels] ?: d.mergeChannels,
+            mergeAcross = this[mergeAcross] ?: d.mergeAcross,
+            mergeBy = MergeBy.entries.find { it.name == this[mergeBy] } ?: d.mergeBy,
             vodTwoRows = this[vodTwoRows] ?: d.vodTwoRows,
+            titleSize = TitleSize.entries.find { it.name == this[titleSize] } ?: d.titleSize,
+            vodTitleSize = TitleSize.entries.find { it.name == this[vodTitleSize] } ?: d.vodTitleSize,
+            catchUpOn = this[catchUpOn] ?: d.catchUpOn,
             headerSize = HeaderSize.entries.find { it.name == this[headerSize] } ?: d.headerSize,
             previewFade = this[previewFade] ?: d.previewFade,
             startOnBoot = this[startOnBoot] ?: d.startOnBoot,
@@ -116,6 +129,7 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
                 ?: d.guideOrder,
             borrowSiblingGuide = this[borrowSibling] ?: d.borrowSiblingGuide,
             hideHeaderChannels = this[hideHeaders] ?: d.hideHeaderChannels,
+            removeNameSymbols = this[nameSymbols] ?: d.removeNameSymbols,
             showDateTime = this[showDateTime] ?: d.showDateTime,
             showPing = this[showPing] ?: d.showPing,
             showRecent = this[showRecent] ?: d.showRecent,
@@ -156,7 +170,13 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
         this[themeLooks] = s.themeLooks.entries.joinToString("|") { "${it.key}=${it.value}" }
         this[liveSubtitlesOn] = s.liveSubtitlesOn
         this[videoAspect] = s.videoAspect.name
+        this[mergeChannels] = s.mergeChannels
+        this[mergeAcross] = s.mergeAcross
+        this[mergeBy] = s.mergeBy.name
         this[vodTwoRows] = s.vodTwoRows
+        this[titleSize] = s.titleSize.name
+        this[vodTitleSize] = s.vodTitleSize.name
+        this[catchUpOn] = s.catchUpOn
         this[headerSize] = s.headerSize.name
         this[previewFade] = s.previewFade
         this[startOnBoot] = s.startOnBoot
@@ -170,6 +190,7 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
         this[guideKinds] = s.guideOrder.joinToString(",") { it.name }
         this[borrowSibling] = s.borrowSiblingGuide
         this[hideHeaders] = s.hideHeaderChannels
+        this[nameSymbols] = s.removeNameSymbols
         this[showDateTime] = s.showDateTime
         this[showPing] = s.showPing
         this[showRecent] = s.showRecent

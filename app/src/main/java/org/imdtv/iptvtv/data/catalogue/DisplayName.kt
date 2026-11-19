@@ -18,10 +18,23 @@ private fun fold(s: String): String = if (s.all { it < '\u00A0' }) s else String
     java.text.Normalizer.normalize(s[i].toString(), java.text.Normalizer.Form.NFKC).singleOrNull() ?: s[i]
 })
 
+/** Remove special characters: rides in the channel clean-up list as this marker (no one can type \u0001). */
+const val STRIP_SYMBOLS = "\u0001symbols"
+
+/** A playlist's channel clean-up list, plus the Remove special characters marker when [symbols]. */
+fun channelStrip(nameStrip: String?, symbols: Boolean): List<String> =
+    parseStripList(nameStrip.orEmpty()).let { if (symbols) it + STRIP_SYMBOLS else it }
+
+// Superscript and small letters (ᴿᴬᵂ, ⁴ᴷ, ᵛᶦᵖ), circled and boxed letters (ⓋⒾⓅ, 🅷🅳), symbols and emoji (◉, ★); a "/" between two runs goes too.
+private const val SYM = """[\u00B2\u00B3\u00B9\u02B0-\u02FF\u1D00-\u1DBF\u2070-\u209F\u2460-\u24FF\x{1F100}-\x{1F1FF}\p{So}]"""
+private val SYMBOLS = Regex("$SYM+(?:/$SYM+)*")
+
+fun removeSymbols(name: String): String = SYMBOLS.replace(name, " ").replace(Regex(" {2,}"), " ").trim { it in SEP }
+
 fun displayName(name: String, customName: String?, strip: List<String>): String {
     if (!customName.isNullOrBlank()) return customName
-    val (renames, removes) = strip.partition { '=' in it }
-    var s = name.trim()
+    val (renames, removes) = strip.filter { it != STRIP_SYMBOLS }.partition { '=' in it }
+    var s = (if (STRIP_SYMBOLS in strip) removeSymbols(name) else name).trim()
     var f = fold(s)
     fun startsWithWord(e: String) = f.length > e.length && f.startsWith(e, ignoreCase = true) && boundary(e.last(), f[e.length])
     fun endsWithWord(e: String) = f.length > e.length && f.endsWith(e, ignoreCase = true) && boundary(e.first(), f[f.length - e.length - 1])
@@ -45,7 +58,8 @@ fun displayName(name: String, customName: String?, strip: List<String>): String 
 /** Whole words only: "UK" mustn't eat the start of "UKTV". */
 private fun boundary(entryEdge: Char, neighbour: Char) = !entryEdge.isLetterOrDigit() || !neighbour.isLetterOrDigit()
 
-fun ChannelEntity.displayName(strip: List<String>) = displayName(name, customName, strip)
+fun ChannelEntity.displayName(strip: List<String>) =
+    displayName(if (mergeHead) org.imdtv.iptvtv.data.repo.baseName(name) else name, customName, strip)
 
 /** Provider divider rows such as "#### SKY CINEMA HD/4K ####" (two to five hashes in practice): any name starting with #. */
 fun isHeaderChannel(name: String): Boolean = name.trimStart().startsWith('#')

@@ -19,6 +19,8 @@ data class Channel(
     val drm: org.imdtv.iptvtv.data.source.Drm? = null,
     /** Days of past programmes the provider keeps (Xtream tv_archive_duration); null = no catch-up. */
     val archiveDays: Int? = null,
+    /** M3U catch-up, packed "type|template"; see ChannelEntity. */
+    val catchupSource: String? = null,
 )
 
 data class Movie(

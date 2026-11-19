@@ -1,5 +1,9 @@
 package org.imdtv.iptvtv.ui.live
 
+import org.imdtv.iptvtv.ui.hasCatchUp
+import androidx.compose.ui.res.stringResource
+import org.imdtv.iptvtv.R
+
 import org.imdtv.iptvtv.ui.theme.glass
 import org.imdtv.iptvtv.data.settings.ThemeId
 import org.imdtv.iptvtv.ui.theme.LocalTheme
@@ -95,7 +99,7 @@ fun LiveOverlay(vm: LiveViewModel, onGuide: () -> Unit, onPick: (ChannelEntity) 
                 }
                 Spacer(Modifier.width(18.dp))
                 Column(Modifier.weight(1f)) {
-                    Text(cur?.title ?: "No guide information", fontSize = 24.sp, fontWeight = FontWeight.SemiBold, color = Color.White,
+                    Text(cur?.title ?: stringResource(R.string.live_no_guide_info), fontSize = 24.sp * org.imdtv.iptvtv.ui.LocalTitleScale.current, fontWeight = FontWeight.SemiBold, color = Color.White,
                         maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Row(Modifier.padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         if (cur != null && progress != null) {
@@ -103,12 +107,13 @@ fun LiveOverlay(vm: LiveViewModel, onGuide: () -> Unit, onPick: (ChannelEntity) 
                             Box(Modifier.size(120.dp, 3.dp).clip(RoundedCornerShape(2.dp)).background(Color(0x33FFFFFF))) {
                                 Box(Modifier.fillMaxHeight().fillMaxWidth(progress).background(Color.White))
                             }
-                            Text("${(cur.stop - now + 59_999) / 60_000} min left", fontSize = 13.sp, color = LocalTheme.current.colors.muted)
+                            Text(stringResource(R.string.live_overlay_min_left, ((cur.stop - now + 59_999) / 60_000).toInt()), fontSize = 13.sp, color = LocalTheme.current.colors.muted)
                         }
                     }
                     Row(Modifier.padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         val number = (ch.customNumber ?: ch.number)?.takeIf { org.imdtv.iptvtv.ui.LocalShowNumbers.current }?.let { "$it  " }.orEmpty()
-                        Text(number + ch.displayName(strip), fontSize = 14.sp, fontWeight = FontWeight.Medium, color = Color.White, maxLines = 1)
+                        Text(number + ch.displayName(strip), fontSize = 14.sp * org.imdtv.iptvtv.ui.LocalTitleScale.current, fontWeight = FontWeight.Medium, color = Color.White, maxLines = 1)
+                        if (ch.hasCatchUp) CatchUpClock(Color.White)
                         badges(formats).forEach { b ->
                             Text(b, fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = Color.White,
                                 modifier = Modifier.border(1.dp, Color(0xB3FFFFFF), RoundedCornerShape(3.dp)).padding(horizontal = 5.dp, vertical = 1.dp))
@@ -119,7 +124,7 @@ fun LiveOverlay(vm: LiveViewModel, onGuide: () -> Unit, onPick: (ChannelEntity) 
                             modifier = Modifier.padding(top = 6.dp).fillMaxWidth(.75f))
                     }
                     next?.let {
-                        Text("Next: ${clockTime(it.start)} ${it.title}", fontSize = 13.sp, color = LocalTheme.current.colors.muted, maxLines = 1,
+                        Text(stringResource(R.string.live_overlay_next, clockTime(it.start), it.title), fontSize = 13.sp, color = LocalTheme.current.colors.muted, maxLines = 1,
                             overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 6.dp))
                     }
                 }
@@ -135,7 +140,7 @@ fun LiveOverlay(vm: LiveViewModel, onGuide: () -> Unit, onPick: (ChannelEntity) 
                 item(key = "guide") {
                     OverlayCard(onClick = onGuide, modifier = Modifier.focusRequester(guideFocus)) { f ->
                         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            Text("TV guide", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = if (f) LocalTheme.current.colors.onFocus else Color.White)
+                            Text(stringResource(R.string.live_tv_guide), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = if (f) LocalTheme.current.colors.onFocus else Color.White)
                         }
                     }
                 }
@@ -143,7 +148,15 @@ fun LiveOverlay(vm: LiveViewModel, onGuide: () -> Unit, onPick: (ChannelEntity) 
                 item(key = "settings") {
                     OverlayCard(onClick = { menus.menu = GuideMenu.Player(ch) }) { f ->
                         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            Text("Settings", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = if (f) LocalTheme.current.colors.onFocus else Color.White)
+                            Text(stringResource(R.string.live_overlay_settings), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = if (f) LocalTheme.current.colors.onFocus else Color.White)
+                        }
+                    }
+                }
+                // Catch-up: the programme on now from its start.
+                if (ch.hasCatchUp && cur != null) item(key = "restart") {
+                    OverlayCard(onClick = { vm.playCatchUp(ch, cur) }) { f ->
+                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Text(stringResource(R.string.live_overlay_restart), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = if (f) LocalTheme.current.colors.onFocus else Color.White)
                         }
                     }
                 }
@@ -174,9 +187,9 @@ private fun RecentCard(ch: ChannelEntity, name: String, cur: GuideProgramme?, fo
         }
         Spacer(Modifier.width(8.dp))
         Column(Modifier.weight(1f)) {
-            Text(((ch.customNumber ?: ch.number)?.takeIf { org.imdtv.iptvtv.ui.LocalShowNumbers.current }?.let { "$it  " }.orEmpty()) + name, fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
+            Text(((ch.customNumber ?: ch.number)?.takeIf { org.imdtv.iptvtv.ui.LocalShowNumbers.current }?.let { "$it  " }.orEmpty()) + name, fontSize = 12.sp * org.imdtv.iptvtv.ui.LocalTitleScale.current, fontWeight = FontWeight.SemiBold,
                 color = fg, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(cur?.title ?: "No guide information", fontSize = 11.sp, color = fg.copy(alpha = .75f), maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Text(cur?.title ?: stringResource(R.string.live_no_guide_info), fontSize = 11.sp * org.imdtv.iptvtv.ui.LocalTitleScale.current, color = fg.copy(alpha = .75f), maxLines = 2, overflow = TextOverflow.Ellipsis)
         }
     }
 }

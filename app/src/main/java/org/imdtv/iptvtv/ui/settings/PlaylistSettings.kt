@@ -1,5 +1,8 @@
 package org.imdtv.iptvtv.ui.settings
 
+import androidx.compose.ui.res.stringResource
+import org.imdtv.iptvtv.R
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -31,13 +34,14 @@ import java.util.Locale
 import org.imdtv.iptvtv.ui.use24Hour
 
 private val time = DateTimeFormatter.ofPattern("h.mma", Locale.UK)
-private val dayTime = DateTimeFormatter.ofPattern("d MMM, h.mma", Locale.UK)
+private val dayTime get() = DateTimeFormatter.ofPattern("d MMM, h.mma", org.imdtv.iptvtv.ui.namesLocale)
 private val time24 = DateTimeFormatter.ofPattern("HH:mm", Locale.UK)
-private val dayTime24 = DateTimeFormatter.ofPattern("d MMM, HH:mm", Locale.UK)
+private val dayTime24 get() = DateTimeFormatter.ofPattern("d MMM, HH:mm", org.imdtv.iptvtv.ui.namesLocale)
 
+@Composable
 fun updatedLabel(lastSync: Long?): String {
-    val t = Instant.ofEpochMilli(lastSync ?: return "Not updated yet").atZone(ZoneId.systemDefault())
-    return "Updated " + (if (t.toLocalDate() == LocalDate.now()) (if (use24Hour) time24 else time) else (if (use24Hour) dayTime24 else dayTime)).format(t).lowercase(Locale.UK)
+    val t = Instant.ofEpochMilli(lastSync ?: return stringResource(R.string.set_a_not_updated_yet)).atZone(ZoneId.systemDefault())
+    return stringResource(R.string.set_a_updated_at, (if (t.toLocalDate() == LocalDate.now()) (if (use24Hour) time24 else time) else (if (use24Hour) dayTime24 else dayTime)).format(t).lowercase(Locale.UK))
 }
 
 private fun ProviderEntity.typeLabel() = when (type) { ProviderType.XTREAM -> "Xtream"; ProviderType.M3U -> "M3U"; ProviderType.STALKER -> "Stalker" }
@@ -47,9 +51,9 @@ private fun ProviderEntity.typeLabel() = when (type) { ProviderType.XTREAM -> "X
 fun PlaylistGroupRows(vm: SettingsViewModel, first: Modifier, openers: MutableMap<Long, FocusRequester>, onAdd: () -> Unit, onOpen: (Long) -> Unit) {
     val providers by vm.providers.collectAsState()
     val activeId by vm.providerId.collectAsState()
-    SettingRow("Add playlist", "Add another Xtream, M3U or Stalker playlist", null, first, onClick = onAdd)
+    SettingRow(stringResource(R.string.set_a_add_playlist), stringResource(R.string.set_a_add_playlist_expl), null, first, onClick = onAdd)
     providers.forEach { p ->
-        SettingRow(p.name, "${p.typeLabel()} · ${updatedLabel(p.lastSync)}${if (p.id == activeId) " · In use" else ""}", "›",
+        SettingRow(p.name, stringResource(if (p.id == activeId) R.string.set_a_playlist_row_in_use else R.string.set_a_playlist_row, p.typeLabel(), updatedLabel(p.lastSync)), "›",
             Modifier.focusRequester(openers.getOrPut(p.id) { FocusRequester() })) { onOpen(p.id) }
     }
 }
@@ -71,19 +75,26 @@ fun PlaylistPage(
     if (p == null) return
     Column(modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(p.name, fontSize = 20.sp, color = Color.White, modifier = Modifier.padding(top = 6.dp, bottom = 18.dp))
-        SettingRow("Edit", "Name, URL, login and user agent", null, Modifier.focusRequester(first)) { onEdit(id) }
-        // One playlist is in use at a time: switching another on switches this one off, so On can't be switched off here.
-        SwitchRow("Use this playlist", if (activeId == id) "The app is showing this playlist" else "Show this playlist's channels, films and series",
-            activeId == id) { if (it) onUse(id) }
-        SettingRow("Update playlist now", update[id] ?: updatedLabel(p.lastSync), null) { vm.updatePlaylist(id) }
-        listOf(org.imdtv.iptvtv.data.model.Kind.LIVE to "Live TV", org.imdtv.iptvtv.data.model.Kind.MOVIE to "Movies", org.imdtv.iptvtv.data.model.Kind.SERIES to "Series").forEach { (kind, label) ->
+        SettingRow(stringResource(R.string.set_a_edit), stringResource(R.string.set_a_edit_expl), null, Modifier.focusRequester(first)) { onEdit(id) }
+        // Off leaves it out of the categories list's other playlists. The one in use hands over to another switched-on
+        // playlist first; when it's the only one, it stays on.
+        SwitchRow(stringResource(R.string.set_a_use_playlist), stringResource(when { !p.enabled -> R.string.set_a_use_playlist_off; activeId == id -> R.string.set_a_use_playlist_on; else -> R.string.set_a_use_playlist_listed }),
+            p.enabled) { on ->
+            if (on || activeId != id) vm.setEnabled(id, on)
+            else providers.firstOrNull { it.id != id && it.enabled }?.let { vm.setEnabled(id, false); onUse(it.id) }
+        }
+        SettingRow(stringResource(R.string.set_a_update_playlist), update[id] ?: updatedLabel(p.lastSync), null) { vm.updatePlaylist(id) }
+        listOf(org.imdtv.iptvtv.data.model.Kind.LIVE to R.string.set_a_kind_live, org.imdtv.iptvtv.data.model.Kind.MOVIE to R.string.set_a_kind_movies, org.imdtv.iptvtv.data.model.Kind.SERIES to R.string.set_a_kind_series).forEach { (kind, labelRes) ->
             val on = p.loads(kind)
-            SwitchRow(label, if (on) "Load $label from this playlist" else "Not loaded from this playlist", on) { vm.setLoads(p, kind, it) }
+            val label = stringResource(labelRes)
+            // Greyed out and shown off while the playlist is switched off; the saved switches come back with it.
+            SwitchRow(label, if (on) stringResource(R.string.set_a_load_from_playlist, label) else stringResource(R.string.set_a_not_loaded_from_playlist), on && p.enabled,
+                enabled = p.enabled) { vm.setLoads(p, kind, it) }
         }
         SettingRow(
-            "Delete playlist",
-            if (confirmDelete) "Delete ${p.name}? Its channels, favourites, your categories and guide links are removed. OK to confirm."
-            else "Remove this playlist from the app",
+            stringResource(R.string.set_a_delete_playlist),
+            if (confirmDelete) stringResource(R.string.set_a_delete_playlist_confirm, p.name)
+            else stringResource(R.string.set_a_delete_playlist_expl),
             null,
         ) { if (confirmDelete) { runCatching { first.requestFocus() }; onDelete(id) } else confirmDelete = true }
 

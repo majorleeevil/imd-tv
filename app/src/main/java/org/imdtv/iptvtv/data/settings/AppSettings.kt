@@ -1,7 +1,14 @@
 package org.imdtv.iptvtv.data.settings
 
+import androidx.annotation.StringRes
+import org.imdtv.iptvtv.R
+
 /** Layout themes (spec §6A); each sub-stage appends its entry, so the drop-down lists only built themes. */
-enum class ThemeId(val label: String) { CELESTIAL_GLASS("Celestial Glass"), CELESTIAL_PLUS("Celestial +"), CELESTIAL_RETRO("Celestial Retro"), LIQUID_GLASS("Liquid Glass"), XCUBE_180("Xcube 360"), GAMESTATION("Gamestation") }
+enum class ThemeId(val label: String, @StringRes val labelRes: Int) {
+    CELESTIAL_GLASS("Celestial Glass", R.string.set_a_theme_celestial_glass), CELESTIAL_PLUS("Celestial +", R.string.set_a_theme_celestial_plus),
+    CELESTIAL_RETRO("Celestial Retro", R.string.set_a_theme_celestial_retro), LIQUID_GLASS("Liquid Glass", R.string.set_a_theme_liquid_glass),
+    XCUBE_180("Xcube 360", R.string.set_a_theme_xcube), GAMESTATION("Gamestation", R.string.set_a_theme_gamestation)
+}
 
 /** A stored theme name this build doesn't know (old SKY_GLASS/MIDNIGHT…, or a newer build's theme) reads as the default. */
 fun themeIdOf(stored: String?): ThemeId = ThemeId.entries.find { it.name == stored } ?: ThemeId.CELESTIAL_GLASS
@@ -10,22 +17,26 @@ fun themeIdOf(stored: String?): ThemeId = ThemeId.entries.find { it.name == stor
  * Background colour for Celestial Glass and Liquid Glass (Appearance › Theme colour). ARGB stops: [glass] is Celestial
  * Glass's dark→light gradient, [liquid] Liquid Glass's backdrop gradient. DEFAULT keeps each theme's own colours.
  */
-enum class ThemeColour(val label: String, val glass: List<Long>, val liquid: List<Long>) {
-    DEFAULT("Default", listOf(0xFF0A1753, 0xFF1A39A6, 0xFF3459CA), listOf(0xFF0FB5BA, 0xFF7A3CF0)),
-    PURPLE("Purple", listOf(0xFF22104F, 0xFF4B21A0, 0xFF6E45C8), listOf(0xFF9B3CF0, 0xFFF03C9B)),
-    TEAL("Teal", listOf(0xFF06323A, 0xFF0D6F7A, 0xFF1C9AA0), listOf(0xFF0FB5BA, 0xFF0F5FBA)),
-    GREEN("Green", listOf(0xFF0A3318, 0xFF1A6E35, 0xFF2F9752), listOf(0xFF2FBF71, 0xFF0F9AB5)),
-    RED("Red", listOf(0xFF420A12, 0xFF8C1A2A, 0xFFB43544), listOf(0xFFF0563C, 0xFFB03CF0)),
-    GRAPHITE("Graphite", listOf(0xFF12151C, 0xFF29303B, 0xFF444E5E), listOf(0xFF5A6478, 0xFF262B38)),
+enum class ThemeColour(val label: String, @StringRes val labelRes: Int, val glass: List<Long>, val liquid: List<Long>) {
+    DEFAULT("Default", R.string.set_a_colour_default, listOf(0xFF0A1753, 0xFF1A39A6, 0xFF3459CA), listOf(0xFF0FB5BA, 0xFF7A3CF0)),
+    PURPLE("Purple", R.string.set_a_colour_purple, listOf(0xFF22104F, 0xFF4B21A0, 0xFF6E45C8), listOf(0xFF9B3CF0, 0xFFF03C9B)),
+    TEAL("Teal", R.string.set_a_colour_teal, listOf(0xFF06323A, 0xFF0D6F7A, 0xFF1C9AA0), listOf(0xFF0FB5BA, 0xFF0F5FBA)),
+    GREEN("Green", R.string.set_a_colour_green, listOf(0xFF0A3318, 0xFF1A6E35, 0xFF2F9752), listOf(0xFF2FBF71, 0xFF0F9AB5)),
+    RED("Red", R.string.set_a_colour_red, listOf(0xFF420A12, 0xFF8C1A2A, 0xFFB43544), listOf(0xFFF0563C, 0xFFB03CF0)),
+    GRAPHITE("Graphite", R.string.set_a_colour_graphite, listOf(0xFF12151C, 0xFF29303B, 0xFF444E5E), listOf(0xFF5A6478, 0xFF262B38)),
 }
 
 enum class AudioDecoder { HARDWARE, SOFTWARE }
 
 /** Where a channel logo can come from; the setting is an order of these (first available wins). */
-enum class LogoKind(val label: String) { PLAYLIST("Playlist"), OPEN_SOURCE("Open-source logos"), PACK("My logo pack") }
+enum class LogoKind(val label: String, @StringRes val labelRes: Int) {
+    PLAYLIST("Playlist", R.string.set_a_logo_playlist), OPEN_SOURCE("Open-source logos", R.string.set_a_logo_open_source), PACK("My logo pack", R.string.set_a_logo_pack)
+}
 
 /** Where the guide can come from; the setting is an order of these (spec §5.1, reversible since 2026-11-12). */
-enum class GuideKind(val label: String) { PLAYLIST("Playlist"), USER("Your EPG sources"), OPEN_SOURCE("Open-source guide") }
+enum class GuideKind(val label: String, @StringRes val labelRes: Int) {
+    PLAYLIST("Playlist", R.string.set_a_guide_playlist), USER("Your EPG sources", R.string.set_a_guide_user), OPEN_SOURCE("Open-source guide", R.string.set_a_guide_open_source)
+}
 
 val DEFAULT_LOGO_ORDER = listOf(LogoKind.PLAYLIST, LogoKind.OPEN_SOURCE)
 val DEFAULT_GUIDE_ORDER = listOf(GuideKind.PLAYLIST, GuideKind.USER, GuideKind.OPEN_SOURCE)
@@ -47,12 +58,26 @@ val END_LATE = listOf(0, 2, 5, 10, 15, 30)
 /** App-wide settings (spec §2.1). Per-playlist data lives in Room. */
 /** Guide header size: a smaller header leaves the guide taller. */
 /** Clock in the full-screen player. */
-enum class PlayerClock(val label: String) { OFF("Off"), LIVE("On (Live TV only)"), ALL("On (Universal)") }
+enum class PlayerClock(val label: String, @StringRes val labelRes: Int) {
+    OFF("Off", R.string.set_a_clock_off), LIVE("On (Live TV only)", R.string.set_a_clock_live), ALL("On (Universal)", R.string.set_a_clock_all)
+}
 
 /** Full-screen picture shape: the stream's own, forced 16:9 or 4:3, or zoomed to fill the screen. */
-enum class VideoAspect(val label: String) { AUTO("Auto"), WIDE("16:9"), STANDARD("4:3"), FILL("Fill") }
+enum class VideoAspect(val label: String, @StringRes val labelRes: Int) {
+    AUTO("Auto", R.string.set_a_aspect_auto), WIDE("16:9", R.string.set_a_aspect_wide), STANDARD("4:3", R.string.set_a_aspect_standard), FILL("Fill", R.string.set_a_aspect_fill)
+}
 
-enum class HeaderSize(val label: String) { LARGE("Large"), MEDIUM("Medium"), SMALL("Small") }
+/** How a merged channel picks which of its sources to play. */
+enum class MergeBy(@StringRes val labelRes: Int) { RESOLUTION(R.string.set_a_merge_by_resolution), LATENCY(R.string.set_a_merge_by_latency) }
+
+enum class HeaderSize(val label: String, @StringRes val labelRes: Int) {
+    LARGE("Large", R.string.set_a_size_large), MEDIUM("Medium", R.string.set_a_size_medium), SMALL("Small", R.string.set_a_size_small)
+}
+
+/** Scales programme, channel and movie/series titles (Appearance › Title size). */
+enum class TitleSize(val label: String, @StringRes val labelRes: Int, val scale: Float) {
+    LARGE("Large", R.string.set_a_size_large, 1f), MEDIUM("Medium", R.string.set_a_size_medium, .85f), SMALL("Small", R.string.set_a_size_small, .72f)
+}
 
 data class AppSettings(
     val theme: ThemeId = ThemeId.CELESTIAL_GLASS,
@@ -72,6 +97,8 @@ data class AppSettings(
     val guideOrder: List<GuideKind> = DEFAULT_GUIDE_ORDER,
     val borrowSiblingGuide: Boolean = true,
     val hideHeaderChannels: Boolean = false,
+    /** Channel names lose superscript / circled letters and symbols (ᴿᴬᵂ, ⓋⒾⓅ, ◉). */
+    val removeNameSymbols: Boolean = false,
     val themeColour: ThemeColour = ThemeColour.DEFAULT,
     /** Celestial Glass / Liquid Glass: near-black versions of the theme colour. */
     val themeDark: Boolean = false,
@@ -115,7 +142,15 @@ data class AppSettings(
     val playerClock: PlayerClock = PlayerClock.OFF,
     val liveSubtitlesOn: Boolean = false,
     val videoAspect: VideoAspect = VideoAspect.AUTO,
+    /** Settings › Channels › Merge channels, and its Merge options (each playlist also has its own switch). */
+    val mergeChannels: Boolean = false,
+    val mergeAcross: Boolean = false,
+    val mergeBy: MergeBy = MergeBy.RESOLUTION,
     val vodTwoRows: Boolean = false,
+    val titleSize: TitleSize = TitleSize.LARGE,
+    val vodTitleSize: TitleSize = TitleSize.LARGE,
+    /** Playback › Catch-up: off hides every catch-up control, even on channels that have it. */
+    val catchUpOn: Boolean = true,
     val headerSize: HeaderSize = HeaderSize.LARGE,
     val previewFade: Boolean = true,
     /** Other themes' [look]s by theme name, so a glass theme's colour/header/rows don't carry to another theme. */

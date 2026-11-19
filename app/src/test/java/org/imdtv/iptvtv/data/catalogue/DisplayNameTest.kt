@@ -34,4 +34,13 @@ class DisplayNameTest {
     }
 
     @Test fun renameToNothingStrips() = assertEquals("SKY", displayName("SKY ᴿᴬᵂ", null, parseStripList("RAW=")))
+
+    @Test fun removeSpecialCharacters() {
+        val on = channelStrip("UK:", true)
+        assertEquals("BBC ONE", displayName("UK: BBC ONE ᴴᴰ/ᴿᴬᵂ", null, on))
+        assertEquals("CHANNEL 4 LONDON", displayName("CHANNEL 4 LONDON ◉", null, on))
+        assertEquals("SKY SPORTS", displayName("ⓋⒾⓅ SKY SPORTS ⁴ᴷ", null, on))
+        assertEquals("ZDF Österreich", displayName("ZDF Österreich", null, on)) // accents stay
+        assertEquals("CHANNEL 4 LONDON ◉", displayName("CHANNEL 4 LONDON ◉", null, channelStrip("", false)))
+    }
 }

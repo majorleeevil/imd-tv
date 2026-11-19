@@ -1,5 +1,8 @@
 package org.imdtv.iptvtv.ui
 
+import androidx.compose.ui.res.stringResource
+import org.imdtv.iptvtv.R
+
 import org.imdtv.iptvtv.ui.theme.LocalTheme
 
 import androidx.compose.foundation.background
@@ -37,10 +40,14 @@ import androidx.tv.material3.Text
 
 /** A small D-pad menu in a dialog; Back dismisses it. Picking an item does not dismiss by itself. */
 @Composable
-fun ContextMenu(title: String, items: List<Pair<String, () -> Unit>>, onDismiss: () -> Unit) {
+fun ContextMenu(title: String, items: List<Pair<String, () -> Unit>>, onDismiss: () -> Unit) = ContextMenu(title, items, 0, onDismiss)
+
+/** As above, with focus starting on item [focusIndex]. */
+@Composable
+fun ContextMenu(title: String, items: List<Pair<String, () -> Unit>>, focusIndex: Int, onDismiss: () -> Unit) {
     MenuFrame(title, onDismiss) { first ->
         items.forEachIndexed { i, (label, action) ->
-            MenuItem(label, if (i == 0) Modifier.focusRequester(first) else Modifier, action)
+            MenuItem(label, if (i == focusIndex) Modifier.focusRequester(first) else Modifier, onClick = action)
         }
     }
 }
@@ -51,8 +58,8 @@ fun TextPrompt(title: String, initial: String, hint: String, onSave: (String) ->
     var text by remember { mutableStateOf(initial) }
     MenuFrame(title, onDismiss) { first ->
         Field(hint, text, modifier = Modifier.focusRequester(first)) { text = it }
-        MenuItem("Save", Modifier) { onSave(text.trim()) }
-        MenuItem("Cancel", Modifier, onDismiss)
+        MenuItem(stringResource(R.string.live_save), Modifier) { onSave(text.trim()) }
+        MenuItem(stringResource(R.string.live_cancel), Modifier, onClick = onDismiss)
     }
 }
 
@@ -82,9 +89,10 @@ internal fun MenuFrame(title: String, onDismiss: () -> Unit, content: @Composabl
 }
 
 @Composable
-internal fun MenuItem(label: String, modifier: Modifier, onClick: () -> Unit) {
-    FocusBox(onClick = onClick, modifier = modifier) { f ->
-        Text(label, fontSize = 16.sp, color = if (f) Color.Black else Color.White,
+internal fun MenuItem(label: String, modifier: Modifier, enabled: Boolean = true, onClick: () -> Unit) {
+    // Disabled: still focusable so it reads as unavailable, greyed, OK does nothing.
+    FocusBox(onClick = { if (enabled) onClick() }, modifier = modifier) { f ->
+        Text(label, fontSize = 16.sp, color = if (!enabled) Color(0x80FFFFFF).let { if (f) Color(0x99000000) else it } else if (f) Color.Black else Color.White,
             modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(if (f) Color.White else Color.Transparent)
                 .padding(horizontal = 14.dp, vertical = 10.dp))
     }

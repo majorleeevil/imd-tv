@@ -1,5 +1,9 @@
 package org.imdtv.iptvtv.ui.settings
 
+import androidx.compose.ui.draw.alpha
+import org.imdtv.iptvtv.R
+import androidx.annotation.StringRes
+import androidx.compose.ui.res.stringResource
 import org.imdtv.iptvtv.data.settings.AppSettings
 import org.imdtv.iptvtv.ui.theme.LocalTheme
 import org.imdtv.iptvtv.ui.theme.LocalGlassBackdrop
@@ -51,9 +55,11 @@ import org.imdtv.iptvtv.ui.AppLogo
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import org.imdtv.iptvtv.ui.FocusBox
 
-enum class SettingsGroup(val title: String) {
-    PLAYLISTS("Playlists"), CHANNELS("Channels & categories"), EPG("TV guide (EPG)"), PLAYBACK("Playback"),
-    APPEARANCE("Appearance"), BEHAVIOUR("App behaviour"), BACKUP("Backup & sync"), ABOUT("About"),
+enum class SettingsGroup(val title: String, @StringRes val labelRes: Int) {
+    PLAYLISTS("Playlists", R.string.set_b_group_playlists), CHANNELS("Channels & categories", R.string.set_b_group_channels),
+    EPG("TV guide (EPG)", R.string.set_b_group_epg), PLAYBACK("Playback", R.string.set_b_group_playback),
+    APPEARANCE("Appearance", R.string.set_b_group_appearance), BEHAVIOUR("App behaviour", R.string.set_b_group_behaviour),
+    BACKUP("Backup & sync", R.string.set_b_group_backup), ABOUT("About", R.string.set_b_group_about),
 }
 
 @OptIn(ExperimentalComposeUiApi::class)
@@ -66,6 +72,9 @@ fun SettingsScreen(vm: SettingsViewModel, onAddPlaylist: () -> Unit, onEditPlayl
     val editedPlaylist = remember { vm.playlistToReopen.also { vm.playlistToReopen = null } }
     var group by remember { mutableStateOf(if (editedPlaylist != null) SettingsGroup.PLAYLISTS else initialGroup) }
     var inRows by remember { mutableStateOf(false) }
+    // Focus parked on the group while a page swaps: don't draw it focused (it flashed white).
+    var parked by remember { mutableStateOf(false) }
+    LaunchedEffect(parked) { if (parked) { repeat(15) { withFrameNanos { } }; parked = false } } // fallback if focus stays on the group
     var page by remember { mutableStateOf<ChannelPage?>(null) }
     var reopen by remember { mutableStateOf<ChannelPage?>(null) }
     val groupFocus = remember { FocusRequester() }
@@ -160,8 +169,9 @@ fun SettingsScreen(vm: SettingsViewModel, onAddPlaylist: () -> Unit, onEditPlayl
 
     Box(Modifier.fillMaxSize().themeBackground(LocalTheme.current.colors.vodBg)) {
         Row(Modifier.fillMaxSize().padding(48.dp).nestedScroll(scrollWatch), horizontalArrangement = Arrangement.spacedBy(32.dp)) {
-            Column(Modifier.width(260.dp).glass().padding(if (LocalGlassBackdrop.current != null) 12.dp else 0.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text("Settings", fontSize = 26.sp, fontWeight = FontWeight.SemiBold, color = Color.White, modifier = Modifier.padding(bottom = 16.dp))
+            // Scrolls: Xcube's short frame clipped the last group (About).
+            Column(Modifier.width(260.dp).glass().padding(if (LocalGlassBackdrop.current != null) 12.dp else 0.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(stringResource(R.string.set_b_settings), fontSize = 26.sp, fontWeight = FontWeight.SemiBold, color = Color.White, modifier = Modifier.padding(bottom = 16.dp))
                 SettingsGroup.entries.forEach { g ->
                     FocusBox(
                         onClick = { runCatching { rowsFocus.requestFocus() } },
@@ -169,15 +179,15 @@ fun SettingsScreen(vm: SettingsViewModel, onAddPlaylist: () -> Unit, onEditPlayl
                         onFocused = { if (g != group) { page = null; playlist = null; sourcesOpen = false; recordingOpen = false; syncOpen = false; backupOpen = false }; group = g },
                     ) { f ->
                         Text(
-                            g.title, fontSize = 15.sp, color = if (f) Color.Black else if (g == group) Color.White else LocalTheme.current.colors.muted,
+                            stringResource(g.labelRes), fontSize = 15.sp, color = if (f && !parked) Color.Black else if (g == group) Color.White else LocalTheme.current.colors.muted,
                             modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp))
-                                .background(if (f) Color.White else if (g == group) Color(0x1FFFFFFF) else Color.Transparent)
+                                .background(if (f && !parked) Color.White else if (g == group) Color(0x1FFFFFFF) else Color.Transparent)
                                 .padding(horizontal = 14.dp, vertical = 9.dp),
                         )
                     }
                 }
             }
-            val pane = Modifier.weight(1f).glass().padding(if (LocalGlassBackdrop.current != null) 16.dp else 0.dp).onFocusChanged { inRows = it.hasFocus }
+            val pane = Modifier.weight(1f).glass().padding(if (LocalGlassBackdrop.current != null) 16.dp else 0.dp).onFocusChanged { inRows = it.hasFocus; if (it.hasFocus) parked = false }
                     // Enter on the first row; Up/Down past the ends stay put instead of jumping into the group list.
                     .focusProperties {
                         enter = { enterTarget.value ?: rowsFocus }
@@ -191,7 +201,7 @@ fun SettingsScreen(vm: SettingsViewModel, onAddPlaylist: () -> Unit, onEditPlayl
                     }
                     .focusGroup()
             // Removing the focused node hands focus to the first focusable (Playlists), so park it on this group first.
-            fun park() = runCatching { groupFocus.requestFocus() }
+            fun park() { parked = true; runCatching { groupFocus.requestFocus() } }
             page?.let { p ->
                 key(p) {
                     ChannelPageView(p, vm, pane, first = rowsFocus, openers, restoring = reopen?.parent == p,
@@ -208,9 +218,9 @@ fun SettingsScreen(vm: SettingsViewModel, onAddPlaylist: () -> Unit, onEditPlayl
             if (page == null && playlist == null && !sourcesOpen && !recordingOpen && !syncOpen && !backupOpen) Column(pane.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 val syncNow by vm.sync.state.collectAsState()
                 syncNow.master?.takeIf { syncNow.role == org.imdtv.iptvtv.data.sync.SyncRole.FOLLOWER }?.let {
-                    Text("Following ${it.name}: changes made here are replaced at the next sync.", fontSize = 14.sp, color = LocalTheme.current.colors.muted)
+                    Text(stringResource(R.string.set_b_following, it.name), fontSize = 14.sp, color = LocalTheme.current.colors.muted)
                 }
-                Text(group.title, fontSize = 20.sp, color = Color.White, modifier = Modifier.padding(top = 6.dp, bottom = 18.dp))
+                Text(stringResource(group.labelRes), fontSize = 20.sp, color = Color.White, modifier = Modifier.padding(top = 6.dp, bottom = 18.dp))
                 // The first row of a group takes rowsFocus, so OK/Right on a group lands on it.
                 val first = Modifier.focusRequester(rowsFocus)
                 when (group) {
@@ -218,41 +228,49 @@ fun SettingsScreen(vm: SettingsViewModel, onAddPlaylist: () -> Unit, onEditPlayl
                     SettingsGroup.EPG -> EpgGroupRows(vm, first, Modifier.focusRequester(sourcesOpener)) { park(); sourcesOpen = true }
                     SettingsGroup.CHANNELS -> ChannelGroupRows(vm, first, openers) { park(); page = it }
                     SettingsGroup.PLAYBACK -> {
-                        SwitchRow("Autoplay while scrolling", "Preview the focused channel after a short pause; when off, press OK to preview",
+                        SwitchRow(stringResource(R.string.set_b_autoplay_title), stringResource(R.string.set_b_autoplay_expl),
                             s.autoplayOnScroll, first) { on -> vm.update { it.copy(autoplayOnScroll = on) } }
-                        ChoiceRow("Audio decoder", "Software (FFmpeg) plays Dolby/DTS on any box; Hardware uses the box or TV first, Software when they can't",
+                        ChoiceRow(stringResource(R.string.set_b_audio_decoder), stringResource(R.string.set_b_audio_decoder_expl),
                             listOf(AudioDecoder.SOFTWARE, AudioDecoder.HARDWARE), s.audioDecoder,
-                            { if (it == AudioDecoder.HARDWARE) "Hardware" else "Software" }, default = AppSettings().audioDecoder) { d -> vm.update { it.copy(audioDecoder = d) } }
-                        ChoiceRow("Change channel with", "Full screen live TV: the keys that go to the previous and next channel",
-                            listOf(false, true), s.zapLeftRight, { if (it) "Left / Right" else "Up / Down" }, default = AppSettings().zapLeftRight) { v -> vm.update { it.copy(zapLeftRight = v) } }
+                            { if (it == AudioDecoder.HARDWARE) stringResource(R.string.set_b_hardware) else stringResource(R.string.set_b_software) }, default = AppSettings().audioDecoder) { d -> vm.update { it.copy(audioDecoder = d) } }
+                        ChoiceRow(stringResource(R.string.set_b_change_channel), stringResource(R.string.set_b_change_channel_expl),
+                            listOf(false, true), s.zapLeftRight, { if (it) stringResource(R.string.set_b_left_right) else stringResource(R.string.set_b_up_down) }, default = AppSettings().zapLeftRight) { v -> vm.update { it.copy(zapLeftRight = v) } }
                         // Always the other pair of arrows: picking one here flips Change channel with.
-                        ChoiceRow("View Previous Channel With", "Full screen live TV: Right or Down steps back through the channels you watched, Left or Up comes forward again",
-                            listOf(true, false), !s.zapLeftRight, { if (it) "Left / Right" else "Up / Down" }, default = !AppSettings().zapLeftRight) { v -> vm.update { it.copy(zapLeftRight = !v) } }
-                        SettingRow("Recording", "Record live TV to the box, a USB drive or a network share",
-                            if (s.recordingOn) "On ›" else "Off ›", Modifier.focusRequester(recordingOpener)) { park(); recordingOpen = true }
+                        ChoiceRow(stringResource(R.string.set_b_prev_channel), stringResource(R.string.set_b_prev_channel_expl),
+                            listOf(true, false), !s.zapLeftRight, { if (it) stringResource(R.string.set_b_left_right) else stringResource(R.string.set_b_up_down) }, default = !AppSettings().zapLeftRight) { v -> vm.update { it.copy(zapLeftRight = !v) } }
+                        SettingRow(stringResource(R.string.set_b_recording), stringResource(R.string.set_b_recording_expl),
+                            if (s.recordingOn) stringResource(R.string.set_b_on_arrow) else stringResource(R.string.set_b_off_arrow), Modifier.focusRequester(recordingOpener)) { park(); recordingOpen = true }
+                        SwitchRow(stringResource(R.string.set_b_catch_up), stringResource(R.string.set_b_catch_up_expl), s.catchUpOn) { on -> vm.update { it.copy(catchUpOn = on) } }
                         val subs = ChannelPage.SUBTITLES
-                        SettingRow(subs.title, subs.explanation, "›", Modifier.focusRequester(openers.getValue(subs))) { park(); page = subs }
+                        SettingRow(stringResource(subs.titleRes), stringResource(subs.explanationRes), "›", Modifier.focusRequester(openers.getValue(subs))) { park(); page = subs }
                     }
-                    SettingsGroup.APPEARANCE -> AppearanceRows(s, first, Modifier.focusRequester(openers.getValue(ChannelPage.DATE_TIME)),
-                        onDateTime = { park(); page = ChannelPage.DATE_TIME }, onReset = { vm.notice.value = "Appearance settings reset to default" }, onChange = { f -> vm.update(f) })
+                    SettingsGroup.APPEARANCE -> PageRows(listOf(ChannelPage.APPEARANCE_APP, ChannelPage.APPEARANCE_LIVE, ChannelPage.APPEARANCE_VOD), vm, rowsFocus, openers) { park(); page = it }
                     SettingsGroup.BEHAVIOUR -> {
-                        SwitchRow("Last channel on start", "Open the last live channel full screen when the app starts", s.lastChannelOnStart, first) { on ->
+                        SwitchRow(stringResource(R.string.set_b_last_channel), stringResource(R.string.set_b_last_channel_expl), s.lastChannelOnStart, first) { on ->
                             vm.update { it.copy(lastChannelOnStart = on) }
                         }
-                        ChoiceRow("Back in TV guide", "What Back does in the live TV guide while a channel is playing",
-                            listOf(false, true), s.backToFullScreen, { if (it) "Go to full screen" else "Go to the menu" }, default = AppSettings().backToFullScreen) { v -> vm.update { it.copy(backToFullScreen = v) } }
-                        SwitchRow("Confirm exit", "Press Back twice at the top menu to leave the app", s.confirmExit) { on ->
+                        ChoiceRow(stringResource(R.string.set_b_back_guide), stringResource(R.string.set_b_back_guide_expl),
+                            listOf(false, true), s.backToFullScreen, { if (it) stringResource(R.string.set_b_go_fullscreen) else stringResource(R.string.set_b_go_menu) }, default = AppSettings().backToFullScreen) { v -> vm.update { it.copy(backToFullScreen = v) } }
+                        // Not an AppSettings value: Android (13+) or AppLanguage keeps it, and the screen restarts in the new language.
+                        val ctx = androidx.compose.ui.platform.LocalContext.current
+                        val activity = remember(ctx) { generateSequence(ctx) { (it as? android.content.ContextWrapper)?.baseContext }.filterIsInstance<android.app.Activity>().first() }
+                        ChoiceRow(stringResource(R.string.set_b_language), stringResource(R.string.set_b_language_expl), listOf("") + org.imdtv.iptvtv.ui.AppLanguage.TAGS,
+                            remember(activity) { org.imdtv.iptvtv.ui.AppLanguage.get(activity).substringBefore('-').substringBefore(',') },
+                            { if (it.isEmpty()) stringResource(R.string.set_b_system_default) else org.imdtv.iptvtv.ui.AppLanguage.nativeName(it) }, default = "") { tag ->
+                            org.imdtv.iptvtv.ui.AppLanguage.set(activity, tag)
+                        }
+                        SwitchRow(stringResource(R.string.set_b_confirm_exit), stringResource(R.string.set_b_confirm_exit_expl), s.confirmExit) { on ->
                             vm.update { it.copy(confirmExit = on) }
                         }
                         StartOnBootRow(s.startOnBoot) { on -> vm.update { it.copy(startOnBoot = on) } }
-                        SwitchRow("Show ping", "Connection time to Cloudflare (1.1.1.1) in the top bar, checked every 30 seconds", s.showPing) { on ->
+                        SwitchRow(stringResource(R.string.set_b_show_ping), stringResource(R.string.set_b_show_ping_expl), s.showPing) { on ->
                             vm.update { it.copy(showPing = on) }
                         }
                     }
                     SettingsGroup.BACKUP -> {
-                        SettingRow("Backup & restore", "Back up now, choose the backup folder, or restore a backup", "›",
+                        SettingRow(stringResource(R.string.set_b_backup_restore), stringResource(R.string.set_b_backup_restore_expl), "›",
                             first.focusRequester(backupOpener)) { park(); backupOpen = true }
-                        SettingRow("Sync", "One box (the master) keeps the others' playlists and settings the same",
+                        SettingRow(stringResource(R.string.set_b_sync), stringResource(R.string.set_b_sync_expl),
                             syncRoleLabel(syncNow.role) + " ›", Modifier.focusRequester(syncOpener)) { park(); syncOpen = true }
                     }
                     SettingsGroup.ABOUT -> AboutRows(first)
@@ -273,18 +291,18 @@ fun SettingsScreen(vm: SettingsViewModel, onAddPlaylist: () -> Unit, onEditPlayl
 @Composable
 fun SubtitleRows(vm: SettingsViewModel, first: FocusRequester) {
     val s by vm.settings.collectAsState()
-    SwitchRow("Movies & Series", "Subtitles for movies and series that have them", s.subtitlesOn, Modifier.focusRequester(first)) { on ->
+    SwitchRow(stringResource(R.string.set_b_movies_series), stringResource(R.string.set_b_movies_series_expl), s.subtitlesOn, Modifier.focusRequester(first)) { on ->
         vm.update { it.copy(subtitlesOn = on) }
     }
     if (s.subtitlesOn) {
         val tv = java.util.Locale.getDefault().displayLanguage
-        ChoiceRow("Movies & Series Subtitle Language", "Subtitles show only when the film has this language",
+        ChoiceRow(stringResource(R.string.set_b_movies_series_lang), stringResource(R.string.set_b_movies_series_lang_expl),
             listOf<String?>(null) + org.imdtv.iptvtv.data.settings.SUBTITLE_LANGUAGES.sortedBy { java.util.Locale(it).displayLanguage },
-            s.subtitleLanguage, { c -> c?.let { java.util.Locale(it).displayLanguage } ?: "TV language ($tv)" }, default = AppSettings().subtitleLanguage) { l ->
+            s.subtitleLanguage, { c -> c?.let { java.util.Locale(it).displayLanguage } ?: stringResource(R.string.set_b_tv_language, tv) }, default = AppSettings().subtitleLanguage) { l ->
             vm.update { it.copy(subtitleLanguage = l) }
         }
     }
-    SwitchRow("Live TV", "Show live channels' subtitles (in the subtitle language) when the stream has them", s.liveSubtitlesOn) { on ->
+    SwitchRow(stringResource(R.string.set_b_live_tv), stringResource(R.string.set_b_live_tv_expl), s.liveSubtitlesOn) { on ->
         vm.update { it.copy(liveSubtitlesOn = on) }
     }
 }
@@ -299,10 +317,14 @@ fun SettingRow(
     /** Non-null: a slider switch in that state instead of [value]. */
     toggle: Boolean? = null,
     /** Picked up to move: the gold row of every move in Settings (as provider categories). */
-    moving: Boolean = false, onClick: () -> Unit,
+    moving: Boolean = false,
+    /** False: greyed out, still focusable (so the list scrolls past it), OK does nothing. */
+    enabled: Boolean = true, onClick: () -> Unit,
 ) {
-    FocusBox(onClick = onClick, modifier = modifier) { focused ->
+    FocusBox(onClick = { if (enabled) onClick() }, modifier = modifier.then(if (enabled) Modifier else Modifier.alpha(.4f))) { focused ->
         val f = focused || moving
+        androidx.compose.foundation.layout.BoxWithConstraints {
+        val valueMax = minOf(320.dp, maxWidth * .45f)
         Row(
             Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(if (moving) MOVING else if (f) Color.White else Color(0x14FFFFFF))
                 .padding(horizontal = 18.dp, vertical = 12.dp),
@@ -314,19 +336,20 @@ fun SettingRow(
             }
             if (value != null) {
                 Spacer(Modifier.width(16.dp))
-                // One line, capped: a long value (e.g. a clean-up list) must not squeeze the title to nothing.
+                // One line, at most 45% of the row (and 320 dp): a long value (a clean-up list, a URL in narrow Xcube) must not squeeze the title to nothing.
                 Text(value, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = if (f) Color.Black else Color.White,
-                    maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, modifier = Modifier.widthIn(max = 320.dp))
+                    maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, modifier = Modifier.widthIn(max = valueMax))
             }
             if (toggle != null) { Spacer(Modifier.width(16.dp)); Toggle(toggle, f) }
             if (busy) { Spacer(Modifier.width(16.dp)); org.imdtv.iptvtv.ui.Spinner(size = 20.dp, color = if (f) Color.Black else Color.White) }
+        }
         }
     }
 }
 
 @Composable
-fun SwitchRow(title: String, explanation: String, checked: Boolean, modifier: Modifier = Modifier, onToggle: (Boolean) -> Unit) =
-    SettingRow(title, explanation, null, modifier, toggle = checked) { onToggle(!checked) }
+fun SwitchRow(title: String, explanation: String, checked: Boolean, modifier: Modifier = Modifier, enabled: Boolean = true, onToggle: (Boolean) -> Unit) =
+    SettingRow(title, explanation, null, modifier, toggle = checked, enabled = enabled) { onToggle(!checked) }
 
 /** Slider switch (TiviMate style): the theme accent fills the track when on; the white knob sits at that end. */
 @Composable
@@ -356,10 +379,10 @@ private fun StartOnBootRow(on: Boolean, onToggle: (Boolean) -> Unit) {
         lifecycle.addObserver(o)
         onDispose { lifecycle.removeObserver(o) }
     }
-    SwitchRow("Start on boot", "Open the app when the TV box starts", on, Modifier.focusRequester(switchFocus), onToggle = onToggle)
+    SwitchRow(stringResource(R.string.set_b_start_boot), stringResource(R.string.set_b_start_boot_expl), on, Modifier.focusRequester(switchFocus), onToggle = onToggle)
     if (on && !allowed) {
         // A row of its own, so the switch above can still be turned off.
-        SettingRow("Allow Display over other apps", "Android blocks this until you allow Display over other apps — OK to open that setting", null) {
+        SettingRow(stringResource(R.string.set_b_allow_overlay), stringResource(R.string.set_b_allow_overlay_expl), null) {
             val i = android.content.Intent(android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION, android.net.Uri.parse("package:${context.packageName}"))
             runCatching { context.startActivity(i) }
         }

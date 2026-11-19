@@ -1,5 +1,7 @@
 package org.imdtv.iptvtv.data.update
 
+import org.imdtv.iptvtv.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.animateScrollBy
@@ -44,14 +46,14 @@ fun UpdatePrompt(updater: Updater, background: CoroutineScope) {
     val scope = rememberCoroutineScope()
     val u = update ?: return
     if (!open) return
-    MenuFrame("IMD TV ${u.version} is available", onDismiss = { scope.launch { updater.later() } }) { first ->
+    MenuFrame(stringResource(R.string.set_b_update_available, u.version), onDismiss = { scope.launch { updater.later() } }) { first ->
         // No release notes here: they show once, after the update (What's new).
-        val body = error ?: progress ?: "A new version of IMD TV is ready to install."
+        val body = error ?: progress ?: stringResource(R.string.set_b_update_ready)
         Text(body, fontSize = 15.sp, color = Color.White, modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp))
-        if (progress != null) MenuItem("Hide", Modifier.focusRequester(first)) { updater.prompt.value = false }
+        if (progress != null) MenuItem(stringResource(R.string.set_b_hide), Modifier.focusRequester(first)) { updater.prompt.value = false }
         else {
-            MenuItem(if (error != null) "Try again" else "Update now", Modifier.focusRequester(first)) { background.launch { updater.install(u) } }
-            MenuItem("Later", Modifier) { scope.launch { updater.later() } }
+            MenuItem(if (error != null) stringResource(R.string.set_b_try_again) else stringResource(R.string.set_b_update_now), Modifier.focusRequester(first)) { background.launch { updater.install(u) } }
+            MenuItem(stringResource(R.string.set_b_later), Modifier) { scope.launch { updater.later() } }
         }
     }
 }
@@ -63,9 +65,9 @@ fun WhatsNewPrompt(updater: Updater) {
     val scope = rememberCoroutineScope()
     val text = notes ?: return
     val close = { scope.launch { updater.closeWhatsNew() }; Unit }
-    MenuFrame("What's new in IMD TV ${org.imdtv.iptvtv.BuildConfig.VERSION_NAME}", onDismiss = close) { first ->
+    MenuFrame(stringResource(R.string.set_b_whats_new, org.imdtv.iptvtv.BuildConfig.VERSION_NAME), onDismiss = close) { first ->
         ScrollText(text, Modifier.focusRequester(first))
-        MenuItem("OK", Modifier.padding(top = 8.dp)) { close() }
+        MenuItem(stringResource(R.string.set_b_ok), Modifier.padding(top = 8.dp)) { close() }
     }
 }
 

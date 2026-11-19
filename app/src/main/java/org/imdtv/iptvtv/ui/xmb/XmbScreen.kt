@@ -1,6 +1,9 @@
 package org.imdtv.iptvtv.ui.xmb
 
+import org.imdtv.iptvtv.ui.live.titleText
 import androidx.activity.compose.BackHandler
+import org.imdtv.iptvtv.recording.recordingStatus
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -83,8 +86,8 @@ private val CLOCK = DateTimeFormatter.ofPattern("d/M H:mm")
 private val CLOCK12 = DateTimeFormatter.ofPattern("d/M h.mma", Locale.UK)
 private val ICONS = mapOf(XmbColumn.SETTINGS to R.drawable.ic_tab_settings, XmbColumn.SEARCH to R.drawable.ic_tab_search, XmbColumn.LIVE to R.drawable.ic_tab_live,
     XmbColumn.MOVIES to R.drawable.ic_tab_movies, XmbColumn.SERIES to R.drawable.ic_tab_series, XmbColumn.RECORDINGS to R.drawable.ic_tab_recordings)
-private val LABELS = mapOf(XmbColumn.SETTINGS to "Settings", XmbColumn.SEARCH to "Search", XmbColumn.LIVE to "Live TV", XmbColumn.MOVIES to "Movies",
-    XmbColumn.SERIES to "Series", XmbColumn.RECORDINGS to "Recordings")
+private val LABELS = mapOf(XmbColumn.SETTINGS to R.string.vod_nav_settings, XmbColumn.SEARCH to R.string.vod_nav_search, XmbColumn.LIVE to R.string.vod_nav_live,
+    XmbColumn.MOVIES to R.string.vod_nav_movies, XmbColumn.SERIES to R.string.vod_nav_series, XmbColumn.RECORDINGS to R.string.vod_nav_recordings)
 private val ROW_Y = 150.dp      // icon row, about a third down
 private val COL_X = 120.dp      // first column
 private val COL_W = 150.dp
@@ -136,15 +139,22 @@ fun XmbScreen(
     val x = live.xmb
     val inFolder = x.folder != null
 
+    val uncategorised = stringResource(R.string.vod_uncategorised)
+    val searchPlaceholder = stringResource(R.string.vod_xmb_search)
+    val searchLabel = stringResource(R.string.vod_xmb_search_query, query)
+    val searchSections = listOf(stringResource(R.string.vod_search_channels), stringResource(R.string.vod_search_movies), stringResource(R.string.vod_search_series))
+    val searchCounts = results?.let { listOf(it.channels, it.movies, it.series) }?.map { s ->
+        if (s.total > s.items.size) stringResource(R.string.vod_search_count_of, s.items.size, s.total) else "${s.total}"
+    }
     val items: List<String> = when (x.column) {
-        XmbColumn.SETTINGS -> SettingsGroup.entries.map { it.title }
-        XmbColumn.LIVE -> rail.orEmpty().map { it.entry.title }
-        XmbColumn.RECORDINGS -> recordings.map { r -> listOf(r.title, org.imdtv.iptvtv.recording.recordingStatus(r)).filter { it.isNotEmpty() }.joinToString(" · ") }
-        XmbColumn.SEARCH -> listOf(if (query.isEmpty()) "Search…" else "Search: $query") + listOf("Channels", "Movies", "Series").mapIndexed { i, t ->
-            val s = results?.let { listOf(it.channels, it.movies, it.series)[i] }
-            if (s == null) t else "$t (${if (s.total > s.items.size) "${s.items.size} of ${s.total}" else s.total})"
+        XmbColumn.SETTINGS -> SettingsGroup.entries.map { androidx.compose.ui.res.stringResource(it.labelRes) }
+        XmbColumn.LIVE -> rail.orEmpty().map { it.entry.titleText() }
+        XmbColumn.RECORDINGS -> recordings.map { r -> listOf(r.title, recordingStatus(app, r)).filter { it.isNotEmpty() }.joinToString(" · ") }
+        XmbColumn.SEARCH -> listOf(if (query.isEmpty()) searchPlaceholder else searchLabel) + searchSections.mapIndexed { i, t ->
+            val c = searchCounts?.get(i)
+            if (c == null) t else stringResource(R.string.vod_xmb_search_section, t, c)
         }
-        else -> cats.map { it.category.name.ifEmpty { "Uncategorised" } }
+        else -> cats.map { it.category.name.ifEmpty { uncategorised } }
     }
     val folderCount = when {
         !inFolder -> 0
@@ -232,7 +242,7 @@ fun XmbScreen(
             val sel = c == x.column
             Column(Modifier.offset(x = COL_X + colW * i, y = ROW_Y - 30.dp).width(110.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Icon(painterResource(ICONS.getValue(c)), null, tint = Color.White.copy(alpha = if (sel) 1f else .55f), modifier = Modifier.size(if (sel) 46.dp else 36.dp))
-                if (sel) Text(LABELS.getValue(c), fontSize = 13.sp, color = Color.White, modifier = Modifier.padding(top = 4.dp))
+                if (sel) Text(stringResource(LABELS.getValue(c)), fontSize = 13.sp, color = Color.White, textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.padding(top = 4.dp))
             }
         }
 
@@ -248,10 +258,10 @@ fun XmbScreen(
                     folderIcon = x.column != XmbColumn.SETTINGS && x.column != XmbColumn.RECORDINGS && !(x.column == XmbColumn.SEARCH && i == 0))
             }
             if (items.isEmpty() && x.column == XmbColumn.RECORDINGS) {
-                Text("No recordings yet. Hold OK on a channel in Live TV to record it.", fontSize = 15.sp, color = Color.White, modifier = Modifier.offset(x = colX - 200.dp, y = FOCUS_Y))
+                Text(stringResource(R.string.vod_xmb_no_recordings), fontSize = 15.sp, color = Color.White, modifier = Modifier.offset(x = colX - 200.dp, y = FOCUS_Y))
             }
             if (items.isEmpty() && x.column == XmbColumn.LIVE && rail != null) {
-                Text("All live categories are hidden. Show them again in Settings › Channels & categories.", fontSize = 15.sp,
+                Text(stringResource(R.string.vod_live_categories_hidden), fontSize = 15.sp,
                     color = Color.White, modifier = Modifier.offset(x = colX, y = FOCUS_Y))
             }
         } else {
@@ -268,17 +278,17 @@ fun XmbScreen(
                             ChannelLogo(ch, logoSource, Modifier.fillMaxSize().padding(2.dp))
                         }
                         Column(Modifier.padding(start = 10.dp).weight(1f)) {
-                            XmbText(ch.displayName(strip), d == 0)
+                            XmbText(ch.displayName(strip), d == 0, org.imdtv.iptvtv.ui.LocalTitleScale.current)
                             if (d == 0) {
                                 val cur = programmes[ch.id].orEmpty().firstOrNull { it.start <= now && now < it.stop }
-                                val meta = listOfNotNull(cur?.let { "Now: ${it.title} ${clockTime(it.start)}–${clockTime(it.stop)}" })
+                                val meta = listOfNotNull(cur?.let { stringResource(R.string.vod_now_programme, it.title, clockTime(it.start), clockTime(it.stop)) })
                                     .plus(heroBadges(ch.id, previewingId, formats)).joinToString(" · ")
                                 if (meta.isNotEmpty()) Text(meta, fontSize = 12.sp, color = Color.White.copy(alpha = .8f), maxLines = 1, overflow = TextOverflow.Ellipsis)
                             }
                         }
                     }
                 }
-                if (channels.isEmpty()) Text("No channels", fontSize = 15.sp, color = Color.White.copy(alpha = .55f), modifier = Modifier.offset(x = listX, y = FOCUS_Y))
+                if (channels.isEmpty()) Text(stringResource(R.string.vod_no_channels), fontSize = 15.sp, color = Color.White.copy(alpha = .55f), modifier = Modifier.offset(x = listX, y = FOCUS_Y))
                 Column(Modifier.align(Alignment.TopEnd).padding(top = 70.dp, end = 30.dp).width(380.dp)) {
                     Preview(live, visible = guide.previewing, screen = screen, edge = PreviewEdge.NONE,
                         modifier = Modifier.size(380.dp, 214.dp).clip(RoundedCornerShape(6.dp)).background(Color(0x40000000)))
@@ -292,19 +302,19 @@ fun XmbScreen(
                     if (d < -3 || d > 6) return@forEachIndexed
                     val title = if (hit is ChannelEntity) listOfNotNull((hit.customNumber ?: hit.number)?.toString()?.takeIf { org.imdtv.iptvtv.ui.LocalShowNumbers.current }, hit.displayName(strip)).joinToString("  ")
                         else (hit as VodItem).name
-                    XmbItem(title, d == 0, Modifier.offset(x = listX, y = FOCUS_Y + ITEM_H * d + if (d > 0) 14.dp else 0.dp).width(560.dp), folderIcon = false)
+                    XmbItem(title, d == 0, Modifier.offset(x = listX, y = FOCUS_Y + ITEM_H * d + if (d > 0) 14.dp else 0.dp).width(560.dp), folderIcon = false, scale = if (hit is ChannelEntity) org.imdtv.iptvtv.ui.LocalTitleScale.current else org.imdtv.iptvtv.ui.LocalVodTitleScale.current)
                 }
             } else {
                 val shown = vodMatches ?: grid
                 val barD = -x.folderItem
-                if (!editing && barD >= -3) XmbItem(if (vodQuery.isEmpty()) "Search ${items.getOrNull(x.folder ?: 0).orEmpty()}…" else "Search: $vodQuery",
+                if (!editing && barD >= -3) XmbItem(if (vodQuery.isEmpty()) stringResource(R.string.vod_search_in, items.getOrNull(x.folder ?: 0).orEmpty()) else stringResource(R.string.vod_xmb_search_query, vodQuery),
                     barD == 0, Modifier.offset(x = listX, y = FOCUS_Y + ITEM_H * barD).width(330.dp), folderIcon = false)
                 shown.forEachIndexed { i, v ->
                     val d = i + 1 - x.folderItem
                     if (d < -3 || d > 6) return@forEachIndexed
-                    XmbItem(v.name, d == 0, Modifier.offset(x = listX, y = FOCUS_Y + ITEM_H * d + if (d > 0) 14.dp else 0.dp).width(330.dp), folderIcon = false)
+                    XmbItem(v.name, d == 0, Modifier.offset(x = listX, y = FOCUS_Y + ITEM_H * d + if (d > 0) 14.dp else 0.dp).width(330.dp), folderIcon = false, scale = org.imdtv.iptvtv.ui.LocalVodTitleScale.current)
                 }
-                if (shown.isEmpty()) Text(if (vodMatches != null) "No matches" else "Nothing here", fontSize = 15.sp, color = Color.White.copy(alpha = .55f), modifier = Modifier.offset(x = listX, y = FOCUS_Y + ITEM_H + 14.dp))
+                if (shown.isEmpty()) Text(stringResource(if (vodMatches != null) R.string.vod_no_matches else R.string.vod_nothing_here), fontSize = 15.sp, color = Color.White.copy(alpha = .55f), modifier = Modifier.offset(x = listX, y = FOCUS_Y + ITEM_H + 14.dp))
                 focusedVod?.let { v ->
                     Column(Modifier.align(Alignment.TopEnd).padding(top = 70.dp, end = 30.dp).width(300.dp)) {
                         Box(Modifier.size(150.dp, 225.dp).clip(RoundedCornerShape(6.dp)).background(Color(0x26FFFFFF))) {
@@ -342,17 +352,17 @@ fun XmbScreen(
 }
 
 @Composable
-private fun XmbItem(title: String, focused: Boolean, modifier: Modifier, folderIcon: Boolean) {
+private fun XmbItem(title: String, focused: Boolean, modifier: Modifier, folderIcon: Boolean, scale: Float = 1f) {
     Row(modifier, verticalAlignment = Alignment.CenterVertically) {
         if (folderIcon) Icon(painterResource(R.drawable.ic_cat_folder), null, tint = Color.White.copy(alpha = if (focused) 1f else .55f),
             modifier = Modifier.padding(end = 10.dp).size(if (focused) 26.dp else 20.dp))
-        Box(Modifier.weight(1f, fill = false)) { XmbText(title, focused) } // ellipsise inside the row's width
+        Box(Modifier.weight(1f, fill = false)) { XmbText(title, focused, scale) } // ellipsise inside the row's width
     }
 }
 
 /** Focused: larger, bright white with a soft blue glow; others ~55%. */
 @Composable
-private fun XmbText(text: String, focused: Boolean) {
+private fun XmbText(text: String, focused: Boolean, ts: Float = 1f) {
     Text(text, maxLines = 1, overflow = TextOverflow.Ellipsis,
-        style = if (focused) TextStyle(fontSize = 19.sp, color = Color.White, shadow = GLOW) else TextStyle(fontSize = 16.sp, color = Color.White.copy(alpha = .55f)))
+        style = if (focused) TextStyle(fontSize = 19.sp * ts, color = Color.White, shadow = GLOW) else TextStyle(fontSize = 16.sp * ts, color = Color.White.copy(alpha = .55f)))
 }

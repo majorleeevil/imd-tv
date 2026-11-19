@@ -1,5 +1,7 @@
 package org.imdtv.iptvtv.ui.settings
 
+import org.imdtv.iptvtv.R
+import androidx.compose.ui.res.stringResource
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -39,27 +41,10 @@ import org.imdtv.iptvtv.ui.clockTime
 import org.imdtv.iptvtv.ui.dayDate
 import org.imdtv.iptvtv.ui.theme.LocalTheme
 
-private const val SYNC_LIMITS = "• Both boxes must be on, with IMD TV open or used recently.\n" +
-    "• A follower gets the master's changes the next time it opens IMD TV (or within 6 hours) while the master can be reached.\n" +
-    "• Changes made on a follower are replaced at its next sync.\n" +
-    "• Logins are sent only to boxes you pair, on this network."
-
-private const val MASTER_STEPS = "This box is now the master. To add a follower, go to the other box:\n" +
-    "1. On the other box, open IMD TV › Settings › Backup & sync › Sync.\n" +
-    "2. Set Role to Follower, then choose Turn on and OK.\n" +
-    "3. Still on the other box, choose Master, then pick this box from the list.\n" +
-    "4. A six-digit code appears on this screen. Type it on the other box and choose Pair.\n" +
-    "Repeat for as many boxes as you like; they're listed here under Followers."
-
-private const val FOLLOWER_STEPS = "This box is now a follower. To pair it:\n" +
-    "1. On the box to copy, open IMD TV › Settings › Backup & sync › Sync and set Role to Master.\n" +
-    "2. Back on this box, choose Master, then pick that box from the list.\n" +
-    "3. A six-digit code appears on that box's screen. Type it here and choose Pair.\n" +
-    "This box then copies the master each time IMD TV opens and every 6 hours."
-
 private fun whenText(t: Long) = "${dayDate(t)} ${clockTime(t)}"
 
-fun syncRoleLabel(r: SyncRole) = when (r) { SyncRole.OFF -> "Off"; SyncRole.MASTER -> "Master"; SyncRole.FOLLOWER -> "Follower" }
+@Composable
+fun syncRoleLabel(r: SyncRole) = stringResource(when (r) { SyncRole.OFF -> R.string.set_b_role_off; SyncRole.MASTER -> R.string.set_b_role_master; SyncRole.FOLLOWER -> R.string.set_b_role_follower })
 
 /** Master: the pairing code on screen, over every screen, until it is used, cancelled or expires. */
 @Composable
@@ -67,11 +52,11 @@ fun PairingPrompt(sync: SyncManager) {
     val p by sync.pairing.collectAsState()
     val pairing = p ?: return
     LaunchedEffect(pairing) { delay(PAIR_MS); if (sync.pairing.value === pairing) sync.pairing.value = null }
-    MenuFrame("Allow ${pairing.followerName}?", onDismiss = { sync.pairing.value = null }) { f ->
-        Text("Type this code on ${pairing.followerName} to let it copy this box's playlists, logins and settings:", fontSize = 14.sp,
+    MenuFrame(stringResource(R.string.set_b_allow_follower, pairing.followerName), onDismiss = { sync.pairing.value = null }) { f ->
+        Text(stringResource(R.string.set_b_pair_code_prompt, pairing.followerName), fontSize = 14.sp,
             color = Color.White, modifier = Modifier.padding(bottom = 10.dp))
         Text(pairing.code.toList().joinToString(" "), fontSize = 40.sp, color = Color.White, modifier = Modifier.padding(bottom = 14.dp))
-        MenuItem("Cancel", Modifier.focusRequester(f)) { sync.pairing.value = null }
+        MenuItem(stringResource(R.string.set_b_cancel), Modifier.focusRequester(f)) { sync.pairing.value = null }
     }
 }
 
@@ -84,6 +69,7 @@ fun SyncPage(vm: SettingsViewModel, modifier: Modifier, first: FocusRequester, o
     val problem by sync.problem.collectAsState()
     val pulling by sync.pulling.collectAsState()
     val scope = rememberCoroutineScope()
+    val ctx = androidx.compose.ui.platform.LocalContext.current
     val muted = LocalTheme.current.colors.muted
     var limits by remember { mutableStateOf<SyncRole?>(null) }
     var setup by remember { mutableStateOf<SyncRole?>(null) }
@@ -98,71 +84,71 @@ fun SyncPage(vm: SettingsViewModel, modifier: Modifier, first: FocusRequester, o
     val m = state.master
 
     Column(modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text("Sync", fontSize = 20.sp, color = Color.White, modifier = Modifier.padding(top = 6.dp, bottom = 18.dp))
-        ChoiceRow("Role", when (state.role) {
-                SyncRole.OFF -> "One box (the master) keeps the others' playlists and settings the same"
-                SyncRole.MASTER -> "Other boxes copy this one"
-                SyncRole.FOLLOWER -> "This box copies the master"
-            }, SyncRole.entries, state.role, ::syncRoleLabel,
+        Text(stringResource(R.string.set_b_sync_title), fontSize = 20.sp, color = Color.White, modifier = Modifier.padding(top = 6.dp, bottom = 18.dp))
+        ChoiceRow(stringResource(R.string.set_b_role), stringResource(when (state.role) {
+                SyncRole.OFF -> R.string.set_b_role_off_expl
+                SyncRole.MASTER -> R.string.set_b_role_master_expl
+                SyncRole.FOLLOWER -> R.string.set_b_role_follower_expl
+            }), SyncRole.entries, state.role, { syncRoleLabel(it) },
             Modifier.focusRequester(first)) { r ->
             if (r == SyncRole.OFF) { listing = false; chosen = null; scope.launch { sync.setRole(r) } } else limits = r
         }
         if (state.role == SyncRole.MASTER) {
-            Text("Followers", fontSize = 16.sp, color = Color.White, modifier = Modifier.padding(top = 8.dp))
+            Text(stringResource(R.string.set_b_followers), fontSize = 16.sp, color = Color.White, modifier = Modifier.padding(top = 8.dp))
             state.followers.forEach { f ->
-                SettingRow(f.name, f.lastSynced?.let { "Last synced ${whenText(it)}" } ?: "Not synced yet", "Remove") { removing = f }
+                SettingRow(f.name, f.lastSynced?.let { stringResource(R.string.set_b_last_synced, whenText(it)) } ?: stringResource(R.string.set_b_not_synced), stringResource(R.string.set_b_remove)) { removing = f }
             }
-            if (state.followers.isEmpty()) Text("No followers yet. On the other box, set Role to Follower, then choose Master and pick this box", fontSize = 14.sp, color = muted)
+            if (state.followers.isEmpty()) Text(stringResource(R.string.set_b_no_followers), fontSize = 14.sp, color = muted)
         }
         if (state.role == SyncRole.FOLLOWER) {
-            SettingRow("Master", problem ?: m?.lastSynced?.let { "Last synced ${whenText(it)}" } ?: if (m != null) "Not synced yet" else "Not paired",
-                (m?.name ?: "Choose a box") + (if (listing) " ▾" else " ›"), Modifier.focusRequester(masterRow)) {
+            SettingRow(stringResource(R.string.set_b_master), problem ?: m?.lastSynced?.let { stringResource(R.string.set_b_last_synced, whenText(it)) } ?: if (m != null) stringResource(R.string.set_b_not_synced) else stringResource(R.string.set_b_not_paired),
+                (m?.name ?: stringResource(R.string.set_b_choose_box)) + (if (listing) " ▾" else " ›"), Modifier.focusRequester(masterRow)) {
                 if (listing) { chosen = null }
                 listing = !listing
             }
             if (listing) {
                 val found by remember(listing) { if (listing) sync.browse() else flowOf(emptyList()) }.collectAsState(initial = emptyList())
                 found.forEach { b ->
-                    SettingRow(b.name, "Master on this network", null) {
+                    SettingRow(b.name, stringResource(R.string.set_b_master_on_network), null) {
                         scope.launch {
-                            if (sync.hello(b)) chosen = b else { chosen = null; vm.notice("Couldn't reach ${b.name}") }
+                            if (sync.hello(b)) chosen = b else { chosen = null; vm.notice(ctx.getString(R.string.set_b_cant_reach, b.name)) }
                         }
                     }
                 }
-                if (found.isEmpty()) Text("Looking for masters… (the other box must be set to Master with IMD TV open)", fontSize = 14.sp, color = muted)
+                if (found.isEmpty()) Text(stringResource(R.string.set_b_looking), fontSize = 14.sp, color = muted)
                 chosen?.let { b -> key(b) {
-                    EditRow("Code shown on ${b.name}", "Six digits, on that box's screen", "Not set", "", keyboard = KeyboardType.Number, saveLabel = "Pair") { code ->
+                    EditRow(stringResource(R.string.set_b_code_shown, b.name), stringResource(R.string.set_b_code_expl), stringResource(R.string.set_b_not_set), "", keyboard = KeyboardType.Number, saveLabel = stringResource(R.string.set_b_pair)) { code ->
                         scope.launch {
-                            if (sync.pair(b, code.trim())) { parkMaster(); listing = false; chosen = null; vm.notice("Paired with ${b.name}") }
-                            else vm.notice("Wrong or expired code: choose the box again")
+                            if (sync.pair(b, code.trim())) { parkMaster(); listing = false; chosen = null; vm.notice(ctx.getString(R.string.set_b_paired, b.name)) }
+                            else vm.notice(ctx.getString(R.string.set_b_wrong_code))
                         }
                     }
                 } }
             }
             if (m != null) {
-                SettingRow("Sync now", "Copy the master's playlists and settings now", null, busy = pulling) { if (!pulling) scope.launch { sync.pull(force = true) } }
-                SettingRow("Forget master", "Stop following ${m.name}", null) { parkMaster(); scope.launch { sync.forgetMaster() } }
+                SettingRow(stringResource(R.string.set_b_sync_now), stringResource(R.string.set_b_sync_now_expl), null, busy = pulling) { if (!pulling) scope.launch { sync.pull(force = true) } }
+                SettingRow(stringResource(R.string.set_b_forget_master), stringResource(R.string.set_b_forget_master_expl, m.name), null) { parkMaster(); scope.launch { sync.forgetMaster() } }
             }
         }
     }
 
     limits?.let { r ->
-        MenuFrame("Before you turn on sync", onDismiss = { limits = null }) { f ->
-            ScrollText(SYNC_LIMITS, Modifier.focusRequester(f).padding(bottom = 10.dp))
-            MenuItem("Turn on", Modifier) { limits = null; setup = r; parkFirst(); listing = false; chosen = null; scope.launch { sync.setRole(r) } }
-            MenuItem("Cancel", Modifier) { limits = null }
+        MenuFrame(stringResource(R.string.set_b_before_sync), onDismiss = { limits = null }) { f ->
+            ScrollText(stringResource(R.string.set_b_sync_limits), Modifier.focusRequester(f).padding(bottom = 10.dp))
+            MenuItem(stringResource(R.string.set_b_turn_on), Modifier) { limits = null; setup = r; parkFirst(); listing = false; chosen = null; scope.launch { sync.setRole(r) } }
+            MenuItem(stringResource(R.string.set_b_cancel), Modifier) { limits = null }
         }
     }
     setup?.let { r ->
-        MenuFrame(if (r == SyncRole.MASTER) "Set up a follower" else "Pair with the master", onDismiss = { setup = null }) { f ->
-            ScrollText(if (r == SyncRole.MASTER) MASTER_STEPS else FOLLOWER_STEPS, Modifier.focusRequester(f).padding(bottom = 10.dp))
-            MenuItem("OK", Modifier) { setup = null }
+        MenuFrame(if (r == SyncRole.MASTER) stringResource(R.string.set_b_setup_follower) else stringResource(R.string.set_b_pair_master), onDismiss = { setup = null }) { f ->
+            ScrollText(stringResource(if (r == SyncRole.MASTER) R.string.set_b_master_steps else R.string.set_b_follower_steps), Modifier.focusRequester(f).padding(bottom = 10.dp))
+            MenuItem(stringResource(R.string.set_b_ok), Modifier) { setup = null }
         }
     }
     removing?.let { f ->
-        MenuFrame("Remove ${f.name}?", onDismiss = { removing = null }) { fr ->
-            MenuItem("Remove", Modifier.focusRequester(fr)) { removing = null; parkFirst(); scope.launch { sync.removeFollower(f.id) } }
-            MenuItem("Cancel", Modifier) { removing = null }
+        MenuFrame(stringResource(R.string.set_b_remove_q, f.name), onDismiss = { removing = null }) { fr ->
+            MenuItem(stringResource(R.string.set_b_remove), Modifier.focusRequester(fr)) { removing = null; parkFirst(); scope.launch { sync.removeFollower(f.id) } }
+            MenuItem(stringResource(R.string.set_b_cancel), Modifier) { removing = null }
         }
     }
 }

@@ -1,6 +1,9 @@
 package org.imdtv.iptvtv.recording
 
 import androidx.compose.foundation.background
+import android.content.Context
+import org.imdtv.iptvtv.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -52,14 +55,48 @@ fun recordingWhen(r: RecordingEntity): String {
     return "${dayDate(start)} ${clockTime(start)}" + (length?.let { " · ${duration(it)}" } ?: "")
 }
 
-fun recordingStatus(r: RecordingEntity): String = when (r.status) {
-    RecStatus.SCHEDULED -> "Scheduled"
-    RecStatus.RECORDING -> "Recording · ends ${clockTime(r.scheduledEnd)}"
+fun recordingStatus(context: Context, r: RecordingEntity): String = when (r.status) {
+    RecStatus.SCHEDULED -> context.getString(R.string.vod_rec_status_scheduled)
+    RecStatus.RECORDING -> context.getString(R.string.vod_rec_status_recording, clockTime(r.scheduledEnd))
     RecStatus.DONE -> ""
-    RecStatus.STOPPED -> r.statusReason ?: "Stopped"
-    RecStatus.FAILED -> r.statusReason ?: "Failed"
-    RecStatus.SKIPPED -> r.statusReason ?: "Skipped — you were watching"
-    RecStatus.MISSED -> r.statusReason ?: "Missed — the box was off"
+    RecStatus.STOPPED -> r.statusReason?.let { recordingReason(context, it) } ?: context.getString(R.string.vod_rec_status_stopped)
+    RecStatus.FAILED -> r.statusReason?.let { recordingReason(context, it) } ?: context.getString(R.string.vod_rec_status_failed)
+    RecStatus.SKIPPED -> context.getString(R.string.vod_rec_reason_skipped)
+    RecStatus.MISSED -> context.getString(R.string.vod_rec_reason_missed)
+}
+
+// The reason is stored on the row in English (the tests and the service write it); it's shown translated.
+private val FIXED_REASONS = mapOf(
+    "Stopped — app was closed" to R.string.vod_rec_reason_app_closed,
+    "Missed — the box was off" to R.string.vod_rec_reason_missed,
+    "Skipped — you were watching" to R.string.vod_rec_reason_skipped,
+    "Channel no longer in the playlist" to R.string.vod_rec_reason_channel_gone,
+    "No free connection" to R.string.vod_rec_reason_no_connection,
+    "Failed — the recording couldn't start" to R.string.vod_rec_reason_cant_start,
+    "Failed — no USB drive found" to R.string.vod_rec_reason_no_usb,
+    "Stopped — stream lost" to R.string.vod_rec_reason_stream_lost,
+    "Failed — provider refused a second stream" to R.string.vod_rec_reason_second_stream,
+    "Stopped — storage full" to R.string.vod_rec_reason_storage_full,
+)
+private val DRM_REASON = Regex("This channel uses DRM \\((.*)\\) and can't be recorded")
+private val UNSUPPORTED_REASON = Regex("This channel can't be recorded \\((.*)\\)")
+private val NO_START_REASON = Regex("Failed — the channel didn't start( \\(HTTP (\\d+)\\))?")
+private val SAVE_REASON = Regex("Failed — couldn't save to (internal storage|the USB drive|the network share): (.*)")
+
+/** A stored reason in the current language; one with no translation (an error message from the system) is shown as it is. */
+fun recordingReason(context: Context, reason: String): String {
+    FIXED_REASONS[reason]?.let { return context.getString(it) }
+    DRM_REASON.matchEntire(reason)?.let { return context.getString(R.string.vod_rec_reason_drm, it.groupValues[1]) }
+    UNSUPPORTED_REASON.matchEntire(reason)?.let { return context.getString(R.string.vod_rec_reason_unsupported, it.groupValues[1]) }
+    NO_START_REASON.matchEntire(reason)?.let { m ->
+        return if (m.groupValues[2].isEmpty()) context.getString(R.string.vod_rec_reason_no_start)
+        else context.getString(R.string.vod_rec_reason_no_start_http, m.groupValues[2])
+    }
+    SAVE_REASON.matchEntire(reason)?.let { m ->
+        val store = when (m.groupValues[1]) { "internal storage" -> R.string.vod_rec_store_internal; "the USB drive" -> R.string.vod_rec_store_usb; else -> R.string.vod_rec_store_smb }
+        return context.getString(R.string.vod_rec_reason_cant_save, context.getString(store), m.groupValues[2])
+    }
+    return reason
 }
 
 /** The row last focused, kept across the screen being rebuilt (full-screen playback and back). */
@@ -74,18 +111,18 @@ fun RecordingMenu(r: RecordingEntity, all: Boolean, onPlay: (RecordingEntity) ->
     val scope = rememberCoroutineScope()
     var confirm by remember(r.id) { mutableStateOf(false) }
     if (confirm) {
-        ContextMenu("Delete ${r.title}?", listOf(
-            "Delete" to { scope.launch { c.recordings.delete(r.id, c::deleteRecordingFile) }; onDismiss() },
-            "Cancel" to onDismiss,
+        ContextMenu(stringResource(R.string.vod_rec_delete_q, r.title), listOf(
+            stringResource(R.string.vod_rec_delete) to { scope.launch { c.recordings.delete(r.id, c::deleteRecordingFile) }; onDismiss() },
+            stringResource(R.string.vod_cancel) to onDismiss,
         ), onDismiss)
         return
     }
     val items = buildList {
-        if (all && r.playable()) add("Play" to { onDismiss(); onPlay(r) })
+        if (all && r.playable()) add(stringResource(R.string.vod_rec_play) to { onDismiss(); onPlay(r) })
         when (r.status) {
-            RecStatus.SCHEDULED -> add("Cancel recording" to { scope.launch { c.recordings.cancel(r.id) }; onDismiss() })
-            RecStatus.RECORDING -> add("Stop recording" to { c.recordings.stop(r.id); onDismiss() })
-            else -> add("Delete" to { confirm = true })
+            RecStatus.SCHEDULED -> add(stringResource(R.string.vod_rec_cancel_recording) to { scope.launch { c.recordings.cancel(r.id) }; onDismiss() })
+            RecStatus.RECORDING -> add(stringResource(R.string.vod_rec_stop_recording) to { c.recordings.stop(r.id); onDismiss() })
+            else -> add(stringResource(R.string.vod_rec_delete) to { confirm = true })
         }
     }
     ContextMenu(r.title, items, onDismiss)
@@ -116,7 +153,7 @@ fun RecordingsScreen(nav: (@Composable () -> Unit)?, onPlay: (RecordingEntity) -
             val list = rows
             if (list != null && list.isEmpty()) {
                 FocusBox(onClick = {}, modifier = firstModifier.padding(top = 32.dp)) { f ->
-                    Text("No recordings yet. Hold OK on a channel in the guide to record it.", fontSize = 16.sp,
+                    Text(stringResource(R.string.vod_rec_none_guide), fontSize = 16.sp,
                         color = if (f) colors.onFocus else textColor,
                         modifier = Modifier.clip(RoundedCornerShape(10.dp)).background(if (f) colors.focus else Color.Transparent).padding(14.dp))
                 }
@@ -156,7 +193,7 @@ private fun RecordingRow(r: RecordingEntity, f: Boolean, textColor: Color) {
             Text(r.title, fontSize = 16.sp, fontWeight = FontWeight.Medium, color = fg, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text("${r.channelName} · ${recordingWhen(r)}", fontSize = 12.sp, color = fg.copy(alpha = .75f), maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
-        val status = recordingStatus(r)
+        val status = recordingStatus(LocalContext.current, r)
         if (status.isNotEmpty()) {
             Spacer(Modifier.width(12.dp))
             Text(status, fontSize = 13.sp, color = if (r.status == RecStatus.RECORDING) Color(0xFFE53935) else fg.copy(alpha = .85f), maxLines = 1)

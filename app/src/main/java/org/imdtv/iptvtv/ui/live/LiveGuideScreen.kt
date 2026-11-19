@@ -1,5 +1,8 @@
 package org.imdtv.iptvtv.ui.live
 
+import androidx.compose.ui.res.stringResource
+import org.imdtv.iptvtv.R
+
 import org.imdtv.iptvtv.ui.theme.glass
 import org.imdtv.iptvtv.ui.theme.LocalGlassBackdrop
 import androidx.compose.runtime.setValue
@@ -74,24 +77,26 @@ fun LiveGuideScreen(vm: LiveViewModel, nav: @Composable () -> Unit, onFullScreen
         Box(Modifier.padding(start = 24.dp, top = 22.dp)) { nav() }
         // Medium/Small: the hero runs up to the preview, so the description fits beside the title.
         val previewW = if (boxed) boxH * 16 / 9 + 30.dp else (300.dp - shift) * 53 / 30
+        // Celestial Glass with the faded preview: Sky Glass style, text across ~60% of the screen over the faded video.
+        val sky = backdrop == null && !boxed
         GuideHero(vm, Modifier.padding(start = 24.dp, top = 80.dp)
-            .then(if (settings.headerSize == HeaderSize.LARGE) Modifier.width(450.dp) else Modifier.padding(end = previewW + 24.dp).fillMaxWidth())
+            .then(if (sky) Modifier.width(575.dp) else if (settings.headerSize == HeaderSize.LARGE) Modifier.width(450.dp) else Modifier.padding(end = previewW + 24.dp).fillMaxWidth())
             // Liquid Glass: a fixed-size panel, so moving focus doesn't re-rasterise it for each description length.
-            .then(if (backdrop != null) Modifier.height(232.dp - shift) else Modifier).glass().padding(inset), settings.headerSize)
+            .then(if (backdrop != null) Modifier.height(232.dp - shift) else Modifier).glass().padding(inset), settings.headerSize, sky)
 
         if (rail?.isEmpty() == true) {
-            Text("All live categories are hidden. Show them again in Settings › Channels & categories.", fontSize = 16.sp,
+            Text(stringResource(R.string.live_all_hidden), fontSize = 16.sp,
                 color = Color.White, modifier = Modifier.padding(start = 24.dp, top = 380.dp))
         }
         Row(Modifier.padding(start = 24.dp, top = gridTop - 18.dp), verticalAlignment = Alignment.CenterVertically) {
             Text(
-                "◀ ${entry?.title.orEmpty()}", fontSize = 11.sp, color = Color.White, maxLines = 1,
+                "◀ ${entry?.titleText().orEmpty()}", fontSize = 11.sp, color = Color.White, maxLines = 1,
                 modifier = Modifier.clip(RoundedCornerShape(10.dp)).background(colors.cellDim).padding(horizontal = 7.dp, vertical = 2.dp),
             )
-            Text("  Press left for categories", fontSize = 11.sp, color = colors.muted)
+            Text(stringResource(R.string.live_press_left), fontSize = 11.sp, color = colors.muted)
             if (updating) {
                 Spacer(Modifier.width(16.dp)); Spinner(size = 11.dp, color = colors.muted)
-                Text("  Updating guide…", fontSize = 11.sp, color = colors.muted)
+                Text(stringResource(R.string.live_updating_guide), fontSize = 11.sp, color = colors.muted)
             }
         }
 
@@ -106,7 +111,7 @@ fun LiveGuideScreen(vm: LiveViewModel, nav: @Composable () -> Unit, onFullScreen
 
 /** The hero reads focus, guide and stream format itself, so a key press recomposes only it and the rows, not the screen. */
 @Composable
-private fun GuideHero(vm: LiveViewModel, modifier: Modifier, size: HeaderSize) {
+private fun GuideHero(vm: LiveViewModel, modifier: Modifier, size: HeaderSize, sky: Boolean) {
     val channels by vm.channels.collectAsState()
     val programmes by vm.programmes.collectAsState()
     val now by vm.now.collectAsState()
@@ -118,5 +123,5 @@ private fun GuideHero(vm: LiveViewModel, modifier: Modifier, size: HeaderSize) {
     val cursor by vm.cursor.collectAsState()
     val hero = channels.find { it.id == focused?.id } ?: focused // the list has the renamed copy
     Hero(hero, hero?.displayName(strip).orEmpty(), programmes[focused?.id].orEmpty(), now, logoSource, heroBadges(focused?.id, previewingId, formats), modifier, size,
-        at = cursor?.takeIf { it > now } ?: now)
+        at = Timeline.cursorAt(cursor, now, vm.inPast.collectAsState().value), sky = sky)
 }

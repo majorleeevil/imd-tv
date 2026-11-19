@@ -53,7 +53,7 @@ class EpgRefreshWorker(context: Context, params: WorkerParameters) : CoroutineWo
                 attempted++
                 // One bad source must not block the others; keep its previous guide (importer is atomic).
                 runCatching { c.epgImporter.import(s, settings.epgDaysToKeep, settings.epgPastDays) }
-                    .onSuccess { c.db.epgDao().setStatus(s.id, epgOkStatus(System.currentTimeMillis(), it, ZoneId.systemDefault())) }
+                    .onSuccess { c.db.epgDao().setStatus(s.id, epgOkStatus(applicationContext, System.currentTimeMillis(), it, ZoneId.systemDefault())) }
                     .onFailure {
                         if (it is CancellationException) throw it
                         failed++

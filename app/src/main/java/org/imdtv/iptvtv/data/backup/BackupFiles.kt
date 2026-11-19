@@ -1,5 +1,6 @@
 package org.imdtv.iptvtv.data.backup
 
+import org.imdtv.iptvtv.R
 import android.content.ContentValues
 import android.content.Context
 import android.net.Uri
@@ -26,7 +27,7 @@ suspend fun writeBackup(context: Context, json: String, folder: String? = null):
         val file = generateSequence(0) { it + 1 }.map { n -> File(dir, if (n == 0) name else name.replace(".json", " ($n).json")) }
             .first { !it.exists() }
         file.writeText(json)
-        return@withContext "Saved ${file.name} to ${dir.path}"
+        return@withContext context.getString(R.string.set_b_saved_to, file.name, dir.path)
     }
     if (Build.VERSION.SDK_INT >= 29) {
         val usb = MediaStore.getExternalVolumeNames(context).firstOrNull { it != MediaStore.VOLUME_EXTERNAL_PRIMARY }
@@ -48,11 +49,11 @@ suspend fun writeBackup(context: Context, json: String, folder: String? = null):
         val saved = resolver.query(uri, arrayOf(MediaStore.MediaColumns.DISPLAY_NAME), null, null, null)?.use { c ->
             if (c.moveToFirst()) c.getString(0) else null
         } ?: name
-        "Saved $saved to ${if (usb != null) "the USB stick" else "Downloads"}"
+        context.getString(if (usb != null) R.string.set_b_saved_usb else R.string.set_b_saved_downloads, saved)
     } else {
         val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).apply { mkdirs() }
         File(dir, name).writeText(json)
-        "Saved $name to Downloads"
+        context.getString(R.string.set_b_saved_downloads, name)
     }
 }
 
@@ -69,5 +70,5 @@ fun backupFilesIn(dir: File, label: String = dir.path): List<SharedFile> =
         .map { SharedFile(it.name, android.net.Uri.fromFile(it), label, it.length(), it.lastModified()) }
 
 suspend fun readBackup(context: Context, uri: Uri): String = withContext(Dispatchers.IO) {
-    context.contentResolver.openInputStream(uri)?.use { it.readBytes().decodeToString() } ?: throw BackupException("Not a readable backup file")
+    context.contentResolver.openInputStream(uri)?.use { it.readBytes().decodeToString() } ?: throw BackupException("Not a readable backup file", R.string.set_b_backup_unreadable)
 }

@@ -1,5 +1,8 @@
 package org.imdtv.iptvtv.ui.live
 
+import androidx.compose.ui.res.stringResource
+import org.imdtv.iptvtv.R
+
 import org.imdtv.iptvtv.ui.theme.LocalTheme
 
 import android.net.Uri
@@ -60,7 +63,7 @@ fun LogoPicker(vm: LiveViewModel, ch: ChannelEntity, name: String, onDismiss: ()
     LaunchedEffect(ch.id, filesAsked) { files = listSharedFiles(context, IMAGE_EXTS) }
     fun pickFile(uri: Uri, fileName: String?) {
         val ext = fileName?.substringAfterLast('.', "")?.lowercase()
-        if (ext !in IMAGE_EXTS) { Toast.makeText(context, "That isn't a PNG, JPG or WEBP image", Toast.LENGTH_LONG).show(); return }
+        if (ext !in IMAGE_EXTS) { Toast.makeText(context, context.getString(R.string.live_logo_bad_type), Toast.LENGTH_LONG).show(); return }
         vm.setCustomLogoFile(ch, uri, ext!!); onDismiss()
     }
     val browse = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
@@ -79,32 +82,32 @@ fun LogoPicker(vm: LiveViewModel, ch: ChannelEntity, name: String, onDismiss: ()
                 Uri.fromParts("package", context.packageName, null)))
         }
     }
-    MenuFrame("Logo for $name", onDismiss) { first ->
+    MenuFrame(stringResource(R.string.live_logo_title, name), onDismiss) { first ->
         var firstUsed = false
         fun firstOr(): Modifier = if (firstUsed) Modifier else { firstUsed = true; Modifier.focusRequester(first) }
 
-        Section("Open-source logos")
+        Section(stringResource(R.string.live_logo_open_source))
         when (val c = candidates) {
-            null -> Note("Looking…")
-            emptyList<String>() -> Note("None found")
+            null -> Note(stringResource(R.string.live_looking))
+            emptyList<String>() -> Note(stringResource(R.string.live_none_found))
             else -> c.forEach { url -> LogoRow(url, url.substringAfterLast('/'), firstOr()) { vm.setCustomLogoUrl(ch, url); onDismiss() } }
         }
-        Section("On this device")
+        Section(stringResource(R.string.live_logo_on_device))
         if (remember { canPickFile(context, "image/*") }) {
-            MenuItem("Browse files… (needs a file manager app)", firstOr()) { browse.launch(pickFileIntent("image/*")) }
+            MenuItem(stringResource(R.string.live_logo_browse), firstOr()) { browse.launch(pickFileIntent("image/*")) }
         }
         if (Build.VERSION.SDK_INT >= 30 && !hasAllFilesAccess()) {
             val intent = remember { allFilesAccessIntent(context) }
-            if (intent != null) MenuItem("Allow access to all files", firstOr()) { runCatching { context.startActivity(intent) } }
-            if (!canReadPhotos) MenuItem("Allow access to images", firstOr()) { askPhotos.launch(photoPermission) }
+            if (intent != null) MenuItem(stringResource(R.string.live_logo_allow_files), firstOr()) { runCatching { context.startActivity(intent) } }
+            if (!canReadPhotos) MenuItem(stringResource(R.string.live_logo_allow_images), firstOr()) { askPhotos.launch(photoPermission) }
         }
         when (val f = files) {
             null -> Unit
-            emptyList<SharedFile>() -> Note("None found")
+            emptyList<SharedFile>() -> Note(stringResource(R.string.live_none_found))
             else -> f.forEach { file -> LogoRow(file.uri, file.name, firstOr()) { pickFile(file.uri, file.name) } }
         }
         Spacer(Modifier.size(6.dp))
-        MenuItem("Use automatic logo", firstOr()) { vm.useAutomaticLogo(ch); onDismiss() }
+        MenuItem(stringResource(R.string.live_logo_automatic), firstOr()) { vm.useAutomaticLogo(ch); onDismiss() }
     }
 }
 

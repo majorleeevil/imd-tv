@@ -6,10 +6,13 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import org.junit.runner.RunWith
 import org.junit.rules.TemporaryFolder
 import java.io.File
 
+@RunWith(org.robolectric.RobolectricTestRunner::class)
 class RecordingStoreTest {
+    private val ctx get() = androidx.test.core.app.ApplicationProvider.getApplicationContext<android.content.Context>()
     @get:Rule val tmp = TemporaryFolder()
 
     @Test fun createMakesUniqueFilesAndDeleteRemoves() {
@@ -25,9 +28,9 @@ class RecordingStoreTest {
     }
 
     @Test fun freeSpaceText() {
-        assertEquals("About 4.0 GB free ≈ 2 h HD", freeSpaceText(4_000_000_000))
-        assertEquals("About 3.8 GB free ≈ 1 h 54 min HD", freeSpaceText(3_800_000_000))
-        assertEquals("About 0.5 GB free ≈ 15 min HD", freeSpaceText(500_000_000))
-        assertEquals("Free space unknown", freeSpaceText(null))
+        assertEquals("About 4.0 GB free ≈ 2 h HD", freeSpaceText(ctx, 4_000_000_000))
+        assertEquals("About 3.8 GB free ≈ 1 h 54 min HD", freeSpaceText(ctx, 3_800_000_000))
+        assertEquals("About 0.5 GB free ≈ 15 min HD", freeSpaceText(ctx, 500_000_000))
+        assertEquals("Free space unknown", freeSpaceText(ctx, null))
     }
 }

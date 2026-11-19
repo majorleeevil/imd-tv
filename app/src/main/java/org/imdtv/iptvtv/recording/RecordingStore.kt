@@ -1,6 +1,7 @@
 package org.imdtv.iptvtv.recording
 
 import android.content.Context
+import org.imdtv.iptvtv.R
 import android.os.Environment
 import java.io.File
 import java.io.FileOutputStream
@@ -36,11 +37,15 @@ fun usbDirs(context: Context): List<File> = context.getExternalFilesDirs(null).d
 private const val BYTES_PER_HD_HOUR = 2_000_000_000.0
 
 /** "About 3.8 GB free ≈ 1 h 54 min HD" (about 2 GB per hour of HD). */
-fun freeSpaceText(bytes: Long?): String {
-    if (bytes == null) return "Free space unknown"
+fun freeSpaceText(context: Context, bytes: Long?): String {
+    if (bytes == null) return context.getString(R.string.vod_rec_free_unknown)
     val minutes = (bytes / BYTES_PER_HD_HOUR * 60).toLong()
-    val time = when { minutes < 60 -> "$minutes min"; minutes % 60 == 0L -> "${minutes / 60} h"; else -> "${minutes / 60} h ${minutes % 60} min" }
-    return "About ${String.format(Locale.UK, "%.1f", bytes / 1e9)} GB free ≈ $time HD"
+    val time = when {
+        minutes < 60 -> context.getString(R.string.vod_minutes_short, minutes)
+        minutes % 60 == 0L -> context.getString(R.string.vod_hours_short, minutes / 60)
+        else -> context.getString(R.string.vod_hours_minutes_short, minutes / 60, minutes % 60)
+    }
+    return context.getString(R.string.vod_rec_free_space, String.format(Locale.UK, "%.1f", bytes / 1e9), time)
 }
 
 /** A recording's file (path or smb://), as opposed to a provider stream the player is showing. */

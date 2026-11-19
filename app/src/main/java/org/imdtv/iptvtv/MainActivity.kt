@@ -70,6 +70,11 @@ import org.imdtv.iptvtv.ui.settings.SettingsViewModel
 import org.imdtv.iptvtv.work.CatalogueSyncWorker
 
 class MainActivity : ComponentActivity() {
+    override fun attachBaseContext(newBase: android.content.Context) {
+        super.attachBaseContext(org.imdtv.iptvtv.ui.AppLanguage.wrap(newBase))
+        org.imdtv.iptvtv.ui.namesLocale = resources.configuration.locales[0].let { if (it.language == "en") java.util.Locale.UK else it }
+    }
+
     private val app: AppViewModel by viewModels()
     private val live: LiveViewModel by viewModels()
     private val vod: VodViewModel by viewModels()
@@ -106,7 +111,11 @@ class MainActivity : ComponentActivity() {
             // (guide hero over the timeline, user photo 2026-11-18), so text keeps its designed size.
             CompositionLocalProvider(androidx.compose.ui.platform.LocalDensity provides androidx.compose.ui.unit.Density(density.density, 1f),
                 LocalTheme provides remember(themeId, themeColour, themeDark) { themeOf(themeId, themeColour, themeDark) }, LocalGlassBackdrop provides backdrop,
-                org.imdtv.iptvtv.ui.LocalShowNumbers provides app.settings.collectAsState().value.showChannelNumbers) {
+                org.imdtv.iptvtv.ui.LocalShowNumbers provides app.settings.collectAsState().value.showChannelNumbers,
+                org.imdtv.iptvtv.ui.LocalTitleScale provides app.settings.collectAsState().value.titleSize.scale,
+                org.imdtv.iptvtv.ui.LocalVodTitleScale provides app.settings.collectAsState().value.vodTitleSize.scale) {
+            val catchUp = app.settings.collectAsState().value.catchUpOn
+            androidx.compose.runtime.SideEffect { org.imdtv.iptvtv.ui.catchUpOn = catchUp }
             MaterialTheme(colorScheme = darkColorScheme()) {
             // Celestial Glass and Liquid Glass: every TV Text in Inter (the website's font). Inside MaterialTheme, which
             // otherwise sets its own sans-serif text style over anything provided outside it.
@@ -178,6 +187,7 @@ class MainActivity : ComponentActivity() {
                 Box(Modifier.fillMaxSize().background(Color.Black)) {
                     // A catch-up programme picked in a guide menu opens with the movie controls (pause, seek).
                     androidx.compose.runtime.LaunchedEffect(live) { live.openCatchUp.collect { app.playFullScreen(it, live = false) } }
+                    app.resumeLive = { live.focused.value?.let(live::preview) }
                     val full: (org.imdtv.iptvtv.data.db.ChannelEntity) -> Unit = { ch ->
                         live.preview(ch)
                         live.watched(ch)
@@ -235,9 +245,11 @@ class MainActivity : ComponentActivity() {
                     org.imdtv.iptvtv.data.update.WhatsNewPrompt((application as IptvApp).container.updater)
                     if (exitHint) org.imdtv.iptvtv.ui.InfoBar(
                         buildAnnotatedString {
-                            append("Press ")
+                            val hint = androidx.compose.ui.res.stringResource(org.imdtv.iptvtv.R.string.live_exit_hint, "\u0000")
+                            val at = hint.indexOf('\u0000')
+                            append(hint.substring(0, at))
                             withStyle(SpanStyle(fontSize = 22.sp, fontWeight = FontWeight.Bold)) { append("↩") }
-                            append(" to exit application")
+                            append(hint.substring(at + 1))
                         },
                         Modifier.align(Alignment.BottomCenter).padding(bottom = 40.dp),
                     )

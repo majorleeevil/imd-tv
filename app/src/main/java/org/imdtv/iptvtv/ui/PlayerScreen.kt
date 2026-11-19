@@ -1,5 +1,6 @@
 package org.imdtv.iptvtv.ui
 
+import org.imdtv.iptvtv.ui.hasCatchUp
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
@@ -38,6 +39,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import org.imdtv.iptvtv.data.settings.VideoAspect
 import kotlinx.coroutines.delay
+import org.imdtv.iptvtv.R
 import org.imdtv.iptvtv.data.catalogue.displayName
 import org.imdtv.iptvtv.player.PlayerManager
 import androidx.tv.material3.Text
@@ -51,6 +53,7 @@ private val OK = setOf(Key.DirectionCenter, Key.Enter, Key.NumPadEnter)
 fun PlayerScreen(player: PlayerManager, title: String, liveVm: LiveViewModel? = null, onGuide: () -> Unit = {}, showClock: Boolean = false,
                  aspect: VideoAspect = VideoAspect.AUTO) {
     val live = liveVm != null
+    val context = androidx.compose.ui.platform.LocalContext.current
     val zapLeftRight = liveVm?.settings?.collectAsState()?.value?.zapLeftRight == true
     val focused = liveVm?.focused?.collectAsState()?.value
     val name = focused?.displayName(liveVm.strip.collectAsState().value) ?: title
@@ -58,13 +61,14 @@ fun PlayerScreen(player: PlayerManager, title: String, liveVm: LiveViewModel? = 
     var failure by remember { mutableStateOf<Pair<Long?, String>?>(null) }
     val shownName by androidx.compose.runtime.rememberUpdatedState(if (live) name else title) // the zapped-to channel, not the first
     // The view model's value, not the composed one: a zap sets it, then plays, before the next recomposition.
-    LaunchedEffect(Unit) { player.errors.collect { failure = liveVm?.focused?.value?.id to "Can't play $shownName: ${org.imdtv.iptvtv.player.playErrorText(it)}" } }
+    LaunchedEffect(Unit) { player.errors.collect { failure = liveVm?.focused?.value?.id to context.getString(R.string.live_err_cant_play, shownName, org.imdtv.iptvtv.player.playErrorText(context, it)) } }
     val error = failure?.takeIf { it.first == focused?.id }?.second
 
     var overlay by remember { mutableStateOf(false) }
     var lastKey by remember { mutableLongStateOf(0L) }
     var menuOpen by remember { mutableStateOf(false) }
     val keys = remember { FocusRequester() }
+    val leftHeld = remember { BooleanArray(1) }
     BackHandler(enabled = overlay) { overlay = false }
     LaunchedEffect(overlay, lastKey, menuOpen) {
         if (overlay) { if (!menuOpen) { delay(5_000); overlay = false } }
@@ -98,6 +102,15 @@ fun PlayerScreen(player: PlayerManager, title: String, liveVm: LiveViewModel? = 
                 if (overlay) return@onKeyEvent false
                 when {
                     e.key in OK -> { if (e.type == KeyEventType.KeyUp) overlay = true; true }
+                    // Catch-up channel: Left acts on key-up, and held it jumps 30 s back into catch-up of the programme on now.
+                    e.key == Key.DirectionLeft && focused?.hasCatchUp == true -> {
+                        if (e.type == KeyEventType.KeyDown && e.nativeKeyEvent.repeatCount > 0) { if (!leftHeld[0]) { leftHeld[0] = true; liveVm.jumpBack(focused) } }
+                        else if (e.type == KeyEventType.KeyUp) {
+                            if (!leftHeld[0]) zapDelta(e.key, zapLeftRight)?.let(liveVm::zapBy) ?: zapDelta(e.key, !zapLeftRight)?.let(liveVm::toPreviousChannel)
+                            leftHeld[0] = false
+                        }
+                        true
+                    }
                     // The other pair of arrows steps through the channels watched before (Playback › View Previous Channel With).
                     zapDelta(e.key, !zapLeftRight) != null -> { if (e.type == KeyEventType.KeyDown) zapDelta(e.key, !zapLeftRight)?.let(liveVm::toPreviousChannel); true }
                     zapDelta(e.key, zapLeftRight) != null -> { if (e.type == KeyEventType.KeyDown) zapDelta(e.key, zapLeftRight)?.let(liveVm::zapBy); true }

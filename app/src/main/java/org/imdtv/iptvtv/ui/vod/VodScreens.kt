@@ -1,6 +1,8 @@
 package org.imdtv.iptvtv.ui.vod
 
 import org.imdtv.iptvtv.ui.theme.LocalTheme
+import org.imdtv.iptvtv.R
+import androidx.compose.ui.res.stringResource
 import org.imdtv.iptvtv.ui.theme.themeBackground
 
 import androidx.compose.foundation.background
@@ -115,18 +117,18 @@ fun VodHomeScreen(vm: VodViewModel, nav: @Composable () -> Unit, onOpen: (VodIte
         Row(Modifier.align(Alignment.TopEnd).padding(top = 66.dp, end = 50.dp), verticalAlignment = Alignment.CenterVertically) {
             if (vm.updating.collectAsState().value) {
                 org.imdtv.iptvtv.ui.Spinner(size = 14.dp)
-                Text("Updating ${if (kind == Kind.MOVIE) "movies" else "series"}…", fontSize = 11.sp, color = Color.White,
+                Text(stringResource(if (kind == Kind.MOVIE) R.string.vod_updating_movies else R.string.vod_updating_series), fontSize = 11.sp, color = Color.White,
                     modifier = Modifier.padding(start = 6.dp, end = 16.dp))
             }
-            Text("Category", fontSize = 11.sp, color = LocalTheme.current.colors.muted)
-            Text("◀ ${gridCat?.name ?: if (kind == Kind.MOVIE) "All Movies" else "All Series"}", fontSize = 11.sp, color = Color.White,
+            Text(stringResource(R.string.vod_category), fontSize = 11.sp, color = LocalTheme.current.colors.muted)
+            Text(stringResource(R.string.vod_category_pill, gridCat?.name ?: stringResource(if (kind == Kind.MOVIE) R.string.vod_all_movies else R.string.vod_all_series)), fontSize = 11.sp, color = Color.White,
                 fontWeight = FontWeight.Medium, modifier = Modifier.padding(start = 4.dp).clip(RoundedCornerShape(10.dp))
                     .background(Color(0x1AFFFFFF)).padding(horizontal = 8.dp, vertical = 3.dp))
         }
         // In-category search sits just above the title (search spec); it searches what the rows/grid show.
         LaunchedEffect(kind) { vm.warmSearch() }
         org.imdtv.iptvtv.ui.search.SearchBar(query, { vm.query.value = it },
-            "Search ${gridCat?.name ?: if (kind == Kind.MOVIE) "All Movies" else "All Series"}…",
+            stringResource(R.string.vod_search_in, gridCat?.name ?: stringResource(if (kind == Kind.MOVIE) R.string.vod_all_movies else R.string.vod_all_series)),
             Modifier.padding(start = 50.dp, top = 62.dp).width(410.dp))
         focused?.let { Hero(it, details[it.id], Modifier.padding(start = 50.dp, top = 100.dp).width(410.dp), titleLines = 1) }
 
@@ -135,7 +137,7 @@ fun VodHomeScreen(vm: VodViewModel, nav: @Composable () -> Unit, onOpen: (VodIte
         Box(Modifier.padding(start = 50.dp, top = 260.dp).fillMaxSize()) {
             val found = matches
             if (found != null) {
-                if (found.isEmpty()) Text("No matches", fontSize = 15.sp, color = LocalTheme.current.colors.muted)
+                if (found.isEmpty()) Text(stringResource(R.string.vod_no_matches), fontSize = 15.sp, color = LocalTheme.current.colors.muted)
                 else androidx.compose.runtime.CompositionLocalProvider(androidx.compose.foundation.gestures.LocalBringIntoViewSpec provides rowToTop) { LazyVerticalGrid(GridCells.Fixed(7), verticalArrangement = Arrangement.spacedBy(14.dp),
                     contentPadding = androidx.compose.foundation.layout.PaddingValues(start = 8.dp, top = 6.dp, end = 42.dp, bottom = 20.dp),
                     modifier = Modifier.fillMaxSize().offset(x = (-8).dp)) {
@@ -168,14 +170,14 @@ fun VodHomeScreen(vm: VodViewModel, nav: @Composable () -> Unit, onOpen: (VodIte
                 LazyColumn(Modifier.fillMaxSize(), contentPadding = androidx.compose.foundation.layout.PaddingValues(
                     bottom = (maxHeight - rowHeight(poster, gap)).coerceAtLeast(0.dp))) {
                     if (favs.isNotEmpty()) item(key = "fav") {
-                        PosterRow("★ Favourites", favs, firstItem, vm, onOpen, openRail, claim, poster = poster, gap = gap, sideways = sideways)
+                        PosterRow(stringResource(R.string.vod_favourites_row), favs, firstItem, vm, onOpen, openRail, claim, poster = poster, gap = gap, sideways = sideways)
                     }
                     itemsIndexed(cats, key = { _, c -> c.category.id }) { i, rc ->
                         val cont = rc.category.id == VodViewModel.CONTINUE_ID
                         val items by if (cont) vm.continueWatching.collectAsState()
                             else produceState<List<VodItem>?>(null, rc.category.id) { value = vm.inCategory(rc.category.id) }
                         val rows by vm.progress.collectAsState()
-                        PosterRow(rc.category.name.ifEmpty { "Uncategorised" }, items, firstItem.takeIf { i == 0 && favs.isEmpty() }, vm, onOpen, openRail, claim,
+                        PosterRow(rc.category.name.ifEmpty { stringResource(R.string.vod_uncategorised) }, items, firstItem.takeIf { i == 0 && favs.isEmpty() }, vm, onOpen, openRail, claim,
                             progress = { if (cont) progressFraction(it, rows) else null }, poster = poster, gap = gap, sideways = sideways)
                     }
                 } } }
@@ -245,14 +247,14 @@ fun Poster(item: VodItem?, modifier: Modifier = Modifier, caption: Boolean = fal
             contentAlignment = Alignment.BottomStart,
         ) {
             if (item != null) {
-                Text(item.name, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.White, maxLines = 3, modifier = Modifier.padding(7.dp))
+                Text(item.name, fontSize = 11.sp * org.imdtv.iptvtv.ui.LocalVodTitleScale.current, fontWeight = FontWeight.Bold, color = Color.White, maxLines = 3, modifier = Modifier.padding(7.dp))
                 if (item.poster != null) AsyncImage(item.poster, item.name, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
                 if (progress != null) Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(3.dp).background(Color(0x66FFFFFF))) {
                     Box(Modifier.fillMaxHeight().fillMaxWidth(progress).background(LocalTheme.current.colors.accent))
                 }
             }
         }
-        if (caption && item != null) Text(item.name, fontSize = 12.sp, lineHeight = 15.sp, color = Color.White, maxLines = 2, overflow = TextOverflow.Ellipsis,
+        if (caption && item != null) Text(item.name, fontSize = 12.sp * org.imdtv.iptvtv.ui.LocalVodTitleScale.current, lineHeight = 15.sp * org.imdtv.iptvtv.ui.LocalVodTitleScale.current, color = Color.White, maxLines = 2, overflow = TextOverflow.Ellipsis,
             modifier = Modifier.padding(start = 3.dp, top = 6.dp))
     } }
 }
@@ -284,7 +286,7 @@ private fun Meta(item: VodItem, d: VodDetail?, extra: String? = null, resolution
 @Composable
 private fun Hero(item: VodItem, d: VodDetail?, modifier: Modifier, extra: String? = null, titleLines: Int = 2, resolution: String? = null) {
     Column(modifier) {
-        Text(item.name, fontSize = 40.sp, lineHeight = 42.sp, fontWeight = FontWeight.ExtraBold, color = Color.White, maxLines = titleLines, overflow = TextOverflow.Ellipsis)
+        Text(item.name, fontSize = 40.sp * org.imdtv.iptvtv.ui.LocalVodTitleScale.current, lineHeight = 42.sp * org.imdtv.iptvtv.ui.LocalVodTitleScale.current, fontWeight = FontWeight.ExtraBold, color = Color.White, maxLines = titleLines, overflow = TextOverflow.Ellipsis)
         Meta(item, d, extra, resolution)
         d?.plot?.let {
             Text(it, fontSize = 12.5.sp, lineHeight = 18.sp, color = Color(0xFFD6D6D6), maxLines = 3, overflow = TextOverflow.Ellipsis,
@@ -302,7 +304,7 @@ private fun VodRail(cats: List<RailCategory>, selectedId: Long?, focus: FocusReq
         Modifier.fillMaxHeight().width(260.dp).shadow(30.dp).background(Color(0xF515171D)).padding(horizontal = 20.dp, vertical = 35.dp)
             .onPreviewKeyEvent { e -> if (e.type == KeyEventType.KeyDown && (e.key == Key.Back || e.key == Key.DirectionLeft)) { onClose(); true } else false },
     ) {
-        Text("CATEGORIES", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = LocalTheme.current.colors.muted, letterSpacing = 2.sp, modifier = Modifier.padding(bottom = 12.dp))
+        Text(stringResource(R.string.vod_categories_header), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = LocalTheme.current.colors.muted, letterSpacing = 2.sp, modifier = Modifier.padding(bottom = 12.dp))
         LazyColumn(state = state, verticalArrangement = Arrangement.spacedBy(3.dp)) {
             val all = listOf<RailCategory?>(null) + cats
             itemsIndexed(all, key = { _, c -> c?.category?.id ?: -1L }) { i, rc ->
@@ -311,7 +313,7 @@ private fun VodRail(cats: List<RailCategory>, selectedId: Long?, focus: FocusReq
                     .onPreviewKeyEvent { e -> if (e.type == KeyEventType.KeyDown && e.key == Key.DirectionRight) { onPick(rc?.category); true } else false }) { f ->
                     Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(5.dp)).background(if (f) Color.White else Color.Transparent).padding(horizontal = 11.dp, vertical = 8.dp)) {
                         val fg = if (f) Color.Black else Color.White
-                        Text(rc?.category?.name?.ifEmpty { "Uncategorised" } ?: "All", fontSize = 14.sp, color = fg, maxLines = 1,
+                        Text(rc?.category?.name?.ifEmpty { stringResource(R.string.vod_uncategorised) } ?: stringResource(R.string.vod_all), fontSize = 14.sp, color = fg, maxLines = 1,
                             overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
                         rc?.let { Text(it.count.toString(), fontSize = 11.sp, color = if (f) fg else LocalTheme.current.colors.muted) }
                     }
@@ -343,6 +345,8 @@ fun VodDetailScreen(vm: VodViewModel, item: VodItem, onPlay: (url: String, title
     val favs by vm.favourites.collectAsState()
     val rows by vm.progress.collectAsState()
     val d = details[item.id]
+    val context = androidx.compose.ui.platform.LocalContext.current
+    fun episodeTitle(ep: Episode) = context.getString(R.string.vod_episode_title, item.name, ep.season, ep.number)
     val play = remember { FocusRequester() }
     LaunchedEffect(item.id) { vm.loadDetail(item); withFrameNanos { }; runCatching { play.requestFocus() } }
     val fav = favs.any { it.id == item.id }
@@ -354,25 +358,25 @@ fun VodDetailScreen(vm: VodViewModel, item: VodItem, onPlay: (url: String, title
         if (item.kind == Kind.MOVIE) {
             Column(Modifier.padding(start = 50.dp, top = 55.dp).width(430.dp)) {
                 Hero(item, d, Modifier, resolution = resolution)
-                listOfNotNull(d?.director?.let { "Director: $it" }, d?.cast?.let { "Cast: $it" }).takeIf { it.isNotEmpty() }?.let {
+                listOfNotNull(d?.director?.let { stringResource(R.string.vod_director, it) }, d?.cast?.let { stringResource(R.string.vod_cast, it) }).takeIf { it.isNotEmpty() }?.let {
                     Text(it.joinToString("  ·  "), fontSize = 10.5.sp, color = LocalTheme.current.colors.muted, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 9.dp))
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 16.dp).wrapContentWidth(Alignment.Start, unbounded = true)) { // four buttons may run past the column
                     val row = rows.find { it.kind == item.kind && it.itemId == item.id && it.episode == "" }
                     val at = resumeAt(row)
                     if (at > 0) {
-                        Btn("▶  Resume from ${duration(at)}", Modifier.focusRequester(play)) { item.streamUrl?.let { onPlay(it, item.name, "", at) } }
-                        Btn("↺  From start") { item.streamUrl?.let { onPlay(it, item.name, "", 0) } }
-                    } else Btn("▶  Play", Modifier.focusRequester(play)) { item.streamUrl?.let { onPlay(it, item.name, "", 0) } }
-                    Btn(if (fav) "★  Favourited" else "☆  Favourite") { vm.toggleFavourite(item) }
-                    Btn(if (row?.completed == true) "✓  Watched" else "Mark watched") { vm.setWatched(item, row?.completed != true) }
+                        Btn(stringResource(R.string.vod_btn_resume_from, duration(at)), Modifier.focusRequester(play)) { item.streamUrl?.let { onPlay(it, item.name, "", at) } }
+                        Btn(stringResource(R.string.vod_btn_from_start)) { item.streamUrl?.let { onPlay(it, item.name, "", 0) } }
+                    } else Btn(stringResource(R.string.vod_btn_play), Modifier.focusRequester(play)) { item.streamUrl?.let { onPlay(it, item.name, "", 0) } }
+                    Btn(stringResource(if (fav) R.string.vod_btn_favourited else R.string.vod_btn_favourite)) { vm.toggleFavourite(item) }
+                    Btn(stringResource(if (row?.completed == true) R.string.vod_btn_watched else R.string.vod_btn_mark_watched)) { vm.setWatched(item, row?.completed != true) }
                 }
             }
             item.categoryId?.let { catId ->
                 val more by produceState(emptyList<VodItem>(), catId) { value = vm.inCategory(catId).filter { it.id != item.id } }
                 // Bottom-anchored inside the TV-safe area; padding leaves room for the focused poster's scale and outline.
                 Column(Modifier.align(Alignment.BottomStart).padding(start = 50.dp, bottom = 20.dp)) {
-                    Text("More like this", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Color.White, modifier = Modifier.padding(bottom = 2.dp))
+                    Text(stringResource(R.string.vod_more_like_this), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Color.White, modifier = Modifier.padding(bottom = 2.dp))
                     LazyRow(horizontalArrangement = Arrangement.spacedBy(11.dp), contentPadding = androidx.compose.foundation.layout.PaddingValues(start = 8.dp, end = 50.dp, top = 6.dp, bottom = 6.dp),
                         modifier = Modifier.offset(x = (-8).dp)) {
                         items(more, key = { it.id }) { m -> Poster(m, onFocused = {}, onClick = { onOpen(m) }) }
@@ -388,25 +392,25 @@ fun VodDetailScreen(vm: VodViewModel, item: VodItem, onPlay: (url: String, title
             val sel = season ?: next?.episode?.season ?: seasons.firstOrNull()
             var menuFor by remember(item.id) { mutableStateOf<Episode?>(null) }
             Column(Modifier.padding(start = 50.dp, top = 55.dp).width(430.dp)) {
-                Hero(item, d, Modifier, extra = seasons.size.takeIf { it > 0 }?.let { if (it == 1) "1 Season" else "$it Seasons" }, resolution = resolution)
+                Hero(item, d, Modifier, extra = seasons.size.takeIf { it > 0 }?.let { androidx.compose.ui.res.pluralStringResource(R.plurals.vod_seasons, it, it) }, resolution = resolution)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 16.dp).wrapContentWidth(Alignment.Start, unbounded = true)) { // four buttons may run past the column
                     val ne = next?.episode
-                    val ntitle = ne?.let { "${item.name} S${it.season}E${it.number}" }
-                    if (ne == null) Btn("▶  Play", Modifier.focusRequester(play)) { }
+                    val ntitle = ne?.let { episodeTitle(it) }
+                    if (ne == null) Btn(stringResource(R.string.vod_btn_play), Modifier.focusRequester(play)) { }
                     else if (next.resume) {
-                        Btn("▶  Resume S${ne.season} · E${ne.number}", Modifier.focusRequester(play)) { onPlay(ne.streamUrl, ntitle!!, ne.remoteId, next.startMs) }
-                        Btn("↺  From start") { onPlay(ne.streamUrl, ntitle!!, ne.remoteId, 0) }
-                    } else Btn("▶  Play S${ne.season} · E${ne.number}", Modifier.focusRequester(play)) { onPlay(ne.streamUrl, ntitle!!, ne.remoteId, 0) }
-                    Btn(if (fav) "★  Favourited" else "☆  Favourite") { vm.toggleFavourite(item) }
-                    if (ne != null) Btn("Mark E${ne.number} watched") { vm.setWatched(item, true, ne.remoteId) }
+                        Btn(stringResource(R.string.vod_btn_resume_episode, ne.season, ne.number), Modifier.focusRequester(play)) { onPlay(ne.streamUrl, ntitle!!, ne.remoteId, next.startMs) }
+                        Btn(stringResource(R.string.vod_btn_from_start)) { onPlay(ne.streamUrl, ntitle!!, ne.remoteId, 0) }
+                    } else Btn(stringResource(R.string.vod_btn_play_episode, ne.season, ne.number), Modifier.focusRequester(play)) { onPlay(ne.streamUrl, ntitle!!, ne.remoteId, 0) }
+                    Btn(stringResource(if (fav) R.string.vod_btn_favourited else R.string.vod_btn_favourite)) { vm.toggleFavourite(item) }
+                    if (ne != null) Btn(stringResource(R.string.vod_btn_mark_episode_watched, ne.number)) { vm.setWatched(item, true, ne.remoteId) }
                 }
             }
             Column(Modifier.padding(start = 50.dp, top = 300.dp)) {
-                if (d == null) Text("Loading episodes…", fontSize = 12.sp, color = LocalTheme.current.colors.muted)
+                if (d == null) Text(stringResource(R.string.vod_loading_episodes), fontSize = 12.sp, color = LocalTheme.current.colors.muted)
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.padding(bottom = 13.dp)) {
                     seasons.forEach { s ->
                         FocusBox(onClick = { season = s }, onFocused = { season = s }) { f ->
-                            Text("Season $s", fontSize = 11.5.sp, fontWeight = FontWeight.Medium,
+                            Text(stringResource(R.string.vod_season_tab, s), fontSize = 11.5.sp, fontWeight = FontWeight.Medium,
                                 color = if (s == sel) Color.Black else LocalTheme.current.colors.muted,
                                 modifier = Modifier.border(1.5.dp, if (f) Color.White else Color.Transparent, RoundedCornerShape(17.dp)).padding(2.dp)
                                     .clip(RoundedCornerShape(15.dp)).background(if (s == sel) Color.White else Color(0x14FFFFFF))
@@ -417,7 +421,7 @@ fun VodDetailScreen(vm: VodViewModel, item: VodItem, onPlay: (url: String, title
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(13.dp), contentPadding = androidx.compose.foundation.layout.PaddingValues(end = 50.dp)) {
                     items(eps.filter { it.season == sel }, key = { it.remoteId }) { ep ->
                         val r = seriesRows.find { it.episode == ep.remoteId }
-                        FocusBox(onClick = { onPlay(ep.streamUrl, "${item.name} S${ep.season}E${ep.number}", ep.remoteId, resumeAt(r)) },
+                        FocusBox(onClick = { onPlay(ep.streamUrl, episodeTitle(ep), ep.remoteId, resumeAt(r)) },
                             modifier = Modifier.width(216.dp).onLongOk { menuFor = ep }) { f ->
                             Column {
                                 Box(
@@ -426,14 +430,14 @@ fun VodDetailScreen(vm: VodViewModel, item: VodItem, onPlay: (url: String, title
                                         .size(210.dp, 118.dp).clip(RoundedCornerShape(6.dp)).background(LocalTheme.current.colors.vodCard),
                                 ) {
                                     (ep.thumb ?: d?.backdrop)?.let { AsyncImage(it, null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize()) }
-                                    Chip("E${ep.number}", Modifier.align(Alignment.BottomStart))
+                                    Chip(stringResource(R.string.vod_episode_short, ep.number), Modifier.align(Alignment.BottomStart))
                                     ep.durationSecs?.takeIf { it > 0 }?.let { Chip(duration(it * 1000L), Modifier.align(Alignment.BottomEnd)) }
                                     if (r != null && !r.completed && r.durationMs > 0) Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(3.dp).background(Color(0x66FFFFFF))) {
                                         Box(Modifier.fillMaxHeight().fillMaxWidth((r.positionMs.toFloat() / r.durationMs).coerceIn(0f, 1f)).background(LocalTheme.current.colors.accent))
                                     }
                                     if (r?.completed == true) Chip("✓", Modifier.align(Alignment.TopEnd))
                                 }
-                                Text(ep.title, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = Color.White, maxLines = 1,
+                                Text(ep.title, fontSize = 12.sp * org.imdtv.iptvtv.ui.LocalVodTitleScale.current, fontWeight = FontWeight.SemiBold, color = Color.White, maxLines = 1,
                                     overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 8.dp, bottom = 3.dp))
                                 ep.plot?.let { Text(it, fontSize = 9.5.sp, lineHeight = 13.sp, color = LocalTheme.current.colors.muted, maxLines = 2, overflow = TextOverflow.Ellipsis) }
                             }
@@ -444,11 +448,11 @@ fun VodDetailScreen(vm: VodViewModel, item: VodItem, onPlay: (url: String, title
             menuFor?.let { ep ->
                 val r = seriesRows.find { it.episode == ep.remoteId }
                 val items = listOfNotNull<Pair<String, () -> Unit>>(
-                    if (r != null && !r.completed && r.positionMs > 0) "Play from start" to { menuFor = null; onPlay(ep.streamUrl, "${item.name} S${ep.season}E${ep.number}", ep.remoteId, 0) } else null,
-                    if (r?.completed == true) "Mark unwatched" to { menuFor = null; vm.setWatched(item, false, ep.remoteId) }
-                    else "Mark watched" to { menuFor = null; vm.setWatched(item, true, ep.remoteId) },
+                    if (r != null && !r.completed && r.positionMs > 0) stringResource(R.string.vod_menu_play_from_start) to { menuFor = null; onPlay(ep.streamUrl, episodeTitle(ep), ep.remoteId, 0) } else null,
+                    if (r?.completed == true) stringResource(R.string.vod_menu_mark_unwatched) to { menuFor = null; vm.setWatched(item, false, ep.remoteId) }
+                    else stringResource(R.string.vod_btn_mark_watched) to { menuFor = null; vm.setWatched(item, true, ep.remoteId) },
                 )
-                ContextMenu("S${ep.season} · E${ep.number}", items) { menuFor = null }
+                ContextMenu(stringResource(R.string.vod_season_episode, ep.season, ep.number), items) { menuFor = null }
             }
         }
     }

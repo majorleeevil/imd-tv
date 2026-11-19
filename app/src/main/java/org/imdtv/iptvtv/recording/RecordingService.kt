@@ -56,7 +56,7 @@ class RecordingService : Service() {
                 container.db.recordingDao().get(id)?.let {
                     container.db.recordingDao().update(it.copy(status = RecStatus.FAILED, statusReason = "Failed — no USB drive found"))
                 }
-                repo.prompt.value = Prompt.Notice("Recording failed: no USB drive found")
+                repo.prompt.value = Prompt.Notice(getString(R.string.vod_rec_notice_no_usb))
                 return@launch
             }
             container.db.recordingDao().get(id)?.let { r -> repo.running.update { it + (id to r) } }
@@ -64,7 +64,7 @@ class RecordingService : Service() {
             val status = runRecording(id, container.db, store, StreamCapture(container.http),
                 otherStreams = { repo.running.value.size > 1 || container.isWatching() }, resolve = container.stalkerLinks::resolve)
             container.db.recordingDao().get(id)?.let { r ->
-                if (status == RecStatus.FAILED || r.statusReason != null && status == RecStatus.STOPPED) repo.prompt.value = Prompt.Notice("${r.title}: ${r.statusReason}")
+                if (status == RecStatus.FAILED || r.statusReason != null && status == RecStatus.STOPPED) repo.prompt.value = Prompt.Notice(getString(R.string.vod_rec_notice_title_reason, r.title, r.statusReason?.let { s -> recordingReason(this@RecordingService, s) }.orEmpty()))
             }
         }.also { job ->
             job.invokeOnCompletion {
@@ -97,8 +97,12 @@ class RecordingService : Service() {
 
     private fun notify(titles: List<String>) {
         val nm = getSystemService(NotificationManager::class.java)
-        if (Build.VERSION.SDK_INT >= 26) nm.createNotificationChannel(NotificationChannel(CHANNEL, "Recording", NotificationManager.IMPORTANCE_LOW))
-        val text = when (titles.size) { 0 -> "Starting a recording"; 1 -> "Recording ${titles[0]}"; else -> "Recording ${titles.size} programmes" }
+        if (Build.VERSION.SDK_INT >= 26) nm.createNotificationChannel(NotificationChannel(CHANNEL, getString(R.string.vod_rec_channel_name), NotificationManager.IMPORTANCE_LOW))
+        val text = when (titles.size) {
+            0 -> getString(R.string.vod_rec_notification_starting)
+            1 -> getString(R.string.vod_rec_notification_one, titles[0])
+            else -> resources.getQuantityString(R.plurals.vod_rec_notification_many, titles.size, titles.size)
+        }
         val n = Notification.Builder(this, CHANNEL).setSmallIcon(R.drawable.ic_tab_recordings).setContentTitle(text).setOngoing(true).build()
         if (Build.VERSION.SDK_INT >= 34) startForeground(1, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE) else startForeground(1, n)
     }

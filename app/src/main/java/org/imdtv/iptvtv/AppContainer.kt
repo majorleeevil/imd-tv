@@ -59,7 +59,8 @@ class AppContainer(context: Context) {
     val stalkerLinks by lazy { org.imdtv.iptvtv.data.source.StalkerLinks(http) { db.providerDao().get(it) } }
 
     val catalogueSync: CatalogueSync by lazy {
-        CatalogueSync(db, keepLanguage = { if (settings.settings.first().matchTvLanguage) tvLanguage() else null })
+        CatalogueSync(db, keepLanguage = { if (settings.settings.first().matchTvLanguage) tvLanguage() else null },
+            mergeOptions = { with(settings.settings.first()) { org.imdtv.iptvtv.data.repo.MergeOptions(mergeChannels, mergeAcross, mergeBy == org.imdtv.iptvtv.data.settings.MergeBy.RESOLUTION) } })
     }
     val providerRepository: ProviderRepository by lazy {
         // Logo matching runs after the sync result is shown, and one step failing doesn't skip the others.

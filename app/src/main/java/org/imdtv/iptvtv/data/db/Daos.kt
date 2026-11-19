@@ -42,8 +42,10 @@ abstract class ProviderDao {
     /** Rows whose login is still plain text (saved before encryption), as stored. */
     suspend fun unsealed(): List<ProviderEntity> = allRaw().filter { !Secrets.isEncrypted(it.url) }
     @Query("UPDATE provider SET nameStrip = :s WHERE id = :id") abstract suspend fun setNameStrip(id: Long, s: String)
+    @Query("UPDATE provider SET mergeOn = :on WHERE id = :id") abstract suspend fun setMergeOn(id: Long, on: Boolean)
     @Query("UPDATE provider SET categoryStrip = :s WHERE id = :id") abstract suspend fun setCategoryStrip(id: Long, s: String)
     @Query("UPDATE provider SET contentOff = :s WHERE id = :id") abstract suspend fun setContentOff(id: Long, s: String)
+    @Query("UPDATE provider SET enabled = :on WHERE id = :id") abstract suspend fun setEnabled(id: Long, on: Boolean)
     @Query("UPDATE provider SET lastSync = :t WHERE id = :id") abstract suspend fun setLastSync(id: Long, t: Long)
     @Query("UPDATE provider SET maxConnections = :n WHERE id = :id") abstract suspend fun setMaxConnections(id: Long, n: Int?)
 
@@ -102,20 +104,22 @@ abstract class CategoryDao {
     }
 }
 
+data class MergeCount(val id: Long, val n: Int)
+
 /** A name to search; [number] is the shown channel number (custom first). */
 data class SearchRow(val id: Long, val name: String, val customName: String?, val number: Int?, val categoryId: Long?)
 
 @Dao
 abstract class ChannelDao {
     @Query(
-        """SELECT * FROM channel WHERE categoryId = :categoryId AND hidden = 0
+        """SELECT * FROM channel WHERE categoryId = :categoryId AND hidden = 0 AND mergedInto IS NULL
            ORDER BY sortOrder IS NULL, sortOrder, coalesce(customNumber, number) IS NULL, coalesce(customNumber, number), coalesce(customName, name)"""
     )
     abstract fun observeByCategory(categoryId: Long): Flow<List<ChannelEntity>>
 
-    @Query("SELECT categoryId, count(*) AS n FROM channel WHERE providerId = :providerId AND hidden = 0 GROUP BY categoryId")
+    @Query("SELECT categoryId, count(*) AS n FROM channel WHERE providerId = :providerId AND hidden = 0 AND mergedInto IS NULL GROUP BY categoryId")
     abstract suspend fun counts(providerId: Long): List<CategoryCount>
-    @Query("SELECT categoryId, count(*) AS n FROM channel WHERE providerId = :providerId AND hidden = 0 GROUP BY categoryId")
+    @Query("SELECT categoryId, count(*) AS n FROM channel WHERE providerId = :providerId AND hidden = 0 AND mergedInto IS NULL GROUP BY categoryId")
     abstract fun observeCounts(providerId: Long): Flow<List<CategoryCount>>
 
     @Query("SELECT * FROM channel WHERE providerId = :providerId")
@@ -129,13 +133,13 @@ abstract class ChannelDao {
     /** Search: visible channels in visible (or no) categories, slim rows. */
     @Query(
         """SELECT ch.id, ch.name, ch.customName, coalesce(ch.customNumber, ch.number) AS number, ch.categoryId FROM channel ch
-           LEFT JOIN category c ON c.id = ch.categoryId WHERE ch.providerId = :providerId AND ch.hidden = 0 AND coalesce(c.hidden, 0) = 0"""
+           LEFT JOIN category c ON c.id = ch.categoryId WHERE ch.providerId = :providerId AND ch.hidden = 0 AND ch.mergedInto IS NULL AND coalesce(c.hidden, 0) = 0"""
     )
     abstract suspend fun searchable(providerId: Long): List<SearchRow>
 
     /** Visible channels whose displayed number is [n]; a custom number comes before a provider number. */
     @Query("""SELECT ch.* FROM channel ch LEFT JOIN category cat ON cat.id = ch.categoryId
-              WHERE ch.providerId = :providerId AND ch.hidden = 0 AND coalesce(cat.hidden, 0) = 0 AND coalesce(ch.customNumber, ch.number) = :n
+              WHERE ch.providerId = :providerId AND ch.hidden = 0 AND ch.mergedInto IS NULL AND coalesce(cat.hidden, 0) = 0 AND coalesce(ch.customNumber, ch.number) = :n
               ORDER BY ch.customNumber IS NULL, ch.id""")
     abstract suspend fun byNumber(providerId: Long, n: Int): List<ChannelEntity>
 
@@ -148,7 +152,7 @@ abstract class ChannelDao {
     @Update abstract suspend fun update(c: ChannelEntity)
     @Query("UPDATE channel SET builtinLogo = :path WHERE id = :id") abstract suspend fun setBuiltinLogo(id: Long, path: String?)
     @Query("""SELECT ch.* FROM channel ch JOIN epg_link l ON l.channelId = ch.id LEFT JOIN category cat ON cat.id = ch.categoryId
-              WHERE ch.providerId = :p AND ch.hidden = 0 AND (cat.hidden IS NULL OR cat.hidden = 0)""")
+              WHERE ch.providerId = :p AND ch.hidden = 0 AND ch.mergedInto IS NULL AND (cat.hidden IS NULL OR cat.hidden = 0)""")
     abstract suspend fun withGuide(p: Long): List<ChannelEntity>
     @Query("UPDATE channel SET customLogo = :logo WHERE id = :id") abstract suspend fun setCustomLogo(id: Long, logo: String?)
     @Query("SELECT customLogo FROM channel WHERE customLogo IS NOT NULL") abstract suspend fun customLogos(): List<String>
@@ -158,29 +162,44 @@ abstract class ChannelDao {
     abstract fun observePackCount(p: Long): Flow<Int>
     @Query(
         """SELECT ch.* FROM channel ch JOIN favourite f ON f.itemId = ch.id AND f.providerId = ch.providerId AND f.kind = 'LIVE'
-           WHERE ch.providerId = :providerId AND ch.hidden = 0 ORDER BY f.sortOrder, f.addedAt DESC"""
+           WHERE ch.providerId = :providerId AND ch.hidden = 0 AND ch.mergedInto IS NULL ORDER BY f.sortOrder, f.addedAt DESC"""
     )
     abstract fun observeFavourites(providerId: Long): Flow<List<ChannelEntity>>
 
-    /** Channels with catch-up (the provider keeps past programmes), for the rail's Catch-up entry. */
-    @Query("SELECT * FROM channel WHERE providerId = :providerId AND hidden = 0 AND archiveDays > 0 ORDER BY number IS NULL, number, name")
-    abstract fun observeArchive(providerId: Long): Flow<List<ChannelEntity>>
     @Query("UPDATE channel SET hidden = :hidden WHERE id = :id") abstract suspend fun setHidden(id: Long, hidden: Boolean)
     @Query("UPDATE channel SET hidden = :hidden WHERE id IN (:ids)") abstract suspend fun setHiddenForIds(ids: List<Long>, hidden: Boolean)
     /** Every channel of a category, hidden ones included (Settings › Manage channels), in guide order. */
     @Query(
-        """SELECT * FROM channel WHERE categoryId = :categoryId
+        """SELECT * FROM channel WHERE categoryId = :categoryId AND mergedInto IS NULL
            ORDER BY sortOrder IS NULL, sortOrder, coalesce(customNumber, number) IS NULL, coalesce(customNumber, number), coalesce(customName, name)"""
     )
     abstract fun observeAllByCategory(categoryId: Long): Flow<List<ChannelEntity>>
     @Query(
-        """SELECT * FROM channel WHERE categoryId = :categoryId
+        """SELECT * FROM channel WHERE categoryId = :categoryId AND mergedInto IS NULL
            ORDER BY sortOrder IS NULL, sortOrder, coalesce(customNumber, number) IS NULL, coalesce(customNumber, number), coalesce(customName, name)"""
     )
     abstract suspend fun allByCategory(categoryId: Long): List<ChannelEntity>
     @Query("UPDATE channel SET sortOrder = :sortOrder WHERE id = :id") abstract suspend fun setSortOrder(id: Long, sortOrder: Int?)
     @Query("UPDATE channel SET sortOrder = NULL WHERE providerId = :p") abstract suspend fun clearSortOrders(p: Long)
     @Query("UPDATE channel SET customName = :name WHERE id = :id") abstract suspend fun setCustomName(id: Long, name: String?)
+    @Query("UPDATE channel SET epgOffsetMinutes = :minutes WHERE id = :id") abstract suspend fun setEpgOffset(id: Long, minutes: Int?)
+
+    /** Merge: channels played through [id] (its sources other than itself). */
+    @Query("SELECT * FROM channel WHERE mergedInto = :id") abstract suspend fun mergedInto(id: Long): List<ChannelEntity>
+    @Query("UPDATE channel SET mergedInto = :into, mergedAuto = :auto WHERE id IN (:ids)")
+    abstract suspend fun setMergedInto(ids: List<Long>, into: Long?, auto: Boolean)
+    @Query("UPDATE channel SET mergeHead = :head WHERE id IN (:ids)") abstract suspend fun setMergeHead(ids: List<Long>, head: Boolean)
+    /** Heads flagged right again: a channel is a head exactly when another is merged into it. */
+    @Query("""UPDATE channel SET mergeHead = NOT mergeHead WHERE providerId = :p
+              AND mergeHead != (id IN (SELECT mergedInto FROM channel WHERE providerId = :p AND mergedInto IS NOT NULL))""")
+    abstract suspend fun refreshMergeHeads(p: Long)
+    @Query("UPDATE channel SET mergedInto = NULL, mergedAuto = 0 WHERE providerId = :p AND mergedAuto = 1") abstract suspend fun clearAutoMerges(p: Long): Int
+    /** Manage channels: how many channels are merged into each of a category's channels. */
+    @Query("""SELECT mergedInto AS id, count(*) AS n FROM channel
+              WHERE mergedInto IN (SELECT id FROM channel WHERE categoryId = :categoryId) GROUP BY mergedInto""")
+    abstract fun observeMergeCounts(categoryId: Long): Flow<List<MergeCount>>
+    /** Channels deleted by a sync: anything merged into them shows again. */
+    @Query("UPDATE channel SET mergedInto = NULL, mergedAuto = 0 WHERE mergedInto IN (:ids)") abstract suspend fun unmergeFrom(ids: List<Long>)
 
     @Query("DELETE FROM channel WHERE id IN (:ids)")
     abstract suspend fun deleteIds(ids: List<Long>)
@@ -411,7 +430,7 @@ abstract class CustomGroupDao {
     abstract fun observe(providerId: Long): Flow<List<CustomGroupEntity>>
 
     @Query(
-        """SELECT gc.groupId, count(*) AS n FROM custom_group_channel gc JOIN channel ch ON ch.id = gc.channelId AND ch.hidden = 0
+        """SELECT gc.groupId, count(*) AS n FROM custom_group_channel gc JOIN channel ch ON ch.id = gc.channelId AND ch.hidden = 0 AND ch.mergedInto IS NULL
            JOIN custom_group g ON g.id = gc.groupId WHERE g.providerId = :providerId GROUP BY gc.groupId"""
     )
     abstract fun observeCounts(providerId: Long): Flow<List<GroupCount>>
@@ -433,7 +452,7 @@ abstract class CustomGroupDao {
 
     @Query(
         """SELECT ch.* FROM channel ch JOIN custom_group_channel gc ON gc.channelId = ch.id
-           WHERE gc.groupId = :groupId AND ch.hidden = 0 ORDER BY gc.sortOrder"""
+           WHERE gc.groupId = :groupId AND ch.hidden = 0 AND ch.mergedInto IS NULL ORDER BY gc.sortOrder"""
     )
     abstract fun observeChannels(groupId: Long): Flow<List<ChannelEntity>>
 
@@ -454,7 +473,7 @@ abstract class RecentDao {
         // Hidden channels don't count towards the cap (Recents doesn't show them); their rows go too.
         """DELETE FROM recent_channel WHERE providerId = :providerId AND channelId NOT IN
            (SELECT r.channelId FROM recent_channel r JOIN channel ch ON ch.id = r.channelId
-            WHERE r.providerId = :providerId AND ch.hidden = 0 ORDER BY r.watchedAt DESC LIMIT :cap)"""
+            WHERE r.providerId = :providerId AND ch.hidden = 0 AND ch.mergedInto IS NULL ORDER BY r.watchedAt DESC LIMIT :cap)"""
     )
     protected abstract suspend fun trim(providerId: Long, cap: Int)
 
@@ -467,12 +486,12 @@ abstract class RecentDao {
 
     @Query(
         """SELECT ch.* FROM channel ch JOIN recent_channel r ON r.channelId = ch.id AND r.providerId = ch.providerId
-           WHERE ch.providerId = :providerId AND ch.hidden = 0 ORDER BY r.watchedAt DESC"""
+           WHERE ch.providerId = :providerId AND ch.hidden = 0 AND ch.mergedInto IS NULL ORDER BY r.watchedAt DESC"""
     )
     abstract fun observe(providerId: Long): Flow<List<ChannelEntity>>
 }
 
 data class ChannelFromProvider(val id: Long, val name: String, val logo: String?, val number: Int?, val tvgId: String?, val streamUrl: String, val categoryId: Long?,
-                               val drmType: String? = null, val drmKey: String? = null, val archiveDays: Int? = null)
+                               val drmType: String? = null, val drmKey: String? = null, val archiveDays: Int? = null, val catchupSource: String? = null)
 data class MovieFromProvider(val id: Long, val name: String, val poster: String?, val year: Int?, val rating: Double?, val streamUrl: String?, val categoryId: Long?)
 data class SeriesFromProvider(val id: Long, val name: String, val poster: String?, val year: Int?, val rating: Double?, val categoryId: Long?)

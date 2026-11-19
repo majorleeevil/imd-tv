@@ -1,6 +1,8 @@
 package org.imdtv.iptvtv.recording
 
 import org.imdtv.iptvtv.data.settings.AppSettings
+import org.imdtv.iptvtv.R
+import androidx.compose.ui.res.stringResource
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -36,11 +38,6 @@ import org.imdtv.iptvtv.ui.settings.SettingRow
 import org.imdtv.iptvtv.ui.settings.SettingsViewModel
 import org.imdtv.iptvtv.ui.settings.SwitchRow
 
-const val RECORDING_INFO = "Recording one channel while you watch another needs two connections from your provider. Xtream " +
-    "logins tell the app their limit; M3U playlists don't. Small boxes have little room: a Chromecast with Google TV has " +
-    "about 4 GB free, about 2 hours of HD. Use a USB drive or a network share for more. Recordings on the box or the USB " +
-    "drive are removed if you uninstall the app."
-
 /** Settings › Playback › Recording. */
 @Composable
 fun RecordingPage(vm: SettingsViewModel, modifier: Modifier, first: FocusRequester, onClose: () -> Unit) {
@@ -53,6 +50,7 @@ fun RecordingPage(vm: SettingsViewModel, modifier: Modifier, first: FocusRequest
     var test by remember { mutableStateOf<String?>(null) }
     var free by remember { mutableStateOf<Long?>(null) }
     val drives = remember(s.recordTo) { usbDirs(context) }
+    val str = { id: Int -> context.getString(id) }
     LaunchedEffect(Unit) { withFrameNanos { }; runCatching { first.requestFocus() } }
     LaunchedEffect(s.recordingOn, s.recordTo, s.recordUsbPath, s.smbServer, s.smbShare, s.smbFolder, s.smbUser, s.smbPassword) {
         free = null
@@ -60,52 +58,52 @@ fun RecordingPage(vm: SettingsViewModel, modifier: Modifier, first: FocusRequest
     }
 
     Column(modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text("Recording", fontSize = 20.sp, color = Color.White, modifier = Modifier.padding(top = 6.dp, bottom = 18.dp))
-        SwitchRow("Recording", "Record live channels from the guide (hold OK on a channel)", s.recordingOn, Modifier.focusRequester(first)) { on ->
+        Text(stringResource(R.string.vod_rec_title), fontSize = 20.sp, color = Color.White, modifier = Modifier.padding(top = 6.dp, bottom = 18.dp))
+        SwitchRow(stringResource(R.string.vod_rec_title), stringResource(R.string.vod_rec_switch_expl), s.recordingOn, Modifier.focusRequester(first)) { on ->
             if (on) info = true else confirmOff = true
         }
         if (!s.recordingOn) return@Column
-        val usbLabel = if (drives.isEmpty()) "USB drive (none found)" else "USB drive"
-        ChoiceRow("Save to", "Where new recordings go", RecStorage.entries, s.recordTo,
-            { when (it) { RecStorage.INTERNAL -> "Internal storage"; RecStorage.USB -> usbLabel; RecStorage.SMB -> "Network share" } }, default = AppSettings().recordTo) { to ->
-            if (to == RecStorage.USB && drives.isEmpty()) vm.notice("Plug in a USB drive first") else vm.update { it.copy(recordTo = to) }
+        val usbLabel = stringResource(if (drives.isEmpty()) R.string.vod_rec_usb_none else R.string.vod_rec_usb)
+        ChoiceRow(stringResource(R.string.vod_rec_save_to), stringResource(R.string.vod_rec_save_to_expl), RecStorage.entries, s.recordTo,
+            { when (it) { RecStorage.INTERNAL -> stringResource(R.string.vod_rec_store_internal_title); RecStorage.USB -> usbLabel; RecStorage.SMB -> stringResource(R.string.vod_rec_store_smb_title) } }, default = AppSettings().recordTo) { to ->
+            if (to == RecStorage.USB && drives.isEmpty()) vm.notice(str(R.string.vod_rec_plug_usb)) else vm.update { it.copy(recordTo = to) }
         }
         if (s.recordTo == RecStorage.USB && drives.size > 1) {
             val current = drives.firstOrNull { it.path == s.recordUsbPath } ?: drives.first()
-            ChoiceRow("USB drive", "Which drive recordings go to", drives, current, { driveName(context, it) }) { d -> vm.update { it.copy(recordUsbPath = d.path) } }
+            ChoiceRow(stringResource(R.string.vod_rec_usb), stringResource(R.string.vod_rec_usb_expl), drives, current, { driveName(context, it) }) { d -> vm.update { it.copy(recordUsbPath = d.path) } }
         }
         if (s.recordTo == RecStorage.SMB) {
-            EditRow("Server", "Name or address, e.g. nas or 192.168.1.20", s.smbServer.ifEmpty { "Not set" }, s.smbServer, keyboard = KeyboardType.Uri) { v -> vm.update { it.copy(smbServer = v) } }
-            EditRow("Share", "The shared folder's name on the server", s.smbShare.ifEmpty { "Not set" }, s.smbShare) { v -> vm.update { it.copy(smbShare = v) } }
-            EditRow("Folder", "Inside the share; empty = the top", s.smbFolder.ifEmpty { "Top of the share" }, s.smbFolder) { v -> vm.update { it.copy(smbFolder = v) } }
-            EditRow("Username", "Empty = guest", s.smbUser.ifEmpty { "Guest" }, s.smbUser, keyboard = KeyboardType.Password) { v -> vm.update { it.copy(smbUser = v) } }
-            EditRow("Password", "Stored encrypted on this box; not in backups", if (s.smbPassword.isEmpty()) "Not set" else "••••••", s.smbPassword,
+            EditRow(stringResource(R.string.vod_rec_server), stringResource(R.string.vod_rec_server_expl), s.smbServer.ifEmpty { stringResource(R.string.vod_rec_not_set) }, s.smbServer, keyboard = KeyboardType.Uri) { v -> vm.update { it.copy(smbServer = v) } }
+            EditRow(stringResource(R.string.vod_rec_share), stringResource(R.string.vod_rec_share_expl), s.smbShare.ifEmpty { stringResource(R.string.vod_rec_not_set) }, s.smbShare) { v -> vm.update { it.copy(smbShare = v) } }
+            EditRow(stringResource(R.string.vod_rec_folder), stringResource(R.string.vod_rec_folder_expl), s.smbFolder.ifEmpty { stringResource(R.string.vod_rec_folder_top) }, s.smbFolder) { v -> vm.update { it.copy(smbFolder = v) } }
+            EditRow(stringResource(R.string.vod_rec_username), stringResource(R.string.vod_rec_username_expl), s.smbUser.ifEmpty { stringResource(R.string.vod_rec_guest) }, s.smbUser, keyboard = KeyboardType.Password) { v -> vm.update { it.copy(smbUser = v) } }
+            EditRow(stringResource(R.string.vod_rec_password), stringResource(R.string.vod_rec_password_expl), if (s.smbPassword.isEmpty()) stringResource(R.string.vod_rec_not_set) else "••••••", s.smbPassword,
                 keyboard = KeyboardType.Password, secret = true) { v -> vm.update { it.copy(smbPassword = v) } }
-            SettingRow("Test", "Writes and removes a small file", test) {
-                test = "Testing…"
-                scope.launch { test = vm.testShare(s)?.let { "Failed: $it" } ?: "OK" }
+            SettingRow(stringResource(R.string.vod_rec_test), stringResource(R.string.vod_rec_test_expl), test) {
+                test = str(R.string.vod_rec_testing)
+                scope.launch { test = vm.testShare(s)?.let { context.getString(R.string.vod_rec_test_failed, it) } ?: str(R.string.vod_ok) }
             }
         }
-        SettingRow("Free space", "Where recordings are saved", free?.let(::freeSpaceText) ?: "…") {}
-        ChoiceRow("Start early", "Guide times drift: scheduled recordings start this much earlier", START_EARLY, s.startEarlyMin, { "$it min" }, default = AppSettings().startEarlyMin) { m ->
+        SettingRow(stringResource(R.string.vod_rec_free_space_title), stringResource(R.string.vod_rec_free_space_expl), free?.let { freeSpaceText(context, it) } ?: "…") {}
+        ChoiceRow(stringResource(R.string.vod_rec_start_early), stringResource(R.string.vod_rec_start_early_expl), START_EARLY, s.startEarlyMin, { stringResource(R.string.vod_minutes_short, it) }, default = AppSettings().startEarlyMin) { m ->
             vm.update { it.copy(startEarlyMin = m) }
         }
-        ChoiceRow("End late", "…and end this much later", END_LATE, s.endLateMin, { "$it min" }, default = AppSettings().endLateMin) { m -> vm.update { it.copy(endLateMin = m) } }
-        SwitchRow("Keep the box awake while recording", "Stops the box sleeping or turning Wi-Fi off mid-recording", s.keepAwake) { on ->
+        ChoiceRow(stringResource(R.string.vod_rec_end_late), stringResource(R.string.vod_rec_end_late_expl), END_LATE, s.endLateMin, { stringResource(R.string.vod_minutes_short, it) }, default = AppSettings().endLateMin) { m -> vm.update { it.copy(endLateMin = m) } }
+        SwitchRow(stringResource(R.string.vod_rec_keep_awake), stringResource(R.string.vod_rec_keep_awake_expl), s.keepAwake) { on ->
             vm.update { it.copy(keepAwake = on) }
         }
     }
 
-    if (info) MenuFrame("Before you record", onDismiss = { info = false }) { f ->
-        Text(RECORDING_INFO, fontSize = 14.sp, color = Color.White, modifier = Modifier.padding(bottom = 10.dp))
-        MenuItem("OK", Modifier.focusRequester(f)) { info = false; vm.update { it.copy(recordingOn = true) } }
-        MenuItem("Cancel", Modifier) { info = false }
+    if (info) MenuFrame(stringResource(R.string.vod_rec_before_title), onDismiss = { info = false }) { f ->
+        Text(stringResource(R.string.vod_rec_info), fontSize = 14.sp, color = Color.White, modifier = Modifier.padding(bottom = 10.dp))
+        MenuItem(stringResource(R.string.vod_ok), Modifier.focusRequester(f)) { info = false; vm.update { it.copy(recordingOn = true) } }
+        MenuItem(stringResource(R.string.vod_cancel), Modifier) { info = false }
     }
-    if (confirmOff) MenuFrame("Turn recording off?", onDismiss = { confirmOff = false }) { f ->
-        Text("Scheduled recordings are cancelled and any recording now stops. Your recordings are kept.", fontSize = 14.sp,
+    if (confirmOff) MenuFrame(stringResource(R.string.vod_rec_off_title), onDismiss = { confirmOff = false }) { f ->
+        Text(stringResource(R.string.vod_rec_off_body), fontSize = 14.sp,
             color = Color.White, modifier = Modifier.padding(bottom = 10.dp))
-        MenuItem("Turn off", Modifier.focusRequester(f)) { confirmOff = false; vm.recordingOff() }
-        MenuItem("Cancel", Modifier) { confirmOff = false }
+        MenuItem(stringResource(R.string.vod_rec_turn_off), Modifier.focusRequester(f)) { confirmOff = false; vm.recordingOff() }
+        MenuItem(stringResource(R.string.vod_cancel), Modifier) { confirmOff = false }
     }
 }
 

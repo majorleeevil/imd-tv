@@ -1,5 +1,6 @@
 package org.imdtv.iptvtv.data.source
 
+import org.imdtv.iptvtv.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -47,7 +48,7 @@ class M3uSource(
     private suspend fun fetch(): M3uParseResult = withContext(Dispatchers.IO) {
         val req = Request.Builder().url(url).apply { userAgent?.let { header("User-Agent", it) } }.build()
         http.newCall(req).execute().use { resp ->
-            if (!resp.isSuccessful) throw IOException("Playlist request failed: HTTP ${resp.code} ${resp.message}")
+            if (!resp.isSuccessful) throw UiIOException("Playlist request failed: HTTP ${resp.code} ${resp.message}", R.string.set_b_m3u_request_failed, listOf(resp.code, resp.message))
             M3uParser.parse(resp.body!!.byteStream())
         }
     }
@@ -107,6 +108,8 @@ class M3uSource(
             tvgId = it.attrs["tvg-id"]?.takeIf(String::isNotBlank),
             streamUrl = it.url,
             drm = it.drm,
+            archiveDays = M3uParser.catchUp(it).first,
+            catchupSource = M3uParser.catchUp(it).second,
         )
     }
 

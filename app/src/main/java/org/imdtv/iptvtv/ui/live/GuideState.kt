@@ -33,6 +33,10 @@ class GuideState internal constructor(
     internal var railMove by mutableStateOf<RailMove?>(null)
     /** A channel picked up from its long-press menu: the guide shows [RowMove.order] until OK drops it or Back cancels. */
     internal var rowMove by mutableStateOf<RowMove?>(null)
+    /** Long OK › Merge channel: this channel stays gold while focus moves; OK on another merges it there, Back cancels. */
+    internal var rowMerge by mutableStateOf<RowMerge?>(null)
+    /** Set by GuideGrid: only a guide grid can carry a Move or show a Merge, so other menus (search, XMB, overlay) leave them out. */
+    internal var hasGrid = false
     /** A rail category to focus once its menu closes (it may have moved). */
     internal var railFocusKey by mutableStateOf<String?>(null)
     internal var restored = false
@@ -62,6 +66,8 @@ class GuideState internal constructor(
 }
 
 /** [dropped]: saved, shown until the saved order arrives (else the list jumps back for a moment). */
+/** [armed]: an OK press began after picking, so its release (not the menu's) does the merge. */
+internal class RowMerge(val ch: ChannelEntity) { var armed = false }
 internal data class RowMove(val ch: ChannelEntity, val before: List<ChannelEntity>, val order: List<ChannelEntity> = before, val dropped: Boolean = false)
 
 @Composable

@@ -1,6 +1,7 @@
 package org.imdtv.iptvtv.data.files
 
 import android.Manifest
+import org.imdtv.iptvtv.R
 import android.content.ContentUris
 import android.content.Context
 import android.content.Intent
@@ -65,7 +66,7 @@ private fun mediaStore(context: Context, extensions: Set<String>): List<SharedFi
         val base = MediaStore.Files.getContentUri(v)
         val cols = arrayOf(MediaStore.MediaColumns._ID, MediaStore.MediaColumns.DISPLAY_NAME, MediaStore.MediaColumns.SIZE,
             MediaStore.MediaColumns.DATE_MODIFIED)
-        val label = if (v == MediaStore.VOLUME_EXTERNAL_PRIMARY) "Internal storage" else "USB"
+        val label = context.getString(if (v == MediaStore.VOLUME_EXTERNAL_PRIMARY) R.string.vod_files_internal else R.string.vod_files_usb)
         runCatching {
             context.contentResolver.query(base, cols, null, null, null)?.use { c ->
                 buildList {
@@ -95,7 +96,7 @@ private fun getContent(mime: String) = Intent(Intent.ACTION_GET_CONTENT).setType
  * Offers the built-in file manager and any file manager app (ES File Explorer, X-plore, MiXplorer). Check the picked
  * name's extension. Use a specific type ("application/zip"): on Google TV the any-type request goes to the photo picker, which loops.
  */
-fun pickFileIntent(mime: String): Intent = Intent.createChooser(getContent(mime), "Choose a file manager")
+fun pickFileIntent(mime: String, title: CharSequence? = null): Intent = Intent.createChooser(getContent(mime), title)
     // The photo picker hands off to DocumentsUI, which Google TV lacks, and the two relaunch each other for ever.
     .putExtra(Intent.EXTRA_EXCLUDE_COMPONENTS, PHOTO_PICKER.map { android.content.ComponentName(it, "com.android.providers.media.photopicker.PhotoPickerGetContentActivity") }.toTypedArray())
 

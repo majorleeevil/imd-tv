@@ -1,6 +1,8 @@
 package org.imdtv.iptvtv.ui.xcube
 
 import androidx.compose.foundation.layout.wrapContentSize
+import org.imdtv.iptvtv.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.size
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.Animatable
@@ -54,8 +56,10 @@ import org.imdtv.iptvtv.ui.theme.ThemeColors
 
 private val BLADE = 34.dp      // width of each stacked side blade
 private val EDGE = 22.dp       // screen margin outside the stacks
-private val LABELS = mapOf(Tab.SEARCH to "search", Tab.LIVE to "live tv", Tab.MOVIES to "movies", Tab.SERIES to "series", Tab.RECORDINGS to "recordings", Tab.SETTINGS to "settings")
-private val TITLES = mapOf(Tab.SEARCH to "Search", Tab.LIVE to "Live TV", Tab.MOVIES to "Movies", Tab.SERIES to "Series", Tab.RECORDINGS to "Recordings", Tab.SETTINGS to "Settings")
+private val LABELS = mapOf(Tab.SEARCH to R.string.vod_xcube_blade_search, Tab.LIVE to R.string.vod_xcube_blade_live, Tab.MOVIES to R.string.vod_xcube_blade_movies,
+    Tab.SERIES to R.string.vod_xcube_blade_series, Tab.RECORDINGS to R.string.vod_xcube_blade_recordings, Tab.SETTINGS to R.string.vod_xcube_blade_settings)
+private val TITLES = mapOf(Tab.SEARCH to R.string.vod_nav_search, Tab.LIVE to R.string.vod_nav_live, Tab.MOVIES to R.string.vod_nav_movies,
+    Tab.SERIES to R.string.vod_nav_series, Tab.RECORDINGS to R.string.vod_nav_recordings, Tab.SETTINGS to R.string.vod_nav_settings)
 
 /** The blade card's focus: Left/Right switch blade, and it is the "menu" the app's root Back focuses. */
 class XcubeCard(val focus: FocusRequester, val onBlade: (Int) -> Unit, val onFocused: (Boolean) -> Unit,
@@ -113,12 +117,12 @@ fun XcubeFrame(selected: Tab, onBlade: (Tab) -> Unit, cardFocus: FocusRequester,
         onDrawBehind { drawImage(img) }
     }) {
         // Each label is centred on the visible strip of its blade.
-        left.forEachIndexed { i, t -> BladeLabel(LABELS.getValue(t), Modifier.offset(x = EDGE + BLADE * i + BLADE / 2 - 40.dp, y = 70.dp)) }
+        left.forEachIndexed { i, t -> BladeLabel(stringResource(LABELS.getValue(t)), Modifier.offset(x = EDGE + BLADE * i + BLADE / 2 - 40.dp, y = 70.dp)) }
         right.forEachIndexed { i, t ->
-            BladeLabel(LABELS.getValue(t), Modifier.align(Alignment.TopEnd).offset(x = -(EDGE + BLADE * (right.size - i - 1) + BLADE / 2 - 40.dp), y = 70.dp))
+            BladeLabel(stringResource(LABELS.getValue(t)), Modifier.align(Alignment.TopEnd).offset(x = -(EDGE + BLADE * (right.size - i - 1) + BLADE / 2 - 40.dp), y = 70.dp))
         }
         Box(Modifier.fillMaxSize().padding(start = EDGE + BLADE * left.size + 14.dp, end = EDGE + BLADE * right.size + 14.dp, top = 10.dp, bottom = 10.dp)) {
-            Text(TITLES.getValue(selected), fontSize = 20.sp, color = Color.White, modifier = Modifier.padding(start = 24.dp, top = 14.dp))
+            Text(stringResource(TITLES.getValue(selected)), fontSize = 20.sp, color = Color.White, modifier = Modifier.padding(start = 24.dp, top = 14.dp))
             // Left/Right that nothing in the blade used and that can't move focus further switch blade.
             Box(Modifier.fillMaxSize().padding(start = 16.dp, end = 16.dp, top = 48.dp, bottom = 34.dp)
                 .onKeyEvent { e ->
@@ -132,8 +136,8 @@ fun XcubeFrame(selected: Tab, onBlade: (Tab) -> Unit, cardFocus: FocusRequester,
                 content(card)
                 if (selected == Tab.SETTINGS) SettingsCard(card) // Settings has no card of its own; drawn over it
             }
-            Text("↩ Back", fontSize = 13.sp, color = Color.White, modifier = Modifier.align(Alignment.BottomStart).padding(start = 24.dp, bottom = 10.dp))
-            Text("Select OK", fontSize = 13.sp, color = Color.White, modifier = Modifier.align(Alignment.BottomEnd).padding(end = 24.dp, bottom = 10.dp))
+            Text(stringResource(R.string.vod_xcube_back), fontSize = 13.sp, color = Color.White, modifier = Modifier.align(Alignment.BottomStart).padding(start = 24.dp, bottom = 10.dp))
+            Text(stringResource(R.string.vod_xcube_select_ok), fontSize = 13.sp, color = Color.White, modifier = Modifier.align(Alignment.BottomEnd).padding(end = 24.dp, bottom = 10.dp))
         }
     }
 }
@@ -152,7 +156,7 @@ private fun BladeLabel(text: String, modifier: Modifier) {
 private fun SettingsCard(card: XcubeCard) {
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopEnd) {
         FocusBox(onClick = {}, modifier = Modifier.bladeCard(card)) { f ->
-            Text("◀ blades ▶", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = if (f) Color(0xFF1A3A0E) else Color.White,
+            Text(stringResource(R.string.vod_xcube_blades), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = if (f) Color(0xFF1A3A0E) else Color.White,
                 modifier = Modifier.background(if (f) Color(0xFFE8F5D8) else Color(0x33FFFFFF), RoundedCornerShape(12.dp))
                     .padding(horizontal = 12.dp, vertical = 4.dp))
         }

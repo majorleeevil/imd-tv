@@ -1,5 +1,9 @@
 package org.imdtv.iptvtv.ui.settings
 
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.pluralStringResource
+import org.imdtv.iptvtv.R
+
 import org.imdtv.iptvtv.ui.theme.LocalTheme
 
 import android.Manifest
@@ -64,29 +68,29 @@ fun LogoPackSection(vm: SettingsViewModel) {
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         status?.let { Text(it, fontSize = 15.sp, color = Color.White, modifier = Modifier.padding(bottom = 8.dp)) }
         if (remember { canPickFile(context, ZIP) }) {
-            SettingRow("Browse files…", "Needs a file manager app such as X-plore or MiXplorer", null, firstOr()) { pick.launch(pickFileIntent(ZIP)) }
+            SettingRow(stringResource(R.string.set_a_browse_files), stringResource(R.string.set_a_browse_files_expl), null, firstOr()) { pick.launch(pickFileIntent(ZIP)) }
         }
         if (!access) {
             if (Build.VERSION.SDK_INT >= 30) {
                 val intent = remember { allFilesAccessIntent(context) }
-                SettingRow("Allow access to all files",
-                    if (intent != null) "So the app can find .zip files in Downloads and on USB sticks by itself"
-                    else "Not available on this device — use Browse files…", null, firstOr()) {
+                SettingRow(stringResource(R.string.set_a_allow_all_files),
+                    if (intent != null) stringResource(R.string.set_a_allow_all_files_expl)
+                    else stringResource(R.string.set_a_allow_all_files_unavailable), null, firstOr()) {
                     intent?.let { runCatching { context.startActivity(it) } }
                 }
             } else {
-                SettingRow("Allow access to files", "So the app can find .zip files in Downloads and on USB sticks", null, firstOr()) {
+                SettingRow(stringResource(R.string.set_a_allow_files), stringResource(R.string.set_a_allow_files_expl), null, firstOr()) {
                     askRead.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
                 }
             }
         }
         files.forEach { f ->
-            SettingRow(f.name, "${f.volume} · ${"%.1f".format(f.size / 1_048_576.0)} MB", null, firstOr()) { vm.importPack(f.uri, f.name) }
+            SettingRow(f.name, stringResource(R.string.set_a_zip_file_expl, f.volume, f.size / 1_048_576.0), null, firstOr()) { vm.importPack(f.uri, f.name) }
         }
-        if (files.isEmpty() && access) Text("No .zip files in Downloads or on USB sticks", fontSize = 14.sp, color = LocalTheme.current.colors.muted)
+        if (files.isEmpty() && access) Text(stringResource(R.string.set_a_no_zip_files), fontSize = 14.sp, color = LocalTheme.current.colors.muted)
         if (count > 0) {
-            SettingRow("Remove logo pack",
-                if (confirmRemove) "Remove your logo pack? Channels go back to their other logos. OK to confirm." else "$count logos in use",
+            SettingRow(stringResource(R.string.set_a_remove_logo_pack),
+                if (confirmRemove) stringResource(R.string.set_a_remove_logo_pack_confirm) else pluralStringResource(R.plurals.set_a_logos_in_use, count, count),
                 null, firstOr()) {
                 // This row disappears: move focus up first, or it falls to the group list and switches group.
                 if (confirmRemove) { focus.moveFocus(FocusDirection.Up); vm.removePack(); confirmRemove = false } else confirmRemove = true

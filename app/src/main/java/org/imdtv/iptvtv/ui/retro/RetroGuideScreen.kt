@@ -1,6 +1,8 @@
 package org.imdtv.iptvtv.ui.retro
 
 import androidx.compose.foundation.background
+import org.imdtv.iptvtv.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -61,7 +63,7 @@ fun RetroGuideScreen(vm: LiveViewModel, onFullScreen: (ChannelEntity) -> Unit) {
                 AppLogo(Modifier.size(58.dp))
                 Column(Modifier.padding(start = 18.dp)) {
                     val st = vm.settings.collectAsState().value
-                    Text(listOfNotNull(clockTime(now).takeIf { st.showDateTime }, DATE.format(Instant.ofEpochMilli(now).atZone(ZoneId.systemDefault())).takeIf { st.showDate }).joinToString(" "),
+                    Text(listOfNotNull(clockTime(now).takeIf { st.showDateTime }, DATE.withLocale(org.imdtv.iptvtv.ui.namesLocale).format(Instant.ofEpochMilli(now).atZone(ZoneId.systemDefault())).takeIf { st.showDate }).joinToString(" "),
                         fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color.White)
                     Text(entry?.title.orEmpty().uppercase(), fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.White,
                         maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 4.dp))
@@ -70,10 +72,10 @@ fun RetroGuideScreen(vm: LiveViewModel, onFullScreen: (ChannelEntity) -> Unit) {
             GuideGrid(vm, state, RETRO_GRID, onFullScreen, onLeftAtStart = {},
                 modifier = Modifier.weight(1f).padding(start = 60.dp, end = 35.dp, top = 8.dp))
             Row(Modifier.fillMaxWidth().height(40.dp).background(colors.panel).padding(start = 50.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("Press ", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color.White)
-                Text("SELECT", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = colors.onFocus,
+                Text(stringResource(R.string.vod_retro_press), fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                Text(stringResource(R.string.vod_retro_select), fontSize = 15.sp, fontWeight = FontWeight.Bold, color = colors.onFocus,
                     modifier = Modifier.background(colors.focus, RoundedCornerShape(2.dp)).padding(horizontal = 4.dp))
-                Text(" to view", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                Text(stringResource(R.string.vod_retro_to_view), fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color.White)
             }
         }
         GuideMenus(vm, state)

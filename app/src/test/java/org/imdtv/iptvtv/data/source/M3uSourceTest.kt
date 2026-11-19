@@ -63,4 +63,13 @@ class M3uSourceTest {
         assertEquals("http://h/live/a.m3u8|User-Agent=UA%2F2", ch.streamUrl)
         assertEquals("http://h/f.mp4", src.movies().single().remoteId)
     }
+
+    @Test
+    fun liveChannelsCarryCatchUp() = runTest {
+        server.enqueue(MockResponse().setBody("#EXTM3U catchup=\"append\" catchup-source=\"?utc={utc}\"\n#EXTINF:-1 catchup-days=\"2\",A\nhttp://h/1\n#EXTINF:-1,B\nhttp://h/2\n"))
+        val ch = M3uSource(server.url("/l.m3u").toString(), emptyList(), OkHttpClient(), "UA/1").liveChannels()
+        assertEquals(2, ch[0].archiveDays)
+        assertEquals("append|?utc={utc}", ch[0].catchupSource)
+        assertEquals(7, ch[1].archiveDays)
+    }
 }

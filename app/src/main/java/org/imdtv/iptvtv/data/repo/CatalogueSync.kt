@@ -37,6 +37,8 @@ class CatalogueSync(
     private val now: () -> Long = System::currentTimeMillis,
     /** "Match TV language": the language new categories must have to start shown, or null when off. */
     private val keepLanguage: suspend () -> String? = { null },
+    /** Settings › Channels › Merge channels and Merge across, read at the end of each live sync. */
+    private val mergeOptions: suspend () -> MergeOptions = { MergeOptions(on = false, across = false) },
 ) {
     companion object {
         /** remoteId of the synthetic per-kind category for items with no (known) category. */
@@ -131,17 +133,18 @@ class CatalogueSync(
             val catId = c.idByRemote[resolve(ch.categoryRemoteId)]
             val old = existing[ch.remoteId]
             if (old == null) fresh += ChannelEntity(providerId = providerId, categoryId = catId, remoteId = ch.remoteId, name = ch.name,
-                logo = ch.logo, number = ch.number, tvgId = ch.tvgId, streamUrl = ch.streamUrl, drmType = ch.drm?.type, drmKey = ch.drm?.key, archiveDays = ch.archiveDays)
-            else ChannelFromProvider(old.id, ch.name, ch.logo, ch.number, ch.tvgId, ch.streamUrl, catId, ch.drm?.type, ch.drm?.key, ch.archiveDays).let { n ->
-                if (n != ChannelFromProvider(old.id, old.name, old.logo, old.number, old.tvgId, old.streamUrl, old.categoryId, old.drmType, old.drmKey, old.archiveDays)) changed += n
+                logo = ch.logo, number = ch.number, tvgId = ch.tvgId, streamUrl = ch.streamUrl, drmType = ch.drm?.type, drmKey = ch.drm?.key, archiveDays = ch.archiveDays, catchupSource = ch.catchupSource)
+            else ChannelFromProvider(old.id, ch.name, ch.logo, ch.number, ch.tvgId, ch.streamUrl, catId, ch.drm?.type, ch.drm?.key, ch.archiveDays, ch.catchupSource).let { n ->
+                if (n != ChannelFromProvider(old.id, old.name, old.logo, old.number, old.tvgId, old.streamUrl, old.categoryId, old.drmType, old.drmKey, old.archiveDays, old.catchupSource)) changed += n
             }
         }
         fresh.chunked(WRITE_CHUNK).forEach { dao.upsert(it) }
         changed.chunked(WRITE_CHUNK).forEach { dao.updateFromProvider(it) }
         val keep = unique.mapTo(HashSet()) { it.remoteId }
         existing.values.filter { it.remoteId !in keep }.map { it.id }.chunked(SQL_DELETE_CHUNK).forEach { ids ->
-            db.withTransaction { dao.deleteIds(ids); db.favouriteDao().deleteForItems(providerId, Kind.LIVE, ids) }
+            db.withTransaction { dao.unmergeFrom(ids); dao.deleteIds(ids); db.favouriteDao().deleteForItems(providerId, Kind.LIVE, ids) }
         }
+        ChannelMerge.applyAuto(db, providerId, mergeOptions()) // new duplicates join, gone ones leave
         return KindResult(c.idByRemote.size, unique.size, c.newlyHidden)
     }
 

@@ -1,5 +1,6 @@
 package org.imdtv.iptvtv.ui.settings
 
+import androidx.compose.ui.res.stringResource
 import android.graphics.Bitmap
 import android.os.Build
 import androidx.compose.foundation.Image
@@ -62,12 +63,12 @@ const val CONTACT_EMAIL = "support@imd-tv.com"
 @Composable
 fun AboutRows(first: Modifier) {
     VersionRow(first)
-    QrRow("Website", "News and help", WEBSITE_LABEL, R.drawable.website_qr, WEBSITE_LABEL)
-    QrRow("Source", "The source code", SITE_LABEL, R.drawable.site_qr, SITE_LABEL)
-    SettingRow("Licence", "Free and open source software", "GPL-3.0") {}
-    SettingRow("Contact", "Questions and feedback", CONTACT_EMAIL) {}
+    QrRow(stringResource(R.string.set_b_website), stringResource(R.string.set_b_website_expl), WEBSITE_LABEL, R.drawable.website_qr, WEBSITE_LABEL)
+    QrRow(stringResource(R.string.set_b_source), stringResource(R.string.set_b_source_expl), SITE_LABEL, R.drawable.site_qr, SITE_LABEL)
+    SettingRow(stringResource(R.string.set_b_licence), stringResource(R.string.set_b_licence_expl), "GPL-3.0") {}
+    SettingRow(stringResource(R.string.set_b_contact), stringResource(R.string.set_b_contact_expl), CONTACT_EMAIL) {}
     SendLogsRow()
-    QrRow("Support IMD TV", "Free and open source. Buy me a coffee if you'd like", null, R.drawable.support_qr, SUPPORT_LABEL)
+    QrRow(stringResource(R.string.set_b_support), stringResource(R.string.set_b_support_expl), null, R.drawable.support_qr, SUPPORT_LABEL)
 }
 
 /** Version: OK opens the update prompt when there is one, else checks GitHub now. */
@@ -79,14 +80,16 @@ private fun VersionRow(first: Modifier) {
     var result by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
     val u = update
-    SettingRow("Version", result ?: if (u != null) "Version ${u.version} is available. Press OK to update" else "IMD TV for Android TV. Press OK to check for updates",
+    val msgCheckFailed = stringResource(R.string.set_b_check_failed)
+    val msgLatest = stringResource(R.string.set_b_latest)
+    SettingRow(stringResource(R.string.set_b_version), result ?: if (u != null) stringResource(R.string.set_b_version_available, u.version) else stringResource(R.string.set_b_version_check),
         BuildConfig.VERSION_NAME, first, busy = checking) {
         if (u != null) updater.prompt.value = true
         else if (!checking) scope.launch {
             checking = true
             val ok = updater.check(manual = true)
             checking = false
-            result = if (!ok) "Couldn't check for updates. Check your connection" else if (updater.available.value == null) "You have the latest version" else null
+            result = if (!ok) msgCheckFailed else if (updater.available.value == null) msgLatest else null
         }
     }
 }
@@ -99,12 +102,12 @@ private fun QrRow(title: String, explanation: String, value: String?, qr: Int, l
     if (open) MenuFrame(title, onDismiss = { open = false }) { first ->
         Box(Modifier.fillMaxWidth().padding(vertical = 8.dp), contentAlignment = Alignment.Center) {
             // The QR is drawn at 1 px per module: scale without smoothing or phones can't read it.
-            Image(ImageBitmap.imageResource(qr), contentDescription = "QR code for $label", filterQuality = FilterQuality.None,
+            Image(ImageBitmap.imageResource(qr), contentDescription = stringResource(R.string.set_b_qr_for, label), filterQuality = FilterQuality.None,
                 modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(Color.White).padding(12.dp).size(200.dp))
         }
-        Text("Scan with your phone, or visit\n$label", fontSize = 15.sp, color = Color.White, textAlign = TextAlign.Center,
+        Text(stringResource(R.string.set_b_scan_visit, label), fontSize = 15.sp, color = Color.White, textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp))
-        MenuItem("Close", Modifier.focusRequester(first)) { open = false }
+        MenuItem(stringResource(R.string.set_b_close), Modifier.focusRequester(first)) { open = false }
     }
 }
 
@@ -114,7 +117,7 @@ private const val LOG_PAGE_MS = 10 * 60 * 1000L
 @Composable
 private fun SendLogsRow() {
     var open by remember { mutableStateOf(false) }
-    SettingRow("Send logs", "Send this app's log to support from your phone", null) { open = true }
+    SettingRow(stringResource(R.string.set_b_send_logs), stringResource(R.string.set_b_send_logs_expl), null) { open = true }
     if (open) SendLogsPage { open = false }
 }
 
@@ -150,17 +153,17 @@ fun SendLogsPage(extraSecrets: List<String> = emptyList(), onClose: () -> Unit) 
         onClose()
     }
     DisposableEffect(Unit) { onDispose { server?.stop() } }
-    MenuFrame("Send logs", onDismiss = onClose) { first ->
+    MenuFrame(stringResource(R.string.set_b_send_logs), onDismiss = onClose) { first ->
         val img = qr
         if (img != null) Box(Modifier.fillMaxWidth().padding(vertical = 8.dp), contentAlignment = Alignment.Center) {
-            Image(img, contentDescription = "QR code for the log file", filterQuality = FilterQuality.None,
+            Image(img, contentDescription = stringResource(R.string.set_b_qr_log), filterQuality = FilterQuality.None,
                 modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(Color.White).padding(12.dp).size(200.dp))
         }
         Text(when {
-            img != null -> "${server?.url}\n\nScan with your phone on the same Wi-Fi, then email the file to $CONTACT_EMAIL"
-            failed -> "No Wi-Fi or Ethernet address found. Connect the TV to your home network and try again"
-            else -> "Preparing the log..."
+            img != null -> stringResource(R.string.set_b_log_ready, server?.url ?: "", CONTACT_EMAIL)
+            failed -> stringResource(R.string.set_b_log_no_net)
+            else -> stringResource(R.string.set_b_log_preparing)
         }, fontSize = 15.sp, color = Color.White, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp))
-        MenuItem("Close", Modifier.focusRequester(first)) { onClose() }
+        MenuItem(stringResource(R.string.set_b_close), Modifier.focusRequester(first)) { onClose() }
     }
 }

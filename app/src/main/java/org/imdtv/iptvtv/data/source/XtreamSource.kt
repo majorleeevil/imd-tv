@@ -1,5 +1,6 @@
 package org.imdtv.iptvtv.data.source
 
+import org.imdtv.iptvtv.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -29,7 +30,7 @@ import org.imdtv.iptvtv.data.model.SeriesDetail
 import org.imdtv.iptvtv.data.model.StreamFormat
 import java.io.IOException
 
-class XtreamAuthException(message: String) : Exception(message)
+class XtreamAuthException(message: String, @androidx.annotation.StringRes override val resId: Int? = null, override val args: List<Any> = emptyList()) : Exception(message), UiMessage
 
 /** Xtream Codes `player_api.php` source (spec §4.1). Credentials are checked once, on first use. */
 class XtreamSource(
@@ -69,9 +70,9 @@ class XtreamSource(
             val req = Request.Builder().url(url).apply { userAgent?.let { header("User-Agent", it) } }.build()
             http.newCall(req).execute().use { resp ->
                 if (resp.code == 401 || resp.code == 403) {
-                    throw XtreamAuthException("Login rejected by server (HTTP ${resp.code})")
+                    throw XtreamAuthException("Login rejected by server (HTTP ${resp.code})", R.string.set_b_xt_rejected, listOf(resp.code))
                 }
-                if (!resp.isSuccessful) throw IOException("Xtream request failed: HTTP ${resp.code} ${resp.message}")
+                if (!resp.isSuccessful) throw UiIOException("Xtream request failed: HTTP ${resp.code} ${resp.message}", R.string.set_b_xt_request_failed, listOf(resp.code, resp.message))
                 read(resp.body!!.source())
             }
         }
@@ -80,7 +81,9 @@ class XtreamSource(
         if (authenticated) return@withLock
         val info = json.decodeFromString(XAuthResponse.serializer(), get(null)).userInfo
         if (info?.auth != 1) {
-            throw XtreamAuthException(info?.message ?: info?.status?.let { "Account $it" } ?: "Invalid username or password")
+            throw info?.message?.let { XtreamAuthException(it) }
+                ?: info?.status?.let { XtreamAuthException("Account $it", R.string.set_b_xt_account, listOf(it)) }
+                ?: XtreamAuthException("Invalid username or password", R.string.set_b_xt_invalid)
         }
         authenticated = true
     }

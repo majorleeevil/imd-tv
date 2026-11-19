@@ -1,6 +1,7 @@
 package org.imdtv.iptvtv.recording
 
 import kotlinx.coroutines.CoroutineScope
+import org.imdtv.iptvtv.R
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
@@ -65,11 +66,11 @@ class RecordingRepository(
             current?.let { it.stop + s.endLateMin * MIN } ?: (t + NO_GUIDE_CAP), null)
         val others = runningOn(ch.providerId)
         val w = watchingOn(ch.providerId)
-        suspend fun go() { val id = dao.insert(r); if (started(r.copy(id = id))) prompt.value = Prompt.Notice("Recording ${r.title}") }
+        suspend fun go() { val id = dao.insert(r); if (started(r.copy(id = id))) prompt.value = Prompt.Notice("Recording ${r.title}", res = R.string.vod_rec_notice_recording, args = listOf(r.title)) }
         when (gate(limitFor(ch.providerId), others.size + w, w)) {
             Gate.GO -> go()
             Gate.ASK -> prompt.value = Prompt.RecordNowStopsWatching(displayName) { stopPlayer(); scope.launch { go() } }
-            Gate.NO_FREE -> prompt.value = Prompt.Notice("No free connection: ${others.first().title} is recording")
+            Gate.NO_FREE -> prompt.value = Prompt.Notice("No free connection: ${others.first().title} is recording", res = R.string.vod_rec_notice_no_free, args = listOf(others.first().title))
         }
     }
 
@@ -79,7 +80,7 @@ class RecordingRepository(
         val (r, changed) = trimBackToBack(new, dao.onChannel(ch.id, listOf(RecStatus.SCHEDULED, RecStatus.RECORDING)))
         changed.forEach { dao.update(it) }
         arm(r.copy(id = dao.insert(r)))
-        prompt.value = Prompt.Notice("Scheduled ${p.title}, ${dayDate(p.start)} ${clockTime(p.start)}")
+        prompt.value = Prompt.Notice("Scheduled ${p.title}, ${dayDate(p.start)} ${clockTime(p.start)}", res = R.string.vod_rec_notice_scheduled, args = listOf(p.title, dayDate(p.start), clockTime(p.start)))
     }
 
     /** A scheduled recording: forgotten (row and alarms). */
@@ -138,7 +139,7 @@ class RecordingRepository(
         val (inUse, canFree) = inUseFor(r)
         when (gate(limitFor(r.providerId), inUse, canFree)) {
             Gate.NO_FREE -> { dao.update(r.copy(status = RecStatus.FAILED, statusReason = "No free connection")); return }
-            Gate.ASK -> { stopPlayer(); prompt.value = Prompt.Notice("Recording ${r.title} — watching stopped", leavePlayer = true) }
+            Gate.ASK -> { stopPlayer(); prompt.value = Prompt.Notice("Recording ${r.title} — watching stopped", leavePlayer = true, res = R.string.vod_rec_notice_watching_stopped, args = listOf(r.title)) }
             Gate.GO -> Unit
         }
         running.value.values.filter { it.channelId == r.channelId && it.id != r.id }.forEach { stopService(it.id) }
@@ -162,7 +163,7 @@ class RecordingRepository(
         if (rec.isEmpty()) return false
         if (gate(activeProviderId()?.let(storedLimit), rec.size, rec.size) == Gate.GO) return false
         val newest = rec.maxBy { it.actualStart ?: it.scheduledStart }
-        prompt.value = if (declined) Prompt.Notice("Recording ${newest.title} is using your only connection")
+        prompt.value = if (declined) Prompt.Notice("Recording ${newest.title} is using your only connection", res = R.string.vod_rec_notice_only_connection, args = listOf(newest.title))
             else Prompt.StopRecordingToWatch(newest.title) {
                 stop(newest.id)
                 // Retry once the recording has let go of the connection (or after a while, if it hangs).

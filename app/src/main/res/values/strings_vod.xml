@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Navigation labels (XMB, Xcube) -->
+    <string name="vod_nav_search">Search</string>
+    <string name="vod_nav_live">Live TV</string>
+    <string name="vod_nav_movies">Movies</string>
+    <string name="vod_nav_series">Series</string>
+    <string name="vod_nav_recordings">Recordings</string>
+    <string name="vod_nav_settings">Settings</string>
+
+    <!-- Retro -->
+    <string name="vod_retro_tab_search">SEARCH</string>
+    <string name="vod_retro_tab_guide">TV GUIDE</string>
+    <string name="vod_retro_tab_movies">MOVIES</string>
+    <string name="vod_retro_tab_series">SERIES</string>
+    <string name="vod_retro_tab_recordings">RECORDINGS</string>
+    <string name="vod_retro_tab_settings">SETTINGS</string>
+    <string name="vod_retro_more">MORE…</string>
+    <string name="vod_retro_back">BACK</string>
+    <string name="vod_retro_press">"Press "</string>
+    <string name="vod_retro_select">SELECT</string>
+    <string name="vod_retro_to_view">" to view"</string>
+
+    <!-- Xcube -->
+    <string name="vod_xcube_blade_search">search</string>
+    <string name="vod_xcube_blade_live">live tv</string>
+    <string name="vod_xcube_blade_movies">movies</string>
+    <string name="vod_xcube_blade_series">series</string>
+    <string name="vod_xcube_blade_recordings">recordings</string>
+    <string name="vod_xcube_blade_settings">settings</string>
+    <string name="vod_xcube_back">↩ Back</string>
+    <string name="vod_xcube_select_ok">Select OK</string>
+    <string name="vod_xcube_blades">◀ blades ▶</string>
+
+    <!-- Shared -->
+    <string name="vod_uncategorised">Uncategorised</string>
+    <string name="vod_live_categories_hidden">All live categories are hidden. Show them again in Settings › Channels &amp; categories.</string>
+    <string name="vod_all">All</string>
+    <string name="vod_all_movies">All Movies</string>
+    <string name="vod_all_series">All Series</string>
+    <string name="vod_search_in">Search %1$s…</string>
+    <string name="vod_no_matches">No matches</string>
+    <string name="vod_nothing_here">Nothing here</string>
+    <string name="vod_no_channels">No channels</string>
+    <string name="vod_no_guide_info">No guide information</string>
+    <string name="vod_next_programme">Next: %1$s %2$s</string>
+    <string name="vod_now_programme">Now: %1$s %2$s–%3$s</string>
+    <string name="vod_cancel">Cancel</string>
+    <string name="vod_ok">OK</string>
+    <string name="vod_minutes_short">%1$d min</string>
+    <string name="vod_hours_short">%1$d h</string>
+    <string name="vod_hours_minutes_short">%1$d h %2$d min</string>
+
+    <!-- Search -->
+    <string name="vod_search_hint">Search channels, films and series</string>
+    <string name="vod_search_prompt">Type or say part of a name</string>
+    <string name="vod_search_channels">Channels</string>
+    <string name="vod_search_movies">Movies</string>
+    <string name="vod_search_series">Series</string>
+    <string name="vod_search_no_channels">No channels found</string>
+    <string name="vod_search_no_movies">No movies found</string>
+    <string name="vod_search_no_series">No series found</string>
+    <string name="vod_search_none_found">None found</string>
+    <string name="vod_search_count_of">%1$d of %2$d</string>
+    <string name="vod_search_heading">"%1$s  %2$s"</string>
+    <string name="vod_xmb_search">Search…</string>
+    <string name="vod_xmb_search_query">Search: %1$s</string>
+    <string name="vod_xmb_search_section">%1$s (%2$s)</string>
+    <string name="vod_xmb_no_recordings">No recordings yet. Hold OK on a channel in Live TV to record it.</string>
+
+    <!-- Movies and series -->
+    <string name="vod_continue_watching">Continue watching</string>
+    <string name="vod_updating_movies">Updating movies…</string>
+    <string name="vod_updating_series">Updating series…</string>
+    <string name="vod_category">Category</string>
+    <string name="vod_category_pill">◀ %1$s</string>
+    <string name="vod_favourites_row">★ Favourites</string>
+    <string name="vod_categories_header">CATEGORIES</string>
+    <string name="vod_director">Director: %1$s</string>
+    <string name="vod_cast">Cast: %1$s</string>
+    <string name="vod_btn_resume_from">"▶  Resume from %1$s"</string>
+    <string name="vod_btn_from_start">"↺  From start"</string>
+    <string name="vod_btn_play">"▶  Play"</string>
+    <string name="vod_btn_favourited">"★  Favourited"</string>
+    <string name="vod_btn_favourite">"☆  Favourite"</string>
+    <string name="vod_btn_watched">"✓  Watched"</string>
+    <string name="vod_btn_mark_watched">Mark watched</string>
+    <string name="vod_btn_resume_episode">"▶  Resume S%1$d · E%2$d"</string>
+    <string name="vod_btn_play_episode">"▶  Play S%1$d · E%2$d"</string>
+    <string name="vod_btn_mark_episode_watched">Mark E%1$d watched</string>
+    <string name="vod_more_like_this">More like this</string>
+    <string name="vod_loading_episodes">Loading episodes…</string>
+    <string name="vod_season_tab">Season %1$d</string>
+    <string name="vod_episode_short">E%1$d</string>
+    <string name="vod_season_episode">S%1$d · E%2$d</string>
+    <string name="vod_episode_title">%1$s S%2$dE%3$d</string>
+    <string name="vod_menu_play_from_start">Play from start</string>
+    <string name="vod_menu_mark_unwatched">Mark unwatched</string>
+    <plurals name="vod_seasons">
+        <item quantity="one">%d Season</item>
+        <item quantity="other">%d Seasons</item>
+    </plurals>
+
+    <!-- Recording: prompts and notices -->
+    <string name="vod_rec_starts_soon">Recording starts soon</string>
+    <string name="vod_rec_starts_soon_body">Recording %1$s on %2$s starts in 1 minute. Your login allows one stream, so watching will stop.</string>
+    <string name="vod_rec_record">Record</string>
+    <string name="vod_rec_keep_watching">Keep watching</string>
+    <string name="vod_rec_stop_q">Stop recording?</string>
+    <string name="vod_rec_stop_to_watch_body">Watching needs your only connection, so recording %1$s will stop. Stop recording?</string>
+    <string name="vod_rec_keep_recording">Keep recording</string>
+    <string name="vod_rec_stop_recording">Stop recording</string>
+    <string name="vod_rec_record_channel_q">Record %1$s?</string>
+    <string name="vod_rec_record_now_body">Recording needs your only connection, so watching will stop.</string>
+    <string name="vod_rec_notice_recording">Recording %1$s</string>
+    <string name="vod_rec_notice_no_free">No free connection: %1$s is recording</string>
+    <string name="vod_rec_notice_scheduled">Scheduled %1$s, %2$s %3$s</string>
+    <string name="vod_rec_notice_watching_stopped">Recording %1$s — watching stopped</string>
+    <string name="vod_rec_notice_only_connection">Recording %1$s is using your only connection</string>
+    <string name="vod_rec_notice_no_usb">Recording failed: no USB drive found</string>
+    <string name="vod_rec_notice_title_reason">%1$s: %2$s</string>
+
+    <!-- Recording: notification -->
+    <string name="vod_rec_channel_name">Recording</string>
+    <string name="vod_rec_notification_starting">Starting a recording</string>
+    <string name="vod_rec_notification_one">Recording %1$s</string>
+    <plurals name="vod_rec_notification_many">
+        <item quantity="one">Recording %1$d programme</item>
+        <item quantity="other">Recording %1$d programmes</item>
+    </plurals>
+
+    <!-- Recording: list -->
+    <string name="vod_rec_status_scheduled">Scheduled</string>
+    <string name="vod_rec_status_recording">Recording · ends %1$s</string>
+    <string name="vod_rec_status_stopped">Stopped</string>
+    <string name="vod_rec_status_failed">Failed</string>
+    <string name="vod_rec_reason_app_closed">Stopped — app was closed</string>
+    <string name="vod_rec_reason_missed">Missed — the box was off</string>
+    <string name="vod_rec_reason_skipped">Skipped — you were watching</string>
+    <string name="vod_rec_reason_channel_gone">Channel no longer in the playlist</string>
+    <string name="vod_rec_reason_no_connection">No free connection</string>
+    <string name="vod_rec_reason_cant_start">Failed — the recording couldn\'t start</string>
+    <string name="vod_rec_reason_no_usb">Failed — no USB drive found</string>
+    <string name="vod_rec_reason_stream_lost">Stopped — stream lost</string>
+    <string name="vod_rec_reason_second_stream">Failed — provider refused a second stream</string>
+    <string name="vod_rec_reason_storage_full">Stopped — storage full</string>
+    <string name="vod_rec_reason_drm">This channel uses DRM (%1$s) and can\'t be recorded</string>
+    <string name="vod_rec_reason_unsupported">This channel can\'t be recorded (%1$s)</string>
+    <string name="vod_rec_reason_no_start">Failed — the channel didn\'t start</string>
+    <string name="vod_rec_reason_no_start_http">Failed — the channel didn\'t start (HTTP %1$s)</string>
+    <string name="vod_rec_reason_cant_save">Failed — couldn\'t save to %1$s: %2$s</string>
+    <string name="vod_rec_store_internal">internal storage</string>
+    <string name="vod_rec_store_usb">the USB drive</string>
+    <string name="vod_rec_store_smb">the network share</string>
+    <string name="vod_rec_delete_q">Delete %1$s?</string>
+    <string name="vod_rec_delete">Delete</string>
+    <string name="vod_rec_play">Play</string>
+    <string name="vod_rec_cancel_recording">Cancel recording</string>
+    <string name="vod_rec_none_guide">No recordings yet. Hold OK on a channel in the guide to record it.</string>
+
+    <!-- Recording: settings -->
+    <string name="vod_rec_title">Recording</string>
+    <string name="vod_rec_switch_expl">Record live channels from the guide (hold OK on a channel)</string>
+    <string name="vod_rec_save_to">Save to</string>
+    <string name="vod_rec_save_to_expl">Where new recordings go</string>
+    <string name="vod_rec_store_internal_title">Internal storage</string>
+    <string name="vod_rec_store_smb_title">Network share</string>
+    <string name="vod_rec_usb">USB drive</string>
+    <string name="vod_rec_usb_none">USB drive (none found)</string>
+    <string name="vod_rec_usb_expl">Which drive recordings go to</string>
+    <string name="vod_rec_plug_usb">Plug in a USB drive first</string>
+    <string name="vod_rec_not_set">Not set</string>
+    <string name="vod_rec_server">Server</string>
+    <string name="vod_rec_server_expl">Name or address, e.g. nas or 192.168.1.20</string>
+    <string name="vod_rec_share">Share</string>
+    <string name="vod_rec_share_expl">The shared folder\'s name on the server</string>
+    <string name="vod_rec_folder">Folder</string>
+    <string name="vod_rec_folder_expl">Inside the share; empty = the top</string>
+    <string name="vod_rec_folder_top">Top of the share</string>
+    <string name="vod_rec_username">Username</string>
+    <string name="vod_rec_username_expl">Empty = guest</string>
+    <string name="vod_rec_guest">Guest</string>
+    <string name="vod_rec_password">Password</string>
+    <string name="vod_rec_password_expl">Stored encrypted on this box; not in backups</string>
+    <string name="vod_rec_test">Test</string>
+    <string name="vod_rec_test_expl">Writes and removes a small file</string>
+    <string name="vod_rec_testing">Testing…</string>
+    <string name="vod_rec_test_failed">Failed: %1$s</string>
+    <string name="vod_rec_free_space_title">Free space</string>
+    <string name="vod_rec_free_space_expl">Where recordings are saved</string>
+    <string name="vod_rec_free_unknown">Free space unknown</string>
+    <string name="vod_rec_free_space">About %1$s GB free ≈ %2$s HD</string>
+    <string name="vod_rec_start_early">Start early</string>
+    <string name="vod_rec_start_early_expl">Guide times drift: scheduled recordings start this much earlier</string>
+    <string name="vod_rec_end_late">End late</string>
+    <string name="vod_rec_end_late_expl">…and end this much later</string>
+    <string name="vod_rec_keep_awake">Keep the box awake while recording</string>
+    <string name="vod_rec_keep_awake_expl">Stops the box sleeping or turning Wi-Fi off mid-recording</string>
+    <string name="vod_rec_before_title">Before you record</string>
+    <string name="vod_rec_info">Recording one channel while you watch another needs two connections from your provider. Xtream logins tell the app their limit; M3U playlists don\'t. Small boxes have little room: a Chromecast with Google TV has about 4 GB free, about 2 hours of HD. Use a USB drive or a network share for more. Recordings on the box or the USB drive are removed if you uninstall the app.</string>
+    <string name="vod_rec_off_title">Turn recording off?</string>
+    <string name="vod_rec_off_body">Scheduled recordings are cancelled and any recording now stops. Your recordings are kept.</string>
+    <string name="vod_rec_turn_off">Turn off</string>
+
+    <!-- Files and logo packs -->
+    <string name="vod_files_internal">Internal storage</string>
+    <string name="vod_files_usb">USB</string>
+    <string name="vod_files_choose_manager">Choose a file manager</string>
+    <string name="vod_pack_no_space">Not enough space to import this pack</string>
+    <string name="vod_pack_no_images">No images in this zip</string>
+    <string name="vod_pack_unreadable">This zip could not be read</string>
+</resources>

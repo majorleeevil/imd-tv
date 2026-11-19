@@ -10,12 +10,14 @@ data class M3uParseResult(val entries: List<M3uEntry>, val skipped: Int)
 object M3uParser {
     private val ATTR = Regex("""([\w-]+)="([^"]*)"""")
     private val SXXEYY = Regex("""(?i)\bS(\d{1,2})\s*E(\d{1,3})\b""")
+    private val CATCHUP_KEYS = setOf("catchup", "catchup-source", "catchup-days")
     private val VOD_EXT = setOf("mp4", "mkv", "avi", "mov", "m4v", "wmv", "flv", "webm", "mpg", "mpeg")
 
     /** Streams line by line; never holds more than the parsed entries in memory. */
     fun parse(input: InputStream): M3uParseResult {
         val entries = ArrayList<M3uEntry>()
         var skipped = 0
+        val header = HashMap<String, String>() // #EXTM3U catchup defaults
         var pending: Pair<String, Map<String, String>>? = null
         val headers = LinkedHashMap<String, String>() // #EXTVLCOPT http-user-agent / http-referrer of the pending entry
         // #KODIPROP lines may come before or after #EXTINF, so they last until the next URL line.
@@ -37,6 +39,8 @@ object M3uParser {
                             (a["http-referrer"] ?: a["http-referer"])?.let { headers["Referer"] = it }
                         }
                     }
+                    line.startsWith("#EXTM3U", ignoreCase = true) ->
+                        ATTR.findAll(line).forEach { m -> m.groupValues[1].lowercase().takeIf { it in CATCHUP_KEYS }?.let { header[it] = m.groupValues[2] } }
                     line.startsWith("#EXTVLCOPT:", ignoreCase = true) -> {
                         val (k, v) = line.substring(11).split('=', limit = 2).let { it[0].trim().lowercase() to it.getOrElse(1) { "" }.trim() }
                         when (k) { "http-user-agent" -> headers["User-Agent"] = v; "http-referrer", "http-referer" -> headers["Referer"] = v }
@@ -55,7 +59,7 @@ object M3uParser {
                     else -> {
                         pending?.let { (name, attrs) ->
                             val drm = drmType?.takeIf { it.isNotBlank() }?.let { Drm(it, drmKey?.takeIf(String::isNotBlank)) }
-                            entries += M3uEntry(name, attrs, if ('|' in line) line else withStreamHeaders(line, propHeaders + headers), drm)
+                            entries += M3uEntry(name, if (header.isEmpty()) attrs else header + attrs, if ('|' in line) line else withStreamHeaders(line, propHeaders + headers), drm)
                             pending = null
                             headers.clear()
                         }
@@ -82,6 +86,16 @@ object M3uParser {
         val name = if (split >= 0) line.substring(split + 1).trim() else ""
         val attrs = ATTR.findAll(header).associate { it.groupValues[1].lowercase() to it.groupValues[2] }
         return name.ifEmpty { attrs["tvg-name"].orEmpty() } to attrs
+    }
+
+    /** (archiveDays, packed "type|template") from the catchup attributes; (null, null) when the entry has none. */
+    fun catchUp(e: M3uEntry): Pair<Int?, String?> {
+        val a = e.attrs
+        val type = a["catchup"]?.trim()?.lowercase()?.takeIf(String::isNotEmpty)
+        val src = a["catchup-source"]?.trim()?.takeIf(String::isNotEmpty)
+        val days = listOf("catchup-days", "tvg-rec", "timeshift").firstNotNullOfOrNull { a[it]?.trim()?.toIntOrNull()?.takeIf { d -> d > 0 } }
+        val packed = if (type == null && src == null) null else "${type ?: "default"}|${src.orEmpty()}"
+        return (days ?: if (packed != null) 7 else null) to packed
     }
 
     fun classify(e: M3uEntry): Kind {

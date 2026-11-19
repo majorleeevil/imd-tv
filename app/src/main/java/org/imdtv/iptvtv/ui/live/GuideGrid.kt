@@ -1,6 +1,10 @@
 @file:OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 package org.imdtv.iptvtv.ui.live
 
+import org.imdtv.iptvtv.ui.hasCatchUp
+import androidx.compose.ui.res.stringResource
+import org.imdtv.iptvtv.R
+
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -142,6 +146,9 @@ fun GuideGrid(
     val move = state.rowMove
     val channels = move?.order ?: listed
     androidx.activity.compose.BackHandler(enabled = move != null && !move.dropped) { state.rowMove = null }
+    val merging = state.rowMerge
+    state.hasGrid = true
+    androidx.activity.compose.BackHandler(enabled = merging != null) { state.rowMerge = null }
     androidx.compose.runtime.LaunchedEffect(listed) { if (state.rowMove?.dropped == true) state.rowMove = null }
     // Keep the moved row clear of the list's edges, so the channel it is passing shows. Measured after the move is laid
     // out: the list keeps its first visible item by key, so a row moving up past the top drags the view with it.
@@ -157,13 +164,22 @@ fun GuideGrid(
         }
     }
     if (move != null && !move.dropped) androidx.compose.ui.window.Popup(alignment = Alignment.BottomCenter) {
-        org.imdtv.iptvtv.ui.InfoBar("Up/Down to move · OK to drop · Back to cancel", Modifier.padding(bottom = 40.dp))
+        org.imdtv.iptvtv.ui.InfoBar(stringResource(R.string.live_row_move_hint), Modifier.padding(bottom = 40.dp))
+    }
+    if (merging != null) androidx.compose.ui.window.Popup(alignment = Alignment.BottomCenter) {
+        org.imdtv.iptvtv.ui.InfoBar(stringResource(R.string.live_row_merge_hint, merging.ch.displayName(vm.strip.value)), Modifier.padding(bottom = 40.dp))
     }
     val programmes by vm.programmes.collectAsState()
     val now by vm.now.collectAsState()
     val windowStart by vm.windowStart.collectAsState()
     val cursor by vm.cursor.collectAsState()
-    val at = cursor?.takeIf { it > now } ?: now // the focused row highlights the programme on at
+    val past by vm.inPast.collectAsState()
+    val at = Timeline.cursorAt(cursor, now, past) // the focused row highlights the programme on at
+    // Left on now: 1 = held down on a catch-up channel (key-up opens the rail, holding goes into the past), 2 = went into the past.
+    val leftHold = remember { IntArray(1) }
+    // Right: 1 = pressed (key-up steps the cursor), 2 = held (jumped to the top channel).
+    val rightHold = remember { IntArray(1) }
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
     val recordingOn by vm.recordingOn.collectAsState()
     val focused by vm.focused.collectAsState()
     val strip by vm.strip.collectAsState()
@@ -172,7 +188,7 @@ fun GuideGrid(
     Column(modifier) {
         Row(Modifier.height(25.dp).drawBehind { drawRect(Color(0x33FFFFFF), Offset(0f, size.height - 1.dp.toPx()), Size(size.width, 1.dp.toPx())) },
             verticalAlignment = Alignment.Bottom) {
-            Text(if (windowStart - now > 12 * 3600_000) "Later" else "Today", fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
+            Text(if (windowStart - now > 12 * 3600_000) stringResource(R.string.live_later) else if (past && org.imdtv.iptvtv.ui.dayDate(windowStart) != org.imdtv.iptvtv.ui.dayDate(now)) org.imdtv.iptvtv.ui.dayDate(windowStart) else stringResource(R.string.live_today), fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
                 color = style.headerColor ?: Color.White, modifier = Modifier.width(style.channelCol).padding(bottom = 5.dp))
             for (i in 0 until style.windowMin / 30) {
                 Text(clockTime(windowStart + i * LiveViewModel.HALF_HOUR), fontSize = 11.sp, color = style.headerColor ?: LocalTheme.current.colors.muted,
@@ -195,30 +211,47 @@ fun GuideGrid(
             LazyColumn(state = state.list, verticalArrangement = Arrangement.spacedBy(style.gap),
                 modifier = if (listHeight != null) Modifier.height(listHeight) else Modifier.fillMaxSize()) {
                 itemsIndexed(channels, key = { _, ch -> ch.id }) { i, ch ->
-                    val moving = move?.ch?.id == ch.id && !move.dropped
+                    val moving = move?.ch?.id == ch.id && !move.dropped || merging?.ch?.id == ch.id
                     GuideRow(
-                        ch, (if (moving) "↕ " else "") + ch.displayName(strip), programmes[ch.id].orEmpty(), now, at, windowStart, style, isFocused = focused?.id == ch.id && !state.railOpen && state.heldFocus == null, moving = moving,
+                        ch, (if (moving && merging == null) "↕ " else "") + ch.displayName(strip), programmes[ch.id].orEmpty(), now, at, windowStart, style, isFocused = focused?.id == ch.id && !state.railOpen && state.heldFocus == null, moving = moving,
                         marked = { p -> (ch.id to p.start) in marks || ch.id in recordingOnChannel && p.start <= now && now < p.stop },
                         modifier = (if (i == state.focusIndex) Modifier.focusRequester(state.rowFocus) else Modifier)
                             .onPreviewKeyEvent { e ->
                                 if (moving && move != null) return@onPreviewKeyEvent moveKey(e, move, i, state, vm)
+                                if (merging != null && e.key in OK_KEYS) return@onPreviewKeyEvent mergeKey(e, merging, ch, state, vm)
                                 if (state.railOpen) return@onPreviewKeyEvent true // rail is taking focus; don't move the guide behind it
                                 if (vm.numberKey(e, false)) return@onPreviewKeyEvent true
+                                if (e.key == Key.DirectionLeft) return@onPreviewKeyEvent leftKey(e, leftHold, ch, programmes[ch.id].orEmpty(), style.windowMin, vm) { state.focusIndex = i; onLeftAtStart() }
+                                if (e.key == Key.DirectionRight) {
+                                    // Tap steps the cursor on key-up; hold jumps to the top channel, as hold Left opens the rail.
+                                    val repeat = e.nativeKeyEvent.repeatCount > 0
+                                    when {
+                                        e.type == KeyEventType.KeyDown && !repeat -> rightHold[0] = 1
+                                        e.type == KeyEventType.KeyDown -> if (rightHold[0] == 1) {
+                                            rightHold[0] = 2; state.focusIndex = 0
+                                            scope.launch { state.list.scrollToItem(0); state.refocus() }
+                                        }
+                                        e.type == KeyEventType.KeyUp -> {
+                                            if (rightHold[0] == 1) vm.moveCursor(programmes[ch.id].orEmpty(), 1, style.windowMin, ch.archiveDays)
+                                            rightHold[0] = 0
+                                        }
+                                    }
+                                    return@onPreviewKeyEvent true
+                                }
                                 if (e.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
                                 when (e.key) {
-                                    Key.DirectionLeft -> { if (!vm.moveCursor(programmes[ch.id].orEmpty(), -1, style.windowMin)) { state.focusIndex = i; onLeftAtStart() }; true }
-                                    Key.DirectionRight -> { vm.moveCursor(programmes[ch.id].orEmpty(), 1, style.windowMin); true }
                                     Key.DirectionUp -> if (i == 0 && onUpAtTop != null) { onUpAtTop(); true } else false
                                     else -> false
                                 }
                             }
-                            .onLongOk { state.focusIndex = i; state.menu = GuideMenu.Channel(ch) },
-                        onFocused = { vm.focused.value = ch; state.focusIndex = i },
+                            .onLongOk { state.focusIndex = i; state.menu = if (past && ch.hasCatchUp) GuideMenu.PickDay(ch, style.windowMin) else GuideMenu.Channel(ch) },
+                        onFocused = { vm.focused.value = ch; state.focusIndex = i; if (past && !ch.hasCatchUp) vm.leavePast() },
                         onClick = {
+                            // A past programme highlighted (catch-up): OK plays it.
+                            val aired = if (past) programmes[ch.id].orEmpty().firstOrNull { it.start <= at && at < it.stop && it.stop <= now } else null
                             // A later programme highlighted: OK offers to record it (or cancel) instead of playing.
                             val later = programmes[ch.id].orEmpty().firstOrNull { at > now && it.start <= at && at < it.stop }
-                            // In Catch-up, OK lists the channel's past programmes.
-                            if (vm.entry.value == org.imdtv.iptvtv.data.repo.RailEntry.CatchUp) { state.focusIndex = i; state.menu = GuideMenu.CatchUp(ch) }
+                            if (aired != null) vm.playCatchUp(ch, aired)
                             else if (later != null && recordingOn) { state.focusIndex = i; state.menu = GuideMenu.Programme(ch, later) } else state.onOk(ch, onFullScreen)
                         },
                     )
@@ -231,6 +264,27 @@ fun GuideGrid(
             }
         }
     }
+}
+
+/**
+ * Left on a guide row, on key-up so a hold can be told from a tap. A tap steps the cursor back one programme; on now, a
+ * catch-up channel goes into the past, any other opens the rail (as does Left at the archive limit). Held, it opens the
+ * rail once and nothing else.
+ */
+private fun leftKey(e: androidx.compose.ui.input.key.KeyEvent, hold: IntArray, ch: ChannelEntity, progs: List<GuideProgramme>, windowMin: Int,
+                    vm: LiveViewModel, openRail: () -> Unit): Boolean {
+    val repeat = e.nativeKeyEvent.repeatCount > 0
+    when {
+        e.type == KeyEventType.KeyDown && !repeat -> hold[0] = 1
+        e.type == KeyEventType.KeyDown -> if (hold[0] == 1) { hold[0] = 2; openRail() }
+        e.type == KeyEventType.KeyUp -> {
+            if (hold[0] == 1 && !vm.moveCursor(progs, -1, windowMin, ch.archiveDays)) {
+                if (ch.hasCatchUp && !vm.inPast.value) vm.enterPast(ch, windowMin) else openRail()
+            }
+            hold[0] = 0
+        }
+    }
+    return true
 }
 
 /** A key on the picked-up row: Up/Down carry it, OK (on release, so the press isn't also a click) drops it; the rest is swallowed. */
@@ -248,6 +302,15 @@ private fun moveKey(e: androidx.compose.ui.input.key.KeyEvent, m: RowMove, i: In
         Key.Back, Key.Escape -> return false // to the BackHandler, which cancels the move
         else -> {}
     }
+    return true
+}
+
+private val OK_KEYS = setOf(Key.DirectionCenter, Key.Enter, Key.NumPadEnter)
+
+/** OK while merging: on release of a fresh press, merges the gold channel into [ch] (on itself, just cancels). */
+private fun mergeKey(e: androidx.compose.ui.input.key.KeyEvent, m: RowMerge, ch: ChannelEntity, state: GuideState, vm: LiveViewModel): Boolean {
+    if (e.type == KeyEventType.KeyDown && e.nativeKeyEvent.repeatCount == 0) m.armed = true
+    else if (e.type == KeyEventType.KeyUp && m.armed) { if (ch.id != m.ch.id) vm.merge(m.ch, ch); state.rowMerge = null }
     return true
 }
 
@@ -275,11 +338,16 @@ private fun GuideRow(
                 val fg = if (moving) Color.Black else if (f) colors.onFocus else Color.White
                 val number = (ch.customNumber ?: ch.number)?.takeIf { org.imdtv.iptvtv.ui.LocalShowNumbers.current }
                 if (style.numberFirst) {
-                    Text(listOfNotNull(number, name).joinToString("  "), fontSize = style.sp(14f), fontWeight = style.font, color = fg, maxLines = style.lines,
-                        overflow = TextOverflow.Ellipsis)
+                    Text(listOfNotNull(number, name).joinToString("  "), fontSize = style.sp(14f) * org.imdtv.iptvtv.ui.LocalTitleScale.current, fontWeight = style.font, color = fg, maxLines = style.lines,
+                        overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+                    if (ch.hasCatchUp) CatchUpClock(fg, Modifier.padding(start = 6.dp))
                 } else {
-                    Text(name, fontSize = style.sp(14f), fontWeight = style.font, color = fg, maxLines = style.lines,
-                        overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                    // Name and clock fill the box up to the number; a weighted spacer beside the name capped it at half the box.
+                    Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+                        Text(name, fontSize = style.sp(14f) * org.imdtv.iptvtv.ui.LocalTitleScale.current, fontWeight = style.font, color = fg, maxLines = style.lines,
+                            overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+                        if (ch.hasCatchUp) CatchUpClock(fg, Modifier.padding(start = 6.dp))
+                    }
                     number?.let { Text("  $it", fontSize = style.sp(12f), color = fg.copy(alpha = .85f)) }
                 }
             }
@@ -292,7 +360,7 @@ private fun GuideRow(
                 Box(Modifier.width(style.dpPerMin * style.windowMin - when { style.boxed -> 3.dp; style.roundedCells -> 2.dp; else -> 0.dp })
                     .fillMaxHeight().background(colors.cellDim, when { style.boxed -> BOX; style.roundedCells -> CELL; else -> RectangleShape }),
                     contentAlignment = Alignment.CenterStart) {
-                    Text(if (progs.isEmpty()) "No guide information" else "", fontSize = style.sp(12f), color = colors.muted, modifier = Modifier.padding(horizontal = 10.dp))
+                    Text(if (progs.isEmpty()) stringResource(R.string.live_no_guide_info) else "", fontSize = style.sp(12f), color = colors.muted, modifier = Modifier.padding(horizontal = 10.dp))
                 }
             }
             for (p in progs) {
@@ -332,7 +400,7 @@ private fun GuideRow(
                         },
                     contentAlignment = Alignment.CenterStart,
                 ) {
-                    Text(p.title, fontSize = style.sp(12.5f), fontWeight = if (focusedNow) FontWeight.SemiBold else FontWeight.Normal,
+                    Text(p.title, fontSize = style.sp(12.5f) * org.imdtv.iptvtv.ui.LocalTitleScale.current, fontWeight = if (focusedNow) FontWeight.SemiBold else FontWeight.Normal,
                         color = (if (focusedNow) style.focusedProgrammeText else Color.White).copy(alpha = if (past && !focusedNow) .55f else 1f), maxLines = style.lines, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(horizontal = 10.dp))
                 }
             }
@@ -341,3 +409,15 @@ private fun GuideRow(
 }
 
 private val REC_DOT = Color(0xFFE53935)
+
+/** Marks a channel with catch-up (guide channel column, full-screen overlay). */
+@Composable
+fun CatchUpClock(color: Color, modifier: Modifier = Modifier) {
+    androidx.compose.foundation.Canvas(modifier.then(Modifier.width(11.dp).height(11.dp))) {
+        val r = size.minDimension / 2
+        val w = 1.3.dp.toPx()
+        drawCircle(color, r - w / 2, style = androidx.compose.ui.graphics.drawscope.Stroke(w))
+        drawLine(color, center, Offset(center.x, center.y - r * .6f), w)
+        drawLine(color, center, Offset(center.x + r * .45f, center.y), w)
+    }
+}

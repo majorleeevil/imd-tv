@@ -1,6 +1,8 @@
 package org.imdtv.iptvtv.data.logos
 
 import androidx.room.withTransaction
+import androidx.annotation.StringRes
+import org.imdtv.iptvtv.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.sync.Mutex
@@ -37,7 +39,8 @@ fun matchPack(files: List<String>, channels: List<ChannelEntity>): Map<Long, Str
 
 data class PackResult(val images: Int, val matched: Int)
 
-class PackException(message: String) : Exception(message)
+/** [res]: the same message as a string resource, for the UI to show in the current language ([message] stays English for logs and tests). */
+class PackException(message: String, @StringRes val res: Int = 0) : Exception(message)
 
 /** The user's logo pack per playlist, unpacked into `dir/<providerId>/<stamp>/` (a new stamp per import, so Coil never shows an old image). */
 class LogoPackRepository(private val db: AppDatabase, private val dir: File, private val now: () -> Long = System::currentTimeMillis) {
@@ -77,7 +80,7 @@ class LogoPackRepository(private val db: AppDatabase, private val dir: File, pri
         var stamp = now()
         while (File(providerDir(providerId), "$stamp").exists()) stamp++
         val target = File(providerDir(providerId), "$stamp")
-        if (!target.mkdirs()) throw PackException("Not enough space to import this pack")
+        if (!target.mkdirs()) throw noSpace()
         try {
             var images = 0
             open().use { raw ->
@@ -100,7 +103,7 @@ class LogoPackRepository(private val db: AppDatabase, private val dir: File, pri
                     }
                 }
             }
-            if (images == 0) throw PackException("No images in this zip")
+            if (images == 0) throw PackException("No images in this zip", R.string.vod_pack_no_images)
             return target
         } catch (e: Throwable) {
             target.deleteRecursively()
@@ -108,14 +111,14 @@ class LogoPackRepository(private val db: AppDatabase, private val dir: File, pri
         }
     }
 
-    private fun noSpace() = PackException("Not enough space to import this pack")
+    private fun noSpace() = PackException("Not enough space to import this pack", R.string.vod_pack_no_space)
 
     private inline fun <T> readStep(read: () -> T): T = try { read() } catch (e: ZipException) {
-        throw PackException("This zip could not be read")
+        throw PackException("This zip could not be read", R.string.vod_pack_unreadable)
     } catch (e: EOFException) {
-        throw PackException("This zip could not be read")
+        throw PackException("This zip could not be read", R.string.vod_pack_unreadable)
     } catch (e: IllegalArgumentException) { // bad entry name encoding
-        throw PackException("This zip could not be read")
+        throw PackException("This zip could not be read", R.string.vod_pack_unreadable)
     }
 
     /** After a sync: new channels get their pack logo without a re-import. No pack → nothing. */

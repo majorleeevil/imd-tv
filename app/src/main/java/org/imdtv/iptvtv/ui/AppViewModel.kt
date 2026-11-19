@@ -1,5 +1,7 @@
 package org.imdtv.iptvtv.ui
 
+import org.imdtv.iptvtv.data.source.uiText
+import org.imdtv.iptvtv.R
 import android.app.Application
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
@@ -63,6 +65,7 @@ data class FormState(val busy: Boolean = false, val error: String? = null, val r
 /** Navigation stack, provider setup form and the shared player. */
 class AppViewModel(app: Application) : AndroidViewModel(app) {
     private val c = (app as IptvApp).container
+    private fun str(@androidx.annotation.StringRes id: Int, vararg a: Any): String = getApplication<Application>().getString(id, *a)
     val player get() = c.playerManager
 
     val stack = MutableStateFlow<List<Screen>>(listOf(Screen.Loading))
@@ -92,7 +95,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
             val start = startStack(hasProvider, s, last != null)
             if (start.last() is Screen.Player && last != null) {
                 startChannel.value = last
-                stack.value = listOf(Screen.Live, Screen.Player(last.displayName(parseStripList(c.db.providerDao().get(last.providerId)?.nameStrip.orEmpty())), live = true))
+                stack.value = listOf(Screen.Live, Screen.Player(last.displayName(org.imdtv.iptvtv.data.catalogue.channelStrip(c.db.providerDao().get(last.providerId)?.nameStrip, s.removeNameSymbols)), live = true))
             } else {
                 stack.value = start
             }
@@ -142,18 +145,23 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         stack.value = stack.value.dropLast(1)
         // A channel played from search: there is no preview to return to.
         if (top is Screen.Player && stack.value.last() == Screen.Search) player.stop()
+        // Catch-up opened from live full screen: back to the live stream.
+        if (top is Screen.Player && !top.live && (stack.value.last() as? Screen.Player)?.live == true) resumeLive()
         return true
     }
+
+    /** Set by the activity: plays the live channel again (see [back]). */
+    var resumeLive: () -> Unit = {}
 
     /** A blank [name] keeps the automatic one: the URL's host. */
     fun save(type: ProviderType, url: String, username: String, password: String, epgUrls: String, userAgent: String, editing: ProviderEntity? = null, name: String = "") {
         val trimmed = url.trim().trimEnd('/')
         if (Uri.parse(trimmed).host.isNullOrEmpty()) {
-            form.value = FormState(error = "Enter a full URL, e.g. http://example.com:8080")
+            form.value = FormState(error = str(R.string.set_b_enter_full_url))
             return
         }
         if (type == ProviderType.STALKER && !org.imdtv.iptvtv.data.source.isValidMac(username)) {
-            form.value = FormState(error = "Enter the MAC address as six pairs, e.g. 00:1A:79:12:34:56")
+            form.value = FormState(error = str(R.string.set_b_enter_mac_pairs))
             return
         }
         form.value = FormState(busy = true)
@@ -176,7 +184,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
                 c.providerRepository.setActive(id)
                 hasProvider = true
                 EpgRefreshWorker.runNow(getApplication())
-                form.value = FormState(result = r.summary() + " The guide is loading in the background.")
+                form.value = FormState(result = r.summary() + str(R.string.set_b_guide_loading))
             } catch (e: Exception) {
                 // Don't leave a half-added provider behind; the user will retry with corrected details.
                 id?.let { c.providerRepository.remove(it) }
@@ -197,14 +205,14 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         } catch (e: Exception) {
             c.providerRepository.update(old)
             android.util.Log.w("AppViewModel", "Edit ${new.type.name} playlist failed", e)
-            form.value = FormState(error = loadError(e) + " Your changes were not saved.")
+            form.value = FormState(error = loadError(e) + str(R.string.set_b_not_saved))
         }
     }
 
     private fun loadError(e: Exception) = when (e) {
-        is XtreamAuthException -> "Login failed: ${e.message}"
-        is org.imdtv.iptvtv.data.source.StalkerException -> "Portal login failed: ${e.message}"
-        else -> "Couldn't load the playlist: ${e.message ?: e::class.simpleName}"
+        is XtreamAuthException -> str(R.string.set_b_login_failed, e.uiText(getApplication()) ?: "")
+        is org.imdtv.iptvtv.data.source.StalkerException -> str(R.string.set_b_portal_login_failed, e.uiText(getApplication()) ?: "")
+        else -> str(R.string.set_b_load_failed, e.uiText(getApplication()) ?: e::class.simpleName ?: "")
     }
 
     fun refreshGuide() = EpgRefreshWorker.runNow(getApplication())

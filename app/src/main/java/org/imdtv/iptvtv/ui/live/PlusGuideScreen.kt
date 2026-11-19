@@ -1,5 +1,8 @@
 package org.imdtv.iptvtv.ui.live
 
+import androidx.compose.ui.res.stringResource
+import org.imdtv.iptvtv.R
+
 import org.imdtv.iptvtv.ui.ChannelLogo
 import androidx.compose.ui.draw.clip
 import androidx.activity.compose.BackHandler
@@ -94,7 +97,7 @@ fun PlusGuideScreen(vm: LiveViewModel, nav: @Composable () -> Unit, onFullScreen
     }) {
         // Title band: "TV guide" (the nav row while it has focus), logo centre, clock and date right.
         Box(Modifier.padding(start = 40.dp, top = 14.dp)) {
-            if (!navFocused) Text("TV guide", fontSize = 17.sp, color = Color.White, modifier = Modifier.padding(top = 4.dp))
+            if (!navFocused) Text(stringResource(R.string.live_tv_guide), fontSize = 17.sp, color = Color.White, modifier = Modifier.padding(top = 4.dp))
             // Always composed (Back at the top level focuses it), only visible while focused.
             Box(Modifier.graphicsLayer { alpha = if (navFocused) 1f else 0f }
                 .onFocusChanged { navFocused = it.hasFocus; if (it.hasFocus) state.heldFocus = tabsFocus }
@@ -102,7 +105,7 @@ fun PlusGuideScreen(vm: LiveViewModel, nav: @Composable () -> Unit, onFullScreen
         }
         if (!navFocused) AppLogo(Modifier.align(Alignment.TopCenter).padding(top = 6.dp).size(48.dp))
         val st = vm.settings.collectAsState().value
-        val status = listOfNotNull(clockTime(now).takeIf { st.showDateTime }, dayDate(now).takeIf { st.showDate }, pingMs?.let(::pingLabel)).joinToString("   ")
+        val status = listOfNotNull(clockTime(now).takeIf { st.showDateTime }, dayDate(now).takeIf { st.showDate }, pingMs?.let { pingLabel(it) }).joinToString("   ")
         if (!navFocused && status.isNotEmpty()) Text(status, fontSize = 12.sp,
             color = Color.White, modifier = Modifier.align(Alignment.TopEnd).padding(top = 16.dp, end = 40.dp))
 
@@ -116,7 +119,7 @@ fun PlusGuideScreen(vm: LiveViewModel, nav: @Composable () -> Unit, onFullScreen
             }
             Column(Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(if (cur != null) "${clockTime(cur.start)}  ${cur.title}" else ch.displayName(strip), fontSize = 15.sp,
+                    Text(if (cur != null) "${clockTime(cur.start)}  ${cur.title}" else ch.displayName(strip), fontSize = 15.sp * org.imdtv.iptvtv.ui.LocalTitleScale.current,
                         color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
                     heroBadges(focused?.id, previewingId, formats).forEach { b ->
                         Text(b, fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = Color.White,
@@ -124,7 +127,7 @@ fun PlusGuideScreen(vm: LiveViewModel, nav: @Composable () -> Unit, onFullScreen
                                 .padding(horizontal = 4.dp, vertical = 1.dp))
                     }
                 }
-                Text(cur?.desc ?: if (cur == null) "No guide information" else "", fontSize = 13.sp, lineHeight = 18.sp,
+                Text(cur?.desc ?: if (cur == null) stringResource(R.string.live_no_guide_info) else "", fontSize = 13.sp, lineHeight = 18.sp,
                     color = Color.White.copy(alpha = .92f), maxLines = 3, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 4.dp))
             }
             }
@@ -133,7 +136,7 @@ fun PlusGuideScreen(vm: LiveViewModel, nav: @Composable () -> Unit, onFullScreen
             modifier = Modifier.align(Alignment.TopEnd).padding(top = 46.dp, end = 40.dp).size(300.dp, 169.dp).background(Color.Black))
 
         if (rail?.isEmpty() == true) {
-            Text("All live categories are hidden. Show them again in Settings › Channels & categories.", fontSize = 16.sp,
+            Text(stringResource(R.string.live_all_hidden), fontSize = 16.sp,
                 color = Color.White, modifier = Modifier.padding(start = 40.dp, top = 300.dp))
         }
         // The tabs and grid panel run to both sides and the bottom (user, 2026-11-12).
@@ -153,7 +156,7 @@ fun PlusGuideScreen(vm: LiveViewModel, nav: @Composable () -> Unit, onFullScreen
             Column(Modifier.fillMaxSize().background(colors.panel).padding(start = 24.dp, end = 16.dp, top = 4.dp, bottom = 14.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 GuideGrid(vm, state, PLUS_GRID, onFullScreen, onLeftAtStart = toTabs, onUpAtTop = toTabs, modifier = Modifier.weight(1f))
-                Text("Press SELECT to view", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
+                Text(stringResource(R.string.live_press_select), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
             }
         }
         GuideMenus(vm, state)

@@ -1,5 +1,7 @@
 package org.imdtv.iptvtv.ui
 
+import org.imdtv.iptvtv.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
@@ -88,7 +90,7 @@ private fun ProviderForm(vm: AppViewModel, editing: ProviderEntity?) {
     // One 1080p screen (960×540 dp): labels sit beside the fields, progress and Watch on the right.
     // Scrolls only when the Name box is open on the tallest (Stalker) form.
     Column(Modifier.verticalScroll(rememberScrollState()).padding(horizontal = 48.dp, vertical = 28.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(if (editing == null) "Add playlist" else "Edit ${editing.name}", style = MaterialTheme.typography.headlineSmall, color = Color.White)
+        Text(if (editing == null) stringResource(R.string.set_b_add_playlist) else stringResource(R.string.set_b_edit_playlist, editing.name), style = MaterialTheme.typography.headlineSmall, color = Color.White)
         Row(horizontalArrangement = Arrangement.spacedBy(32.dp)) {
             Column(Modifier.width(560.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (editing == null) Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -96,26 +98,26 @@ private fun ProviderForm(vm: AppViewModel, editing: ProviderEntity?) {
                         Button(onClick = { type = t }) { Text((if (t == type) "● " else "○ ") + t.name) }
                     }
                 }
-                FormField(when (type) { ProviderType.XTREAM -> "Server URL"; ProviderType.M3U -> "Playlist URL"; ProviderType.STALKER -> "Portal URL" },
+                FormField(stringResource(when (type) { ProviderType.XTREAM -> R.string.set_b_server_url; ProviderType.M3U -> R.string.set_b_playlist_url; ProviderType.STALKER -> R.string.set_b_portal_url }),
                     url, KeyboardType.Uri) { url = it }
                 if (type == ProviderType.STALKER) {
-                    FormField("MAC address\ne.g. 00:1A:79:12:34:56", user, KeyboardType.Password) { user = it }
-                    FormField("Serial (optional)", pass, KeyboardType.Password) { pass = it }
-                    FormField("Device ID (optional)", deviceId, KeyboardType.Password) { deviceId = it }
-                    FormField("Device ID 2 (optional)\nBlank = same as Device ID", deviceId2, KeyboardType.Password) { deviceId2 = it }
-                    FormField("STB model (optional)\nBlank = MAG250", model, KeyboardType.Password) { model = it }
+                    FormField(stringResource(R.string.set_b_mac_form), user, KeyboardType.Password) { user = it }
+                    FormField(stringResource(R.string.set_b_serial_optional), pass, KeyboardType.Password) { pass = it }
+                    FormField(stringResource(R.string.set_b_device_id), deviceId, KeyboardType.Password) { deviceId = it }
+                    FormField(stringResource(R.string.set_b_device_id2), deviceId2, KeyboardType.Password) { deviceId2 = it }
+                    FormField(stringResource(R.string.set_b_stb_model), model, KeyboardType.Password) { model = it }
                 } else if (type == ProviderType.XTREAM) {
                     // The password keyboard has the number row many providers' usernames need.
-                    FormField("Username", user, KeyboardType.Password) { user = it }
-                    FormField("Password", pass, KeyboardType.Password, secret = true) { pass = it }
+                    FormField(stringResource(R.string.set_b_username), user, KeyboardType.Password) { user = it }
+                    FormField(stringResource(R.string.set_b_password), pass, KeyboardType.Password, secret = true) { pass = it }
                 } else if (editing == null) {
-                    FormField("EPG URLs (optional, one per line)", epg, KeyboardType.Uri) { epg = it }
+                    FormField(stringResource(R.string.set_b_epg_urls), epg, KeyboardType.Uri) { epg = it }
                 }
-                FormField("User agent (optional)", agent) { agent = it }
-                org.imdtv.iptvtv.ui.settings.EditRow("Name (optional)", "Blank: named after the URL, e.g. example.com",
+                FormField(stringResource(R.string.set_b_user_agent), agent) { agent = it }
+                org.imdtv.iptvtv.ui.settings.EditRow(stringResource(R.string.set_b_name_optional), stringResource(R.string.set_b_name_expl),
                     // Down goes to Save: the nearest-below search picked "Refresh guide now".
                     modifier = Modifier.focusProperties { if (!ready) down = save },
-                    value = name.ifBlank { "Automatic" }, initial = name, saveLabel = "Confirm") { name = it } // "Save" here read as the form's Save (user, 2026-11-15)
+                    value = name.ifBlank { stringResource(R.string.set_b_automatic) }, initial = name, saveLabel = stringResource(R.string.set_b_confirm)) { name = it } // "Save" here read as the form's Save (user, 2026-11-15)
                 if (!ready) {
                     // The buttons stay while busy: if Save left the screen, focus fell to the top and the error showed off screen.
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
@@ -123,10 +125,10 @@ private fun ProviderForm(vm: AppViewModel, editing: ProviderEntity?) {
                             if (state.busy) return@Button
                             val secret = if (type == ProviderType.STALKER) org.imdtv.iptvtv.data.source.StalkerLogin(user, pass, deviceId, deviceId2, model).packed().orEmpty() else pass
                             vm.save(type, url, user, secret, epg, agent, editing, name)
-                        }, Modifier.focusRequester(save)) { Text("Save") }
-                        if (vm.canLeaveSetup && editing == null) Button(onClick = vm::refreshGuide) { Text("Refresh guide now") }
+                        }, Modifier.focusRequester(save)) { Text(stringResource(R.string.set_b_save)) }
+                        if (vm.canLeaveSetup && editing == null) Button(onClick = vm::refreshGuide) { Text(stringResource(R.string.set_b_refresh_guide)) }
                         // Beside Save, not above it: a line above pushed Save off the bottom of the Stalker form.
-                        if (!state.busy && state.error != null) Button(onClick = { sendLogs = true }) { Text("Send logs") }
+                        if (!state.busy && state.error != null) Button(onClick = { sendLogs = true }) { Text(stringResource(R.string.set_b_send_logs)) }
                         if (!state.busy) state.error?.let { Text(it, color = Color(0xFFFF8A80), fontSize = 13.sp, maxLines = 3, modifier = Modifier.weight(1f)) }
                     }
                 }
@@ -134,11 +136,11 @@ private fun ProviderForm(vm: AppViewModel, editing: ProviderEntity?) {
             Column(Modifier.width(240.dp).padding(top = if (editing == null) 56.dp else 0.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 // Greyed out (not pressable) until the playlist has loaded.
                 Button(onClick = { if (editing == null) vm.done() else vm.back() }, Modifier.focusRequester(next), enabled = ready) {
-                    Text(if (editing == null) "Watch" else "Done")
+                    Text(if (editing == null) stringResource(R.string.set_b_watch) else stringResource(R.string.set_b_done))
                 }
                 if (state.busy) {
                     Spinner(size = 32.dp)
-                    Text(state.progress ?: "Loading playlist…", color = Color.White, fontSize = 14.sp)
+                    Text(state.progress ?: stringResource(R.string.set_b_loading_playlist), color = Color.White, fontSize = 14.sp)
                 }
                 state.result?.let { Text(it, color = Color.White, fontSize = 14.sp) }
             }

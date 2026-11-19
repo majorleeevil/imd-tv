@@ -1,5 +1,7 @@
 package org.imdtv.iptvtv.player
 
+import org.imdtv.iptvtv.data.source.uiText
+import org.imdtv.iptvtv.R
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
@@ -243,7 +245,7 @@ class PlayerManager(private val context: Context) {
         this.login = login
         this.drm = drm
         _formats.value = StreamFormats.UNKNOWN
-        Log.i(TAG, "play ${tail(url)}${drm?.let { " drm=${it.type}" }.orEmpty()}")
+        Log.i(TAG, "play ${tail(url)}${if (vod) " (vod)" else ""}${drm?.let { " drm=${it.type}" }.orEmpty()}")
         start()
         stall.reset()
         handler.removeCallbacks(watchdog)
@@ -277,7 +279,7 @@ class PlayerManager(private val context: Context) {
                 Log.w(TAG, "link not resolved ${tail(url)}: $e")
                 // In a retry the portal may be down with the stream: keep retrying (asking it again) like any lost stream.
                 if (this@PlayerManager.url == url && (retries == 0 || !scheduleRetry()))
-                    fail(e.message ?: "The portal didn't give a stream link", e, PlaybackException.ERROR_CODE_IO_UNSPECIFIED)
+                    fail(e.message ?: context.getString(R.string.live_err_no_stream_link), e, PlaybackException.ERROR_CODE_IO_UNSPECIFIED)
                 return@launch
             }
             if (this@PlayerManager.url == url) load(real)
@@ -294,7 +296,7 @@ class PlayerManager(private val context: Context) {
         req.headers["User-Agent"]?.let { http.setUserAgent(it) }
         (req.headers - "User-Agent").takeIf { it.isNotEmpty() }?.let { http.setDefaultRequestProperties(it) }
         val spec = try { drm?.let(::drmSpec) } catch (e: DrmException) {
-            return fail(e.message!!, e, PlaybackException.ERROR_CODE_DRM_SCHEME_UNSUPPORTED)
+            return fail((e.uiText(context) ?: e.message!!), e, PlaybackException.ERROR_CODE_DRM_SCHEME_UNSUPPORTED)
         }
         // A live .ts stream reconnects by itself when the provider ends or stalls the connection (LiveTsDataSource).
         val liveTs = !vod && spec == null && android.net.Uri.parse(req.url).lastPathSegment?.endsWith(".ts", ignoreCase = true) == true
@@ -306,7 +308,7 @@ class PlayerManager(private val context: Context) {
             factory.createMediaSource(mediaItem(req.url, spec))
         } catch (e: IllegalStateException) {
             Log.w(TAG, "unsupported stream format ${tail(url)}", e)
-            return fail("Unsupported stream format", e, PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED)
+            return fail(context.getString(R.string.live_err_unsupported_format), e, PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED)
         }
         val at = startAt; startAt = 0 // once: a later reload of this stream (retry) is not a resume
         if (at > 0) player.setMediaSource(source, at) else player.setMediaSource(source)
@@ -488,8 +490,8 @@ class StallClock(private val startMs: Long, private val playingMs: Long) {
 class StreamProblem(message: String, cause: Throwable? = null) : Exception(message, cause)
 
 /** The text the player shows for [e]. */
-fun playErrorText(e: PlaybackException): String = (e.cause as? StreamProblem)?.message ?: when (e.errorCode) {
-    in 6000..6999 -> "DRM error (${e.errorCodeName}): the licence or keys were refused, or this device can't play this DRM"
+fun playErrorText(context: Context, e: PlaybackException): String = (e.cause as? StreamProblem)?.message ?: when (e.errorCode) {
+    in 6000..6999 -> context.getString(R.string.live_err_drm, e.errorCodeName)
     else -> e.errorCodeName
 }
 

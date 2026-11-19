@@ -1,5 +1,8 @@
 package org.imdtv.iptvtv.ui
 
+import androidx.compose.ui.res.stringResource
+import org.imdtv.iptvtv.R
+
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.tv.material3.Text
@@ -23,12 +26,21 @@ import org.imdtv.iptvtv.data.settings.LogoKind
 /** Appearance > Channel numbers, provided once at the root. */
 val LocalShowNumbers = androidx.compose.runtime.staticCompositionLocalOf { true }
 
+/** Appearance › Title size: multiply a title's sp by this (font scale itself stays pinned to 1.0). */
+val LocalTitleScale = androidx.compose.runtime.staticCompositionLocalOf { 1f }
+/** Appearance › Movies & Series › Title size: the same for movie and series titles. */
+val LocalVodTitleScale = androidx.compose.runtime.staticCompositionLocalOf { 1f }
+
+/** Playback › Catch-up; off hides every catch-up control (clock icons, past programmes, Restart, held Left). */
+var catchUpOn by androidx.compose.runtime.mutableStateOf(true)
+val org.imdtv.iptvtv.data.db.ChannelEntity.hasCatchUp get() = catchUpOn && archiveDays != null
+
 /** The channel's logo per the Channel logos setting; the number tile while loading, on error and when there is none. */
 @Composable
 fun ChannelLogo(ch: ChannelEntity, source: List<LogoKind>, modifier: Modifier = Modifier, fontSize: TextUnit = 16.sp) {
     val tile = @Composable {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text((ch.customNumber ?: ch.number)?.toString()?.takeIf { LocalShowNumbers.current } ?: "TV", fontSize = fontSize, fontWeight = FontWeight.Bold, color = Color.White)
+            Text((ch.customNumber ?: ch.number)?.toString()?.takeIf { LocalShowNumbers.current } ?: stringResource(R.string.live_logo_tv), fontSize = fontSize, fontWeight = FontWeight.Bold, color = Color.White)
         }
     }
     val urls = shownLogos(ch, source)

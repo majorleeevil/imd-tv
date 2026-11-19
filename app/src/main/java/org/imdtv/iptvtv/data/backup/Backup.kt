@@ -1,5 +1,6 @@
 package org.imdtv.iptvtv.data.backup
 
+import org.imdtv.iptvtv.R
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
@@ -18,7 +19,10 @@ import org.imdtv.iptvtv.data.settings.withUserGuides
 
 const val BACKUP_VERSION = 1
 
-class BackupException(message: String) : Exception(message)
+class BackupException(message: String, @androidx.annotation.StringRes val resId: Int? = null) : Exception(message) {
+    /** The message in the app's language where it has a resource, else the English text. */
+    fun localized(context: android.content.Context): String = resId?.let { context.getString(it) } ?: message.orEmpty()
+}
 
 /** Backup file (spec §7). Never holds a username or password; enums are stored by name so unknown ones read as defaults. */
 @Serializable
@@ -43,6 +47,8 @@ data class BPlaylist(
     val channelOrder: List<BChannelOrder> = emptyList(),
     /** Kinds the playlist doesn't load (older backups: all loaded). */
     val contentOff: String = "",
+    /** "Use this playlist" (older backups: on). */
+    val enabled: Boolean = true,
 )
 
 /** [url] null = the playlist's own guide, whose URL carries the login: restored from the new login. */
@@ -116,6 +122,9 @@ data class BSettings(
     val liveSubtitlesOn: Boolean = AppSettings().liveSubtitlesOn,
     val videoAspect: String? = null,
     val vodTwoRows: Boolean = AppSettings().vodTwoRows,
+    val titleSize: String? = null,
+    val vodTitleSize: String? = null,
+    val catchUpOn: Boolean = AppSettings().catchUpOn,
     val showRecent: Boolean = AppSettings().showRecent,
     val headerSize: String = AppSettings().headerSize.name,
     val previewFade: Boolean = AppSettings().previewFade,
@@ -137,6 +146,9 @@ data class BSettings(
             showDate = showDate, themeLooks = themeLooks, guidesOff = guidesOff.toSet(), liveSubtitlesOn = liveSubtitlesOn, showRecent = showRecent,
             videoAspect = org.imdtv.iptvtv.data.settings.VideoAspect.entries.find { it.name == videoAspect } ?: org.imdtv.iptvtv.data.settings.VideoAspect.AUTO,
             vodTwoRows = vodTwoRows,
+            titleSize = org.imdtv.iptvtv.data.settings.TitleSize.entries.find { it.name == titleSize } ?: org.imdtv.iptvtv.data.settings.TitleSize.LARGE,
+            vodTitleSize = org.imdtv.iptvtv.data.settings.TitleSize.entries.find { it.name == vodTitleSize } ?: org.imdtv.iptvtv.data.settings.TitleSize.LARGE,
+            catchUpOn = catchUpOn,
             headerSize = HeaderSize.entries.find { it.name == headerSize } ?: d.headerSize, previewFade = previewFade, themeDark = themeDark,
             startOnBoot = startOnBoot,
             epgUpdateIntervalHours = epgUpdateIntervalHours,
@@ -174,7 +186,7 @@ data class BSettings(
             s.borrowSiblingGuide, s.hideHeaderChannels, s.showDateTime, s.showPing, s.subtitlesOn, s.subtitleLanguage,
             guideRows = s.guideRows, multiLineGuide = s.multiLineGuide,
             zapLeftRight = s.zapLeftRight, backToFullScreen = s.backToFullScreen, showChannelNumbers = s.showChannelNumbers, clock24h = s.clock24h,
-            playerClockMode = s.playerClock.name, showDate = s.showDate, themeLooks = s.themeLooks, guidesOff = s.guidesOff.toList(), liveSubtitlesOn = s.liveSubtitlesOn, showRecent = s.showRecent, videoAspect = s.videoAspect.name, vodTwoRows = s.vodTwoRows,
+            playerClockMode = s.playerClock.name, showDate = s.showDate, themeLooks = s.themeLooks, guidesOff = s.guidesOff.toList(), liveSubtitlesOn = s.liveSubtitlesOn, showRecent = s.showRecent, videoAspect = s.videoAspect.name, vodTwoRows = s.vodTwoRows, titleSize = s.titleSize.name, vodTitleSize = s.vodTitleSize.name, catchUpOn = s.catchUpOn,
             headerSize = s.headerSize.name, previewFade = s.previewFade, themeDark = s.themeDark, guideKinds = s.guideOrder.map { it.name },
             recordingOn = s.recordingOn, recordTo = s.recordTo.name, startEarlyMin = s.startEarlyMin, endLateMin = s.endLateMin,
             keepAwake = s.keepAwake, smbServer = s.smbServer, smbShare = s.smbShare, smbFolder = s.smbFolder, smbUser = s.smbUser,
@@ -193,17 +205,17 @@ fun decodeBackup(s: String): Backup {
     val tree = try {
         backupJson.parseToJsonElement(s).jsonObject
     } catch (e: SerializationException) {
-        throw BackupException("Not a readable backup file")
+        throw BackupException("Not a readable backup file", R.string.set_b_backup_unreadable)
     } catch (e: IllegalArgumentException) {
-        throw BackupException("Not a readable backup file")
+        throw BackupException("Not a readable backup file", R.string.set_b_backup_unreadable)
     }
-    val version = (tree["version"] as? JsonPrimitive)?.intOrNull ?: throw BackupException("Not a readable backup file")
-    if (version > BACKUP_VERSION) throw BackupException("This backup was made by a newer version of the app")
+    val version = (tree["version"] as? JsonPrimitive)?.intOrNull ?: throw BackupException("Not a readable backup file", R.string.set_b_backup_unreadable)
+    if (version > BACKUP_VERSION) throw BackupException("This backup was made by a newer version of the app", R.string.set_b_backup_newer)
     return try {
         backupJson.decodeFromJsonElement(Backup.serializer(), tree)
     } catch (e: SerializationException) {
-        throw BackupException("Not a readable backup file")
+        throw BackupException("Not a readable backup file", R.string.set_b_backup_unreadable)
     } catch (e: IllegalArgumentException) {
-        throw BackupException("Not a readable backup file")
+        throw BackupException("Not a readable backup file", R.string.set_b_backup_unreadable)
     }
 }

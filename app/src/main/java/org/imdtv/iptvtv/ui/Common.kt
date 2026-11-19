@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.tv.material3.Icon
 import kotlinx.coroutines.delay
 import org.imdtv.iptvtv.R
@@ -48,9 +49,9 @@ import java.util.Locale
 fun keepOrFirst(current: org.imdtv.iptvtv.data.db.CategoryEntity?, list: List<org.imdtv.iptvtv.data.db.CategoryEntity>, preferId: Long? = null) =
     list.firstOrNull { it.id == current?.id } ?: list.firstOrNull { it.id == preferId } ?: list.firstOrNull()
 
-enum class Tab(val label: String, @androidx.annotation.DrawableRes val icon: Int) {
-    SEARCH("Search", R.drawable.ic_tab_search), LIVE("Live", R.drawable.ic_tab_live), MOVIES("Movies", R.drawable.ic_tab_movies),
-    SERIES("Series", R.drawable.ic_tab_series), RECORDINGS("Recordings", R.drawable.ic_tab_recordings), SETTINGS("Settings", R.drawable.ic_tab_settings),
+enum class Tab(val label: String, @androidx.annotation.DrawableRes val icon: Int, @androidx.annotation.StringRes val labelRes: Int) {
+    SEARCH("Search", R.drawable.ic_tab_search, R.string.live_tab_search), LIVE("Live", R.drawable.ic_tab_live, R.string.live_tab_live), MOVIES("Movies", R.drawable.ic_tab_movies, R.string.live_tab_movies),
+    SERIES("Series", R.drawable.ic_tab_series, R.string.live_tab_series), RECORDINGS("Recordings", R.drawable.ic_tab_recordings, R.string.live_tab_recordings), SETTINGS("Settings", R.drawable.ic_tab_settings, R.string.live_tab_settings),
 }
 
 /** The main menu's entries: Recordings only while recording is switched on. */
@@ -94,7 +95,7 @@ fun TopNav(selected: Tab, onSelect: (Tab) -> Unit, modifier: Modifier = Modifier
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(painterResource(t.icon), contentDescription = null, tint = fg, modifier = Modifier.size(14.dp))
-                    Text("  " + t.label, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = fg)
+                    Text("  " + stringResource(t.labelRes), fontSize = 12.sp, fontWeight = FontWeight.Medium, color = fg)
                 }
             }
         }
@@ -122,11 +123,15 @@ fun clockTime(t: Long): String =
     (if (use24Hour) clock24 else clock).format(Instant.ofEpochMilli(t).atZone(ZoneId.systemDefault())).lowercase()
 
 private val day = DateTimeFormatter.ofPattern("EEE d/M", Locale.UK)
+
+/** Day and month names in the app's language (English keeps the UK forms). MainActivity sets it on every (re)start. */
+var namesLocale: Locale = Locale.UK
 /** "Fri 13/11". */
-fun dayDate(t: Long): String = day.format(Instant.ofEpochMilli(t).atZone(ZoneId.systemDefault()))
+fun dayDate(t: Long): String = day.withLocale(namesLocale).format(Instant.ofEpochMilli(t).atZone(ZoneId.systemDefault()))
 
 /** "12 ms", or "offline" when the last check failed (-1). */
-fun pingLabel(ms: Int): String = if (ms < 0) "offline" else "$ms ms"
+@Composable
+fun pingLabel(ms: Int): String = if (ms < 0) stringResource(R.string.live_ping_offline) else stringResource(R.string.live_ping_ms, ms)
 
 fun duration(ms: Long): String {
     val m = ms / 60_000

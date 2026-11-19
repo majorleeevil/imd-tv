@@ -1,5 +1,9 @@
 package org.imdtv.iptvtv.ui.settings
 
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.pluralStringResource
+import org.imdtv.iptvtv.R
+
 import org.imdtv.iptvtv.data.settings.AppSettings
 import org.imdtv.iptvtv.data.settings.DEFAULT_GUIDE_ORDER
 import org.imdtv.iptvtv.ui.theme.LocalTheme
@@ -58,7 +62,7 @@ fun <T> StepperRow(title: String, explanation: String, values: List<T>, current:
 /** A source's time offset, −12:00 to +12:00 in 15-minute steps; its last status is the explanation. */
 @Composable
 fun OffsetRow(vm: SettingsViewModel, s: EpgSourceEntity, modifier: Modifier = Modifier) =
-    StepperRow("Time offset · ${sourceLabel(s)}", s.lastStatus ?: "Not updated yet", OFFSET_STEPS, s.offsetMinutes, ::formatOffset, modifier) {
+    StepperRow(stringResource(R.string.set_a_time_offset, sourceLabel(s)), s.lastStatus ?: stringResource(R.string.set_a_not_updated_yet), OFFSET_STEPS, s.offsetMinutes, ::formatOffset, modifier) {
         vm.setOffset(s.id, it)
     }
 
@@ -75,30 +79,30 @@ fun EpgGroupRows(vm: SettingsViewModel, first: Modifier, sourcesOpener: Modifier
     val sources by vm.activeSources.collectAsState()
     var confirmClear by remember { mutableStateOf(false) }
     val updating by vm.guideUpdating.collectAsState()
-    SettingRow("Update now", if (updating) "Updating guide… This can take a few minutes" else guideStatus(sources) ?: "Download the TV guide now",
+    SettingRow(stringResource(R.string.set_a_update_now), if (updating) stringResource(R.string.set_a_updating_guide) else guideStatus(sources) ?: stringResource(R.string.set_a_download_guide),
         null, first, busy = updating) { vm.refreshGuide() }
-    SettingRow("EPG sources", "Add, rename, time-shift or remove guide sources", "${sources.size} ›", sourcesOpener) { onOpenSources() }
-    PriorityRows("guides", s.guideOrder, GuideKind.entries, 3, { it.label }, defaults = DEFAULT_GUIDE_ORDER) { vm.setGuideOrder(it) }
-    SwitchRow("Borrow guide from similar channels", "A channel with no guide uses one with the same name, e.g. Sport HEVC uses Sport",
+    SettingRow(stringResource(R.string.set_a_epg_sources), stringResource(R.string.set_a_epg_sources_expl), "${sources.size} ›", sourcesOpener) { onOpenSources() }
+    PriorityRows(R.string.set_a_priority_where_guides, s.guideOrder, GuideKind.entries, 3, { stringResource(it.labelRes) }, defaults = DEFAULT_GUIDE_ORDER) { vm.setGuideOrder(it) }
+    SwitchRow(stringResource(R.string.set_a_borrow_guide), stringResource(R.string.set_a_borrow_guide_expl),
         s.borrowSiblingGuide) { on -> vm.setBorrowSiblingGuide(on) }
     SettingRow(
-        "Clear guide data",
-        if (confirmClear) "Press OK again — the guide stays empty until the next update" else "Remove downloaded programmes and automatic channel links",
+        stringResource(R.string.set_a_clear_guide),
+        if (confirmClear) stringResource(R.string.set_a_clear_guide_confirm) else stringResource(R.string.set_a_clear_guide_expl),
         null,
     ) { if (confirmClear) { vm.clearGuideData(); confirmClear = false } else confirmClear = true }
-    ChoiceRow("Update every", "How often the guide downloads in the background", EPG_INTERVALS, s.epgUpdateIntervalHours, { "$it hours" }, default = AppSettings().epgUpdateIntervalHours) { h ->
+    ChoiceRow(stringResource(R.string.set_a_update_every), stringResource(R.string.set_a_update_every_expl), EPG_INTERVALS, s.epgUpdateIntervalHours, { pluralStringResource(R.plurals.set_a_hours, it, it) }, default = AppSettings().epgUpdateIntervalHours) { h ->
         vm.update { it.copy(epgUpdateIntervalHours = h) }
     }
-    SwitchRow("Update on app start", "Download the guide each time the app opens", s.epgUpdateOnStart) { on ->
+    SwitchRow(stringResource(R.string.set_a_update_on_start), stringResource(R.string.set_a_update_on_start_expl), s.epgUpdateOnStart) { on ->
         vm.update { it.copy(epgUpdateOnStart = on) }
     }
-    SwitchRow("Update when the playlist changes", "Download the guide after a playlist update", s.epgUpdateOnPlaylistChange) { on ->
+    SwitchRow(stringResource(R.string.set_a_update_on_playlist), stringResource(R.string.set_a_update_on_playlist_expl), s.epgUpdateOnPlaylistChange) { on ->
         vm.update { it.copy(epgUpdateOnPlaylistChange = on) }
     }
-    StepperRow("Days to keep", "Days of upcoming programmes stored at each update", (1..14).toList(), s.epgDaysToKeep, { "$it" }) { n ->
+    StepperRow(stringResource(R.string.set_a_days_keep), stringResource(R.string.set_a_days_keep_expl), (1..14).toList(), s.epgDaysToKeep, { "$it" }) { n ->
         vm.update { it.copy(epgDaysToKeep = n) }
     }
-    StepperRow("Past days to keep", "Days of past programmes stored at each update", (0..7).toList(), s.epgPastDays, { "$it" }) { n ->
+    StepperRow(stringResource(R.string.set_a_past_days_keep), stringResource(R.string.set_a_past_days_keep_expl), (0..7).toList(), s.epgPastDays, { "$it" }) { n ->
         vm.update { it.copy(epgPastDays = n) }
     }
 }
@@ -117,19 +121,19 @@ fun EpgSourcesPage(vm: SettingsViewModel, modifier: Modifier, first: FocusReques
     BackHandler { if (open != null && single == null) { park(); refocus = open; open = null } else onClose() }
     LaunchedEffect(open) { withFrameNanos { }; runCatching { (refocus?.let(rows::get) ?: first).requestFocus() }; refocus = null }
     Column(modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text(if (shown != null && single == null) "EPG sources · ${shown.name}" else "EPG sources", fontSize = 20.sp, color = Color.White,
+        Text(if (shown != null && single == null) stringResource(R.string.set_a_epg_sources_of, shown.name) else stringResource(R.string.set_a_epg_sources), fontSize = 20.sp, color = Color.White,
             modifier = Modifier.padding(top = 6.dp, bottom = 18.dp))
         if (shown == null) providers.forEachIndexed { i, p ->
             key(p.id) {
                 val sources by remember(p.id) { vm.sources(p.id) }.collectAsState(emptyList())
                 val r = rows.getOrPut(p.id) { FocusRequester() }
-                SettingRow(p.name, "Add, rename, time-shift or remove this playlist's guide sources", "${sources.size} ›",
+                SettingRow(p.name, stringResource(R.string.set_a_epg_sources_playlist_expl), "${sources.size} ›",
                     (if (i == 0) Modifier.focusRequester(first) else Modifier).focusRequester(r)) { park(); open = p.id }
             }
         } else key(shown.id) {
             val p = shown
             val sources by remember(p.id) { vm.sources(p.id) }.collectAsState(emptyList())
-            EditRow("Add source", "Paste or type an XMLTV guide URL", null, "", Modifier.focusRequester(first), KeyboardType.Uri) { url ->
+            EditRow(stringResource(R.string.set_a_add_source), stringResource(R.string.set_a_add_source_expl), null, "", Modifier.focusRequester(first), KeyboardType.Uri) { url ->
                 if (Uri.parse(url).host != null) vm.addSource(p.id, url)
             }
             sources.forEach { s ->
@@ -138,10 +142,10 @@ fun EpgSourcesPage(vm: SettingsViewModel, modifier: Modifier, first: FocusReques
                     OffsetRow(vm, s, Modifier.padding(top = 12.dp))
                     // Open-source (epgshare01) sources follow the shown countries; the app adds and removes them, the user can turn one off.
                     if (s.origin == ORIGIN_EPGSHARE) {
-                        SwitchRow("Use ${sourceLabel(s)}", "Off keeps it in the list but never downloads or uses it", s.url !in settings.guidesOff) { on -> vm.setGuideOn(s.url, on) }
+                        SwitchRow(stringResource(R.string.set_a_use_source, sourceLabel(s)), stringResource(R.string.set_a_use_source_expl), s.url !in settings.guidesOff) { on -> vm.setGuideOn(s.url, on) }
                     } else {
-                        EditRow("Rename", "Shown as “${sourceLabel(s)}”; empty uses the address", null, s.name.orEmpty()) { vm.renameSource(s.id, it) }
-                        SettingRow("Remove source", if (confirmRemove) "Press OK again to remove it and its guide" else EpgImporter.logUrl(s.url), null) {
+                        EditRow(stringResource(R.string.set_a_rename), stringResource(R.string.set_a_rename_expl, sourceLabel(s)), null, s.name.orEmpty()) { vm.renameSource(s.id, it) }
+                        SettingRow(stringResource(R.string.set_a_remove_source), if (confirmRemove) stringResource(R.string.set_a_remove_source_confirm) else EpgImporter.logUrl(s.url), null) {
                             if (confirmRemove) { runCatching { first.requestFocus() }; vm.removeSource(p.id, s.id) } else confirmRemove = true
                         }
                     }

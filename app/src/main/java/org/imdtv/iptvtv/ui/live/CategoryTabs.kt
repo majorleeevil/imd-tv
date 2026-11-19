@@ -97,7 +97,8 @@ internal fun CategoryTabs(
         itemsIndexed(items, key = { _, it -> it.entry.key }) { i, item ->
             val isSelected = item.entry.key == selectedKey
             val isMoving = item.entry.key == movingKey
-            val width = remember(item.entry.title) { with(density) { measurer.measure(item.entry.title, LABEL).size.width.toDp() } }
+            val title = item.entry.titleText()
+            val width = remember(title) { with(density) { measurer.measure(title, LABEL).size.width.toDp() } }
             FocusBox(
                 onClick = onDown,
                 onFocused = { if (!isSelected && move == null) onPick(item.entry) },
@@ -116,7 +117,7 @@ internal fun CategoryTabs(
                         },
                     contentAlignment = Alignment.Center,
                 ) {
-                    Text((if (isMoving) "↔ " else "") + item.entry.title, style = LABEL, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    Text((if (isMoving) "↔ " else "") + title, style = LABEL, maxLines = 1, overflow = TextOverflow.Ellipsis,
                         color = if (f || isMoving) colors.onFocus else if (isSelected) Color.White else Color.White.copy(alpha = .85f),
                         modifier = Modifier.padding(horizontal = 14.dp))
                 }

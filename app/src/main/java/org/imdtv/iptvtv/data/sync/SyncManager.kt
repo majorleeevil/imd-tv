@@ -1,5 +1,6 @@
 package org.imdtv.iptvtv.data.sync
 
+import org.imdtv.iptvtv.R
 import android.content.Context
 import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
@@ -169,7 +170,7 @@ class SyncManager(
             val r = parseSyncRequest(head.toString()) ?: return reply("404 Not Found")
             when (r.path) {
                 SyncPath.HELLO -> {
-                    pairing.value = Pairing(cleanName(runCatching { java.net.URLDecoder.decode(r.headers["x-name"].orEmpty(), "UTF-8") }.getOrNull()))
+                    pairing.value = Pairing(cleanName(runCatching { java.net.URLDecoder.decode(r.headers["x-name"].orEmpty(), "UTF-8") }.getOrNull(), context.getString(R.string.set_b_a_box)))
                     reply("200 OK")
                 }
                 SyncPath.PAIR -> {
@@ -261,7 +262,7 @@ class SyncManager(
     /** Pulls and mirrors the master's snapshot; quiet when the master can't be reached (the problem shows on its row). [force]: even if unchanged. */
     suspend fun pull(force: Boolean = false) = pullLock.withLock {
         val m = current().master?.takeIf { current().role == SyncRole.FOLLOWER } ?: return@withLock
-        val key = Secrets.decrypt(m.key)?.unhex() ?: return@withLock run { problem.value = "Pair with the master again" }
+        val key = Secrets.decrypt(m.key)?.unhex() ?: return@withLock run { problem.value = context.getString(R.string.set_b_pair_again) }
         pulling.value = true
         try {
             val t0 = System.currentTimeMillis()
@@ -272,10 +273,10 @@ class SyncManager(
                 ?: run {
                     // The master's address or port changed (DHCP, app restart): find it again by name.
                     val f = withTimeoutOrNull(8000) { browse().first { l -> l.any { it.name == m.name } }.first { it.name == m.name } }
-                        ?: return@withLock run { problem.value = "${m.name} isn't reachable: is it on with IMD TV open?" }
+                        ?: return@withLock run { problem.value = context.getString(R.string.set_b_unreachable, m.name) }
                     at = m.copy(host = f.host, port = f.port)
                     runCatching { request(f.host, f.port, SyncPath.SNAPSHOT, headers) }.getOrNull()
-                        ?: return@withLock run { problem.value = "${m.name} isn't reachable: is it on with IMD TV open?" }
+                        ?: return@withLock run { problem.value = context.getString(R.string.set_b_unreachable, m.name) }
                 }
             val (status, body) = res
             when (status) {
@@ -289,10 +290,10 @@ class SyncManager(
                     Log.i(TAG, "Pull ${body.first.size} B: fetch ${t1 - t0} ms, apply ${t2 - t1} ms, after ${System.currentTimeMillis() - t2} ms (guide changed: ${r.guideChanged})")
                     // A playlist left out is tried again when the master changes or on Sync now (a forced pull).
                     at = at.copy(lastHash = body.second)
-                    if (r.failed.isNotEmpty()) notCopied = "Not copied: ${r.failed.joinToString()}"
+                    if (r.failed.isNotEmpty()) notCopied = context.getString(R.string.set_b_not_copied, r.failed.joinToString())
                 }
-                403 -> return@withLock run { problem.value = "${m.name} no longer allows this box: choose it again to pair" }
-                else -> return@withLock run { problem.value = "Sync failed (${m.name} answered $status)" }
+                403 -> return@withLock run { problem.value = context.getString(R.string.set_b_no_longer_allows, m.name) }
+                else -> return@withLock run { problem.value = context.getString(R.string.set_b_sync_failed_status, m.name, status) }
             }
             val done = at.copy(lastSynced = System.currentTimeMillis())
             edit { s -> if (s.master?.followerId == m.followerId) s.copy(master = done) else s }
@@ -300,7 +301,7 @@ class SyncManager(
         } catch (e: Exception) {
             if (e is CancellationException) throw e
             Log.w(TAG, "Sync pull failed", e)
-            problem.value = "Sync failed: ${e.message ?: e::class.simpleName}"
+            problem.value = context.getString(R.string.set_b_sync_failed, e.message ?: e::class.simpleName ?: "")
         } finally {
             pulling.value = false
         }
@@ -308,4 +309,4 @@ class SyncManager(
 }
 
 /** Shown on the master's screen: printable, one line, short. */
-internal fun cleanName(s: String?) = s.orEmpty().filter { !it.isISOControl() }.trim().take(40).ifEmpty { "A box" }
+internal fun cleanName(s: String?, fallback: String = "A box") = s.orEmpty().filter { !it.isISOControl() }.trim().take(40).ifEmpty { fallback }

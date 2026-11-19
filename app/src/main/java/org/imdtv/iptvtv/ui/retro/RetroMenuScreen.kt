@@ -1,6 +1,9 @@
 package org.imdtv.iptvtv.ui.retro
 
+import org.imdtv.iptvtv.ui.live.titleText
 import org.imdtv.iptvtv.ui.live.toggled
+import org.imdtv.iptvtv.R
+import androidx.compose.ui.res.stringResource
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import androidx.activity.compose.BackHandler
@@ -58,8 +61,8 @@ import org.imdtv.iptvtv.ui.theme.LocalTheme
 import org.imdtv.iptvtv.ui.theme.ThemeColors
 import org.imdtv.iptvtv.ui.vod.VodViewModel
 
-private val RETRO_TABS = listOf(Tab.SEARCH to "SEARCH", Tab.LIVE to "TV GUIDE", Tab.MOVIES to "MOVIES", Tab.SERIES to "SERIES",
-    Tab.RECORDINGS to "RECORDINGS", Tab.SETTINGS to "SETTINGS")
+private val RETRO_TABS = listOf(Tab.SEARCH to R.string.vod_retro_tab_search, Tab.LIVE to R.string.vod_retro_tab_guide, Tab.MOVIES to R.string.vod_retro_tab_movies,
+    Tab.SERIES to R.string.vod_retro_tab_series, Tab.RECORDINGS to R.string.vod_retro_tab_recordings, Tab.SETTINGS to R.string.vod_retro_tab_settings)
 
 /** One bar's title and what picking it opens. */
 /** [other]: a category of another playlist (picking it switches playlist); [toggle]: that playlist's header bar. */
@@ -80,19 +83,20 @@ fun RetroMenuScreen(
     recordings: (@Composable () -> Unit)? = null,
 ) {
     val colors = LocalTheme.current.colors
+    val uncategorised = stringResource(R.string.vod_uncategorised)
     val rail by live.rail.collectAsState()
     val cats by vod.categories.collectAsState()
     val entry by live.entry.collectAsState()
     val others by (if (tab == Tab.LIVE) live.otherPlaylists else vod.otherPlaylists).collectAsState()
     val expandedFlow = if (tab == Tab.LIVE) live.expandedPlaylists else vod.expandedPlaylists
     val expanded by expandedFlow.collectAsState()
-    val all = (if (tab == Tab.LIVE) rail.orEmpty().map { Bar(it.entry.title, it.entry, null) }
-        else cats.map { Bar(it.category.name.ifEmpty { "Uncategorised" }, null, it.category) }) +
+    val all = (if (tab == Tab.LIVE) rail.orEmpty().map { Bar(it.entry.titleText(), it.entry, null) }
+        else cats.map { Bar(it.category.name.ifEmpty { uncategorised }, null, it.category) }) +
         // Then the other playlists, each a header bar with its categories under it when opened.
         others.flatMap { o ->
             val open = o.provider.id in expanded
             listOf(Bar("${o.provider.name} ${if (open) "⌃" else "⌄"}", null, null, toggle = o.provider.id)) +
-                if (open) o.categories.map { (c, _) -> Bar("   " + c.name.ifEmpty { "Uncategorised" }, null, null, other = c) } else emptyList()
+                if (open) o.categories.map { (c, _) -> Bar("   " + c.name.ifEmpty { uncategorised }, null, null, other = c) } else emptyList()
         }
     val scope = androidx.compose.runtime.rememberCoroutineScope()
     var page by remember(tab) { mutableIntStateOf(-1) } // -1: not placed yet (the list may still be loading)
@@ -125,7 +129,7 @@ fun RetroMenuScreen(
             .focusProperties { enter = { menuFocus } }.focusGroup(),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
             AppLogo(Modifier.size(52.dp))
-            RETRO_TABS.filter { it.first != Tab.RECORDINGS || recordings != null }.forEach { (t, label) ->
+            RETRO_TABS.filter { it.first != Tab.RECORDINGS || recordings != null }.forEach { (t, labelRes) ->
                 FocusBox(onClick = { onTab(t) }, modifier = if (t == tab) Modifier.focusRequester(menuFocus) else Modifier) { f ->
                     Column(
                         Modifier.background(when { f -> colors.focus; t == tab -> colors.cell; else -> Color.Transparent }, RoundedCornerShape(4.dp))
@@ -134,7 +138,7 @@ fun RetroMenuScreen(
                     ) {
                         val fg = if (f) colors.onFocus else if (t == tab) Color.White else colors.panel
                         Icon(painterResource(t.icon), contentDescription = null, tint = fg, modifier = Modifier.size(22.dp))
-                        Text(label, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = fg)
+                        Text(stringResource(labelRes), fontSize = 13.sp, fontWeight = FontWeight.Bold, color = fg)
                     }
                 }
             }
@@ -143,7 +147,7 @@ fun RetroMenuScreen(
         if (tab == Tab.SEARCH) Box(Modifier.padding(start = 60.dp, end = 60.dp, top = 110.dp, bottom = 24.dp)) { search() }
         else if (tab == Tab.RECORDINGS) Box(Modifier.padding(start = 60.dp, end = 60.dp, top = 110.dp, bottom = 24.dp)) { recordings?.invoke() }
         else if (all.isEmpty() && tab == Tab.LIVE && rail != null) {
-            Text("All live categories are hidden. Show them again in Settings › Channels & categories.", fontSize = 16.sp,
+            Text(stringResource(R.string.vod_live_categories_hidden), fontSize = 16.sp,
                 color = colors.panel, modifier = Modifier.padding(start = 60.dp, top = 160.dp))
         }
         if (tab != Tab.SEARCH && tab != Tab.RECORDINGS) Column(Modifier.align(Alignment.TopCenter).padding(top = 120.dp).width(520.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
@@ -160,8 +164,8 @@ fun RetroMenuScreen(
                     }
                 }
             }
-            if (pg.hasMore) RetroBar("0", "MORE…", bars[RETRO_PAGE], colors) { turn(pg.page + 1) }
-            if (pg.hasBack) RetroBar("", "BACK", bars[RETRO_PAGE + 1], colors) { turn(pg.page - 1) }
+            if (pg.hasMore) RetroBar("0", stringResource(R.string.vod_retro_more), bars[RETRO_PAGE], colors) { turn(pg.page + 1) }
+            if (pg.hasBack) RetroBar("", stringResource(R.string.vod_retro_back), bars[RETRO_PAGE + 1], colors) { turn(pg.page - 1) }
         }
     }
 }

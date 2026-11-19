@@ -39,6 +39,10 @@ data class ProviderEntity(
     val maxConnections: Int? = null,
     /** Kinds (Kind names, comma-separated) this playlist doesn't load: never fetched, their data removed. */
     @ColumnInfo(defaultValue = "") val contentOff: String = "",
+    /** "Use this playlist": off = left out of the category lists' other playlists (never the one in use). */
+    @ColumnInfo(defaultValue = "1") val enabled: Boolean = true,
+    /** Settings › Channels › Merge options › Playlists: this playlist merges when "Merge channels" is on. */
+    @ColumnInfo(defaultValue = "1") val mergeOn: Boolean = true,
 ) {
     fun loads(kind: org.imdtv.iptvtv.data.model.Kind) = kind.name !in contentOff.split(',')
 }
@@ -96,6 +100,14 @@ data class ChannelEntity(
     val sortOrder: Int? = null,
     /** Catch-up: days of past programmes the provider keeps (Xtream tv_archive_duration); null = none. */
     val archiveDays: Int? = null,
+    /** M3U catch-up, packed "type|template" (template may be empty); null = the provider's default (shift). */
+    val catchupSource: String? = null,
+    /** Merge: the channel this one is a source of (hidden from every list, played through it); null = not merged. */
+    val mergedInto: Long? = null,
+    /** True when [mergedInto] came from "Merge duplicate channels", so turning that off or a re-run only undoes these. */
+    @ColumnInfo(defaultValue = "0") val mergedAuto: Boolean = false,
+    /** Other channels are merged into this one: its name is shown without quality tags (HD, 4K…). */
+    @ColumnInfo(defaultValue = "0") val mergeHead: Boolean = false,
 ) {
     fun drm(): org.imdtv.iptvtv.data.source.Drm? = drmType?.let { org.imdtv.iptvtv.data.source.Drm(it, drmKey) }
 }

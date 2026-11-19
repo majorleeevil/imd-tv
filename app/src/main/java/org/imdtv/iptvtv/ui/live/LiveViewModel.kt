@@ -1,5 +1,7 @@
 package org.imdtv.iptvtv.ui.live
 
+import org.imdtv.iptvtv.R
+
 import org.imdtv.iptvtv.data.db.EpgChannelEntity
 import org.imdtv.iptvtv.data.epg.SourceChannel
 import org.imdtv.iptvtv.data.epg.guideKindOf
@@ -75,7 +77,8 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     /** Name clean-up list of the active playlist; edits in Settings show up in the guide at once. */
-    val strip: StateFlow<List<String>> = provider.map { parseStripList(it?.nameStrip.orEmpty()) }.distinctUntilChanged()
+    val strip: StateFlow<List<String>> = combine(provider, c.settings.settings.map { it.removeNameSymbols }.distinctUntilChanged()) { p, sym ->
+        org.imdtv.iptvtv.data.catalogue.channelStrip(p?.nameStrip, sym) }.distinctUntilChanged()
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     // Keyed on the id only: the provider row also changes on every sync (lastSync) and name-strip edit.
@@ -135,12 +138,16 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
     /** Covers the visible window and "now" (for the hero) even when scrolled forward. */
     // observeGuideVersion counts links; replacing one channel's link doesn't change it, so Use guide from… bumps this.
     private val guideBump = MutableStateFlow(0)
+    /** True while the cursor is on a past programme of a catch-up channel (Left held on now). */
+    val inPast = MutableStateFlow(false)
+
 
     val programmes: StateFlow<Map<Long, List<GuideProgramme>>> =
-        combine(channels, windowStart, c.db.epgDao().observeGuideVersion(), guideBump) { ch, w, _, _ -> ch to w } // reload after an EPG import
-        .mapLatest { (ch, w) ->
+        combine(channels, windowStart, c.db.epgDao().observeGuideVersion(), guideBump, inPast) { ch, w, _, _, past -> Triple(ch, w, past) } // reload after an EPG import
+        .mapLatest { (ch, w, past) ->
             val p = provider.value ?: return@mapLatest emptyMap()
-            val from = minOf(w, System.currentTimeMillis())
+            // In the past, Left needs the programme before the window too.
+            val from = minOf(w, System.currentTimeMillis()) - if (past) 6 * 3_600_000L else 0
             guide.programmes(p.id, ch, from, w + WINDOW)
         }
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyMap())
@@ -153,9 +160,11 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
         .stateIn(viewModelScope, SharingStarted.Eagerly, AppSettings().logoOrder)
 
     private val previewed = MutableStateFlow<ChannelEntity?>(null)
+    /** The link [previewed] plays: its own, or one of the channels merged into it. */
+    private val previewedUrl = MutableStateFlow<String?>(null)
 
     /** The channel the player is showing; cleared when the player stops or plays something else (a movie). */
-    val previewingId: StateFlow<Long?> = combine(previewed, player.playingUrl) { ch, url -> ch?.id?.takeIf { ch.streamUrl == url } }
+    val previewingId: StateFlow<Long?> = combine(previewed, previewedUrl, player.playingUrl) { ch, u, url -> ch?.id?.takeIf { u == url } }
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     /** The channel the guide's preview is playing, or null. */
@@ -172,8 +181,9 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
             // A recreated activity (e.g. reopened after Back-exit) gets a fresh view model while the process-wide
             // player resumes the old stream: open the guide on that channel, or the preview would jump to the top row.
             val p = provider.filterNotNull().first()
-            val playing = player.currentUrl?.let { c.db.channelDao().byStreamUrl(p.id, it) }
-            if (playing != null) { focused.value = playing; previewed.value = playing }
+            // A merged source plays through the channel it's merged into, which is the one the guide shows.
+            val playing = player.currentUrl?.let { c.db.channelDao().byStreamUrl(p.id, it) }?.let { s -> s.mergedInto?.let { c.db.channelDao().get(it) } ?: s }
+            if (playing != null) { focused.value = playing; previewedUrl.value = player.currentUrl; previewed.value = playing }
             // Also moves off an entry that vanished or belongs to a previously active provider.
             rail.filterNotNull().collect { list ->
                 val entries = list.map { it.entry }
@@ -193,32 +203,64 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
         previewed.value = null
         history.clear()
         guidePos = null
-        timeShift.value = 0
-        cursor.value = null
+        leavePast()
         retroGuideOpen = false
         xmb = org.imdtv.iptvtv.ui.xmb.XmbState()
     }
 
     fun select(e: RailEntry) {
         entry.value = e
-        timeShift.value = 0
-        cursor.value = null
+        leavePast()
     }
 
     /** Start of the guide's highlighted programme; null = the one on now. Right/Left move it and the window follows. */
     val cursor = MutableStateFlow<Long?>(null)
 
-    /** Right/Left on a guide row ([progs] = its programmes). False when it can't move (Left on now). */
-    fun moveCursor(progs: List<GuideProgramme>, dir: Int, windowMin: Int): Boolean {
+    /** Back to the programme on now. */
+    fun leavePast() { inPast.value = false; cursor.value = null; timeShift.value = 0 }
+
+    /**
+     * Right/Left on a guide row ([progs] = its programmes). False when it can't move (Left on now). In the past, Left stops
+     * [archiveDays] back and Right onto the programme on now leaves the past.
+     */
+    fun moveCursor(progs: List<GuideProgramme>, dir: Int, windowMin: Int, archiveDays: Int? = null): Boolean {
         val now = System.currentTimeMillis()
+        if (inPast.value) {
+            val to = Timeline.stepPast(progs, cursor.value ?: now, now, dir, now - (archiveDays ?: 0) * DAY)
+            if (to == null) leavePast() else if (to != cursor.value) showCursor(to, windowMin) else return false // at the archive limit
+            return true
+        }
         val to = Timeline.stepCursor(progs, cursor.value, now, dir)
         if (to == cursor.value) return false
+        return showCursor(to, windowMin)
+    }
+
+    /** Left held on now (catch-up channel): the cursor goes to the programme before the one on now. */
+    fun enterPast(ch: ChannelEntity, windowMin: Int) {
+        viewModelScope.launch {
+            val p = catchUpProgrammes(ch).firstOrNull() ?: return@launch
+            inPast.value = true
+            showCursor(p.start, windowMin)
+        }
+    }
+
+    /** "Pick a day": the cursor jumps to the first catch-up programme of the day starting at [dayStart]. */
+    fun jumpToDay(ch: ChannelEntity, dayStart: Long, windowMin: Int) {
+        viewModelScope.launch {
+            val p = catchUpProgrammes(ch).lastOrNull { it.start >= dayStart } ?: return@launch
+            inPast.value = true
+            showCursor(p.start, windowMin)
+        }
+    }
+
+    private fun showCursor(to: Long?, windowMin: Int): Boolean {
+        val now = System.currentTimeMillis()
         val base = Timeline.windowStart(now)
         val ws = base + timeShift.value * HALF_HOUR
         // Keep the highlighted programme's start on screen, clear of the last half-hour.
         val shift = when {
             to == null -> 0
-            to < ws || to >= ws + windowMin * 60_000L - HALF_HOUR -> ((to - base) / HALF_HOUR).toInt()
+            to < ws || to >= ws + windowMin * 60_000L - HALF_HOUR -> Math.floorDiv(to - base, HALF_HOUR).toInt()
             else -> timeShift.value
         }
         if (shift > MAX_SHIFT) return false
@@ -231,7 +273,7 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
 
     /** [ch]'s past programmes still in its catch-up window, newest first. */
     suspend fun catchUpProgrammes(ch: ChannelEntity): List<org.imdtv.iptvtv.data.repo.GuideProgramme> {
-        val days = ch.archiveDays ?: return emptyList()
+        val days = ch.archiveDays?.takeIf { org.imdtv.iptvtv.ui.catchUpOn } ?: return emptyList()
         val now = System.currentTimeMillis()
         return guide.programmes(ch.providerId, listOf(ch), now - days * 86_400_000L, now)[ch.id].orEmpty()
             .filter { it.stop <= now }.sortedByDescending { it.start }
@@ -240,17 +282,37 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
     /** Title for the full-screen player a catch-up programme opens in (movie controls: it can be paused and seeked). */
     val openCatchUp = kotlinx.coroutines.flow.MutableSharedFlow<String>(extraBufferCapacity = 1)
 
-    fun playCatchUp(ch: ChannelEntity, p: org.imdtv.iptvtv.data.repo.GuideProgramme) {
+    /** [startMs] = position in the programme. A programme still on air keeps its full length: the stream ends at now. */
+    fun playCatchUp(ch: ChannelEntity, p: org.imdtv.iptvtv.data.repo.GuideProgramme, startMs: Long = 0) {
         viewModelScope.launch {
             val prov = c.db.providerDao().get(ch.providerId) ?: return@launch
+            if (prov.type == org.imdtv.iptvtv.data.db.ProviderType.M3U) {
+                val url = org.imdtv.iptvtv.data.source.m3uCatchUpUrl(ch.streamUrl, ch.catchupSource, p.start, p.stop, System.currentTimeMillis())
+                if (url != null) {
+                    previewed.value = null
+                    player.play(url, prov.userAgent, prov.login(), vod = true, startMs = startMs)
+                    openCatchUp.tryEmit("${ch.displayName(strip.value)} · ${p.title}")
+                    return@launch
+                }
+                if (ch.catchupSource?.substringBefore('|') != "xc") return@launch
+            }
             // Start times are in the server's time zone; the TV's is the best guess when the server doesn't say.
             val zone = (c.sourceFor(prov) as? org.imdtv.iptvtv.data.source.XtreamSource)?.serverTimeZone() ?: java.util.TimeZone.getDefault()
             val urls = org.imdtv.iptvtv.data.source.catchUpUrls(ch.streamUrl, p.start, p.stop, zone)
             if (urls.isEmpty()) return@launch
             previewed.value = null
             // vod: seekable, and not the live .ts reconnect path or the live stall watchdog.
-            player.play(urls[0], prov.userAgent, prov.login(), vod = true, fallbackUrl = urls[1])
+            player.play(urls[0], prov.userAgent, prov.login(), vod = true, startMs = startMs, fallbackUrl = urls[1])
             openCatchUp.tryEmit("${ch.displayName(strip.value)} · ${p.title}")
+        }
+    }
+
+    /** Full screen, Left held on a catch-up channel: catch-up of the programme on now, 30 s behind live. */
+    fun jumpBack(ch: ChannelEntity) {
+        viewModelScope.launch {
+            val now = System.currentTimeMillis()
+            val p = guide.programmes(ch.providerId, listOf(ch), now, now + 1)[ch.id].orEmpty().firstOrNull { it.start <= now && now < it.stop } ?: return@launch
+            playCatchUp(ch, p, (now - 30_000 - p.start).coerceAtLeast(0))
         }
     }
 
@@ -260,13 +322,19 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
     /** [dir] 1 = one further back (Right/Down), -1 = towards the newest again (Left/Up). */
     fun toPreviousChannel(dir: Int) { history.step(dir)?.let(::switchTo) }
 
+    private var previewJob: kotlinx.coroutines.Job? = null
+
     fun preview(ch: ChannelEntity) {
         previewed.value = ch
-        viewModelScope.launch {
+        previewJob?.cancel() // a latency check for the channel scrolled past stops here
+        previewJob = viewModelScope.launch {
             // The playlist's login fills the link. At app start (last channel) it may not have loaded yet, and a link
             // without it is refused (401) on every retry. Loaded (every other time), this doesn't suspend.
             val p = provider.first { it?.id == ch.providerId }!!
-            if (previewed.value?.id == ch.id) player.play(ch.streamUrl, p.userAgent, p.login(), drm = ch.drm())
+            // Merged channels play their best source (Settings › Channels › Merge by); others play themselves at once.
+            val src = if (ch.mergeHead) org.imdtv.iptvtv.data.repo.ChannelMerge.pick(c.db, c.http, ch,
+                settings.value.mergeBy, p.userAgent, p.login()) else ch
+            if (previewed.value?.id == ch.id) { previewedUrl.value = src.streamUrl; player.play(src.streamUrl, p.userAgent, p.login(), drm = src.drm()) }
             c.settings.update { it.copy(lastLiveChannelId = ch.id) }
         }
     }
@@ -356,7 +424,7 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
         typed.value = "$n"
         typedJob = viewModelScope.launch {
             val ch = channelByNumber(n)
-            if (ch == null) { typed.value = "No channel $n"; delay(1_500); typed.value = ""; return@launch }
+            if (ch == null) { typed.value = getApplication<Application>().getString(R.string.live_no_channel, n); delay(1_500); typed.value = ""; return@launch }
             typed.value = ""
             if (typedFullScreen) {
                 if (ch.id != focused.value?.id) if (ch.id in channels.value.map { it.id }) zapTo(ch) else switchTo(ch)
@@ -470,6 +538,10 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
             guideBump.value++
         }
     }
+    /** null = follow the EPG source's offset. */
+    fun setEpgOffset(ch: ChannelEntity, minutes: Int?) {
+        viewModelScope.launch { c.db.channelDao().setEpgOffset(ch.id, minutes); guideBump.value++ }
+    }
     fun useAutomaticGuide(ch: ChannelEntity) {
         viewModelScope.launch {
             c.db.epgDao().deleteLink(ch.id)
@@ -517,6 +589,14 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
 
     fun hide(ch: ChannelEntity) { viewModelScope.launch { c.db.channelDao().setHidden(ch.id, true) } }
 
+    /** Long OK › Merge channel, then OK on [into]: [src] becomes one of [into]'s sources. */
+    fun merge(src: ChannelEntity, into: ChannelEntity) { viewModelScope.launch { org.imdtv.iptvtv.data.repo.ChannelMerge.merge(c.db, src, into) } }
+    suspend fun mergedMembers(head: ChannelEntity) = org.imdtv.iptvtv.data.repo.ChannelMerge.members(c.db.channelDao(), head)
+    /** View merged channels' switch: [member] out of [head], or back in. */
+    suspend fun setMerged(member: ChannelEntity, head: ChannelEntity, on: Boolean) =
+        if (on) org.imdtv.iptvtv.data.repo.ChannelMerge.merge(c.db, member, head) else org.imdtv.iptvtv.data.repo.ChannelMerge.unmergeOne(c.db, member)
+    fun unmerge(head: ChannelEntity) { viewModelScope.launch { org.imdtv.iptvtv.data.repo.ChannelMerge.unmerge(c.db, head) } }
+
     fun hideCategory(cat: CategoryEntity) { viewModelScope.launch { c.db.categoryDao().setHidden(cat.id, true) } }
 
     /** Moves [delta] places among the categories the rail shows, so a step never vanishes behind a hidden one. */
@@ -537,7 +617,7 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
                     val all = c.db.channelDao().allByCategory(at.category.id)
                     CategoryRepository(c.db).moveChannel(at.category.id, ch.id, all.indexOfFirst { it.id == target.id } - all.indexOfFirst { it.id == ch.id })
                 }
-                RailEntry.Recent, RailEntry.CatchUp -> Unit
+                RailEntry.Recent -> Unit
             }
         } }
     }
@@ -575,6 +655,7 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
         const val HALF_HOUR = 30 * 60_000L
         const val WINDOW = 5 * HALF_HOUR // the widest guide (Glass, Liquid: 2½ hours)
         const val MAX_SHIFT = 7 * 48 // 7 days of half-hours
+        const val DAY = 86_400_000L
     }
 }
 
