@@ -4,7 +4,6 @@ import org.imdtv.iptvtv.data.security.withLogin
 import org.imdtv.iptvtv.data.db.login
 
 import android.util.Log
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -36,7 +35,7 @@ class EpgImporter(
 
     /** Returns the number of programmes stored. */
     suspend fun import(source: EpgSourceEntity, daysToKeep: Int, pastDays: Int, batchSize: Int = 2000): Int =
-        withContext(Dispatchers.IO) {
+        withContext(GuideWork) {
             val t = now()
             val from = t - pastDays * DAY
             val to = t + daysToKeep * DAY

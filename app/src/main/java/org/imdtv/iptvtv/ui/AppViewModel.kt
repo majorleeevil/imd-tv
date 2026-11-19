@@ -80,7 +80,8 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
                 .collect { EpgRefreshWorker.schedule(getApplication(), it) }
         }
         viewModelScope.launch {
-            if (c.settings.settings.first().epgUpdateOnStart) EpgRefreshWorker.runNow(getApplication(), automatic = true)
+            // Off: still collapse a backlog of queued runs left by 0.5.1 and older.
+            EpgRefreshWorker.runNow(getApplication(), automatic = true, backlogOnly = !c.settings.settings.first().epgUpdateOnStart)
         }
         viewModelScope.launch {
             val active = c.providerRepository.activeProviderId.first()

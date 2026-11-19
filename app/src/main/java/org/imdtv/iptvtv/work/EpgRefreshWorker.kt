@@ -9,6 +9,7 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import org.imdtv.iptvtv.IptvApp
@@ -82,20 +83,43 @@ class EpgRefreshWorker(context: Context, params: WorkerParameters) : CoroutineWo
 
         /** True while a refresh runs (or waits for the network after Update now). */
         fun updating(context: Context): kotlinx.coroutines.flow.Flow<Boolean> =
-            WorkManager.getInstance(context).getWorkInfosFlow(androidx.work.WorkQuery.fromUniqueWorkNames(listOf("epg-refresh-now", "epg-refresh")))
+            WorkManager.getInstance(context).getWorkInfosFlow(androidx.work.WorkQuery.fromUniqueWorkNames(listOf(NOW, "epg-refresh")))
                 // The periodic job is ENQUEUED between runs, so only a one-off counts while it waits.
-                .map { infos -> infos.any { it.state == androidx.work.WorkInfo.State.RUNNING ||
-                    (it.state == androidx.work.WorkInfo.State.ENQUEUED && it.periodicityInfo == null) } }
+                .map { infos -> infos.any { it.state == WorkInfo.State.RUNNING ||
+                    (it.state == WorkInfo.State.ENQUEUED && it.periodicityInfo == null) } }
 
         /**
          * Runs a refresh now. Never cancels one already running: [automatic] triggers (app start, daily playlist sync)
          * leave a running or queued one alone; user changes queue one more run after it, so their change is included.
+         * [backlogOnly]: only collapse a backlog (app start with "Update on start" off).
          */
-        fun runNow(context: Context, automatic: Boolean = false) {
-            WorkManager.getInstance(context).enqueueUniqueWork(
-                "epg-refresh-now", if (automatic) ExistingWorkPolicy.KEEP else ExistingWorkPolicy.APPEND_OR_REPLACE,
-                OneTimeWorkRequestBuilder<EpgRefreshWorker>().setConstraints(network).build(),
-            )
+        fun runNow(context: Context, automatic: Boolean = false, backlogOnly: Boolean = false) {
+            val wm = WorkManager.getInstance(context)
+            val infos = wm.getWorkInfosForUniqueWork(NOW)
+            infos.addListener({
+                val states = runCatching { infos.get().map { it.state } }.getOrDefault(emptyList())
+                policy(states, automatic, backlogOnly)?.let {
+                    wm.enqueueUniqueWork(NOW, it, OneTimeWorkRequestBuilder<EpgRefreshWorker>().setConstraints(network).build())
+                }
+            }, Runnable::run)
+        }
+
+        private const val NOW = "epg-refresh-now"
+
+        /**
+         * A run still waiting reads the settings when it starts, so it already includes the latest change: appending one
+         * per change (0.5.1 and older) queued runs that re-imported every guide back to back (stutter on slower boxes).
+         * Such a backlog is replaced by a single run; null = nothing to enqueue.
+         */
+        fun policy(states: List<WorkInfo.State>, automatic: Boolean, backlogOnly: Boolean = false): ExistingWorkPolicy? {
+            val waiting = states.count { it == WorkInfo.State.ENQUEUED || it == WorkInfo.State.BLOCKED }
+            return when {
+                waiting > 1 -> ExistingWorkPolicy.REPLACE
+                backlogOnly -> null
+                automatic -> ExistingWorkPolicy.KEEP
+                waiting == 1 -> null
+                else -> ExistingWorkPolicy.APPEND_OR_REPLACE
+            }
         }
     }
 }

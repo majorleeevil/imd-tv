@@ -279,13 +279,18 @@ class PlayerManager(private val context: Context) {
     private fun load(address: String) {
         // Headers on the link (M3U #EXTVLCOPT or Kodi "url|User-Agent=…") win over the playlist's user agent.
         val req = org.imdtv.iptvtv.data.source.streamRequest(address, userAgent, login)
+        // Some providers send live streams in bursts ~10 s apart: Media3's 8 s default dropped the connection in each gap.
         val http = DefaultHttpDataSource.Factory().setAllowCrossProtocolRedirects(true)
+            .setConnectTimeoutMs(15_000).setReadTimeoutMs(READ_TIMEOUT_MS)
         req.headers["User-Agent"]?.let { http.setUserAgent(it) }
         (req.headers - "User-Agent").takeIf { it.isNotEmpty() }?.let { http.setDefaultRequestProperties(it) }
         val spec = try { drm?.let(::drmSpec) } catch (e: DrmException) {
             return fail(e.message!!, e, PlaybackException.ERROR_CODE_DRM_SCHEME_UNSUPPORTED)
         }
-        val factory = DefaultMediaSourceFactory(DefaultDataSource.Factory(context, http))
+        // A live .ts stream reconnects by itself when the provider ends or stalls the connection (LiveTsDataSource).
+        val liveTs = !vod && spec == null && android.net.Uri.parse(req.url).lastPathSegment?.endsWith(".ts", ignoreCase = true) == true
+        val upstream = if (liveTs) androidx.media3.datasource.DataSource.Factory { LiveTsDataSource(http.createDataSource()) } else http
+        val factory = DefaultMediaSourceFactory(DefaultDataSource.Factory(context, upstream))
         spec?.let { factory.setDrmSessionManagerProvider(drmSessions(it, http)) }
         // A stream format with no module in the app (e.g. Smooth Streaming) throws here: report it, don't crash.
         val source = try {
@@ -417,6 +422,8 @@ class PlayerManager(private val context: Context) {
 
     private companion object {
         const val MAX_RETRIES = 3
+        /** Longer than the gaps of providers that send in bursts, short enough that a dead stream is retried within the buffer. */
+        const val READ_TIMEOUT_MS = 20_000
         const val WATCH_MS = 2_000L
         /** A stream that played and froze; longer than a normal live rebuffer. */
         const val STALL_MS = 5_000L

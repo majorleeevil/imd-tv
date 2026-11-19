@@ -1,7 +1,6 @@
 package org.imdtv.iptvtv.data.epg
 
 import androidx.room.withTransaction
-import kotlinx.coroutines.Dispatchers
 import org.imdtv.iptvtv.data.logos.compactKey
 import kotlinx.coroutines.withContext
 import org.imdtv.iptvtv.data.settings.GuideKind
@@ -42,7 +41,7 @@ class EpgMatcher(
      * Matching (~46k channels, tens of seconds on a TV box) runs outside any transaction, so user writes (favourites,
      * rename, manual links) aren't queued behind it; only replacing the automatic links is one short transaction.
      */
-    private suspend fun rematchWith(providerId: Long, mode: List<GuideKind>, borrow: Boolean, off: Set<String>): MatchResult = withContext(Dispatchers.Default) {
+    private suspend fun rematchWith(providerId: Long, mode: List<GuideKind>, borrow: Boolean, off: Set<String>): MatchResult = withContext(GuideWork) {
         val epg = db.epgDao()
         val clock = System.currentTimeMillis(); val phases = StringBuilder()
         fun phase(name: String) { phases.append(" $name=${System.currentTimeMillis() - clock}") }
@@ -72,8 +71,8 @@ class EpgMatcher(
         // A guide that has run out (provider feeds sometimes stop hours early) gives way to a later source that still has one.
         val live = db.programmeDao().liveKeys(now()).toHashSet()
         phase("live")
-        // Every core: the indexes above are only read here, and the name keys (regexes) are the slow part.
-        val links = ArrayList(channels.filter { it.id !in manual }.parallelStream().map { c ->
+        // One low-priority thread (GuideWork), not every core: on every core it starved a playing stream.
+        val links = ArrayList(channels.filter { it.id !in manual }.stream().map { c ->
             // Same precedence as before (ids across sources, then names across sources); the first one still on air wins.
             val keys = NameKeys(c.name, normaliser)  // once per channel, not once per source
             val candidates = sequence {

@@ -13,10 +13,10 @@ import org.imdtv.iptvtv.data.catalogue.detectCountry
  */
 fun borrowSiblings(channels: List<ChannelEntity>, countryOf: (ChannelEntity) -> String?, links: List<EpgLinkEntity>): List<EpgLinkEntity> {
     val byChannel = links.associateBy { it.channelId }
-    // Both per channel and regex-heavy (46k channels): on every core. [countryOf] must be safe to call from several threads.
-    val keyOf = channels.parallelStream().map { it.id to logoKey(it.name)?.key }.collect(java.util.stream.Collectors.toList()).toMap()
+    // Both per channel and regex-heavy (46k channels); sequential so the caller's low priority (GuideWork) holds.
+    val keyOf = channels.stream().map { it.id to logoKey(it.name)?.key }.collect(java.util.stream.Collectors.toList()).toMap()
     // A mixed category ("SPORTS") has no country: fall back to the channel's own prefix ("DE: Sport").
-    val country = channels.parallelStream().map { it.id to (countryOf(it) ?: detectCountry(it.name)) }.collect(java.util.stream.Collectors.toList()).toMap()
+    val country = channels.stream().map { it.id to (countryOf(it) ?: detectCountry(it.name)) }.collect(java.util.stream.Collectors.toList()).toMap()
     val donors = channels.filter { it.id in byChannel && keyOf[it.id] != null }
         .groupBy { keyOf[it.id] to country[it.id] }
         .mapValues { (_, cs) -> byChannel.getValue((cs.firstOrNull { byChannel.getValue(it.id).manual } ?: cs.minBy { it.id }).id) }
