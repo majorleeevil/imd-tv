@@ -151,6 +151,11 @@ h3 { font-size: 18px; font-weight: 700; letter-spacing: -.01em; margin-bottom: 8
 /* Theme cards fade between the guide and the categories screen, all in step. */
 .shot.rotate img + img { position: absolute; inset: 0; animation: swap 14s ease-in-out infinite; }
 @keyframes swap { 0%, 40% { opacity: 0; } 50%, 90% { opacity: 1; } 100% { opacity: 0; } }
+/* Three-shot tiles: the 2nd fades in a third of the way round, the 3rd at two thirds, both clear at the end. */
+.shot.rotate:has(img:nth-of-type(3)) img:nth-of-type(2) { animation: swap-b 21s ease-in-out infinite; }
+.shot.rotate:has(img:nth-of-type(3)) img:nth-of-type(3) { animation: swap-c 21s ease-in-out infinite; }
+@keyframes swap-b { 0%, 28% { opacity: 0; } 36%, 95% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes swap-c { 0%, 61% { opacity: 0; } 69%, 95% { opacity: 1; } 100% { opacity: 0; } }
 .settings-shots { margin-top: 20px; }
 
 /* Download steps */
@@ -211,7 +216,7 @@ footer a:hover { color: #fff; }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   .blob { animation: none; }
-  .shot.rotate img + img { animation: none; opacity: 0; }
+  .shot.rotate img + img, .shot.rotate:has(img:nth-of-type(3)) img:nth-of-type(n+2) { animation: none; opacity: 0; }
   .reveal { opacity: 1; transform: none; filter: none; transition: none; }
   .card, .shot, .btn, .intro .hero-shot { transition: none; transform: none; }
   .card:hover, .shot:hover, .btn:hover { transform: none; }
