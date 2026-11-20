@@ -606,6 +606,21 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
     fun setLiveSubtitles(on: Boolean) { viewModelScope.launch { c.settings.update { it.copy(liveSubtitlesOn = on) } } }
     fun setVideoAspect(a: org.imdtv.iptvtv.data.settings.VideoAspect) { viewModelScope.launch { c.settings.update { it.copy(videoAspect = a) } } }
 
+    /** Sort A–Z (issue #9): the entry's channels by shown name, saved as its own order (Move still works after). */
+    fun sortAZ(e: RailEntry) {
+        viewModelScope.launch { moveLock.withLock {
+            val p = providerId.first()
+            val byName = compareBy(java.text.Collator.getInstance()) { ch: ChannelEntity -> ch.displayName(strip.value) }
+            when (e) {
+                RailEntry.Favourites -> c.db.withTransaction { railRepo.channels(p, e).first().sortedWith(byName).forEachIndexed { n, x -> c.db.favouriteDao().setSortOrder(p, Kind.LIVE, x.id, n) } }
+                is RailEntry.Custom -> c.db.withTransaction { railRepo.channels(p, e).first().sortedWith(byName).forEachIndexed { n, x -> c.db.customGroupDao().setMemberOrder(e.group.id, x.id, n) } }
+                // Hidden channels too, so one shown again lands in its A–Z place.
+                is RailEntry.Provider -> c.db.withTransaction { c.db.channelDao().allByCategory(e.category.id).sortedWith(byName).forEachIndexed { n, x -> c.db.channelDao().setSortOrder(x.id, n) } }
+                RailEntry.Recent -> Unit
+            }
+        } }
+    }
+
     /** A channel moved in the guide: [order] is the list as shown after the move, [before] as it was. */
     fun saveGuideOrder(ch: ChannelEntity, before: List<ChannelEntity>, order: List<ChannelEntity>) {
         val at = entry.value ?: return

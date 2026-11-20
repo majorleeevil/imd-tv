@@ -104,7 +104,7 @@ internal fun CategoryTabs(
                 onFocused = { if (!isSelected && move == null) onPick(item.entry) },
                 modifier = (if (isSelected) Modifier.focusRequester(focus) else Modifier)
                     .then(if (isMoving) Modifier.focusRequester(moveFocus) else Modifier)
-                    .then(if (item.entry is RailEntry.Provider || item.entry is RailEntry.Custom) Modifier.onLongOk { onLongPress(item.entry) } else Modifier)
+                    .then(if (item.entry != RailEntry.Recent) Modifier.onLongOk { onLongPress(item.entry) } else Modifier)
                     .width(tabWidth(width)).fillMaxHeight(),
             ) { f ->
                 val nextSelected = items.getOrNull(i + 1)?.entry?.key == selectedKey

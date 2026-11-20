@@ -140,8 +140,8 @@ internal fun Rail(
                         .then(if (isMoving) Modifier.focusRequester(moveFocus) else Modifier)
                         .then(if (rc.entry.key == focusKey) Modifier.focusRequester(keyFocus) else Modifier)
                         .then(track(rc.entry.key))
-                        // Provider and your categories have a menu; Favourites and Recently watched don't.
-                        .then(if (rc.entry is RailEntry.Provider || rc.entry is RailEntry.Custom) Modifier.onLongOk { onLongPress(rc.entry) } else Modifier)
+                        // Every entry but Recently watched has a menu.
+                        .then(if (rc.entry != RailEntry.Recent) Modifier.onLongOk { onLongPress(rc.entry) } else Modifier)
                         .onPreviewKeyEvent { e -> if (e.type == KeyEventType.KeyDown && e.key == Key.DirectionRight) { onPick(rc.entry); true } else false },
                 ) { f ->
                     Row(
@@ -176,6 +176,7 @@ internal fun List<RailItem>.sameKindKeys(e: RailEntry) = filter { it.entry::clas
 internal fun railMenu(e: RailEntry, horizontal: Boolean = false): GuideMenu? = when (e) {
     is RailEntry.Provider -> GuideMenu.Category(e.category, horizontal)
     is RailEntry.Custom -> GuideMenu.Group(e.group, horizontal)
+    RailEntry.Favourites -> GuideMenu.Favourites
     else -> null
 }
 
