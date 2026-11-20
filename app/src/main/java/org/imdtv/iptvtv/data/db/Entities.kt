@@ -93,6 +93,8 @@ data class ChannelEntity(
     val packLogo: String? = null,
     /** tv-logos path, e.g. `countries/united-kingdom/hd/sky-sports-main-event-uhd-uk.png` (not a URL). */
     val builtinLogo: String? = null,
+    /** The <icon> of the guide channel it is linked to (EpgDao.refreshEpgLogos). */
+    val epgLogo: String? = null,
     /** Playlist DRM (Kodi license_type / license_key), read at play time by drmSpec(). */
     val drmType: String? = null,
     val drmKey: String? = null,

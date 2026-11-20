@@ -14,5 +14,6 @@ fun shownLogos(ch: ChannelEntity, order: List<LogoKind>): List<String> = listOfN
         LogoKind.PLAYLIST -> ch.logo
         LogoKind.OPEN_SOURCE -> ch.builtinLogo?.let { TV_LOGOS_RAW + it }
         LogoKind.PACK -> ch.packLogo
+        LogoKind.EPG -> ch.epgLogo
     }
 }

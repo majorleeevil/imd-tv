@@ -4,13 +4,13 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class PriorityTest {
-    private val P = LogoKind.PLAYLIST; private val O = LogoKind.OPEN_SOURCE; private val K = LogoKind.PACK
+    private val P = LogoKind.PLAYLIST; private val O = LogoKind.OPEN_SOURCE; private val K = LogoKind.PACK; private val E = LogoKind.EPG
     private val all = LogoKind.entries
 
     @Test fun choicesExcludeHigherLevels() {
-        assertEquals(listOf(P, O, K), priorityChoices(listOf(P, O), 0, all))          // first: everything, no None
-        assertEquals(listOf(null, O, K), priorityChoices(listOf(P, O), 1, all))      // second: None + not the first
-        assertEquals(listOf(null, K), priorityChoices(listOf(P, O), 2, all))
+        assertEquals(listOf(P, O, K, E), priorityChoices(listOf(P, O), 0, all))          // first: everything, no None
+        assertEquals(listOf(null, O, K, E), priorityChoices(listOf(P, O), 1, all))      // second: None + not the first
+        assertEquals(listOf(null, K, E), priorityChoices(listOf(P, O), 2, all))
     }
 
     @Test fun pickingReorders() {

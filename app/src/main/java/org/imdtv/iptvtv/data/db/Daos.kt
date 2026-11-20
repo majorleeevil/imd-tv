@@ -345,6 +345,12 @@ interface EpgDao {
     @Query("DELETE FROM epg_link WHERE channelId = :id") suspend fun deleteLink(id: Long)
     @Query("SELECT * FROM epg_link WHERE channelId IN (:ids)") suspend fun linksFor(ids: List<Long>): List<EpgLinkEntity>
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun upsertLinks(list: List<EpgLinkEntity>)
+    /** Copies each channel's linked guide icon to channel.epgLogo; only changed rows are written. */
+    @Query("""UPDATE channel SET epgLogo = (SELECT nullif(e.icon, '') FROM epg_link l JOIN epg_channel e ON e.sourceId = l.sourceId AND e.xmltvId = l.xmltvId
+        WHERE l.channelId = channel.id AND nullif(e.icon, '') IS NOT NULL LIMIT 1)
+        WHERE providerId = :providerId AND epgLogo IS NOT (SELECT nullif(e.icon, '') FROM epg_link l JOIN epg_channel e ON e.sourceId = l.sourceId AND e.xmltvId = l.xmltvId
+        WHERE l.channelId = channel.id AND nullif(e.icon, '') IS NOT NULL LIMIT 1)""")
+    suspend fun refreshEpgLogos(providerId: Long)
     /** Emits whenever an import (lastFetched) or a rematch (epg_link) finishes, so open guides reload. */
     // Offsets are in it so a changed source offset re-reads the guide without a refresh.
     @Query("SELECT coalesce((SELECT max(lastFetched) FROM epg_source), 0) + (SELECT count(*) FROM epg_link) + (SELECT coalesce(sum(offsetMinutes), 0) FROM epg_source)")

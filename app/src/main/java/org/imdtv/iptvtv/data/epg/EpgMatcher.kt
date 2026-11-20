@@ -97,6 +97,7 @@ class EpgMatcher(
             val manualNow = epg.links(providerId).filter { it.manual }.mapTo(HashSet()) { it.channelId }
             epg.deleteAutoLinks(providerId)
             links.filter { it.channelId !in manualNow }.chunked(500).forEach { epg.upsertLinks(it) }
+            epg.refreshEpgLogos(providerId)
         }
         phase("write")
         android.util.Log.i(EpgImporter.TAG, "rematch $providerId phases (ms, cumulative):$phases")

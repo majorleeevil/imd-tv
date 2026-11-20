@@ -528,6 +528,7 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             val l = c.db.epgDao().link(donor.id) ?: return@launch
             c.db.epgDao().upsertLinks(listOf(EpgLinkEntity(ch.id, l.sourceId, l.xmltvId, manual = true)))
+            c.db.epgDao().refreshEpgLogos(ch.providerId)
             guideBump.value++
         }
     }
@@ -535,6 +536,7 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
     fun useGuideFrom(ch: ChannelEntity, s: SourceChannel) {
         viewModelScope.launch {
             c.db.epgDao().upsertLinks(listOf(EpgLinkEntity(ch.id, s.sourceId, s.xmltvId, manual = true)))
+            c.db.epgDao().refreshEpgLogos(ch.providerId)
             guideBump.value++
         }
     }

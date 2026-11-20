@@ -92,7 +92,7 @@ enum class ChannelPage(@StringRes val titleRes: Int, @StringRes val explanationR
 }
 
 @Composable
-private fun LogoKind.short() = stringResource(when (this) { LogoKind.PLAYLIST -> R.string.set_a_logo_short_playlist; LogoKind.OPEN_SOURCE -> R.string.set_a_logo_short_open_source; LogoKind.PACK -> R.string.set_a_logo_short_pack })
+private fun LogoKind.short() = stringResource(when (this) { LogoKind.PLAYLIST -> R.string.set_a_logo_short_playlist; LogoKind.OPEN_SOURCE -> R.string.set_a_logo_short_open_source; LogoKind.PACK -> R.string.set_a_logo_short_pack; LogoKind.EPG -> R.string.set_a_logo_short_epg })
 
 /** The Channels & categories group: Channels › and Categories ›. */
 @Composable
@@ -181,7 +181,7 @@ private fun ChannelLogosPage(vm: SettingsViewModel, first: FocusRequester) {
     val s by vm.settings.collectAsState()
     val matching by vm.logoMatching.collectAsState()
     Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        PriorityRows(R.string.set_a_priority_where_logos, s.logoOrder, LogoKind.entries, 3, { stringResource(it.labelRes) }, Modifier.focusRequester(first),
+        PriorityRows(R.string.set_a_priority_where_logos, s.logoOrder, LogoKind.entries, 4, { stringResource(it.labelRes) }, Modifier.focusRequester(first),
             busy = { it == LogoKind.OPEN_SOURCE && matching }, defaults = DEFAULT_LOGO_ORDER) { vm.setLogoOrder(it) }
         if (matching) Text(stringResource(R.string.set_a_matching_logos), fontSize = 13.sp, color = LocalTheme.current.colors.muted)
         if (LogoKind.PACK in s.logoOrder) {

@@ -30,7 +30,9 @@ enum class AudioDecoder { HARDWARE, SOFTWARE }
 
 /** Where a channel logo can come from; the setting is an order of these (first available wins). */
 enum class LogoKind(val label: String, @StringRes val labelRes: Int) {
-    PLAYLIST("Playlist", R.string.set_a_logo_playlist), OPEN_SOURCE("Open-source logos", R.string.set_a_logo_open_source), PACK("My logo pack", R.string.set_a_logo_pack)
+    PLAYLIST("Playlist", R.string.set_a_logo_playlist), OPEN_SOURCE("Open-source logos", R.string.set_a_logo_open_source), PACK("My logo pack", R.string.set_a_logo_pack),
+    /** The icon in the channel's guide (XMLTV), e.g. from Your EPG sources (issue #4). */
+    EPG("EPG logos", R.string.set_a_logo_epg)
 }
 
 /** Where the guide can come from; the setting is an order of these (spec §5.1, reversible since 2026-11-12). */
