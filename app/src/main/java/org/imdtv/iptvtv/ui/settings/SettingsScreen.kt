@@ -251,6 +251,9 @@ fun SettingsScreen(vm: SettingsViewModel, onAddPlaylist: () -> Unit, onEditPlayl
                         }
                         ChoiceRow(stringResource(R.string.set_b_back_guide), stringResource(R.string.set_b_back_guide_expl),
                             listOf(false, true), s.backToFullScreen, { if (it) stringResource(R.string.set_b_go_fullscreen) else stringResource(R.string.set_b_go_menu) }, default = AppSettings().backToFullScreen) { v -> vm.update { it.copy(backToFullScreen = v) } }
+                        SwitchRow(stringResource(R.string.set_b_hold_back), stringResource(R.string.set_b_hold_back_expl), s.holdBackOther) { on -> vm.update { it.copy(holdBackOther = on) } }
+                        ChoiceRow(stringResource(R.string.set_b_guide_timeout), stringResource(R.string.set_b_guide_timeout_expl), listOf(0, 1, 2, 5, 10, 30), s.guideTimeoutMin,
+                            { if (it == 0) stringResource(R.string.set_b_off) else stringResource(R.string.set_b_minutes, it) }, default = 0) { v -> vm.update { it.copy(guideTimeoutMin = v) } }
                         // Not an AppSettings value: Android (13+) or AppLanguage keeps it, and the screen restarts in the new language.
                         val ctx = androidx.compose.ui.platform.LocalContext.current
                         val activity = remember(ctx) { generateSequence(ctx) { (it as? android.content.ContextWrapper)?.baseContext }.filterIsInstance<android.app.Activity>().first() }

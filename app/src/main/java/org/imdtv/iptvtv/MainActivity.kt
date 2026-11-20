@@ -39,6 +39,11 @@ import org.imdtv.iptvtv.ui.theme.LocalGlassBackdrop
 import org.imdtv.iptvtv.ui.theme.glassBackdrop
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.graphics.Color
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.darkColorScheme
@@ -142,15 +147,36 @@ class MainActivity : ComponentActivity() {
                     if (!menuFocused) exitHint = false
                     if (exitHint) { delay(3_000); exitHint = false }
                 }
+                // The live guide with a channel playing (Retro: only inside its guide): where Back, hold Back and the timeout apply.
+                val previewingId by live.previewingId.collectAsState()
+                val inGuide = top == Screen.Live && tab == Tab.LIVE && previewingId != null &&
+                    (settings.theme != ThemeId.CELESTIAL_RETRO || live.retroGuideOpen)
+                val guideToFull = {
+                    live.previewing?.let { playing ->
+                        live.focused.value = playing; live.watched(playing)
+                        app.playFullScreen(playing.displayName(live.strip.value), live = true)
+                    }
+                    Unit
+                }
+                val guideToMenu = { if (settings.theme == ThemeId.CELESTIAL_RETRO) live.retroGuideOpen = false else runCatching { menuFocus.requestFocus() }; Unit }
+                // Uptime of the last key press, for the guide timeout; plain, so a key press doesn't recompose this screen.
+                val lastKey = remember { longArrayOf(0) }
+                // Hold Back: 1 = pressed, 2 = held (the other action done; its release must not also be a Back).
+                val backHold = remember { IntArray(1) }
+                LaunchedEffect(inGuide, settings.guideTimeoutMin) {
+                    if (!inGuide || settings.guideTimeoutMin == 0) return@LaunchedEffect
+                    val timeout = settings.guideTimeoutMin * 60_000L
+                    lastKey[0] = android.os.SystemClock.uptimeMillis()
+                    while (true) {
+                        val wait = lastKey[0] + timeout - android.os.SystemClock.uptimeMillis()
+                        if (wait <= 0) { guideToFull(); break }
+                        delay(wait)
+                    }
+                }
                 BackHandler {
-                    val playing = live.previewing
                     when {
-                        // Back in the live guide opens the playing channel (Retro: only inside its guide; menu focused keeps the usual Back).
-                        top == Screen.Live && tab == Tab.LIVE && settings.backToFullScreen && !menuFocused && playing != null &&
-                            (settings.theme != ThemeId.CELESTIAL_RETRO || live.retroGuideOpen) -> {
-                            live.focused.value = playing; live.watched(playing)
-                            app.playFullScreen(playing.displayName(live.strip.value), live = true)
-                        }
+                        // Back in the live guide opens the playing channel (menu focused keeps the usual Back).
+                        inGuide && settings.backToFullScreen && !menuFocused -> guideToFull()
                         top == Screen.Vod && grid != null && settings.theme != ThemeId.XCUBE_180 && settings.theme != ThemeId.GAMESTATION -> vod.gridCategory.value = null
                         top == Screen.Live && live.retroGuideOpen && settings.theme == ThemeId.CELESTIAL_RETRO -> live.retroGuideOpen = false
                         app.back() -> Unit
@@ -187,7 +213,21 @@ class MainActivity : ComponentActivity() {
                         menuFocus = menuFocus, onMenuFocused = { menuFocused = it },
                         search = { org.imdtv.iptvtv.ui.search.SearchScreen(searchVm, {}, searchChannel, app::open, live = live, lists = true, textColor = LocalTheme.current.colors.panel) })
                 }
-                Box(Modifier.fillMaxSize().background(Color.Black)) {
+                Box(Modifier.fillMaxSize().background(Color.Black).onPreviewKeyEvent { e ->
+                    lastKey[0] = android.os.SystemClock.uptimeMillis()
+                    if (e.key != Key.Back) return@onPreviewKeyEvent false
+                    when {
+                        e.type == KeyEventType.KeyDown && e.nativeKeyEvent.repeatCount == 0 -> { backHold[0] = 1; false }
+                        e.type == KeyEventType.KeyDown -> {
+                            if (backHold[0] == 1 && settings.holdBackOther && inGuide && !menuFocused) {
+                                backHold[0] = 2
+                                if (settings.backToFullScreen) guideToMenu() else guideToFull()
+                            }
+                            backHold[0] == 2
+                        }
+                        else -> (backHold[0] == 2).also { backHold[0] = 0 }
+                    }
+                }) {
                     // A catch-up programme picked in a guide menu opens with the movie controls (pause, seek).
                     androidx.compose.runtime.LaunchedEffect(live) { live.openCatchUp.collect { app.playFullScreen(it, live = false) } }
                     app.resumeLive = { live.focused.value?.let(live::preview) }

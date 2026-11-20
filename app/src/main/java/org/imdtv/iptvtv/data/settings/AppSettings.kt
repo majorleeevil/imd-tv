@@ -136,6 +136,10 @@ data class AppSettings(
     val zapLeftRight: Boolean = false,
     /** Back in the live TV guide opens the playing channel full screen instead of going to the menu. */
     val backToFullScreen: Boolean = false,
+    /** Holding Back in the live TV guide does what a tap doesn't (full screen or the menu). */
+    val holdBackOther: Boolean = true,
+    /** Minutes without a key press in the live TV guide before the playing channel goes full screen; 0 = never. */
+    val guideTimeoutMin: Int = 0,
     val showChannelNumbers: Boolean = true,
     /** 13:05 instead of 1.05pm. */
     val clock24h: Boolean = true,

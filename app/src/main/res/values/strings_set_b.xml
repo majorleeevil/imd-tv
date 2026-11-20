@@ -47,6 +47,12 @@
     <string name="set_b_back_guide_expl">What Back does in the live TV guide while a channel is playing</string>
     <string name="set_b_go_fullscreen">Go to full screen</string>
     <string name="set_b_go_menu">Go to the menu</string>
+    <string name="set_b_hold_back">Hold Back in TV guide</string>
+    <string name="set_b_hold_back_expl">Holding Back does the other one: full screen or the menu</string>
+    <string name="set_b_guide_timeout">Full screen after</string>
+    <string name="set_b_guide_timeout_expl">The playing channel goes full screen when the live TV guide is left alone this long</string>
+    <string name="set_b_minutes">%d min</string>
+    <string name="set_b_off">Off</string>
     <string name="set_b_language">Language</string>
     <string name="set_b_language_expl">The app\'s language; System default follows the TV</string>
     <string name="set_b_system_default">System default</string>
