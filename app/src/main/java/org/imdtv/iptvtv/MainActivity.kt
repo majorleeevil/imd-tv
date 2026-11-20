@@ -109,7 +109,10 @@ class MainActivity : ComponentActivity() {
             }
             // Every screen is a fixed 10-foot layout in dp: a box's larger system text size (font scale) made text overrun it
             // (guide hero over the timeline, user photo 2026-11-18), so text keeps its designed size.
-            CompositionLocalProvider(androidx.compose.ui.platform.LocalDensity provides androidx.compose.ui.unit.Density(density.density, 1f),
+            // The same goes for density: layouts are designed on a 960x540 dp canvas (1080p at 320 dpi); a box reporting a lower
+            // dpi (ugoos SK4, issue #3) drew everything smaller and the guide stopped short of the right edge.
+            val fit = minOf(conf.screenWidthDp / 960f, conf.screenHeightDp / 540f) * density.density
+            CompositionLocalProvider(androidx.compose.ui.platform.LocalDensity provides androidx.compose.ui.unit.Density(fit, 1f),
                 LocalTheme provides remember(themeId, themeColour, themeDark) { themeOf(themeId, themeColour, themeDark) }, LocalGlassBackdrop provides backdrop,
                 org.imdtv.iptvtv.ui.LocalShowNumbers provides app.settings.collectAsState().value.showChannelNumbers,
                 org.imdtv.iptvtv.ui.LocalTitleScale provides app.settings.collectAsState().value.titleSize.scale,
