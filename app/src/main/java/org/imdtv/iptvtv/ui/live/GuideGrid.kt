@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -336,16 +337,18 @@ private fun GuideRow(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 val fg = if (moving) Color.Black else if (f) colors.onFocus else Color.White
+                // The focused row scrolls a name too long for its box (issue #5); multi-line names wrap instead.
+                val marquee = f && style.lines == 1
                 val number = (ch.customNumber ?: ch.number)?.takeIf { org.imdtv.iptvtv.ui.LocalShowNumbers.current }
                 if (style.numberFirst) {
                     Text(listOfNotNull(number, name).joinToString("  "), fontSize = style.sp(14f) * org.imdtv.iptvtv.ui.LocalTitleScale.current, fontWeight = style.font, color = fg, maxLines = style.lines,
-                        overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+                        overflow = if (marquee) TextOverflow.Clip else TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false).then(if (marquee) Modifier.basicMarquee(Int.MAX_VALUE) else Modifier))
                     if (ch.hasCatchUp) CatchUpClock(fg, Modifier.padding(start = 6.dp))
                 } else {
                     // Name and clock fill the box up to the number; a weighted spacer beside the name capped it at half the box.
                     Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
                         Text(name, fontSize = style.sp(14f) * org.imdtv.iptvtv.ui.LocalTitleScale.current, fontWeight = style.font, color = fg, maxLines = style.lines,
-                            overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+                            overflow = if (marquee) TextOverflow.Clip else TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false).then(if (marquee) Modifier.basicMarquee(Int.MAX_VALUE) else Modifier))
                         if (ch.hasCatchUp) CatchUpClock(fg, Modifier.padding(start = 6.dp))
                     }
                     number?.let { Text("  $it", fontSize = style.sp(12f), color = fg.copy(alpha = .85f)) }
