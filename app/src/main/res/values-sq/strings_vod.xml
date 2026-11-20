@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Navigation labels (XMB, Xcube) -->
+    <string name="vod_nav_search">Kërko</string>
+    <string name="vod_nav_live">TV Live</string>
+    <string name="vod_nav_movies">Filma</string>
+    <string name="vod_nav_series">Seriale</string>
+    <string name="vod_nav_recordings">Regjistrime</string>
+    <string name="vod_nav_settings">Cilësimet</string>
+
+    <!-- Retro -->
+    <string name="vod_retro_tab_search">KËRKO</string>
+    <string name="vod_retro_tab_guide">PROGRAMI TV</string>
+    <string name="vod_retro_tab_movies">FILMA</string>
+    <string name="vod_retro_tab_series">SERIALE</string>
+    <string name="vod_retro_tab_recordings">REGJISTRIME</string>
+    <string name="vod_retro_tab_settings">CILËSIMET</string>
+    <string name="vod_retro_more">MË SHUMË…</string>
+    <string name="vod_retro_back">PRAPA</string>
+    <string name="vod_retro_press">"Shtypni "</string>
+    <string name="vod_retro_select">SELECT</string>
+    <string name="vod_retro_to_view">" për të parë"</string>
+
+    <!-- Xcube -->
+    <string name="vod_xcube_blade_search">kërko</string>
+    <string name="vod_xcube_blade_live">tv live</string>
+    <string name="vod_xcube_blade_movies">filma</string>
+    <string name="vod_xcube_blade_series">seriale</string>
+    <string name="vod_xcube_blade_recordings">regjistrime</string>
+    <string name="vod_xcube_blade_settings">cilësimet</string>
+    <string name="vod_xcube_back">↩ Prapa</string>
+    <string name="vod_xcube_select_ok">Zgjidh OK</string>
+    <string name="vod_xcube_blades">◀ blade ▶</string>
+
+    <!-- Shared -->
+    <string name="vod_uncategorised">Pa kategori</string>
+    <string name="vod_live_categories_hidden">Të gjitha kategoritë live janë të fshehura. Shfaqini përsëri te Cilësimet › Kanalet &amp; kategoritë.</string>
+    <string name="vod_all">Të gjitha</string>
+    <string name="vod_all_movies">Të gjithë filmat</string>
+    <string name="vod_all_series">Të gjitha serialet</string>
+    <string name="vod_search_in">Kërko në %1$s…</string>
+    <string name="vod_no_matches">Asnjë rezultat</string>
+    <string name="vod_nothing_here">Këtu nuk ka asgjë</string>
+    <string name="vod_no_channels">Nuk ka kanale</string>
+    <string name="vod_no_guide_info">Nuk ka informacion programi</string>
+    <string name="vod_next_programme">Pas: %1$s %2$s</string>
+    <string name="vod_now_programme">Tani: %1$s %2$s–%3$s</string>
+    <string name="vod_cancel">Anulo</string>
+    <string name="vod_ok">OK</string>
+    <string name="vod_minutes_short">%1$d min</string>
+    <string name="vod_hours_short">%1$d orë</string>
+    <string name="vod_hours_minutes_short">%1$d orë %2$d min</string>
+
+    <!-- Search -->
+    <string name="vod_search_hint">Kërko kanale, filma dhe seriale</string>
+    <string name="vod_search_prompt">Shkruani ose thoni një pjesë të emrit</string>
+    <string name="vod_search_channels">Kanale</string>
+    <string name="vod_search_movies">Filma</string>
+    <string name="vod_search_series">Seriale</string>
+    <string name="vod_search_no_channels">Nuk u gjetën kanale</string>
+    <string name="vod_search_no_movies">Nuk u gjetën filma</string>
+    <string name="vod_search_no_series">Nuk u gjetën seriale</string>
+    <string name="vod_search_none_found">Nuk u gjet asnjë</string>
+    <string name="vod_search_count_of">%1$d nga %2$d</string>
+    <string name="vod_search_heading">"%1$s  %2$s"</string>
+    <string name="vod_xmb_search">Kërko…</string>
+    <string name="vod_xmb_search_query">Kërkim: %1$s</string>
+    <string name="vod_xmb_search_section">%1$s (%2$s)</string>
+    <string name="vod_xmb_no_recordings">Ende pa regjistrime. Mbani OK te një kanal në TV Live për ta regjistruar.</string>
+
+    <!-- Movies and series -->
+    <string name="vod_continue_watching">Vazhdo shikimin</string>
+    <string name="vod_updating_movies">Po përditësohen filmat…</string>
+    <string name="vod_updating_series">Po përditësohen serialet…</string>
+    <string name="vod_category">Kategoria</string>
+    <string name="vod_category_pill">◀ %1$s</string>
+    <string name="vod_favourites_row">★ Të preferuarat</string>
+    <string name="vod_categories_header">KATEGORITË</string>
+    <string name="vod_director">Regjisor: %1$s</string>
+    <string name="vod_cast">Aktorë: %1$s</string>
+    <string name="vod_btn_resume_from">"▶  Vazhdo nga %1$s"</string>
+    <string name="vod_btn_from_start">"↺  Nga fillimi"</string>
+    <string name="vod_btn_play">"▶  Luaj"</string>
+    <string name="vod_btn_favourited">"★  Në të preferuarat"</string>
+    <string name="vod_btn_favourite">"☆  Shto te të preferuarat"</string>
+    <string name="vod_btn_watched">"✓  Parë"</string>
+    <string name="vod_btn_mark_watched">Shëno si parë</string>
+    <string name="vod_btn_resume_episode">"▶  Vazhdo S%1$d · E%2$d"</string>
+    <string name="vod_btn_play_episode">"▶  Luaj S%1$d · E%2$d"</string>
+    <string name="vod_btn_mark_episode_watched">Shëno E%1$d si parë</string>
+    <string name="vod_more_like_this">Të ngjashme</string>
+    <string name="vod_loading_episodes">Po ngarkohen episodet…</string>
+    <string name="vod_season_tab">Sezoni %1$d</string>
+    <string name="vod_episode_short">E%1$d</string>
+    <string name="vod_season_episode">S%1$d · E%2$d</string>
+    <string name="vod_episode_title">%1$s S%2$dE%3$d</string>
+    <string name="vod_menu_play_from_start">Luaj nga fillimi</string>
+    <string name="vod_menu_mark_unwatched">Shëno si të paparë</string>
+    <plurals name="vod_seasons">
+        <item quantity="one">%d sezon</item>
+        <item quantity="other">%d sezone</item>
+    </plurals>
+
+    <!-- Recording: prompts and notices -->
+    <string name="vod_rec_starts_soon">Regjistrimi fillon së shpejti</string>
+    <string name="vod_rec_starts_soon_body">Regjistrimi i %1$s në %2$s fillon pas 1 minute. Llogaria juaj lejon një transmetim, ndaj shikimi do të ndalojë.</string>
+    <string name="vod_rec_record">Regjistro</string>
+    <string name="vod_rec_keep_watching">Vazhdo shikimin</string>
+    <string name="vod_rec_stop_q">Të ndalet regjistrimi?</string>
+    <string name="vod_rec_stop_to_watch_body">Shikimi përdor lidhjen tuaj të vetme, ndaj regjistrimi i %1$s do të ndalojë. Të ndalet regjistrimi?</string>
+    <string name="vod_rec_keep_recording">Vazhdo regjistrimin</string>
+    <string name="vod_rec_stop_recording">Ndalo regjistrimin</string>
+    <string name="vod_rec_record_channel_q">Të regjistrohet %1$s?</string>
+    <string name="vod_rec_record_now_body">Regjistrimi përdor lidhjen tuaj të vetme, ndaj shikimi do të ndalojë.</string>
+    <string name="vod_rec_notice_recording">Po regjistrohet %1$s</string>
+    <string name="vod_rec_notice_no_free">Nuk ka lidhje të lirë: %1$s po regjistrohet</string>
+    <string name="vod_rec_notice_scheduled">U planifikua %1$s, %2$s %3$s</string>
+    <string name="vod_rec_notice_watching_stopped">Po regjistrohet %1$s — shikimi u ndal</string>
+    <string name="vod_rec_notice_only_connection">Regjistrimi i %1$s po përdor lidhjen tuaj të vetme</string>
+    <string name="vod_rec_notice_no_usb">Regjistrimi dështoi: nuk u gjet disk USB</string>
+    <string name="vod_rec_notice_title_reason">%1$s: %2$s</string>
+
+    <!-- Recording: notification -->
+    <string name="vod_rec_channel_name">Regjistrim</string>
+    <string name="vod_rec_notification_starting">Po nis një regjistrim</string>
+    <string name="vod_rec_notification_one">Po regjistrohet %1$s</string>
+    <plurals name="vod_rec_notification_many">
+        <item quantity="one">Po regjistrohet %1$d emision</item>
+        <item quantity="other">Po regjistrohen %1$d emisione</item>
+    </plurals>
+
+    <!-- Recording: list -->
+    <string name="vod_rec_status_scheduled">I planifikuar</string>
+    <string name="vod_rec_status_recording">Po regjistrohet · mbaron %1$s</string>
+    <string name="vod_rec_status_stopped">I ndalur</string>
+    <string name="vod_rec_status_failed">Dështoi</string>
+    <string name="vod_rec_reason_app_closed">Ndalur — aplikacioni u mbyll</string>
+    <string name="vod_rec_reason_missed">Humbur — pajisja ishte e fikur</string>
+    <string name="vod_rec_reason_skipped">Anashkaluar — po shikonit</string>
+    <string name="vod_rec_reason_channel_gone">Kanali nuk është më në listë</string>
+    <string name="vod_rec_reason_no_connection">Nuk ka lidhje të lirë</string>
+    <string name="vod_rec_reason_cant_start">Dështoi — regjistrimi nuk mundi të niste</string>
+    <string name="vod_rec_reason_no_usb">Dështoi — nuk u gjet disk USB</string>
+    <string name="vod_rec_reason_stream_lost">Ndalur — transmetimi u humb</string>
+    <string name="vod_rec_reason_second_stream">Dështoi — ofruesi refuzoi një transmetim të dytë</string>
+    <string name="vod_rec_reason_storage_full">Ndalur — hapësira u mbush</string>
+    <string name="vod_rec_reason_drm">Ky kanal përdor DRM (%1$s) dhe nuk mund të regjistrohet</string>
+    <string name="vod_rec_reason_unsupported">Ky kanal nuk mund të regjistrohet (%1$s)</string>
+    <string name="vod_rec_reason_no_start">Dështoi — kanali nuk nisi</string>
+    <string name="vod_rec_reason_no_start_http">Dështoi — kanali nuk nisi (HTTP %1$s)</string>
+    <string name="vod_rec_reason_cant_save">Dështoi — nuk u ruajt te %1$s: %2$s</string>
+    <string name="vod_rec_store_internal">hapësira e brendshme</string>
+    <string name="vod_rec_store_usb">disku USB</string>
+    <string name="vod_rec_store_smb">ndarja e rrjetit</string>
+    <string name="vod_rec_delete_q">Të fshihet %1$s?</string>
+    <string name="vod_rec_delete">Fshi</string>
+    <string name="vod_rec_play">Luaj</string>
+    <string name="vod_rec_cancel_recording">Anulo regjistrimin</string>
+    <string name="vod_rec_none_guide">Ende pa regjistrime. Mbani OK te një kanal në program për ta regjistruar.</string>
+
+    <!-- Recording: settings -->
+    <string name="vod_rec_title">Regjistrim</string>
+    <string name="vod_rec_switch_expl">Regjistroni kanale live nga programi (mbani OK te një kanal)</string>
+    <string name="vod_rec_save_to">Ruaj te</string>
+    <string name="vod_rec_save_to_expl">Ku shkojnë regjistrimet e reja</string>
+    <string name="vod_rec_store_internal_title">Hapësira e brendshme</string>
+    <string name="vod_rec_store_smb_title">Ndarje rrjeti</string>
+    <string name="vod_rec_usb">Disk USB</string>
+    <string name="vod_rec_usb_none">Disk USB (nuk u gjet)</string>
+    <string name="vod_rec_usb_expl">Në cilin disk shkojnë regjistrimet</string>
+    <string name="vod_rec_plug_usb">Lidhni fillimisht një disk USB</string>
+    <string name="vod_rec_not_set">Nuk është caktuar</string>
+    <string name="vod_rec_server">Serveri</string>
+    <string name="vod_rec_server_expl">Emri ose adresa, p.sh. nas ose 192.168.1.20</string>
+    <string name="vod_rec_share">Ndarja</string>
+    <string name="vod_rec_share_expl">Emri i dosjes së ndarë në server</string>
+    <string name="vod_rec_folder">Dosja</string>
+    <string name="vod_rec_folder_expl">Brenda ndarjes; bosh = në krye</string>
+    <string name="vod_rec_folder_top">Në krye të ndarjes</string>
+    <string name="vod_rec_username">Përdoruesi</string>
+    <string name="vod_rec_username_expl">Bosh = vizitor</string>
+    <string name="vod_rec_guest">Vizitor</string>
+    <string name="vod_rec_password">Fjalëkalimi</string>
+    <string name="vod_rec_password_expl">Ruhet i enkriptuar në këtë pajisje; jo në kopjet rezervë</string>
+    <string name="vod_rec_test">Provo</string>
+    <string name="vod_rec_test_expl">Shkruan dhe fshin një skedar të vogël</string>
+    <string name="vod_rec_testing">Po provohet…</string>
+    <string name="vod_rec_test_failed">Dështoi: %1$s</string>
+    <string name="vod_rec_free_space_title">Hapësira e lirë</string>
+    <string name="vod_rec_free_space_expl">Ku ruhen regjistrimet</string>
+    <string name="vod_rec_free_unknown">Hapësira e lirë nuk dihet</string>
+    <string name="vod_rec_free_space">Rreth %1$s GB të lira ≈ %2$s HD</string>
+    <string name="vod_rec_start_early">Fillo më herët</string>
+    <string name="vod_rec_start_early_expl">Orët e programit zhvendosen: regjistrimet e planifikuara fillojnë kaq më herët</string>
+    <string name="vod_rec_end_late">Mbaro më vonë</string>
+    <string name="vod_rec_end_late_expl">…dhe mbarojnë kaq më vonë</string>
+    <string name="vod_rec_keep_awake">Mbaje pajisjen zgjuar gjatë regjistrimit</string>
+    <string name="vod_rec_keep_awake_expl">Pengon pajisjen të bjerë në gjumë ose të fikë Wi-Fi gjatë regjistrimit</string>
+    <string name="vod_rec_before_title">Para se të regjistroni</string>
+    <string name="vod_rec_info">Regjistrimi i një kanali ndërsa shikoni një tjetër kërkon dy lidhje nga ofruesi juaj. Llogaritë Xtream e njoftojnë aplikacionin për kufirin; listat M3U jo. Pajisjet e vogla kanë pak hapësirë: një Chromecast me Google TV ka rreth 4 GB të lira, rreth 2 orë HD. Përdorni një disk USB ose një ndarje rrjeti për më shumë. Regjistrimet në pajisje ose në diskun USB fshihen nëse çinstaloni aplikacionin.</string>
+    <string name="vod_rec_off_title">Të çaktivizohet regjistrimi?</string>
+    <string name="vod_rec_off_body">Regjistrimet e planifikuara anulohen dhe çdo regjistrim aktual ndalon. Regjistrimet tuaja ruhen.</string>
+    <string name="vod_rec_turn_off">Çaktivizo</string>
+
+    <!-- Files and logo packs -->
+    <string name="vod_files_internal">Hapësira e brendshme</string>
+    <string name="vod_files_usb">USB</string>
+    <string name="vod_files_choose_manager">Zgjidhni një menaxher skedarësh</string>
+    <string name="vod_pack_no_space">Nuk ka hapësirë të mjaftueshme për ta importuar këtë paketë</string>
+    <string name="vod_pack_no_images">Ky zip nuk ka imazhe</string>
+    <string name="vod_pack_unreadable">Ky zip nuk u lexua dot</string>
+</resources>

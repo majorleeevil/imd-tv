@@ -15,7 +15,7 @@ import java.util.Locale
  */
 object AppLanguage {
     /** Offered in Settings, after "System default". Each is shown in its own language. */
-    val TAGS = listOf("en", "fr", "es", "pl", "nl", "de", "it", "pt", "tr", "ro", "el", "sv")
+    val TAGS = listOf("en", "fr", "es", "pl", "nl", "de", "it", "pt", "tr", "ro", "el", "sv", "sq")
 
     private const val PREFS = "app_language"
     private const val KEY = "tag"
