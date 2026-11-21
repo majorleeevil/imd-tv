@@ -113,13 +113,43 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
     // Keyed on the provider too: "fav" is the same key in every playlist.
     private val hideHeaders = c.settings.settings.map { it.hideHeaderChannels }.distinctUntilChanged()
 
-    val listing: StateFlow<Pair<String?, List<ChannelEntity>>> = combine(providerId, entry) { p, e -> p to e }
-        .distinctUntilChangedBy { (p, e) -> p to e?.key }
-        .flatMapLatest { (p, e) ->
+    private val favouritesAZ = c.settings.settings.map { it.favouritesAZ }.distinctUntilChanged()
+    /** Sort A–Z › Always is on for [e]. */
+    private fun isAZ(e: RailEntry?, favourites: Boolean) = when (e) {
+        RailEntry.Favourites -> favourites
+        is RailEntry.Custom -> e.group.sortAZ
+        is RailEntry.Provider -> e.category.sortAZ
+        else -> false
+    }
+    /** The selected entry is always shown A–Z (so a channel can't be moved in it). */
+    val selectedAZ: StateFlow<Boolean> = combine(entry, favouritesAZ, ::isAZ).stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    val listing: StateFlow<Pair<String?, List<ChannelEntity>>> = combine(providerId, entry, selectedAZ) { p, e, az -> Triple(p, e, az) }
+        .distinctUntilChangedBy { (p, e, az) -> Triple(p, e?.key, az) }
+        .flatMapLatest { (p, e, az) ->
             if (e == null) flowOf(null to emptyList())
-            else combine(railRepo.channels(p, e), hideHeaders) { list, hide -> e.key to if (hide) list.filterNot { isHeaderChannel(it.name) } else list }
+            else combine(railRepo.channels(p, e), hideHeaders, strip) { list, hide, s ->
+                val shown = if (hide) list.filterNot { isHeaderChannel(it.name) } else list
+                e.key to if (az) shown.sortedWith(byName(s)) else shown
+            }
         }
         .stateIn(viewModelScope, SharingStarted.Eagerly, null to emptyList())
+
+    private fun byName(strip: List<String>) = compareBy(java.text.Collator.getInstance()) { ch: ChannelEntity -> ch.displayName(strip) }
+
+    /** Sort A–Z › Always, as now stored for [e] (the rail's copy, newer than a menu's). */
+    fun alwaysAZ(e: RailEntry): Boolean = isAZ(rail.value.orEmpty().find { it.entry.key == e.key }?.entry ?: e, settings.value.favouritesAZ)
+
+    fun setAlwaysAZ(e: RailEntry, on: Boolean) {
+        viewModelScope.launch {
+            when (e) {
+                RailEntry.Favourites -> c.settings.update { it.copy(favouritesAZ = on) }
+                is RailEntry.Custom -> c.db.customGroupDao().setSortAZ(e.group.id, on)
+                is RailEntry.Provider -> c.db.categoryDao().setSortAZ(e.category.id, on)
+                RailEntry.Recent -> Unit
+            }
+        }
+    }
 
     val channels: StateFlow<List<ChannelEntity>> = listing.map { it.second }
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
@@ -608,11 +638,11 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
     fun setLiveSubtitles(on: Boolean) { viewModelScope.launch { c.settings.update { it.copy(liveSubtitlesOn = on) } } }
     fun setVideoAspect(a: org.imdtv.iptvtv.data.settings.VideoAspect) { viewModelScope.launch { c.settings.update { it.copy(videoAspect = a) } } }
 
-    /** Sort A–Z (issue #9): the entry's channels by shown name, saved as its own order (Move still works after). */
+    /** Sort A–Z › Once (issue #9): the entry's channels by shown name, saved as its own order (Move still works after). */
     fun sortAZ(e: RailEntry) {
         viewModelScope.launch { moveLock.withLock {
             val p = providerId.first()
-            val byName = compareBy(java.text.Collator.getInstance()) { ch: ChannelEntity -> ch.displayName(strip.value) }
+            val byName = byName(strip.value)
             when (e) {
                 RailEntry.Favourites -> c.db.withTransaction { railRepo.channels(p, e).first().sortedWith(byName).forEachIndexed { n, x -> c.db.favouriteDao().setSortOrder(p, Kind.LIVE, x.id, n) } }
                 is RailEntry.Custom -> c.db.withTransaction { railRepo.channels(p, e).first().sortedWith(byName).forEachIndexed { n, x -> c.db.customGroupDao().setMemberOrder(e.group.id, x.id, n) } }

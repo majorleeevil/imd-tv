@@ -57,6 +57,8 @@ internal sealed interface GuideMenu {
     /** One of your categories (rename, delete and priority stay in Settings). */
     data class Group(val g: org.imdtv.iptvtv.data.db.CustomGroupEntity, val horizontal: Boolean = false) : GuideMenu
     data object Favourites : GuideMenu
+    /** Sort A–Z's sub-menu: Always (a switch) or Once. */
+    data class Sort(val entry: RailEntry) : GuideMenu
 }
 
 /** The long-press menus of a channel row and a rail category, shared by every theme. */
@@ -89,7 +91,7 @@ fun GuideMenus(vm: LiveViewModel, state: GuideState) {
             add(stringResource(R.string.live_menu_rename) to { state.menu = GuideMenu.Rename(m.ch) })
             add(stringResource(R.string.live_menu_change_logo) to { state.menu = GuideMenu.ChangeLogo(m.ch) })
             // Picks the channel up in place, as categories move: arrows carry it, OK drops, Back cancels.
-            if (state.hasGrid && entry != null && entry != RailEntry.Recent) add(stringResource(R.string.live_menu_move) to { state.rowMove = RowMove(m.ch, vm.channels.value); state.menu = null })
+            if (state.hasGrid && entry != null && entry != RailEntry.Recent && !vm.selectedAZ.value) add(stringResource(R.string.live_menu_move) to { state.rowMove = RowMove(m.ch, vm.channels.value); state.menu = null })
             if (state.hasGrid || m.ch.mergeHead) add(stringResource(R.string.live_menu_merge_options) to { state.menu = GuideMenu.MergeOptions(m.ch) })
             add(stringResource(R.string.live_menu_hide) to { state.refocusOnChange = true; vm.hide(m.ch); state.menu = null })
             }) { state.menu = null }
@@ -206,20 +208,28 @@ fun GuideMenus(vm: LiveViewModel, state: GuideState) {
             ContextMenu(stringResource(R.string.live_menu_category_title, m.cat.name.ifEmpty { stringResource(R.string.live_uncategorised) }, at + 1, provider.size), listOf(
                 stringResource(R.string.live_menu_move) to { state.railMove = RailMove(e, at); state.menu = null },
                 stringResource(R.string.live_menu_hide) to { vm.hideCategory(m.cat); state.menu = null; state.railOpen = false; state.refocus() },
-                stringResource(R.string.live_menu_sort_az) to { vm.sortAZ(e); state.menu = null; state.railFocusKey = key },
+                stringResource(R.string.live_menu_sort_az) to { state.menu = GuideMenu.Sort(e) },
             )) { state.menu = null; state.railFocusKey = key }
         }
         is GuideMenu.Group -> {
             val e = RailEntry.Custom(m.g)
             ContextMenu(m.g.name, listOf(
                 stringResource(R.string.live_menu_move) to { state.railMove = RailMove(e, rail.orEmpty().sameKindKeys(e).indexOf(e.key)); state.menu = null },
-                stringResource(R.string.live_menu_sort_az) to { vm.sortAZ(e); state.menu = null; state.railFocusKey = e.key },
+                stringResource(R.string.live_menu_sort_az) to { state.menu = GuideMenu.Sort(e) },
+            )) { state.menu = null; state.railFocusKey = e.key }
+        }
+        is GuideMenu.Sort -> {
+            val e = m.entry
+            val always = vm.alwaysAZ(e)
+            ContextMenu(stringResource(R.string.live_menu_sort_az), listOf(
+                (if (always) stringResource(R.string.live_menu_sort_always_on) else stringResource(R.string.live_menu_sort_always_off)) to { vm.setAlwaysAZ(e, !always); state.menu = null; state.railFocusKey = e.key },
+                stringResource(R.string.live_menu_sort_once) to { vm.sortAZ(e); state.menu = null; state.railFocusKey = e.key },
             )) { state.menu = null; state.railFocusKey = e.key }
         }
         GuideMenu.Favourites -> {
             val e = RailEntry.Favourites
             ContextMenu(stringResource(e.titleRes), listOf(
-                stringResource(R.string.live_menu_sort_az) to { vm.sortAZ(e); state.menu = null; state.railFocusKey = e.key },
+                stringResource(R.string.live_menu_sort_az) to { state.menu = GuideMenu.Sort(e) },
             )) { state.menu = null; state.railFocusKey = e.key }
         }
     }

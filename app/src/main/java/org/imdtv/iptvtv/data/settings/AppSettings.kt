@@ -142,6 +142,8 @@ data class AppSettings(
     val holdBackOther: Boolean = true,
     /** Minutes without a key press in the live TV guide before the playing channel goes full screen; 0 = never. */
     val guideTimeoutMin: Int = 0,
+    /** Sort A–Z › Always for Favourites (categories keep theirs in the database). */
+    val favouritesAZ: Boolean = false,
     val showChannelNumbers: Boolean = true,
     /** 13:05 instead of 1.05pm. */
     val clock24h: Boolean = true,

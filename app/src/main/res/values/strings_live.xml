@@ -42,6 +42,9 @@
     <string name="live_menu_keep_it">Keep it</string>
     <string name="live_menu_move">Move</string>
     <string name="live_menu_sort_az">Sort A–Z</string>
+    <string name="live_menu_sort_always_off">Always A–Z: Off</string>
+    <string name="live_menu_sort_always_on">Always A–Z: On</string>
+    <string name="live_menu_sort_once">Sort once</string>
     <string name="live_menu_new_category">New category</string>
     <string name="live_menu_new_category_item">New category</string>
     <string name="live_menu_no_guide_channel">No guide for this channel</string>

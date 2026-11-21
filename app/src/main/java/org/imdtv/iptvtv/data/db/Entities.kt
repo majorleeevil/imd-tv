@@ -63,6 +63,8 @@ data class CategoryEntity(
     val locked: Boolean = false,
     val pinned: Boolean = false,
     val country: String? = null,
+    /** Sort A–Z › Always: its channels are shown A–Z, whatever their saved order (issue #9). */
+    @ColumnInfo(defaultValue = "0") val sortAZ: Boolean = false,
 )
 
 @Entity(
@@ -340,6 +342,8 @@ data class CustomGroupEntity(
     val name: String,
     val sortOrder: Int,
     @ColumnInfo(defaultValue = "NORMAL") val placement: GroupPlacement = GroupPlacement.NORMAL,
+    /** As [CategoryEntity.sortAZ]. */
+    @ColumnInfo(defaultValue = "0") val sortAZ: Boolean = false,
 )
 
 @Entity(
