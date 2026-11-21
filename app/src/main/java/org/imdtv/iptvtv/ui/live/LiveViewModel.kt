@@ -175,6 +175,8 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
     var retroGuideOpen by androidx.compose.runtime.mutableStateOf(false)
     /** Gamestation: where the XMB is (column, item, open folder). Kept here so full screen, detail and Settings return to it. */
     var xmb by androidx.compose.runtime.mutableStateOf(org.imdtv.iptvtv.ui.xmb.XmbState())
+    /** Gamestation has opened at the playing channel once (or the user moved first). */
+    var xmbRestored = false
 
     init {
         viewModelScope.launch {

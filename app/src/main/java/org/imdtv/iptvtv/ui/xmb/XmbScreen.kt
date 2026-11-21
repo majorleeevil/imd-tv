@@ -176,6 +176,16 @@ fun XmbScreen(
     }
     // Lists that shrank (hidden channels, a sync) never leave focus on nothing; a gone folder closes.
     LaunchedEffect(items.size, folderCount) { if (items.isNotEmpty()) live.xmb = live.xmb.clamp(items.size, folderCount) }
+    // App reopened (issue #8): start in the playing channel's folder on that channel, not at the top of the column.
+    LaunchedEffect(rail, channels) {
+        if (live.xmbRestored) return@LaunchedEffect
+        if (live.xmb != XmbState()) { live.xmbRestored = true; return@LaunchedEffect }
+        val ch = live.focused.value ?: return@LaunchedEffect
+        val i = rail.orEmpty().indexOfFirst { it.entry.key == live.entry.value?.key }.takeIf { it >= 0 } ?: return@LaunchedEffect
+        val j = channels.indexOfFirst { it.id == ch.id }.takeIf { it >= 0 } ?: return@LaunchedEffect
+        live.xmb = XmbState(item = i, folder = i, folderItem = j)
+        live.xmbRestored = true
+    }
     // Back from full screen: the folder reopens on the channel being watched.
     LaunchedEffect(channels) {
         if (live.xmb.column == XmbColumn.LIVE && live.xmb.folder != null) {
