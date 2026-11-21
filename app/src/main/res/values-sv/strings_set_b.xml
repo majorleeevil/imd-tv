@@ -47,6 +47,12 @@
     <string name="set_b_back_guide_expl">Vad Tillbaka gör i live-tv-guiden medan en kanal spelas</string>
     <string name="set_b_go_fullscreen">Gå till helskärm</string>
     <string name="set_b_go_menu">Gå till menyn</string>
+    <string name="set_b_hold_back">Håll Tillbaka i tv-guiden</string>
+    <string name="set_b_hold_back_expl">Att hålla Tillbaka gör det andra: helskärm eller menyn</string>
+    <string name="set_b_guide_timeout">Helskärm efter</string>
+    <string name="set_b_guide_timeout_expl">Gå till helskärm efter så här länge utan knapptryck i tv-guiden</string>
+    <string name="set_b_minutes">%d min</string>
+    <string name="set_b_off">Av</string>
     <string name="set_b_language">Språk</string>
     <string name="set_b_language_expl">Appens språk; Systemstandard följer tv:n</string>
     <string name="set_b_system_default">Systemstandard</string>

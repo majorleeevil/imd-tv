@@ -43,6 +43,7 @@
     <string name="set_a_logo_playlist">Λίστα</string>
     <string name="set_a_logo_open_source">Λογότυπα ανοιχτού κώδικα</string>
     <string name="set_a_logo_pack">Το πακέτο λογοτύπων μου</string>
+    <string name="set_a_logo_epg">Λογότυπα EPG</string>
     <string name="set_a_guide_playlist">Λίστα</string>
     <string name="set_a_guide_user">Οι πηγές EPG σας</string>
     <string name="set_a_guide_open_source">Οδηγός ανοιχτού κώδικα</string>
@@ -59,6 +60,7 @@
     <string name="set_a_logo_short_playlist">Λίστα</string>
     <string name="set_a_logo_short_open_source">Ανοιχτός κώδ.</string>
     <string name="set_a_logo_short_pack">Το πακέτο μου</string>
+    <string name="set_a_logo_short_epg">EPG</string>
     <string name="set_a_save">Αποθήκευση</string>
     <string name="set_a_cancel">Άκυρο</string>
     <string name="set_a_delete">Διαγραφή</string>

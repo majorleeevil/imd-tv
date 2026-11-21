@@ -44,6 +44,7 @@
     <string name="set_a_logo_playlist">Lista</string>
     <string name="set_a_logo_open_source">Logo me burim të hapur</string>
     <string name="set_a_logo_pack">Paketa ime e logove</string>
+    <string name="set_a_logo_epg">Logot EPG</string>
     <string name="set_a_guide_playlist">Lista</string>
     <string name="set_a_guide_user">Burimet tuaja EPG</string>
     <string name="set_a_guide_open_source">Program me burim të hapur</string>
@@ -60,6 +61,7 @@
     <string name="set_a_logo_short_playlist">Lista</string>
     <string name="set_a_logo_short_open_source">Burim i hapur</string>
     <string name="set_a_logo_short_pack">Paketa ime</string>
+    <string name="set_a_logo_short_epg">EPG</string>
     <string name="set_a_save">Ruaj</string>
     <string name="set_a_cancel">Anulo</string>
     <string name="set_a_delete">Fshi</string>

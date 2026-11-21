@@ -43,6 +43,7 @@
     <string name="set_a_logo_playlist">Spellista</string>
     <string name="set_a_logo_open_source">Öppen källkod-logotyper</string>
     <string name="set_a_logo_pack">Mitt logotypspaket</string>
+    <string name="set_a_logo_epg">EPG-logotyper</string>
     <string name="set_a_guide_playlist">Spellista</string>
     <string name="set_a_guide_user">Dina EPG-källor</string>
     <string name="set_a_guide_open_source">Öppen källkod-guide</string>
@@ -59,6 +60,7 @@
     <string name="set_a_logo_short_playlist">Spellista</string>
     <string name="set_a_logo_short_open_source">Öppen källkod</string>
     <string name="set_a_logo_short_pack">Mitt paket</string>
+    <string name="set_a_logo_short_epg">EPG</string>
     <string name="set_a_save">Spara</string>
     <string name="set_a_cancel">Avbryt</string>
     <string name="set_a_delete">Ta bort</string>

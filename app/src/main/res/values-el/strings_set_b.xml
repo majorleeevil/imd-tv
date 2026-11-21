@@ -47,6 +47,12 @@
     <string name="set_b_back_guide_expl">Τι κάνει το Πίσω στον οδηγό live TV ενώ παίζει ένα κανάλι</string>
     <string name="set_b_go_fullscreen">Μετάβαση σε πλήρη οθόνη</string>
     <string name="set_b_go_menu">Μετάβαση στο μενού</string>
+    <string name="set_b_hold_back">Παρατεταμένο Πίσω στον οδηγό TV</string>
+    <string name="set_b_hold_back_expl">Το παρατεταμένο Πίσω κάνει την άλλη ενέργεια: πλήρη οθόνη ή μενού</string>
+    <string name="set_b_guide_timeout">Πλήρης οθόνη μετά από</string>
+    <string name="set_b_guide_timeout_expl">Πλήρης οθόνη μετά από τόσο χρόνο χωρίς πλήκτρο στον οδηγό TV</string>
+    <string name="set_b_minutes">%d λ.</string>
+    <string name="set_b_off">Ανενεργό</string>
     <string name="set_b_language">Γλώσσα</string>
     <string name="set_b_language_expl">Η γλώσσα της εφαρμογής· η προεπιλογή συστήματος ακολουθεί την τηλεόραση</string>
     <string name="set_b_system_default">Προεπιλογή συστήματος</string>

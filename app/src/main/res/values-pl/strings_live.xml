@@ -41,6 +41,7 @@
     <string name="live_menu_hide">Ukryj</string>
     <string name="live_menu_keep_it">Zostaw</string>
     <string name="live_menu_move">Przenieś</string>
+    <string name="live_menu_sort_az">Sortuj A–Z</string>
     <string name="live_menu_new_category">Nowa kategoria</string>
     <string name="live_menu_new_category_item">Nowa kategoria</string>
     <string name="live_menu_no_guide_channel">Brak przewodnika dla tego kanału</string>

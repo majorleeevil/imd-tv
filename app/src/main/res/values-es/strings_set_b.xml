@@ -47,6 +47,12 @@
     <string name="set_b_back_guide_expl">Qué hace Atrás en la guía de TV mientras se reproduce un canal</string>
     <string name="set_b_go_fullscreen">Ir a pantalla completa</string>
     <string name="set_b_go_menu">Ir al menú</string>
+    <string name="set_b_hold_back">Mantener Atrás en la guía de TV</string>
+    <string name="set_b_hold_back_expl">Mantener Atrás hace la otra acción: pantalla completa o menú</string>
+    <string name="set_b_guide_timeout">Pantalla completa tras</string>
+    <string name="set_b_guide_timeout_expl">Pantalla completa tras este tiempo sin pulsar teclas en la guía</string>
+    <string name="set_b_minutes">%d min</string>
+    <string name="set_b_off">Desactivado</string>
     <string name="set_b_language">Idioma</string>
     <string name="set_b_language_expl">El idioma de la aplicación; Predeterminado del sistema sigue el de la TV</string>
     <string name="set_b_system_default">Predeterminado del sistema</string>

@@ -41,6 +41,7 @@
     <string name="live_menu_hide">Ascunde</string>
     <string name="live_menu_keep_it">Păstrează</string>
     <string name="live_menu_move">Mută</string>
+    <string name="live_menu_sort_az">Sortează A–Z</string>
     <string name="live_menu_new_category">Categorie nouă</string>
     <string name="live_menu_new_category_item">Categorie nouă</string>
     <string name="live_menu_no_guide_channel">Fără ghid pentru acest canal</string>

@@ -47,6 +47,12 @@
     <string name="set_b_back_guide_expl">Cosa fa Indietro nella guida TV live mentre un canale è in riproduzione</string>
     <string name="set_b_go_fullscreen">Vai a schermo intero</string>
     <string name="set_b_go_menu">Vai al menu</string>
+    <string name="set_b_hold_back">Tieni premuto Indietro nella guida TV</string>
+    <string name="set_b_hold_back_expl">Tenere premuto Indietro fa l\'altra azione: schermo intero o menu</string>
+    <string name="set_b_guide_timeout">Schermo intero dopo</string>
+    <string name="set_b_guide_timeout_expl">Vai a schermo intero dopo questo tempo senza tasti nella guida TV</string>
+    <string name="set_b_minutes">%d min</string>
+    <string name="set_b_off">Disattivato</string>
     <string name="set_b_language">Lingua</string>
     <string name="set_b_language_expl">La lingua dell\'app; Predefinita di sistema segue la TV</string>
     <string name="set_b_system_default">Predefinita di sistema</string>

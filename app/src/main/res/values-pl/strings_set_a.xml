@@ -43,6 +43,7 @@
     <string name="set_a_logo_playlist">Playlista</string>
     <string name="set_a_logo_open_source">Logo open source</string>
     <string name="set_a_logo_pack">Mój pakiet logo</string>
+    <string name="set_a_logo_epg">Logo EPG</string>
     <string name="set_a_guide_playlist">Playlista</string>
     <string name="set_a_guide_user">Twoje źródła EPG</string>
     <string name="set_a_guide_open_source">Przewodnik open source</string>
@@ -59,6 +60,7 @@
     <string name="set_a_logo_short_playlist">Playlista</string>
     <string name="set_a_logo_short_open_source">Open source</string>
     <string name="set_a_logo_short_pack">Mój pakiet</string>
+    <string name="set_a_logo_short_epg">EPG</string>
     <string name="set_a_save">Zapisz</string>
     <string name="set_a_cancel">Anuluj</string>
     <string name="set_a_delete">Usuń</string>

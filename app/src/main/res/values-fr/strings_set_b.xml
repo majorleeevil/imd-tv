@@ -47,6 +47,12 @@
     <string name="set_b_back_guide_expl">Action de Retour dans le guide TV pendant la lecture d\'une chaîne</string>
     <string name="set_b_go_fullscreen">Passer en plein écran</string>
     <string name="set_b_go_menu">Aller au menu</string>
+    <string name="set_b_hold_back">Maintenir Retour dans le guide TV</string>
+    <string name="set_b_hold_back_expl">Maintenir Retour fait l\'autre action : plein écran ou menu</string>
+    <string name="set_b_guide_timeout">Plein écran après</string>
+    <string name="set_b_guide_timeout_expl">Passer en plein écran après ce délai sans touche dans le guide TV</string>
+    <string name="set_b_minutes">%d min</string>
+    <string name="set_b_off">Désactivé</string>
     <string name="set_b_language">Langue</string>
     <string name="set_b_language_expl">La langue de l\'application ; Par défaut du système suit la TV</string>
     <string name="set_b_system_default">Par défaut du système</string>

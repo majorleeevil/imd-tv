@@ -41,6 +41,7 @@
     <string name="live_menu_hide">Ausblenden</string>
     <string name="live_menu_keep_it">Behalten</string>
     <string name="live_menu_move">Verschieben</string>
+    <string name="live_menu_sort_az">A–Z sortieren</string>
     <string name="live_menu_new_category">Neue Kategorie</string>
     <string name="live_menu_new_category_item">Neue Kategorie</string>
     <string name="live_menu_no_guide_channel">Kein Programm für diesen Sender</string>

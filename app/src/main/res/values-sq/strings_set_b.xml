@@ -50,7 +50,7 @@
     <string name="set_b_hold_back">Mbaj Prapa në programin TV</string>
     <string name="set_b_hold_back_expl">Mbajtja e Prapa bën tjetrën: ekran të plotë ose menynë</string>
     <string name="set_b_guide_timeout">Ekran i plotë pas</string>
-    <string name="set_b_guide_timeout_expl">Kanali që luan kalon në ekran të plotë kur programi TV live lihet pa u prekur kaq gjatë</string>
+    <string name="set_b_guide_timeout_expl">Ekran i plotë pas kësaj kohe pa shtypur tast në programin TV</string>
     <string name="set_b_minutes">%d min</string>
     <string name="set_b_off">Joaktiv</string>
     <string name="set_b_language">Gjuha</string>
