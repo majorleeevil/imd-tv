@@ -42,6 +42,9 @@
     <string name="live_menu_keep_it">Behouden</string>
     <string name="live_menu_move">Verplaatsen</string>
     <string name="live_menu_sort_az">Sorteer A–Z</string>
+    <string name="live_menu_sort_always_off">Altijd A–Z: uit</string>
+    <string name="live_menu_sort_always_on">Altijd A–Z: aan</string>
+    <string name="live_menu_sort_once">Eenmalig sorteren</string>
     <string name="live_menu_new_category">Nieuwe categorie</string>
     <string name="live_menu_new_category_item">Nieuwe categorie</string>
     <string name="live_menu_no_guide_channel">Geen gids voor deze zender</string>

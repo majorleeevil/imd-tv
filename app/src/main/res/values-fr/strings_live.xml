@@ -42,6 +42,9 @@
     <string name="live_menu_keep_it">Conserver</string>
     <string name="live_menu_move">Déplacer</string>
     <string name="live_menu_sort_az">Trier A–Z</string>
+    <string name="live_menu_sort_always_off">Toujours A–Z : désactivé</string>
+    <string name="live_menu_sort_always_on">Toujours A–Z : activé</string>
+    <string name="live_menu_sort_once">Trier une fois</string>
     <string name="live_menu_new_category">Nouvelle catégorie</string>
     <string name="live_menu_new_category_item">Nouvelle catégorie</string>
     <string name="live_menu_no_guide_channel">Pas de guide pour cette chaîne</string>

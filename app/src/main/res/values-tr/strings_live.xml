@@ -42,6 +42,9 @@
     <string name="live_menu_keep_it">Koru</string>
     <string name="live_menu_move">Taşı</string>
     <string name="live_menu_sort_az">A–Z sırala</string>
+    <string name="live_menu_sort_always_off">Her zaman A–Z: Kapalı</string>
+    <string name="live_menu_sort_always_on">Her zaman A–Z: Açık</string>
+    <string name="live_menu_sort_once">Bir kez sırala</string>
     <string name="live_menu_new_category">Yeni kategori</string>
     <string name="live_menu_new_category_item">Yeni kategori</string>
     <string name="live_menu_no_guide_channel">Bu kanal için rehber yok</string>
