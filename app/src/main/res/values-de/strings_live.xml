@@ -41,10 +41,12 @@
     <string name="live_menu_hide">Ausblenden</string>
     <string name="live_menu_keep_it">Behalten</string>
     <string name="live_menu_move">Verschieben</string>
-    <string name="live_menu_sort_az">A–Z sortieren</string>
-    <string name="live_menu_sort_always_off">Immer A–Z: Aus</string>
-    <string name="live_menu_sort_always_on">Immer A–Z: An</string>
-    <string name="live_menu_sort_once">Einmal sortieren</string>
+    <string name="live_menu_sort_by">Sortieren nach…</string>
+    <string name="live_menu_sort_playlist">Playlist</string>
+    <string name="live_menu_sort_az_switch">A–Z</string>
+    <string name="live_menu_sort_once">Einmal A–Z sortieren</string>
+    <string name="live_sort_confirm_title">Deine Senderreihenfolge entfernen?</string>
+    <string name="live_sort_confirm_body">Du hast Sender in dieser Kategorie selbst verschoben. Eine andere Sortierung entfernt deine Reihenfolge.</string>
     <string name="live_menu_new_category">Neue Kategorie</string>
     <string name="live_menu_new_category_item">Neue Kategorie</string>
     <string name="live_menu_no_guide_channel">Kein Programm für diesen Sender</string>

@@ -60,8 +60,8 @@ class BackupRepository(
             // Never a login in a backup: an M3U address carrying one keeps placeholders, filled in on restore.
             name = p.name, type = p.type.name, url = if (p.type == ProviderType.M3U) m3uBackupUrl(p.url) else p.url, userAgent = p.userAgent, streamFormat = p.streamFormat.name,
             nameStrip = p.nameStrip, epgSources = sources,
-            categories = db.categoryDao().allKinds(p.id).map { BCategory(it.kind.name, it.remoteId, it.hidden, it.sortOrder, it.pinned, it.sortAZ) },
-            groups = db.customGroupDao().observe(p.id).first().map { BGroup(it.name, it.sortOrder, db.customGroupDao().memberRemoteIds(it.id), it.placement.name, it.sortAZ) },
+            categories = db.categoryDao().allKinds(p.id).map { BCategory(it.kind.name, it.remoteId, it.hidden, it.sortOrder, it.pinned, it.sortAZ, it.sortPlaylist) },
+            groups = db.customGroupDao().observe(p.id).first().map { BGroup(it.name, it.sortOrder, db.customGroupDao().memberRemoteIds(it.id), it.placement.name, it.sortAZ, it.sortPlaylist) },
             favourites = favourites, categoryStrip = p.categoryStrip, channelOrder = channelOrder, contentOff = p.contentOff, enabled = p.enabled,
             progress = db.progressDao().all(p.id).let { rows ->
                 val movies = rows.filter { it.kind == Kind.MOVIE }.map { it.itemId }.distinct().chunked(900).flatMap { db.movieDao().byIds(it) }.associate { it.id to it.remoteId }
@@ -173,7 +173,7 @@ class BackupRepository(
         var skipped = 0
         val cats = db.categoryDao().allKinds(id).associateBy { it.kind.name to it.remoteId }
         db.categoryDao().update(b.categories.mapNotNull { bc ->
-            cats[bc.kind to bc.remoteId]?.copy(hidden = bc.hidden, sortOrder = bc.sortOrder, pinned = bc.pinned, sortAZ = bc.sortAZ)
+            cats[bc.kind to bc.remoteId]?.copy(hidden = bc.hidden, sortOrder = bc.sortOrder, pinned = bc.pinned, sortAZ = bc.sortAZ, sortPlaylist = bc.sortPlaylist)
         })
         b.categories.forEach { if (cats.containsKey(it.kind to it.remoteId)) applied++ else skipped++ }
 
@@ -194,7 +194,7 @@ class BackupRepository(
             if (g.channels.isNotEmpty() && g.channels.none { it in channels } && g.name !in groups) { skipped += g.channels.size; return@forEach }
             val gid = groups[g.name]?.id ?: db.customGroupDao().create(id, g.name)
             org.imdtv.iptvtv.data.db.GroupPlacement.entries.find { it.name == g.placement }?.let { db.customGroupDao().setPlacement(gid, it) }
-            if (g.sortAZ) db.customGroupDao().setSortAZ(gid, true)
+            if (g.sortAZ || g.sortPlaylist) db.customGroupDao().setSort(gid, g.sortAZ, g.sortPlaylist)
             g.channels.forEach { r -> channels[r]?.let { db.customGroupDao().addChannel(gid, it); applied++ } ?: skipped++ }
         }
 

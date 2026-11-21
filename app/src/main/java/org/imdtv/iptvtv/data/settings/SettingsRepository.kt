@@ -42,6 +42,7 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
     private val holdBackOther = booleanPreferencesKey("hold_back_other")
     private val guideTimeoutMin = intPreferencesKey("guide_timeout_min")
     private val favouritesAZ = booleanPreferencesKey("favourites_az")
+    private val favouritesPlaylist = booleanPreferencesKey("favourites_playlist")
     private val headerSize = stringPreferencesKey("header_size")
     private val previewFade = booleanPreferencesKey("preview_fade")
     private val startOnBoot = booleanPreferencesKey("start_on_boot")
@@ -119,6 +120,7 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
             holdBackOther = this[holdBackOther] ?: d.holdBackOther,
             guideTimeoutMin = this[guideTimeoutMin] ?: d.guideTimeoutMin,
             favouritesAZ = this[favouritesAZ] ?: d.favouritesAZ,
+            favouritesPlaylist = this[favouritesPlaylist] ?: d.favouritesPlaylist,
             headerSize = HeaderSize.entries.find { it.name == this[headerSize] } ?: d.headerSize,
             previewFade = this[previewFade] ?: d.previewFade,
             startOnBoot = this[startOnBoot] ?: d.startOnBoot,
@@ -186,6 +188,7 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
         this[holdBackOther] = s.holdBackOther
         this[guideTimeoutMin] = s.guideTimeoutMin
         this[favouritesAZ] = s.favouritesAZ
+        this[favouritesPlaylist] = s.favouritesPlaylist
         this[headerSize] = s.headerSize.name
         this[previewFade] = s.previewFade
         this[startOnBoot] = s.startOnBoot

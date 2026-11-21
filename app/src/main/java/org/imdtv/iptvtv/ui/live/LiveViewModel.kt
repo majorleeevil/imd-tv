@@ -66,6 +66,9 @@ data class RailCategory(val category: CategoryEntity, val count: Int)
 data class GuidePos(val channelId: Long?, val index: Int, val offset: Int)
 
 @OptIn(ExperimentalCoroutinesApi::class)
+/** Sort by: the entry's own order (moved by hand), the playlist's, or A–Z. */
+enum class SortBy { OWN, PLAYLIST, AZ }
+
 class LiveViewModel(app: Application) : AndroidViewModel(app) {
     private val c = (app as IptvApp).container
     private val guide = GuideRepository(c.db)
@@ -113,42 +116,73 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
     // Keyed on the provider too: "fav" is the same key in every playlist.
     private val hideHeaders = c.settings.settings.map { it.hideHeaderChannels }.distinctUntilChanged()
 
-    private val favouritesAZ = c.settings.settings.map { it.favouritesAZ }.distinctUntilChanged()
-    /** Sort A–Z › Always is on for [e]. */
-    private fun isAZ(e: RailEntry?, favourites: Boolean) = when (e) {
+    private val favouritesSort = c.settings.settings.map { sortBy(it.favouritesPlaylist, it.favouritesAZ) }.distinctUntilChanged()
+    private fun sortBy(playlist: Boolean, az: Boolean) = if (playlist) SortBy.PLAYLIST else if (az) SortBy.AZ else SortBy.OWN
+    private fun sortOf(e: RailEntry?, favourites: SortBy) = when (e) {
         RailEntry.Favourites -> favourites
-        is RailEntry.Custom -> e.group.sortAZ
-        is RailEntry.Provider -> e.category.sortAZ
-        else -> false
+        is RailEntry.Custom -> sortBy(e.group.sortPlaylist, e.group.sortAZ)
+        is RailEntry.Provider -> sortBy(e.category.sortPlaylist, e.category.sortAZ)
+        else -> SortBy.OWN
     }
-    /** The selected entry is always shown A–Z (so a channel can't be moved in it). */
-    val selectedAZ: StateFlow<Boolean> = combine(entry, favouritesAZ, ::isAZ).stateIn(viewModelScope, SharingStarted.Eagerly, false)
+    /** How the selected entry is sorted; only its own order lets a channel be moved. */
+    val selectedSort: StateFlow<SortBy> = combine(entry, favouritesSort, ::sortOf).stateIn(viewModelScope, SharingStarted.Eagerly, SortBy.OWN)
 
-    val listing: StateFlow<Pair<String?, List<ChannelEntity>>> = combine(providerId, entry, selectedAZ) { p, e, az -> Triple(p, e, az) }
-        .distinctUntilChangedBy { (p, e, az) -> Triple(p, e?.key, az) }
-        .flatMapLatest { (p, e, az) ->
+    val listing: StateFlow<Pair<String?, List<ChannelEntity>>> = combine(providerId, entry, selectedSort) { p, e, by -> Triple(p, e, by) }
+        .distinctUntilChangedBy { (p, e, by) -> Triple(p, e?.key, by) }
+        .flatMapLatest { (p, e, by) ->
             if (e == null) flowOf(null to emptyList())
             else combine(railRepo.channels(p, e), hideHeaders, strip) { list, hide, s ->
                 val shown = if (hide) list.filterNot { isHeaderChannel(it.name) } else list
-                e.key to if (az) shown.sortedWith(byName(s)) else shown
+                e.key to when (by) { SortBy.OWN -> shown; else -> shown.sortedWith(comparator(by, s)) }
             }
         }
         .stateIn(viewModelScope, SharingStarted.Eagerly, null to emptyList())
 
     private fun byName(strip: List<String>) = compareBy(java.text.Collator.getInstance()) { ch: ChannelEntity -> ch.displayName(strip) }
+    /** The playlist's order: its channel numbers, then (none, e.g. M3U without tvg-chno) the order it was first listed in. */
+    private val playlistOrder = compareBy(nullsLast<Int>()) { ch: ChannelEntity -> ch.number }.thenBy { it.id }
+    private fun comparator(by: SortBy, strip: List<String>) = if (by == SortBy.AZ) byName(strip) else playlistOrder
 
-    /** Sort A–Z › Always, as now stored for [e] (the rail's copy, newer than a menu's). */
-    fun alwaysAZ(e: RailEntry): Boolean = isAZ(rail.value.orEmpty().find { it.entry.key == e.key }?.entry ?: e, settings.value.favouritesAZ)
+    /** For the Sort by menu: how [e] is sorted, following changes (the rail's copy is newer than a menu's). */
+    fun sortOf(e: RailEntry): kotlinx.coroutines.flow.Flow<SortBy> =
+        combine(rail, favouritesSort) { r, f -> sortOf(r.orEmpty().find { it.entry.key == e.key }?.entry ?: e, f) }
 
-    fun setAlwaysAZ(e: RailEntry, on: Boolean) {
-        viewModelScope.launch {
+    /** [e] has an order of its own (channels moved, or Sort A–Z once) that a new sort would replace. */
+    suspend fun hasOwnOrder(e: RailEntry): Boolean {
+        val p = providerId.first()
+        return when (e) {
+            RailEntry.Favourites -> c.db.favouriteDao().list(p, Kind.LIVE).any { it.sortOrder != 0 }
+            // Your categories always keep an order (the one channels were added in): it counts once it's neither sort.
+            is RailEntry.Custom -> railRepo.channels(p, e).first().let { l -> l != l.sortedWith(playlistOrder) && l != l.sortedWith(byName(strip.value)) }
+            is RailEntry.Provider -> c.db.channelDao().allByCategory(e.category.id).any { it.sortOrder != null }
+            RailEntry.Recent -> false
+        }
+    }
+
+    /** Sort by: [by] for [e]. Playlist or A–Z replaces its own order with that one (so it stays when switched off). */
+    fun setSort(e: RailEntry, by: SortBy) {
+        viewModelScope.launch { moveLock.withLock {
+            val p = providerId.first()
+            val az = by == SortBy.AZ; val playlist = by == SortBy.PLAYLIST
+            val order = if (by == SortBy.OWN) null else comparator(by, strip.value)
             when (e) {
-                RailEntry.Favourites -> c.settings.update { it.copy(favouritesAZ = on) }
-                is RailEntry.Custom -> c.db.customGroupDao().setSortAZ(e.group.id, on)
-                is RailEntry.Provider -> c.db.categoryDao().setSortAZ(e.category.id, on)
+                RailEntry.Favourites -> {
+                    // Favourites' own order is any place other than 0 (Move, Sort A–Z once): back to all 0, newest first.
+                    if (order != null) c.db.withTransaction { c.db.favouriteDao().list(p, Kind.LIVE).forEach { c.db.favouriteDao().setSortOrder(p, Kind.LIVE, it.itemId, 0) } }
+                    c.settings.update { it.copy(favouritesAZ = az, favouritesPlaylist = playlist) }
+                }
+                is RailEntry.Custom -> c.db.withTransaction {
+                    order?.let { o -> railRepo.channels(p, e).first().sortedWith(o).forEachIndexed { n, x -> c.db.customGroupDao().setMemberOrder(e.group.id, x.id, n) } }
+                    c.db.customGroupDao().setSort(e.group.id, az, playlist)
+                }
+                // A playlist category's own order is its saved places: without them it lists by number again.
+                is RailEntry.Provider -> c.db.withTransaction {
+                    if (order != null) c.db.channelDao().clearCategorySortOrders(e.category.id)
+                    c.db.categoryDao().setSort(e.category.id, az, playlist)
+                }
                 RailEntry.Recent -> Unit
             }
-        }
+        } }
     }
 
     val channels: StateFlow<List<ChannelEntity>> = listing.map { it.second }
@@ -638,8 +672,9 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
     fun setLiveSubtitles(on: Boolean) { viewModelScope.launch { c.settings.update { it.copy(liveSubtitlesOn = on) } } }
     fun setVideoAspect(a: org.imdtv.iptvtv.data.settings.VideoAspect) { viewModelScope.launch { c.settings.update { it.copy(videoAspect = a) } } }
 
-    /** Sort A–Z › Once (issue #9): the entry's channels by shown name, saved as its own order (Move still works after). */
+    /** Sort A–Z once (issue #9): the entry's channels by shown name, saved as its own order (Move still works after). */
     fun sortAZ(e: RailEntry) {
+        setSort(e, SortBy.OWN) // the switches go off, or they would hide this order
         viewModelScope.launch { moveLock.withLock {
             val p = providerId.first()
             val byName = byName(strip.value)

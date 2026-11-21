@@ -83,7 +83,7 @@ abstract class CategoryDao {
     @Query("SELECT * FROM category WHERE providerId = :providerId") abstract suspend fun allKinds(providerId: Long): List<CategoryEntity>
 
     @Query("UPDATE category SET hidden = :hidden WHERE id = :id") abstract suspend fun setHidden(id: Long, hidden: Boolean)
-    @Query("UPDATE category SET sortAZ = :on WHERE id = :id") abstract suspend fun setSortAZ(id: Long, on: Boolean)
+    @Query("UPDATE category SET sortAZ = :az, sortPlaylist = :playlist WHERE id = :id") abstract suspend fun setSort(id: Long, az: Boolean, playlist: Boolean)
     @Query("UPDATE category SET hidden = :hidden WHERE providerId = :providerId AND kind = :kind")
     abstract suspend fun setHiddenForKind(providerId: Long, kind: Kind, hidden: Boolean)
     @Query("UPDATE category SET hidden = :hidden WHERE providerId = :providerId AND country IN (:countries)")
@@ -182,6 +182,7 @@ abstract class ChannelDao {
     abstract suspend fun allByCategory(categoryId: Long): List<ChannelEntity>
     @Query("UPDATE channel SET sortOrder = :sortOrder WHERE id = :id") abstract suspend fun setSortOrder(id: Long, sortOrder: Int?)
     @Query("UPDATE channel SET sortOrder = NULL WHERE providerId = :p") abstract suspend fun clearSortOrders(p: Long)
+    @Query("UPDATE channel SET sortOrder = NULL WHERE categoryId = :categoryId") abstract suspend fun clearCategorySortOrders(categoryId: Long)
     @Query("UPDATE channel SET customName = :name WHERE id = :id") abstract suspend fun setCustomName(id: Long, name: String?)
     @Query("UPDATE channel SET epgOffsetMinutes = :minutes WHERE id = :id") abstract suspend fun setEpgOffset(id: Long, minutes: Int?)
 
@@ -430,7 +431,7 @@ abstract class CustomGroupDao {
 
     @Query("UPDATE custom_group SET name = :name WHERE id = :id") abstract suspend fun rename(id: Long, name: String)
     @Query("UPDATE custom_group SET placement = :placement WHERE id = :id") abstract suspend fun setPlacement(id: Long, placement: GroupPlacement)
-    @Query("UPDATE custom_group SET sortAZ = :on WHERE id = :id") abstract suspend fun setSortAZ(id: Long, on: Boolean)
+    @Query("UPDATE custom_group SET sortAZ = :az, sortPlaylist = :playlist WHERE id = :id") abstract suspend fun setSort(id: Long, az: Boolean, playlist: Boolean)
     @Query("UPDATE custom_group SET sortOrder = :sortOrder WHERE id = :id") abstract suspend fun setSortOrder(id: Long, sortOrder: Int)
     @Query("DELETE FROM custom_group WHERE id = :id") abstract suspend fun delete(id: Long)
     @Query("DELETE FROM custom_group WHERE providerId = :p") abstract suspend fun deleteForProvider(p: Long)

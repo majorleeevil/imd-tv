@@ -41,10 +41,12 @@
     <string name="live_menu_hide">Dölj</string>
     <string name="live_menu_keep_it">Behåll</string>
     <string name="live_menu_move">Flytta</string>
-    <string name="live_menu_sort_az">Sortera A–Ö</string>
-    <string name="live_menu_sort_always_off">Alltid A–Ö: Av</string>
-    <string name="live_menu_sort_always_on">Alltid A–Ö: På</string>
-    <string name="live_menu_sort_once">Sortera en gång</string>
+    <string name="live_menu_sort_by">Sortera efter…</string>
+    <string name="live_menu_sort_playlist">Spellista</string>
+    <string name="live_menu_sort_az_switch">A–Ö</string>
+    <string name="live_menu_sort_once">Sortera A–Ö en gång</string>
+    <string name="live_sort_confirm_title">Ta bort din kanalordning?</string>
+    <string name="live_sort_confirm_body">Du har flyttat kanaler i den här kategorin. Om du ändrar sorteringen tas din ordning bort.</string>
     <string name="live_menu_new_category">Ny kategori</string>
     <string name="live_menu_new_category_item">Ny kategori</string>
     <string name="live_menu_no_guide_channel">Ingen guide för den här kanalen</string>

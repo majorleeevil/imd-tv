@@ -41,10 +41,12 @@
     <string name="live_menu_hide">Gizle</string>
     <string name="live_menu_keep_it">Koru</string>
     <string name="live_menu_move">Taşı</string>
-    <string name="live_menu_sort_az">A–Z sırala</string>
-    <string name="live_menu_sort_always_off">Her zaman A–Z: Kapalı</string>
-    <string name="live_menu_sort_always_on">Her zaman A–Z: Açık</string>
-    <string name="live_menu_sort_once">Bir kez sırala</string>
+    <string name="live_menu_sort_by">Sırala…</string>
+    <string name="live_menu_sort_playlist">Oynatma listesi</string>
+    <string name="live_menu_sort_az_switch">A–Z</string>
+    <string name="live_menu_sort_once">Bir kez A–Z sırala</string>
+    <string name="live_sort_confirm_title">Kanal sıranız kaldırılsın mı?</string>
+    <string name="live_sort_confirm_body">Bu kategoride kanalları kendiniz taşıdınız. Sıralamayı değiştirmek sizin sıranızı kaldıracak.</string>
     <string name="live_menu_new_category">Yeni kategori</string>
     <string name="live_menu_new_category_item">Yeni kategori</string>
     <string name="live_menu_no_guide_channel">Bu kanal için rehber yok</string>

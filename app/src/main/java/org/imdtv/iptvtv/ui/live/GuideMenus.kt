@@ -57,7 +57,7 @@ internal sealed interface GuideMenu {
     /** One of your categories (rename, delete and priority stay in Settings). */
     data class Group(val g: org.imdtv.iptvtv.data.db.CustomGroupEntity, val horizontal: Boolean = false) : GuideMenu
     data object Favourites : GuideMenu
-    /** Sort A–Z's sub-menu: Always (a switch) or Once. */
+    /** Sort by: Playlist and A–Z switches, and Sort A–Z once. */
     data class Sort(val entry: RailEntry) : GuideMenu
 }
 
@@ -91,7 +91,7 @@ fun GuideMenus(vm: LiveViewModel, state: GuideState) {
             add(stringResource(R.string.live_menu_rename) to { state.menu = GuideMenu.Rename(m.ch) })
             add(stringResource(R.string.live_menu_change_logo) to { state.menu = GuideMenu.ChangeLogo(m.ch) })
             // Picks the channel up in place, as categories move: arrows carry it, OK drops, Back cancels.
-            if (state.hasGrid && entry != null && entry != RailEntry.Recent && !vm.selectedAZ.value) add(stringResource(R.string.live_menu_move) to { state.rowMove = RowMove(m.ch, vm.channels.value); state.menu = null })
+            if (state.hasGrid && entry != null && entry != RailEntry.Recent && vm.selectedSort.value == SortBy.OWN) add(stringResource(R.string.live_menu_move) to { state.rowMove = RowMove(m.ch, vm.channels.value); state.menu = null })
             if (state.hasGrid || m.ch.mergeHead) add(stringResource(R.string.live_menu_merge_options) to { state.menu = GuideMenu.MergeOptions(m.ch) })
             add(stringResource(R.string.live_menu_hide) to { state.refocusOnChange = true; vm.hide(m.ch); state.menu = null })
             }) { state.menu = null }
@@ -208,28 +208,21 @@ fun GuideMenus(vm: LiveViewModel, state: GuideState) {
             ContextMenu(stringResource(R.string.live_menu_category_title, m.cat.name.ifEmpty { stringResource(R.string.live_uncategorised) }, at + 1, provider.size), listOf(
                 stringResource(R.string.live_menu_move) to { state.railMove = RailMove(e, at); state.menu = null },
                 stringResource(R.string.live_menu_hide) to { vm.hideCategory(m.cat); state.menu = null; state.railOpen = false; state.refocus() },
-                stringResource(R.string.live_menu_sort_az) to { state.menu = GuideMenu.Sort(e) },
+                stringResource(R.string.live_menu_sort_by) to { state.menu = GuideMenu.Sort(e) },
             )) { state.menu = null; state.railFocusKey = key }
         }
         is GuideMenu.Group -> {
             val e = RailEntry.Custom(m.g)
             ContextMenu(m.g.name, listOf(
                 stringResource(R.string.live_menu_move) to { state.railMove = RailMove(e, rail.orEmpty().sameKindKeys(e).indexOf(e.key)); state.menu = null },
-                stringResource(R.string.live_menu_sort_az) to { state.menu = GuideMenu.Sort(e) },
+                stringResource(R.string.live_menu_sort_by) to { state.menu = GuideMenu.Sort(e) },
             )) { state.menu = null; state.railFocusKey = e.key }
         }
-        is GuideMenu.Sort -> {
-            val e = m.entry
-            val always = vm.alwaysAZ(e)
-            ContextMenu(stringResource(R.string.live_menu_sort_az), listOf(
-                (if (always) stringResource(R.string.live_menu_sort_always_on) else stringResource(R.string.live_menu_sort_always_off)) to { vm.setAlwaysAZ(e, !always); state.menu = null; state.railFocusKey = e.key },
-                stringResource(R.string.live_menu_sort_once) to { vm.sortAZ(e); state.menu = null; state.railFocusKey = e.key },
-            )) { state.menu = null; state.railFocusKey = e.key }
-        }
+        is GuideMenu.Sort -> SortMenu(vm, m.entry) { state.menu = null; state.railFocusKey = m.entry.key }
         GuideMenu.Favourites -> {
             val e = RailEntry.Favourites
             ContextMenu(stringResource(e.titleRes), listOf(
-                stringResource(R.string.live_menu_sort_az) to { state.menu = GuideMenu.Sort(e) },
+                stringResource(R.string.live_menu_sort_by) to { state.menu = GuideMenu.Sort(e) },
             )) { state.menu = null; state.railFocusKey = e.key }
         }
     }
@@ -238,6 +231,43 @@ fun GuideMenus(vm: LiveViewModel, state: GuideState) {
 private fun startOfDay(t: Long): Long = java.util.Calendar.getInstance().apply {
     timeInMillis = t; set(java.util.Calendar.HOUR_OF_DAY, 0); set(java.util.Calendar.MINUTE, 0); set(java.util.Calendar.SECOND, 0); set(java.util.Calendar.MILLISECOND, 0)
 }.timeInMillis
+
+/**
+ * Sort by (issue #9): Playlist and A–Z switches (at most one on; both off = the entry's own order) and Sort A–Z once.
+ * Switching one on, or sorting once, replaces an order made by hand: that asks first.
+ */
+@Composable
+private fun SortMenu(vm: LiveViewModel, e: RailEntry, onDismiss: () -> Unit) {
+    val by by androidx.compose.runtime.remember(e.key) { vm.sortOf(e) }.collectAsState(null)
+    val current = by ?: return
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    var confirm by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<(() -> Unit)?>(null) }
+    fun replacing(action: () -> Unit) { scope.launch { if (vm.hasOwnOrder(e)) confirm = action else action() } }
+    confirm?.let { action ->
+        org.imdtv.iptvtv.ui.MenuFrame(stringResource(R.string.live_sort_confirm_title), onDismiss = { confirm = null }) { first ->
+            androidx.tv.material3.Text(stringResource(R.string.live_sort_confirm_body), fontSize = 14.sp, color = Color.White,
+                modifier = androidx.compose.ui.Modifier.padding(bottom = 10.dp))
+            org.imdtv.iptvtv.ui.MenuItem(stringResource(R.string.set_b_confirm), androidx.compose.ui.Modifier.focusRequester(first)) { confirm = null; action() }
+            org.imdtv.iptvtv.ui.MenuItem(stringResource(R.string.vod_cancel), androidx.compose.ui.Modifier) { confirm = null }
+        }
+        return
+    }
+    org.imdtv.iptvtv.ui.MenuFrame(stringResource(R.string.live_menu_sort_by), onDismiss) { first ->
+        listOf(SortBy.PLAYLIST to R.string.live_menu_sort_playlist, SortBy.AZ to R.string.live_menu_sort_az_switch).forEachIndexed { i, (mode, label) ->
+            val on = current == mode
+            org.imdtv.iptvtv.ui.FocusBox(onClick = { if (on) vm.setSort(e, SortBy.OWN) else replacing { vm.setSort(e, mode) } },
+                modifier = if (i == 0) androidx.compose.ui.Modifier.focusRequester(first) else androidx.compose.ui.Modifier) { f ->
+                androidx.compose.foundation.layout.Row(androidx.compose.ui.Modifier.fillMaxWidth()
+                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(8.dp)).background(if (f) Color.White else Color.Transparent)
+                    .padding(horizontal = 14.dp, vertical = 10.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                    androidx.tv.material3.Text(stringResource(label), fontSize = 16.sp, color = if (f) Color.Black else Color.White, modifier = androidx.compose.ui.Modifier.weight(1f))
+                    org.imdtv.iptvtv.ui.settings.Toggle(on, f)
+                }
+            }
+        }
+        org.imdtv.iptvtv.ui.MenuItem(stringResource(R.string.live_menu_sort_once), androidx.compose.ui.Modifier) { replacing { vm.sortAZ(e); onDismiss() } }
+    }
+}
 
 /**
  * The channels merged into [head], each with a switch: off unmerges it, on merges it back (it stays listed until the

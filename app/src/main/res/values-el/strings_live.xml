@@ -41,10 +41,12 @@
     <string name="live_menu_hide">Απόκρυψη</string>
     <string name="live_menu_keep_it">Διατήρηση</string>
     <string name="live_menu_move">Μετακίνηση</string>
-    <string name="live_menu_sort_az">Ταξινόμηση Α–Ω</string>
-    <string name="live_menu_sort_always_off">Πάντα Α–Ω: Ανενεργό</string>
-    <string name="live_menu_sort_always_on">Πάντα Α–Ω: Ενεργό</string>
-    <string name="live_menu_sort_once">Ταξινόμηση μία φορά</string>
+    <string name="live_menu_sort_by">Ταξινόμηση κατά…</string>
+    <string name="live_menu_sort_playlist">Λίστα</string>
+    <string name="live_menu_sort_az_switch">Α–Ω</string>
+    <string name="live_menu_sort_once">Ταξινόμηση Α–Ω μία φορά</string>
+    <string name="live_sort_confirm_title">Κατάργηση της σειράς των καναλιών σας;</string>
+    <string name="live_sort_confirm_body">Μετακινήσατε κανάλια σε αυτή την κατηγορία. Αν αλλάξετε την ταξινόμηση, η σειρά σας θα καταργηθεί.</string>
     <string name="live_menu_new_category">Νέα κατηγορία</string>
     <string name="live_menu_new_category_item">Νέα κατηγορία</string>
     <string name="live_menu_no_guide_channel">Δεν υπάρχει οδηγός για αυτό το κανάλι</string>
