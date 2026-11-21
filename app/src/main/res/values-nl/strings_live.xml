@@ -44,9 +44,12 @@
     <string name="live_menu_sort_by">Sorteren op…</string>
     <string name="live_menu_sort_playlist">Playlist</string>
     <string name="live_menu_sort_az_switch">A–Z</string>
+    <string name="live_menu_sort_manual">Handmatig</string>
     <string name="live_menu_sort_once">Eenmalig sorteren A–Z</string>
     <string name="live_sort_confirm_title">Je zendervolgorde verwijderen?</string>
     <string name="live_sort_confirm_body">Je hebt zenders in deze categorie zelf verplaatst. Een andere sortering verwijdert je volgorde.</string>
+    <string name="live_manual_confirm_title">Handmatig sorteren?</string>
+    <string name="live_manual_confirm_body">Als je een zender verplaatst, wordt de sortering van deze categorie Handmatig. Dit begint met de volgorde die nu wordt getoond.</string>
     <string name="live_menu_new_category">Nieuwe categorie</string>
     <string name="live_menu_new_category_item">Nieuwe categorie</string>
     <string name="live_menu_no_guide_channel">Geen gids voor deze zender</string>

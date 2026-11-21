@@ -44,9 +44,12 @@
     <string name="live_menu_sort_by">Rendit sipas…</string>
     <string name="live_menu_sort_playlist">Lista</string>
     <string name="live_menu_sort_az_switch">A–Zh</string>
+    <string name="live_menu_sort_manual">Manual</string>
     <string name="live_menu_sort_once">Rendit A–Zh një herë</string>
     <string name="live_sort_confirm_title">Të hiqet renditja jote e kanaleve?</string>
     <string name="live_sort_confirm_body">I ke zhvendosur kanalet në këtë kategori. Ndryshimi i renditjes do ta heqë renditjen tënde.</string>
+    <string name="live_manual_confirm_title">Të renditet manualisht?</string>
+    <string name="live_manual_confirm_body">Zhvendosja e një kanali e vendos renditjen e kësaj kategorie në Manual. Fillon nga renditja që shfaqet tani.</string>
     <string name="live_menu_new_category">Kategori e re</string>
     <string name="live_menu_new_category_item">Kategori e re</string>
     <string name="live_menu_no_guide_channel">Ky kanal nuk ka program</string>

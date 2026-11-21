@@ -61,6 +61,7 @@
     <string name="set_a_logo_short_open_source">Açık kaynak</string>
     <string name="set_a_logo_short_pack">Paketim</string>
     <string name="set_a_logo_short_epg">EPG</string>
+    <string name="set_a_sort_by_expl">Bu kategorideki kanalların listelenme şekli</string>
     <string name="set_a_save">Kaydet</string>
     <string name="set_a_cancel">İptal</string>
     <string name="set_a_delete">Sil</string>

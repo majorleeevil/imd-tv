@@ -13,6 +13,9 @@ enum class ProviderType { XTREAM, M3U, STALKER }
 /** Where a user category sits in the category list (Your categories › Options › Priority). */
 enum class GroupPlacement { TOP, NORMAL, BOTTOM }
 
+/** Sort by (issue #9): the playlist's order (the default), A–Z, or the order the user made (Move, Sort A–Z once). */
+enum class SortBy { PLAYLIST, AZ, MANUAL }
+
 enum class NameRuleType { BUILTIN, FIND_REPLACE, REGEX }
 
 /** [EpgSourceEntity.origin]: provider/user URLs, or epgshare01 files managed by the app. */
@@ -63,9 +66,8 @@ data class CategoryEntity(
     val locked: Boolean = false,
     val pinned: Boolean = false,
     val country: String? = null,
-    /** Sort by › A–Z / Playlist (at most one on): its channels are shown in that order, not a saved one (issue #9). */
-    @ColumnInfo(defaultValue = "0") val sortAZ: Boolean = false,
-    @ColumnInfo(defaultValue = "0") val sortPlaylist: Boolean = false,
+    /** How its channels are listed; only MANUAL uses their saved places (channel.sortOrder). */
+    @ColumnInfo(defaultValue = "PLAYLIST") val sortBy: SortBy = SortBy.PLAYLIST,
 )
 
 @Entity(
@@ -343,9 +345,8 @@ data class CustomGroupEntity(
     val name: String,
     val sortOrder: Int,
     @ColumnInfo(defaultValue = "NORMAL") val placement: GroupPlacement = GroupPlacement.NORMAL,
-    /** As [CategoryEntity.sortAZ]. */
-    @ColumnInfo(defaultValue = "0") val sortAZ: Boolean = false,
-    @ColumnInfo(defaultValue = "0") val sortPlaylist: Boolean = false,
+    /** As [CategoryEntity.sortBy]; MANUAL uses the members' saved places. */
+    @ColumnInfo(defaultValue = "PLAYLIST") val sortBy: SortBy = SortBy.PLAYLIST,
 )
 
 @Entity(

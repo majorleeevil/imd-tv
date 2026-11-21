@@ -199,6 +199,17 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
     // One move at a time: quick presses each read the order the last one wrote.
     private val moveLock = kotlinx.coroutines.sync.Mutex()
     fun move(cat: CategoryEntity, delta: Int) = launchFor { p -> moveLock.withLock { categoryRepo.move(p, cat.kind, cat.id, delta) } }
+    // --- Sort by (issue #9), as the guide's long-press menu ---
+    private fun strip() = org.imdtv.iptvtv.data.catalogue.channelStrip(nameStrip.value, settings.value.removeNameSymbols)
+    fun sortOf(e: org.imdtv.iptvtv.data.repo.RailEntry): Flow<org.imdtv.iptvtv.data.db.SortBy> =
+        providerId.filterNotNull().flatMapLatest { org.imdtv.iptvtv.data.repo.ChannelSort.observe(c.db, c.settings, it, e) }
+    /** [list] in [e]'s Sort by order, as the guide shows it. */
+    fun sorted(list: List<org.imdtv.iptvtv.data.db.ChannelEntity>, by: org.imdtv.iptvtv.data.db.SortBy) = org.imdtv.iptvtv.data.repo.ChannelSort.sorted(list, by, strip())
+    fun setSort(e: org.imdtv.iptvtv.data.repo.RailEntry, by: org.imdtv.iptvtv.data.db.SortBy) =
+        launchFor { p -> moveLock.withLock { org.imdtv.iptvtv.data.repo.ChannelSort.set(c.db, c.settings, p, e, by, strip()) } }
+    fun sortOnce(e: org.imdtv.iptvtv.data.repo.RailEntry) =
+        launchFor { p -> moveLock.withLock { org.imdtv.iptvtv.data.repo.ChannelSort.sortOnce(c.db, c.settings, p, e, strip()) } }
+
     fun moveChannel(ch: org.imdtv.iptvtv.data.db.ChannelEntity, delta: Int) {
         val cat = ch.categoryId ?: return
         viewModelScope.launch { moveLock.withLock { categoryRepo.moveChannel(cat, ch.id, delta) } }

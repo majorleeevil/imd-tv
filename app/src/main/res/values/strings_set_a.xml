@@ -62,6 +62,7 @@
     <string name="set_a_logo_short_open_source">Open-source</string>
     <string name="set_a_logo_short_pack">My pack</string>
     <string name="set_a_logo_short_epg">EPG</string>
+    <string name="set_a_sort_by_expl">How this category\'s channels are listed</string>
     <string name="set_a_save">Save</string>
     <string name="set_a_cancel">Cancel</string>
     <string name="set_a_delete">Delete</string>

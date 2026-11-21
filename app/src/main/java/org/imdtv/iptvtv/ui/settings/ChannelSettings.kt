@@ -1,5 +1,6 @@
 package org.imdtv.iptvtv.ui.settings
 
+import org.imdtv.iptvtv.data.repo.RailEntry
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.pluralStringResource
 import org.imdtv.iptvtv.R
@@ -305,7 +306,13 @@ private fun ManageChannelsPage(vm: SettingsViewModel, first: FocusRequester, onC
         }
         return
     }
-    val channels by remember(cat.id) { vm.channelsIn(cat.id) }.collectAsState(emptyList())
+    val entry = remember(cat.id) { RailEntry.Provider(cat) }
+    val stored by remember(cat.id) { vm.channelsIn(cat.id) }.collectAsState(emptyList())
+    // Sort by (issue #9): listed as the guide shows them; the first move in a list that isn't Manual asks first.
+    val by by remember(cat.id) { vm.sortOf(entry) }.collectAsState(null)
+    val channels = by?.let { vm.sorted(stored, it) } ?: stored
+    var sortOpen by remember(cat.id) { mutableStateOf(false) }
+    var toManual by remember(cat.id) { mutableStateOf<org.imdtv.iptvtv.data.db.ChannelEntity?>(null) }
     val strip = org.imdtv.iptvtv.data.catalogue.channelStrip(vm.nameStrip.collectAsState().value, vm.settings.collectAsState().value.removeNameSymbols)
     // Default: OK shows/hides one channel, hold OK moves it. "Select channels" switches to ticking many, then Save changes.
     var selecting by remember(cat.id) { mutableStateOf(false) }
@@ -340,11 +347,16 @@ private fun ManageChannelsPage(vm: SettingsViewModel, first: FocusRequester, onC
     var movedFrom by remember(cat.id) { mutableStateOf(0) }
     val list = rememberLazyListState()
     val movingIndex = channels.indexOfFirst { it.id == moving }
-    // Keep the row being moved on screen (+2 for the title and button rows above it).
+    // Keep the row being moved on screen (+3 for the title, Sort by and Select rows above it).
     LaunchedEffect(movingIndex) {
         if (movingIndex < 0) return@LaunchedEffect
-        if (movingIndex + 2 !in list.layoutInfo.visibleItemsInfo.map { it.index }.drop(1).dropLast(1)) list.scrollToItem((movingIndex + 2 - 3).coerceAtLeast(0))
+        if (movingIndex + 3 !in list.layoutInfo.visibleItemsInfo.map { it.index }.drop(1).dropLast(1)) list.scrollToItem((movingIndex + 3 - 3).coerceAtLeast(0))
     }
+    if (sortOpen) org.imdtv.iptvtv.ui.live.SortMenu(by, { vm.setSort(entry, it) }, { vm.sortOnce(entry) }) { sortOpen = false }
+    toManual?.let { ch -> org.imdtv.iptvtv.ui.live.ToManualConfirm({
+        vm.setSort(entry, org.imdtv.iptvtv.data.db.SortBy.MANUAL)
+        moving = ch.id; movedFrom = channels.indexOfFirst { it.id == ch.id }; toManual = null
+    }) { toManual = null } }
     // Closing the dialog gives focus back to the row that opened it.
     if (noneTicked) ContextMenu(stringResource(R.string.set_a_no_channels_selected), listOf(stringResource(R.string.set_a_ok) to { noneTicked = false })) { noneTicked = false }
     val n = selected.size
@@ -353,12 +365,13 @@ private fun ManageChannelsPage(vm: SettingsViewModel, first: FocusRequester, onC
     val muted = LocalTheme.current.colors.muted
     LazyColumn(state = list, verticalArrangement = Arrangement.spacedBy(6.dp)) {
         item { Text(cat.name.ifEmpty { stringResource(R.string.set_a_uncategorised) }, fontSize = 15.sp, color = muted, modifier = Modifier.padding(bottom = 6.dp)) }
+        item { SortByRow(by, (if (list.firstVisibleItemIndex <= 1) Modifier.focusRequester(first) else Modifier).focusProperties { canFocus = moving == null }) { sortOpen = true } }
         // One row whose label changes: swapping two rows would drop focus (and Settings would jump to its root).
         item {
             SettingRow(if (selecting) stringResource(R.string.set_a_hide_or_show) else stringResource(R.string.set_a_select_channels),
                 if (!selecting) stringResource(R.string.set_a_select_channels_expl)
                 else if (n == 0) stringResource(R.string.set_a_tick_channels_hint) else pluralStringResource(R.plurals.set_a_hide_or_show_ticked, n, n),
-                null, (if (list.firstVisibleItemIndex <= 1) Modifier.focusRequester(first) else Modifier).focusProperties { canFocus = moving == null }) {
+                null, (if (list.firstVisibleItemIndex == 2) Modifier.focusRequester(first) else Modifier).focusProperties { canFocus = moving == null }) {
                 if (!selecting) selecting = true else if (n == 0) noneTicked = true else choose = true
             }
         }
@@ -378,10 +391,10 @@ private fun ManageChannelsPage(vm: SettingsViewModel, first: FocusRequester, onC
                     }
                 },
                 // canFocus reads `moving` itself: a captured value is stale when the lambda re-runs.
-                // Scrolled past the Select row: `first` moves to the first channel on screen (items 0 and 1 are the title and Select).
-                modifier = (if (list.firstVisibleItemIndex > 1 && i == list.firstVisibleItemIndex - 2) Modifier.focusRequester(first) else Modifier)
+                // Scrolled past the Select row: `first` moves to the first channel on screen (items 0–2 are the title, Sort by and Select).
+                modifier = (if (list.firstVisibleItemIndex > 2 && i == list.firstVisibleItemIndex - 3) Modifier.focusRequester(first) else Modifier)
                     .focusProperties { canFocus = moving == null || moving == ch.id }
-                    .onLongOk { if (!selecting && moving == null) { moving = ch.id; movedFrom = channels.indexOfFirst { it.id == ch.id } } }
+                    .onLongOk { if (!selecting && moving == null) { if (by != org.imdtv.iptvtv.data.db.SortBy.MANUAL) toManual = ch else { moving = ch.id; movedFrom = channels.indexOfFirst { it.id == ch.id } } } }
                     .onPreviewKeyEvent { e ->
                         if (!isMoving) return@onPreviewKeyEvent false
                         val down = e.type == KeyEventType.KeyDown
@@ -514,7 +527,12 @@ private fun YourCategoriesPage(vm: SettingsViewModel, first: FocusRequester) {
         }
     }
     Box(Modifier.focusRequester(parkSpot).focusProperties { canFocus = parking }.focusable())
-    ordering?.let { (id, title) -> BackHandler { showOrder(null) }; ChannelOrderPage(vm, id, title, orderFirst); return }
+    ordering?.let { (id, title) ->
+        BackHandler { showOrder(null) }
+        val entry = if (id == null) RailEntry.Favourites else saved.find { it.id == id }?.let { RailEntry.Custom(it) }
+        if (entry != null) ChannelOrderPage(vm, entry, title, orderFirst)
+        return
+    }
     // While moving, this page's order leads (fast presses mustn't wait for the database); grouped by side of the list.
     var order by remember { mutableStateOf<List<org.imdtv.iptvtv.data.db.CustomGroupEntity>?>(null) }
     val groups = order ?: saved.sortedBy { it.placement.ordinal }
@@ -570,8 +588,14 @@ private fun YourCategoriesPage(vm: SettingsViewModel, first: FocusRequester) {
 
 /** The channels of Favourites (id null) or one of your categories: OK picks one up, Up/Down moves it, OK drops it. */
 @Composable
-private fun ChannelOrderPage(vm: SettingsViewModel, groupId: Long?, title: String, first: FocusRequester) {
-    val saved by remember(groupId) { vm.orderedChannels(groupId) }.collectAsState(emptyList())
+private fun ChannelOrderPage(vm: SettingsViewModel, entry: RailEntry, title: String, first: FocusRequester) {
+    val groupId = (entry as? RailEntry.Custom)?.group?.id
+    val stored by remember(groupId) { vm.orderedChannels(groupId) }.collectAsState(emptyList())
+    // Sort by (issue #9): the list as the guide shows it; picking a channel up in a list that isn't Manual asks first.
+    val by by remember(entry.key) { vm.sortOf(entry) }.collectAsState(null)
+    val saved = by?.let { vm.sorted(stored, it) } ?: stored
+    var sortOpen by remember { mutableStateOf(false) }
+    var toManual by remember { mutableStateOf<org.imdtv.iptvtv.data.db.ChannelEntity?>(null) }
     var picked by remember { mutableStateOf<Long?>(null) }
     var order by remember { mutableStateOf<List<org.imdtv.iptvtv.data.db.ChannelEntity>?>(null) }
     val channels = order ?: saved
@@ -585,28 +609,30 @@ private fun ChannelOrderPage(vm: SettingsViewModel, groupId: Long?, title: Strin
     }
     LaunchedEffect(saved) { if (picked == null) order = null }
     val pickedIndex = channels.indexOfFirst { it.id == picked }
-    // Keep the row being moved on screen (+1 for the hint line above it), as provider categories do.
+    // Keep the row being moved on screen (+2 for the hint and Sort by rows above it), as provider categories do.
     LaunchedEffect(pickedIndex) {
         if (pickedIndex < 0) return@LaunchedEffect
         val visible = list.layoutInfo.visibleItemsInfo.map { it.index }
-        if (pickedIndex + 1 !in visible.drop(1).dropLast(1)) list.scrollToItem((pickedIndex + 1 - 3).coerceAtLeast(0))
+        if (pickedIndex + 2 !in visible.drop(1).dropLast(1)) list.scrollToItem((pickedIndex + 2 - 3).coerceAtLeast(0))
     }
+    if (sortOpen) org.imdtv.iptvtv.ui.live.SortMenu(by, { vm.setSort(entry, it) }, { vm.sortOnce(entry) }) { sortOpen = false }
+    toManual?.let { ch -> org.imdtv.iptvtv.ui.live.ToManualConfirm({ vm.setSort(entry, org.imdtv.iptvtv.data.db.SortBy.MANUAL); order = channels; picked = ch.id; toManual = null }) { toManual = null } }
     LazyColumn(state = list, verticalArrangement = Arrangement.spacedBy(6.dp)) {
         item {
             Text(stringResource(R.string.set_a_order_hint, title), fontSize = 12.sp, color = LocalTheme.current.colors.muted,
                 modifier = Modifier.padding(bottom = 8.dp))
         }
+        item { SortByRow(by, Modifier.focusRequester(first).focusProperties { canFocus = picked == null }) { sortOpen = true } }
         items(channels, key = { it.id }) { ch ->
             val isPicked = picked == ch.id
             SettingRow((if (isPicked) "↕ " else "") + ch.displayName(emptyList()), if (isPicked) stringResource(R.string.set_a_move_hint) else "", null,
-                Modifier.then(if (ch.id == channels.first().id) Modifier.focusRequester(first) else Modifier)
-                    .focusProperties { canFocus = picked == null || picked == ch.id }
+                Modifier.focusProperties { canFocus = picked == null || picked == ch.id }
                     .onPreviewKeyEvent { e ->
                         if (!isPicked) return@onPreviewKeyEvent false
                         val d = when (e.key) { Key.DirectionUp -> -1; Key.DirectionDown -> 1; Key.DirectionLeft, Key.DirectionRight -> 0; else -> return@onPreviewKeyEvent false }
                         if (d != 0 && e.type == KeyEventType.KeyDown) moveWithin(channels, channels.indexOf(ch), d) { GroupPlacement.NORMAL }?.let { order = it }
                         true
-                    }, moving = isPicked) { if (isPicked) drop() else { order = channels; picked = ch.id } }
+                    }, moving = isPicked) { if (isPicked) drop() else if (by != org.imdtv.iptvtv.data.db.SortBy.MANUAL) toManual = ch else { order = channels; picked = ch.id } }
         }
     }
 }
@@ -637,3 +663,8 @@ private fun MergePlaylistsPage(vm: SettingsViewModel, first: FocusRequester) {
 }
 
 private const val DOUBLE_TAP_MS = 400L
+
+/** Sort by › for one category's channels (Manage channels, channel order): opens the guide's Sort by menu. */
+@Composable
+private fun SortByRow(by: org.imdtv.iptvtv.data.db.SortBy?, modifier: Modifier, onClick: () -> Unit) =
+    SettingRow(stringResource(R.string.live_menu_sort_by), stringResource(R.string.set_a_sort_by_expl), by?.let { org.imdtv.iptvtv.ui.live.sortLabel(it) + "  ›" }, modifier, onClick = onClick)

@@ -44,9 +44,12 @@
     <string name="live_menu_sort_by">Sortera efter…</string>
     <string name="live_menu_sort_playlist">Spellista</string>
     <string name="live_menu_sort_az_switch">A–Ö</string>
+    <string name="live_menu_sort_manual">Manuell</string>
     <string name="live_menu_sort_once">Sortera A–Ö en gång</string>
     <string name="live_sort_confirm_title">Ta bort din kanalordning?</string>
     <string name="live_sort_confirm_body">Du har flyttat kanaler i den här kategorin. Om du ändrar sorteringen tas din ordning bort.</string>
+    <string name="live_manual_confirm_title">Sortera manuellt?</string>
+    <string name="live_manual_confirm_body">Om du flyttar en kanal ställs sorteringen för den här kategorin in på Manuell. Den utgår från ordningen som visas nu.</string>
     <string name="live_menu_new_category">Ny kategori</string>
     <string name="live_menu_new_category_item">Ny kategori</string>
     <string name="live_menu_no_guide_channel">Ingen guide för den här kanalen</string>

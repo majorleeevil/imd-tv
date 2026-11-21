@@ -127,4 +127,22 @@ class MigrationTest {
             }
         }
     }
+
+    @Test fun v20ToV24SortByIsManualOnlyWhereChannelsWereMoved() {
+        helper.createDatabase(DB, 20).use { db ->
+            db.execSQL("INSERT INTO provider (id,name,type,url,streamFormat,epgOverrideUrls) VALUES (1,'p','M3U','http://x','TS','')")
+            db.execSQL("INSERT INTO category (id,providerId,kind,remoteId,name,sortOrder,hidden,locked,pinned) VALUES (1,1,'LIVE','a','Moved',0,0,0,0)")
+            db.execSQL("INSERT INTO category (id,providerId,kind,remoteId,name,sortOrder,hidden,locked,pinned) VALUES (2,1,'LIVE','b','Untouched',1,0,0,0)")
+            db.execSQL("INSERT INTO channel (id,providerId,categoryId,remoteId,name,hidden,streamUrl,sortOrder) VALUES (1,1,1,'r1','A',0,'http://s',0)")
+            db.execSQL("INSERT INTO channel (id,providerId,categoryId,remoteId,name,hidden,streamUrl) VALUES (2,1,2,'r2','B',0,'http://s')")
+            db.execSQL("INSERT INTO custom_group (id,providerId,name,sortOrder) VALUES (1,1,'Mine',0)")
+        }
+        helper.runMigrationsAndValidate(DB, 24, true, AppDatabase.MIGRATION_11_14).use { db ->
+            db.query("SELECT id, sortBy FROM category ORDER BY id").use { c ->
+                c.moveToFirst(); assertEquals("MANUAL", c.getString(1))
+                c.moveToNext(); assertEquals("PLAYLIST", c.getString(1))
+            }
+            db.query("SELECT sortBy FROM custom_group").use { c -> c.moveToFirst(); assertEquals("MANUAL", c.getString(0)) }
+        }
+    }
 }

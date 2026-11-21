@@ -61,6 +61,7 @@
     <string name="set_a_logo_short_open_source">Open-Source</string>
     <string name="set_a_logo_short_pack">Mein Paket</string>
     <string name="set_a_logo_short_epg">EPG</string>
+    <string name="set_a_sort_by_expl">Reihenfolge der Sender in dieser Kategorie</string>
     <string name="set_a_save">Speichern</string>
     <string name="set_a_cancel">Abbrechen</string>
     <string name="set_a_delete">Löschen</string>

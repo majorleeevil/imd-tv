@@ -61,6 +61,7 @@
     <string name="set_a_logo_short_open_source">Öppen källkod</string>
     <string name="set_a_logo_short_pack">Mitt paket</string>
     <string name="set_a_logo_short_epg">EPG</string>
+    <string name="set_a_sort_by_expl">Hur kanalerna i kategorin listas</string>
     <string name="set_a_save">Spara</string>
     <string name="set_a_cancel">Avbryt</string>
     <string name="set_a_delete">Ta bort</string>

@@ -8,9 +8,9 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 
 @Database(
-    version = 23,
+    version = 24,
     exportSchema = true,
-    autoMigrations = [AutoMigration(from = 1, to = 2), AutoMigration(from = 2, to = 3), AutoMigration(from = 3, to = 4), AutoMigration(from = 4, to = 5), AutoMigration(from = 5, to = 6), AutoMigration(from = 6, to = 7), AutoMigration(from = 7, to = 8), AutoMigration(from = 8, to = 9), AutoMigration(from = 9, to = 10), AutoMigration(from = 10, to = 11), AutoMigration(from = 11, to = 12), AutoMigration(from = 12, to = 13), AutoMigration(from = 13, to = 14), AutoMigration(from = 14, to = 15), AutoMigration(from = 15, to = 16), AutoMigration(from = 16, to = 17), AutoMigration(from = 17, to = 18), AutoMigration(from = 18, to = 19), AutoMigration(from = 19, to = 20, spec = AppDatabase.MergeSettingsGlobal::class), AutoMigration(from = 20, to = 21), AutoMigration(from = 21, to = 22), AutoMigration(from = 22, to = 23)] /* 13 (a programme index) was never released: 11 -> 14 skips it, see MIGRATION_11_14 */, // 4: (providerId, categoryId) on movie/series for fast category counts
+    autoMigrations = [AutoMigration(from = 1, to = 2), AutoMigration(from = 2, to = 3), AutoMigration(from = 3, to = 4), AutoMigration(from = 4, to = 5), AutoMigration(from = 5, to = 6), AutoMigration(from = 6, to = 7), AutoMigration(from = 7, to = 8), AutoMigration(from = 8, to = 9), AutoMigration(from = 9, to = 10), AutoMigration(from = 10, to = 11), AutoMigration(from = 11, to = 12), AutoMigration(from = 12, to = 13), AutoMigration(from = 13, to = 14), AutoMigration(from = 14, to = 15), AutoMigration(from = 15, to = 16), AutoMigration(from = 16, to = 17), AutoMigration(from = 17, to = 18), AutoMigration(from = 18, to = 19), AutoMigration(from = 19, to = 20, spec = AppDatabase.MergeSettingsGlobal::class), AutoMigration(from = 20, to = 21), AutoMigration(from = 21, to = 22), AutoMigration(from = 22, to = 23), AutoMigration(from = 23, to = 24, spec = AppDatabase.SortByColumn::class)] /* 13 (a programme index) was never released: 11 -> 14 skips it, see MIGRATION_11_14 */, // 4: (providerId, categoryId) on movie/series for fast category counts
     entities = [
         ProviderEntity::class, CategoryEntity::class, ChannelEntity::class, MovieEntity::class,
         SeriesEntity::class, EpisodeEntity::class, EpgSourceEntity::class, EpgChannelEntity::class,
@@ -28,6 +28,20 @@ abstract class AppDatabase : RoomDatabase() {
         androidx.room.DeleteColumn(tableName = "provider", columnName = "mergeAcross"),
     )
     class MergeSettingsGlobal : androidx.room.migration.AutoMigrationSpec
+    /** 22–23 (never released) had A–Z / Playlist switches; one sortBy replaces them. A category whose channels were moved,
+     *  and every one of your categories (always listed in their own order before), start as MANUAL. */
+    @androidx.room.DeleteColumn.Entries(
+        androidx.room.DeleteColumn(tableName = "category", columnName = "sortAZ"),
+        androidx.room.DeleteColumn(tableName = "category", columnName = "sortPlaylist"),
+        androidx.room.DeleteColumn(tableName = "custom_group", columnName = "sortAZ"),
+        androidx.room.DeleteColumn(tableName = "custom_group", columnName = "sortPlaylist"),
+    )
+    class SortByColumn : androidx.room.migration.AutoMigrationSpec {
+        override fun onPostMigrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+            db.execSQL("UPDATE category SET sortBy = 'MANUAL' WHERE id IN (SELECT categoryId FROM channel WHERE sortOrder IS NOT NULL)")
+            db.execSQL("UPDATE custom_group SET sortBy = 'MANUAL'")
+        }
+    }
     abstract fun providerDao(): ProviderDao
     abstract fun categoryDao(): CategoryDao
     abstract fun channelDao(): ChannelDao

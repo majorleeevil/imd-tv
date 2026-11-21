@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
+import org.imdtv.iptvtv.data.db.SortBy
 import org.imdtv.iptvtv.data.catalogue.displayName
 import org.imdtv.iptvtv.data.db.CategoryEntity
 import org.imdtv.iptvtv.data.db.ChannelEntity
@@ -59,6 +60,8 @@ internal sealed interface GuideMenu {
     data object Favourites : GuideMenu
     /** Sort by: Playlist and A–Z switches, and Sort A–Z once. */
     data class Sort(val entry: RailEntry) : GuideMenu
+    /** Move chosen in a list that isn't sorted Manually: confirm the switch first. */
+    data class ToManual(val ch: ChannelEntity, val entry: RailEntry) : GuideMenu
 }
 
 /** The long-press menus of a channel row and a rail category, shared by every theme. */
@@ -91,7 +94,9 @@ fun GuideMenus(vm: LiveViewModel, state: GuideState) {
             add(stringResource(R.string.live_menu_rename) to { state.menu = GuideMenu.Rename(m.ch) })
             add(stringResource(R.string.live_menu_change_logo) to { state.menu = GuideMenu.ChangeLogo(m.ch) })
             // Picks the channel up in place, as categories move: arrows carry it, OK drops, Back cancels.
-            if (state.hasGrid && entry != null && entry != RailEntry.Recent && vm.selectedSort.value == SortBy.OWN) add(stringResource(R.string.live_menu_move) to { state.rowMove = RowMove(m.ch, vm.channels.value); state.menu = null })
+            if (state.hasGrid && entry != null && entry != RailEntry.Recent) add(stringResource(R.string.live_menu_move) to {
+                if (vm.selectedSort.value == SortBy.MANUAL) { state.rowMove = RowMove(m.ch, vm.channels.value); state.menu = null } else entry?.let { state.menu = GuideMenu.ToManual(m.ch, it) }
+            })
             if (state.hasGrid || m.ch.mergeHead) add(stringResource(R.string.live_menu_merge_options) to { state.menu = GuideMenu.MergeOptions(m.ch) })
             add(stringResource(R.string.live_menu_hide) to { state.refocusOnChange = true; vm.hide(m.ch); state.menu = null })
             }) { state.menu = null }
@@ -218,7 +223,14 @@ fun GuideMenus(vm: LiveViewModel, state: GuideState) {
                 stringResource(R.string.live_menu_sort_by) to { state.menu = GuideMenu.Sort(e) },
             )) { state.menu = null; state.railFocusKey = e.key }
         }
-        is GuideMenu.Sort -> SortMenu(vm, m.entry) { state.menu = null; state.railFocusKey = m.entry.key }
+        is GuideMenu.Sort -> {
+            val by by androidx.compose.runtime.remember(m.entry.key) { vm.sortOf(m.entry) }.collectAsState(null)
+            SortMenu(by, { vm.setSort(m.entry, it) }, { vm.sortAZ(m.entry) }) { state.menu = null; state.railFocusKey = m.entry.key }
+        }
+        is GuideMenu.ToManual -> ToManualConfirm({
+            vm.setSort(m.entry, SortBy.MANUAL) // keeps the order shown, so the move starts from what's on screen
+            state.rowMove = RowMove(m.ch, vm.channels.value); state.menu = null
+        }) { state.menu = null }
         GuideMenu.Favourites -> {
             val e = RailEntry.Favourites
             ContextMenu(stringResource(e.titleRes), listOf(
@@ -233,39 +245,53 @@ private fun startOfDay(t: Long): Long = java.util.Calendar.getInstance().apply {
 }.timeInMillis
 
 /**
- * Sort by (issue #9): Playlist and A–Z switches (at most one on; both off = the entry's own order) and Sort A–Z once.
- * Switching one on, or sorting once, replaces an order made by hand: that asks first.
+ * Sort by (issue #9): Playlist, A–Z and Manual switches (exactly one on) and Sort A–Z once. Leaving Manual (another
+ * switch, or sorting once) replaces the order made by hand, so that asks first. Shared by the guide and Settings.
  */
 @Composable
-private fun SortMenu(vm: LiveViewModel, e: RailEntry, onDismiss: () -> Unit) {
-    val by by androidx.compose.runtime.remember(e.key) { vm.sortOf(e) }.collectAsState(null)
-    val current = by ?: return
-    val scope = androidx.compose.runtime.rememberCoroutineScope()
+fun SortMenu(current: SortBy?, onPick: (SortBy) -> Unit, onSortOnce: () -> Unit, onDismiss: () -> Unit) {
+    current ?: return
     var confirm by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<(() -> Unit)?>(null) }
-    fun replacing(action: () -> Unit) { scope.launch { if (vm.hasOwnOrder(e)) confirm = action else action() } }
+    fun replacing(action: () -> Unit) { if (current == SortBy.MANUAL) confirm = action else action() }
     confirm?.let { action ->
-        org.imdtv.iptvtv.ui.MenuFrame(stringResource(R.string.live_sort_confirm_title), onDismiss = { confirm = null }) { first ->
-            androidx.tv.material3.Text(stringResource(R.string.live_sort_confirm_body), fontSize = 14.sp, color = Color.White,
-                modifier = androidx.compose.ui.Modifier.padding(bottom = 10.dp))
-            org.imdtv.iptvtv.ui.MenuItem(stringResource(R.string.set_b_confirm), androidx.compose.ui.Modifier.focusRequester(first)) { confirm = null; action() }
-            org.imdtv.iptvtv.ui.MenuItem(stringResource(R.string.vod_cancel), androidx.compose.ui.Modifier) { confirm = null }
-        }
+        ConfirmBox(stringResource(R.string.live_sort_confirm_title), stringResource(R.string.live_sort_confirm_body), { confirm = null; action() }) { confirm = null }
         return
     }
     org.imdtv.iptvtv.ui.MenuFrame(stringResource(R.string.live_menu_sort_by), onDismiss) { first ->
-        listOf(SortBy.PLAYLIST to R.string.live_menu_sort_playlist, SortBy.AZ to R.string.live_menu_sort_az_switch).forEachIndexed { i, (mode, label) ->
+        SortBy.entries.forEachIndexed { i, mode ->
             val on = current == mode
-            org.imdtv.iptvtv.ui.FocusBox(onClick = { if (on) vm.setSort(e, SortBy.OWN) else replacing { vm.setSort(e, mode) } },
+            org.imdtv.iptvtv.ui.FocusBox(onClick = { if (!on) { if (mode == SortBy.MANUAL) onPick(mode) else replacing { onPick(mode) } } },
                 modifier = if (i == 0) androidx.compose.ui.Modifier.focusRequester(first) else androidx.compose.ui.Modifier) { f ->
                 androidx.compose.foundation.layout.Row(androidx.compose.ui.Modifier.fillMaxWidth()
                     .clip(androidx.compose.foundation.shape.RoundedCornerShape(8.dp)).background(if (f) Color.White else Color.Transparent)
                     .padding(horizontal = 14.dp, vertical = 10.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                    androidx.tv.material3.Text(stringResource(label), fontSize = 16.sp, color = if (f) Color.Black else Color.White, modifier = androidx.compose.ui.Modifier.weight(1f))
+                    androidx.tv.material3.Text(sortLabel(mode), fontSize = 16.sp, color = if (f) Color.Black else Color.White, modifier = androidx.compose.ui.Modifier.weight(1f))
                     org.imdtv.iptvtv.ui.settings.Toggle(on, f)
                 }
             }
         }
-        org.imdtv.iptvtv.ui.MenuItem(stringResource(R.string.live_menu_sort_once), androidx.compose.ui.Modifier) { replacing { vm.sortAZ(e); onDismiss() } }
+        org.imdtv.iptvtv.ui.MenuItem(stringResource(R.string.live_menu_sort_once), androidx.compose.ui.Modifier) { replacing { onSortOnce(); onDismiss() } }
+    }
+}
+
+@Composable
+fun sortLabel(by: SortBy) = stringResource(when (by) {
+    SortBy.PLAYLIST -> R.string.live_menu_sort_playlist
+    SortBy.AZ -> R.string.live_menu_sort_az_switch
+    SortBy.MANUAL -> R.string.live_menu_sort_manual
+})
+
+/** Before the first move in a list that isn't Manual: moving sets it to Manual (keeping the order shown). */
+@Composable
+fun ToManualConfirm(onConfirm: () -> Unit, onDismiss: () -> Unit) =
+    ConfirmBox(stringResource(R.string.live_manual_confirm_title), stringResource(R.string.live_manual_confirm_body), onConfirm, onDismiss)
+
+@Composable
+private fun ConfirmBox(title: String, body: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    org.imdtv.iptvtv.ui.MenuFrame(title, onDismiss) { first ->
+        androidx.tv.material3.Text(body, fontSize = 14.sp, color = Color.White, modifier = androidx.compose.ui.Modifier.padding(bottom = 10.dp))
+        org.imdtv.iptvtv.ui.MenuItem(stringResource(R.string.set_b_confirm), androidx.compose.ui.Modifier.focusRequester(first), onClick = onConfirm)
+        org.imdtv.iptvtv.ui.MenuItem(stringResource(R.string.vod_cancel), androidx.compose.ui.Modifier, onClick = onDismiss)
     }
 }
 

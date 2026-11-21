@@ -61,6 +61,7 @@
     <string name="set_a_logo_short_open_source">Open source</string>
     <string name="set_a_logo_short_pack">Mój pakiet</string>
     <string name="set_a_logo_short_epg">EPG</string>
+    <string name="set_a_sort_by_expl">Jak wyświetlane są kanały tej kategorii</string>
     <string name="set_a_save">Zapisz</string>
     <string name="set_a_cancel">Anuluj</string>
     <string name="set_a_delete">Usuń</string>

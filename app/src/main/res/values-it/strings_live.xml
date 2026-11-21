@@ -44,9 +44,12 @@
     <string name="live_menu_sort_by">Ordina per…</string>
     <string name="live_menu_sort_playlist">Playlist</string>
     <string name="live_menu_sort_az_switch">A–Z</string>
+    <string name="live_menu_sort_manual">Manuale</string>
     <string name="live_menu_sort_once">Ordina A–Z una volta</string>
     <string name="live_sort_confirm_title">Rimuovere il tuo ordine dei canali?</string>
     <string name="live_sort_confirm_body">Hai spostato dei canali in questa categoria. Cambiare l\'ordinamento rimuoverà il tuo ordine.</string>
+    <string name="live_manual_confirm_title">Ordinare manualmente?</string>
+    <string name="live_manual_confirm_body">Spostando un canale, l\'ordinamento di questa categoria diventa Manuale. Parte dall\'ordine mostrato ora.</string>
     <string name="live_menu_new_category">Nuova categoria</string>
     <string name="live_menu_new_category_item">Nuova categoria</string>
     <string name="live_menu_no_guide_channel">Nessuna guida per questo canale</string>

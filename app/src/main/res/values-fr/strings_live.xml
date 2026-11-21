@@ -44,9 +44,12 @@
     <string name="live_menu_sort_by">Trier par…</string>
     <string name="live_menu_sort_playlist">Playlist</string>
     <string name="live_menu_sort_az_switch">A–Z</string>
+    <string name="live_menu_sort_manual">Manuel</string>
     <string name="live_menu_sort_once">Trier de A à Z une fois</string>
     <string name="live_sort_confirm_title">Supprimer votre ordre des chaînes ?</string>
     <string name="live_sort_confirm_body">Vous avez déplacé des chaînes dans cette catégorie. Changer le tri supprimera votre ordre.</string>
+    <string name="live_manual_confirm_title">Trier manuellement ?</string>
+    <string name="live_manual_confirm_body">Déplacer une chaîne règle le tri de cette catégorie sur Manuel. Il part de l\'ordre affiché actuellement.</string>
     <string name="live_menu_new_category">Nouvelle catégorie</string>
     <string name="live_menu_new_category_item">Nouvelle catégorie</string>
     <string name="live_menu_no_guide_channel">Pas de guide pour cette chaîne</string>

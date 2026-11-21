@@ -44,9 +44,12 @@
     <string name="live_menu_sort_by">Sortează după…</string>
     <string name="live_menu_sort_playlist">Playlist</string>
     <string name="live_menu_sort_az_switch">A–Z</string>
+    <string name="live_menu_sort_manual">Manual</string>
     <string name="live_menu_sort_once">Sortează A–Z o dată</string>
     <string name="live_sort_confirm_title">Elimini ordinea ta a canalelor?</string>
     <string name="live_sort_confirm_body">Ai mutat canale în această categorie. Schimbarea sortării va elimina ordinea ta.</string>
+    <string name="live_manual_confirm_title">Sortezi manual?</string>
+    <string name="live_manual_confirm_body">Mutarea unui canal setează sortarea acestei categorii pe Manual. Pornește de la ordinea afișată acum.</string>
     <string name="live_menu_new_category">Categorie nouă</string>
     <string name="live_menu_new_category_item">Categorie nouă</string>
     <string name="live_menu_no_guide_channel">Fără ghid pentru acest canal</string>

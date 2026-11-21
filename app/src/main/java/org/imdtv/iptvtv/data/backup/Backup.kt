@@ -56,11 +56,11 @@ data class BPlaylist(
 data class BEpgSource(val url: String?, val name: String?, val priority: Int, val offsetMinutes: Int)
 
 @Serializable
-data class BCategory(val kind: String, val remoteId: String, val hidden: Boolean, val sortOrder: Int, val pinned: Boolean, val sortAZ: Boolean = false, val sortPlaylist: Boolean = false)
+data class BCategory(val kind: String, val remoteId: String, val hidden: Boolean, val sortOrder: Int, val pinned: Boolean, val sortBy: String? = null)
 
 /** [channels] are channel remoteIds in group order. */
 @Serializable
-data class BGroup(val name: String, val sortOrder: Int, val channels: List<String>, val placement: String = "NORMAL", val sortAZ: Boolean = false, val sortPlaylist: Boolean = false)
+data class BGroup(val name: String, val sortOrder: Int, val channels: List<String>, val placement: String = "NORMAL", val sortBy: String? = null)
 
 @Serializable
 data class BFavourite(val kind: String, val remoteId: String)
@@ -127,8 +127,7 @@ data class BSettings(
     val catchUpOn: Boolean = AppSettings().catchUpOn,
     val holdBackOther: Boolean = AppSettings().holdBackOther,
     val guideTimeoutMin: Int = AppSettings().guideTimeoutMin,
-    val favouritesAZ: Boolean = AppSettings().favouritesAZ,
-    val favouritesPlaylist: Boolean = AppSettings().favouritesPlaylist,
+    val favouritesSortBy: String? = null,
     val showRecent: Boolean = AppSettings().showRecent,
     val headerSize: String = AppSettings().headerSize.name,
     val previewFade: Boolean = AppSettings().previewFade,
@@ -152,7 +151,7 @@ data class BSettings(
             vodTwoRows = vodTwoRows,
             titleSize = org.imdtv.iptvtv.data.settings.TitleSize.entries.find { it.name == titleSize } ?: org.imdtv.iptvtv.data.settings.TitleSize.LARGE,
             vodTitleSize = org.imdtv.iptvtv.data.settings.TitleSize.entries.find { it.name == vodTitleSize } ?: org.imdtv.iptvtv.data.settings.TitleSize.LARGE,
-            catchUpOn = catchUpOn, holdBackOther = holdBackOther, guideTimeoutMin = guideTimeoutMin, favouritesAZ = favouritesAZ, favouritesPlaylist = favouritesPlaylist,
+            catchUpOn = catchUpOn, holdBackOther = holdBackOther, guideTimeoutMin = guideTimeoutMin, favouritesSortBy = favouritesSortBy?.let { n -> org.imdtv.iptvtv.data.db.SortBy.entries.find { it.name == n } },
             headerSize = HeaderSize.entries.find { it.name == headerSize } ?: d.headerSize, previewFade = previewFade, themeDark = themeDark,
             startOnBoot = startOnBoot,
             epgUpdateIntervalHours = epgUpdateIntervalHours,
@@ -190,7 +189,7 @@ data class BSettings(
             s.borrowSiblingGuide, s.hideHeaderChannels, s.showDateTime, s.showPing, s.subtitlesOn, s.subtitleLanguage,
             guideRows = s.guideRows, multiLineGuide = s.multiLineGuide,
             zapLeftRight = s.zapLeftRight, backToFullScreen = s.backToFullScreen, showChannelNumbers = s.showChannelNumbers, clock24h = s.clock24h,
-            playerClockMode = s.playerClock.name, showDate = s.showDate, themeLooks = s.themeLooks, guidesOff = s.guidesOff.toList(), liveSubtitlesOn = s.liveSubtitlesOn, showRecent = s.showRecent, videoAspect = s.videoAspect.name, vodTwoRows = s.vodTwoRows, titleSize = s.titleSize.name, vodTitleSize = s.vodTitleSize.name, catchUpOn = s.catchUpOn, holdBackOther = s.holdBackOther, guideTimeoutMin = s.guideTimeoutMin, favouritesAZ = s.favouritesAZ, favouritesPlaylist = s.favouritesPlaylist,
+            playerClockMode = s.playerClock.name, showDate = s.showDate, themeLooks = s.themeLooks, guidesOff = s.guidesOff.toList(), liveSubtitlesOn = s.liveSubtitlesOn, showRecent = s.showRecent, videoAspect = s.videoAspect.name, vodTwoRows = s.vodTwoRows, titleSize = s.titleSize.name, vodTitleSize = s.vodTitleSize.name, catchUpOn = s.catchUpOn, holdBackOther = s.holdBackOther, guideTimeoutMin = s.guideTimeoutMin, favouritesSortBy = s.favouritesSortBy?.name,
             headerSize = s.headerSize.name, previewFade = s.previewFade, themeDark = s.themeDark, guideKinds = s.guideOrder.map { it.name },
             recordingOn = s.recordingOn, recordTo = s.recordTo.name, startEarlyMin = s.startEarlyMin, endLateMin = s.endLateMin,
             keepAwake = s.keepAwake, smbServer = s.smbServer, smbShare = s.smbShare, smbFolder = s.smbFolder, smbUser = s.smbUser,
