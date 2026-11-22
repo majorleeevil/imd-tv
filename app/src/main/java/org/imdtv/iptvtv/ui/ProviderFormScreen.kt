@@ -164,15 +164,19 @@ private fun ProviderForm(vm: AppViewModel, editing: ProviderEntity?) {
                     value = name.ifBlank { stringResource(R.string.set_b_automatic) }, initial = name, saveLabel = stringResource(R.string.set_b_confirm)) { name = it } // "Save" here read as the form's Save (user, 2026-11-15)
                 if (!ready) {
                     // The buttons stay while busy: if Save left the screen, focus fell to the top and the error showed off screen.
-                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                        Button(onClick = {
-                            if (state.busy) return@Button
-                            val secret = if (type == ProviderType.STALKER) org.imdtv.iptvtv.data.source.StalkerLogin(user, pass, deviceId, deviceId2, model).packed().orEmpty() else pass
-                            vm.save(type, url, user, secret, epg, agent, editing, name)
-                        }, Modifier.focusRequester(save)) { Text(stringResource(R.string.set_b_save)) }
-                        // Beside Save, not above it: a line above pushed Save off the bottom of the Stalker form.
-                        if (!state.busy && state.error != null) Button(onClick = { sendLogs = true }) { Text(stringResource(R.string.set_b_send_logs)) }
-                        if (!state.busy) state.error?.let { Text(it, color = Color(0xFFFF8A80), fontSize = 13.sp, maxLines = 3, modifier = Modifier.weight(1f)) }
+                    Button(onClick = {
+                        if (state.busy) return@Button
+                        val secret = if (type == ProviderType.STALKER) org.imdtv.iptvtv.data.source.StalkerLogin(user, pass, deviceId, deviceId2, model).packed().orEmpty() else pass
+                        vm.save(type, url, user, secret, epg, agent, editing, name)
+                    }, Modifier.fillMaxWidth().focusRequester(save)) {
+                        Text(stringResource(R.string.set_b_save), fontSize = 18.sp, textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp))
+                    }
+                    // Below Save, not above it: a line above pushed Save off the bottom of the Stalker form.
+                    if (!state.busy) state.error?.let { err ->
+                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                            Button(onClick = { sendLogs = true }) { Text(stringResource(R.string.set_b_send_logs)) }
+                            Text(err, color = Color(0xFFFF8A80), fontSize = 13.sp, maxLines = 3, modifier = Modifier.weight(1f))
+                        }
                     }
                 }
                 // Greyed out (not pressable) until the playlist has loaded; Back still leaves. "Finish", not "Done": beside Save, Done read as saving.
