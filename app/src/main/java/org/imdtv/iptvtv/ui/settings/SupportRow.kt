@@ -113,6 +113,53 @@ private fun QrRow(title: String, explanation: String, value: String?, qr: Int, l
 
 private const val LOG_PAGE_MS = 10 * 60 * 1000L
 
+/** [text] as a QR code at 1 px per module: draw it with FilterQuality.None. */
+fun qrImage(text: String): ImageBitmap {
+    val m = QRCodeWriter().encode(text, BarcodeFormat.QR_CODE, 0, 0, mapOf(EncodeHintType.MARGIN to 0))
+    return Bitmap.createBitmap(IntArray(m.width * m.height) { i -> if (m.get(i % m.width, i / m.width)) 0xFF000000.toInt() else -1 }, m.width, m.height, Bitmap.Config.ARGB_8888).asImageBitmap()
+}
+
+/** Add / edit playlist from a phone: a QR code for [fields]' form on the local network; [onSubmit] gets the first form sent. */
+@Composable
+fun PhoneFormPage(title: String, types: List<String>, type: String, fields: List<org.imdtv.iptvtv.data.support.PhoneField>,
+                  onSubmit: (Map<String, String>) -> Unit, onClose: () -> Unit) {
+    var server by remember { mutableStateOf<org.imdtv.iptvtv.data.support.PhoneFormServer?>(null) }
+    var qr by remember { mutableStateOf<ImageBitmap?>(null) }
+    var failed by remember { mutableStateOf(false) }
+    val send = stringResource(R.string.set_b_phone_send)
+    val done = stringResource(R.string.set_b_phone_done)
+    val submit by androidx.compose.runtime.rememberUpdatedState(onSubmit)
+    val scope = rememberCoroutineScope()
+    LaunchedEffect(Unit) {
+        val s = withContext(Dispatchers.IO) {
+            runCatching {
+                val addr = lanAddress() ?: return@runCatching null
+                // The server's thread calls back: hand the form to the main thread, then close the page.
+                org.imdtv.iptvtv.data.support.PhoneFormServer(addr, title, types, type, fields, send, done) { form -> scope.launch { submit(form); onClose() } }
+                    .also { server = it; qr = qrImage(it.url) }
+            }.getOrNull()
+        }
+        server = s
+        failed = s == null
+        delay(LOG_PAGE_MS)
+        onClose()
+    }
+    DisposableEffect(Unit) { onDispose { server?.stop() } }
+    MenuFrame(stringResource(R.string.set_b_use_phone), onDismiss = onClose) { first ->
+        val img = qr
+        if (img != null) Box(Modifier.fillMaxWidth().padding(vertical = 8.dp), contentAlignment = Alignment.Center) {
+            Image(img, contentDescription = stringResource(R.string.set_b_use_phone), filterQuality = FilterQuality.None,
+                modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(Color.White).padding(12.dp).size(200.dp))
+        }
+        Text(when {
+            img != null -> stringResource(R.string.set_b_phone_scan, server?.url ?: "")
+            failed -> stringResource(R.string.set_b_log_no_net)
+            else -> stringResource(R.string.set_b_log_preparing)
+        }, fontSize = 15.sp, color = Color.White, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp))
+        MenuItem(stringResource(R.string.set_b_close), Modifier.focusRequester(first)) { onClose() }
+    }
+}
+
 /** Send logs: OK builds the scrubbed log, serves it on the local network for 10 minutes and shows a QR code for it. Nothing runs otherwise. */
 @Composable
 private fun SendLogsRow() {
@@ -142,8 +189,7 @@ fun SendLogsPage(extraSecrets: List<String> = emptyList(), onClose: () -> Unit) 
                 val secrets = (providers.flatMap { listOfNotNull(it.username, it.password) } + extraSecrets).flatMap { it.lines() }
                 LogServer(addr, (header + scrubLog(prev + cur, secrets)).toByteArray()).also {
                     server = it // set at once so closing the page mid-build still stops it
-                    val m = QRCodeWriter().encode(it.url, BarcodeFormat.QR_CODE, 0, 0, mapOf(EncodeHintType.MARGIN to 0))
-                    qr = Bitmap.createBitmap(IntArray(m.width * m.height) { i -> if (m.get(i % m.width, i / m.width)) 0xFF000000.toInt() else -1 }, m.width, m.height, Bitmap.Config.ARGB_8888).asImageBitmap()
+                    qr = qrImage(it.url)
                 }
             }.getOrNull()
         }

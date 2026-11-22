@@ -18,6 +18,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
@@ -81,22 +82,70 @@ private fun ProviderForm(vm: AppViewModel, editing: ProviderEntity?) {
 
     var name by rememberSaveable { mutableStateOf(editing?.name.orEmpty()) }
     var sendLogs by remember { mutableStateOf(false) }
+    var phone by remember { mutableStateOf(false) }
     val ready = state.result != null
     val next = remember { FocusRequester() }
     val save = remember { FocusRequester() }
     // What was typed may never have been saved (a failed add is removed), so the scrubber is given it directly.
     if (sendLogs) org.imdtv.iptvtv.ui.settings.SendLogsPage(listOf(user, pass, deviceId, deviceId2)) { sendLogs = false; runCatching { save.requestFocus() } }
+    if (phone) {
+        // Secrets are never sent to the phone (plain HTTP on the LAN): editing, they start blank and blank keeps them.
+        val edit = editing != null
+        val keep = stringResource(R.string.set_b_phone_blank_keeps)
+        fun f(key: String, label: String, value: String, secret: Boolean, vararg t: ProviderType) =
+            org.imdtv.iptvtv.data.support.PhoneField(key, if (secret && edit) "$label ($keep)" else label, value, secret, t.map { it.name }.toSet())
+        val x = ProviderType.XTREAM; val m = ProviderType.M3U; val st = ProviderType.STALKER
+        val fields = listOf(
+            f("xurl", stringResource(R.string.set_b_server_url), url.takeIf { type == x }.orEmpty(), false, x),
+            f("murl", stringResource(R.string.set_b_playlist_url), url.takeIf { type == m }.orEmpty(), edit, m), // an M3U address often holds the login
+            f("surl", stringResource(R.string.set_b_portal_url), url.takeIf { type == st }.orEmpty(), false, st),
+            f("user", stringResource(R.string.set_b_username), user.takeIf { type == x }.orEmpty(), false, x),
+            f("pass", stringResource(R.string.set_b_password), "", true, x),
+            f("mac", stringResource(R.string.set_b_mac_form), "", true, st),
+            f("serial", stringResource(R.string.set_b_serial_optional), "", true, st),
+            f("deviceId", stringResource(R.string.set_b_device_id), "", true, st),
+            f("deviceId2", stringResource(R.string.set_b_device_id2), "", true, st),
+            f("model", stringResource(R.string.set_b_stb_model), model, false, st),
+        ) + (if (edit) emptyList() else listOf(f("epg", stringResource(R.string.set_b_epg_urls), epg, false, m))) + listOf(
+            f("agent", stringResource(R.string.set_b_user_agent), agent, false),
+            f("name", stringResource(R.string.set_b_name_optional), name, false),
+        )
+        org.imdtv.iptvtv.ui.settings.PhoneFormPage(
+            if (editing == null) stringResource(R.string.set_b_add_playlist) else stringResource(R.string.set_b_edit_playlist, editing.name),
+            if (edit) emptyList() else ProviderType.entries.map { it.name }, type.name, fields,
+            onSubmit = { form ->
+                if (state.busy) return@PhoneFormPage
+                fun get(k: String) = form[k]?.trim().orEmpty()
+                fun secret(k: String, old: String) = get(k).ifEmpty { if (edit) old else "" }
+                if (!edit) type = ProviderType.entries.find { it.name == form["type"] } ?: type
+                when (type) {
+                    ProviderType.XTREAM -> { url = get("xurl"); user = get("user"); pass = secret("pass", pass) }
+                    ProviderType.M3U -> { url = secret("murl", url); epg = get("epg") }
+                    ProviderType.STALKER -> { url = get("surl"); user = secret("mac", user); pass = secret("serial", pass)
+                        deviceId = secret("deviceId", deviceId); deviceId2 = secret("deviceId2", deviceId2); model = get("model") }
+                }
+                agent = get("agent"); name = get("name")
+                runCatching { save.requestFocus() } // one OK on Save from here
+            }) { phone = false }
+    }
     LaunchedEffect(ready) { if (ready) runCatching { next.requestFocus() } } // Save has gone: focus Watch/Done, not the top
     // One 1080p screen (960×540 dp): labels sit beside the fields, progress and Watch on the right.
     // Scrolls only when the Name box is open on the tallest (Stalker) form.
     Column(Modifier.verticalScroll(rememberScrollState()).padding(horizontal = 48.dp, vertical = 28.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(if (editing == null) stringResource(R.string.set_b_add_playlist) else stringResource(R.string.set_b_edit_playlist, editing.name), style = MaterialTheme.typography.headlineSmall, color = Color.White)
         Row(horizontalArrangement = Arrangement.spacedBy(32.dp)) {
-            Column(Modifier.width(560.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (editing == null) Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    ProviderType.entries.forEach { t ->
+            // Loading: every field, type button, Name and Save ignore OK (editing mid-load could crash), dimmed to show it.
+            Column(Modifier.width(560.dp).alpha(if (state.busy) .45f else 1f).onPreviewKeyEvent { e ->
+                state.busy && e.key in setOf(Key.DirectionCenter, Key.Enter, Key.NumPadEnter)
+            }, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                // Use your phone sits in this top row: Right inside a text field doesn't leave it (a button beside the
+                // fields was unreachable), and in the Save row it squeezed the error text.
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    if (editing == null) ProviderType.entries.forEach { t ->
                         Button(onClick = { type = t }) { Text((if (t == type) "● " else "○ ") + t.name) }
                     }
+                    androidx.compose.foundation.layout.Spacer(Modifier.weight(1f))
+                    Button(onClick = { phone = true }) { Text(stringResource(R.string.set_b_use_phone)) }
                 }
                 FormField(stringResource(when (type) { ProviderType.XTREAM -> R.string.set_b_server_url; ProviderType.M3U -> R.string.set_b_playlist_url; ProviderType.STALKER -> R.string.set_b_portal_url }),
                     url, KeyboardType.Uri) { url = it }
@@ -133,7 +182,7 @@ private fun ProviderForm(vm: AppViewModel, editing: ProviderEntity?) {
                     }
                 }
             }
-            Column(Modifier.width(240.dp).padding(top = if (editing == null) 56.dp else 0.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(Modifier.width(240.dp).padding(top = 56.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 // Greyed out (not pressable) until the playlist has loaded.
                 Button(onClick = { if (editing == null) vm.done() else vm.back() }, Modifier.focusRequester(next), enabled = ready) {
                     Text(if (editing == null) stringResource(R.string.set_b_watch) else stringResource(R.string.set_b_done))

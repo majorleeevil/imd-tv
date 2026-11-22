@@ -207,6 +207,11 @@
     <string name="set_b_automatic">Automatic</string>
     <string name="set_b_confirm">Confirm</string>
     <string name="set_b_group_vod">Movies &amp; Series</string>
+    <string name="set_b_use_phone">Use your phone</string>
+    <string name="set_b_phone_scan">Scan with your phone to fill in this form there. The phone must be on the same network as the TV.\n%1$s</string>
+    <string name="set_b_phone_send">Send to TV</string>
+    <string name="set_b_phone_done">Sent. On the TV, check the details and press Save.</string>
+    <string name="set_b_phone_blank_keeps">leave blank to keep it</string>
     <string name="set_b_parental">Parental controls</string>
     <string name="set_b_parental_expl">A PIN for rated programmes and locked categories</string>
     <string name="set_b_parental_switch_expl">Ask for a PIN before rated content or a locked category plays</string>
