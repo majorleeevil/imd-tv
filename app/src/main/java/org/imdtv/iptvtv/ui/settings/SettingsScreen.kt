@@ -226,7 +226,7 @@ fun SettingsScreen(vm: SettingsViewModel, onAddPlaylist: () -> Unit, onEditPlayl
                 val first = Modifier.focusRequester(rowsFocus)
                 when (group) {
                     SettingsGroup.PLAYLISTS -> PlaylistGroupRows(vm, first, playlistOpeners, onAddPlaylist) { park(); playlist = it }
-                    SettingsGroup.MEDIA_SERVERS -> MediaServerRows(vm, first, playlistOpeners) { park(); playlist = it }
+                    SettingsGroup.MEDIA_SERVERS -> MediaServerRows(vm, rowsFocus, playlistOpeners) { park(); playlist = it }
                     SettingsGroup.EPG -> EpgGroupRows(vm, first, Modifier.focusRequester(sourcesOpener)) { park(); sourcesOpen = true }
                     SettingsGroup.CHANNELS -> ChannelGroupRows(vm, first, openers) { park(); page = it }
                     SettingsGroup.VOD -> ChoiceRow(stringResource(R.string.set_b_vod_sort), stringResource(R.string.set_b_vod_sort_expl), org.imdtv.iptvtv.data.settings.VodSort.entries, s.vodSort,

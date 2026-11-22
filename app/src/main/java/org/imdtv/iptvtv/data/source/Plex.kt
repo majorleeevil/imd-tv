@@ -71,7 +71,7 @@ class PlexAuth(private val http: OkHttpClient, private val json: Json, private v
 
     private suspend fun <T> call(r: Request, s: DeserializationStrategy<T>): T = withContext(Dispatchers.IO) {
         http.newCall(r).execute().use { resp ->
-            if (!resp.isSuccessful) throw PlexException(resp.code)
+            if (!resp.isSuccessful) throw PlexException(resp.code, r.url.encodedPath)
             json.decodeFromString(s, resp.body!!.string())
         }
     }
@@ -99,7 +99,7 @@ class PlexAuth(private val http: OkHttpClient, private val json: Json, private v
         }
 }
 
-class PlexException(val code: Int) : java.io.IOException("Plex request failed: HTTP $code"), UiMessage {
+class PlexException(val code: Int, path: String = "") : java.io.IOException("Plex request failed: HTTP $code $path"), UiMessage {
     override val resId: Int? get() = R.string.set_b_plex_failed
     override val args: List<Any> get() = listOf(code)
 }
@@ -121,7 +121,7 @@ class PlexSource(
         val r = Request.Builder().url(u).header("Accept", "application/json").header("X-Plex-Token", token)
             .header("X-Plex-Client-Identifier", clientId).build()
         http.newCall(r).execute().use { resp ->
-            if (!resp.isSuccessful) throw PlexException(resp.code)
+            if (!resp.isSuccessful) throw PlexException(resp.code, r.url.encodedPath)
             @OptIn(kotlinx.serialization.ExperimentalSerializationApi::class)
             resp.body!!.byteStream().use { json.decodeFromStream(PlexResponse.serializer(), it) }.container
         }

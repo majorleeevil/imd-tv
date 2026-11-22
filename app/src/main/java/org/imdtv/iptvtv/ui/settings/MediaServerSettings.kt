@@ -1,6 +1,9 @@
 package org.imdtv.iptvtv.ui.settings
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.draw.clip
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
@@ -104,36 +107,42 @@ class PlexAddFlow(private val c: AppContainer, private val scope: CoroutineScope
 
 /** Settings › Media servers: the Plex servers added, and Add Plex server. */
 @Composable
-fun MediaServerRows(vm: SettingsViewModel, first: Modifier, openers: MutableMap<Long, FocusRequester>, onOpen: (Long) -> Unit) {
+fun MediaServerRows(vm: SettingsViewModel, rowsFocus: FocusRequester, openers: MutableMap<Long, FocusRequester>, onOpen: (Long) -> Unit) {
     val flow = vm.plex
     val step by flow.step.collectAsState()
     val providers by vm.providers.collectAsState()
     DisposableEffect(Unit) { onDispose { if (flow.step.value !is PlexStep.Adding) flow.cancel() } } // stop polling on leaving
-    val muted = Color(0xFFB0B8C8)
-    when (val s = step) {
-        null -> SettingRow(stringResource(R.string.set_b_plex_add), stringResource(R.string.set_b_plex_add_expl), null, first) { flow.start() }
-        is PlexStep.Code -> {
-            SettingRow(stringResource(R.string.set_b_plex_code, s.code), stringResource(R.string.set_b_plex_code_expl), null, first) { flow.cancel() }
-        }
-        PlexStep.Working -> SettingRow(stringResource(R.string.set_b_plex_working), "", null, first, busy = true) { }
-        is PlexStep.Servers -> {
-            Text(stringResource(R.string.set_b_plex_pick_server), fontSize = 14.sp, color = muted)
-            s.list.forEachIndexed { i, srv -> SettingRow(srv.name, "", null, if (i == 0) first else Modifier) { flow.pick(srv) } }
-        }
-        is PlexStep.Libraries -> {
-            Text(stringResource(R.string.set_b_plex_pick_libraries, s.server.name), fontSize = 14.sp, color = muted)
-            s.libs.forEachIndexed { i, (key, title, kind) ->
-                SwitchRow(title, stringResource(if (kind == Kind.MOVIE) R.string.set_a_kind_movies else R.string.set_a_kind_series), key !in s.skip,
-                    if (i == 0) first else Modifier) { flow.toggle(key) }
-            }
-            SettingRow(stringResource(R.string.set_b_plex_add_server), stringResource(R.string.set_b_plex_add_server_expl), null) { flow.add() }
-        }
-        is PlexStep.Adding -> SettingRow(stringResource(R.string.set_b_plex_adding), s.progress, null, first, busy = true) { }
-        is PlexStep.Done -> SettingRow(stringResource(R.string.set_b_plex_added), s.text, null, first) { flow.cancel() }
-        is PlexStep.Failed -> SettingRow(stringResource(R.string.set_b_plex_failed_title), s.text, null, first) { flow.cancel() }
+    // One top row for every step, so the focused row is never removed (focus would jump to the groups and leave).
+    fun stay(then: () -> Unit) { runCatching { rowsFocus.requestFocus() }; then() }
+    val s = step
+    val (title, expl) = when (s) {
+        null -> stringResource(R.string.set_b_plex_add) to stringResource(R.string.set_b_plex_add_expl)
+        is PlexStep.Code -> stringResource(R.string.set_b_plex_code, s.code) to stringResource(R.string.set_b_plex_code_expl)
+        PlexStep.Working -> stringResource(R.string.set_b_plex_working) to ""
+        is PlexStep.Servers -> stringResource(R.string.set_b_plex_pick_server) to ""
+        is PlexStep.Libraries -> stringResource(R.string.set_b_plex_pick_libraries, s.server.name) to ""
+        is PlexStep.Adding -> stringResource(R.string.set_b_plex_adding) to s.progress
+        is PlexStep.Done -> stringResource(R.string.set_b_plex_added) to s.text
+        is PlexStep.Failed -> stringResource(R.string.set_b_plex_failed_title) to s.text
     }
-    if (step != null && step !is PlexStep.Adding && step !is PlexStep.Done)
-        SettingRow(stringResource(R.string.live_cancel), "", null, Modifier.padding(top = 4.dp)) { flow.cancel() }
+    SettingRow(title, expl, null, Modifier.focusRequester(rowsFocus), busy = s == PlexStep.Working || s is PlexStep.Adding) {
+        when (s) { null -> flow.start(); is PlexStep.Code, is PlexStep.Done, is PlexStep.Failed -> flow.cancel(); else -> Unit }
+    }
+    if (s is PlexStep.Code) androidx.compose.foundation.Image(org.imdtv.iptvtv.ui.settings.qrImage("https://plex.tv/link"), contentDescription = "plex.tv/link",
+        filterQuality = androidx.compose.ui.graphics.FilterQuality.None,
+        modifier = Modifier.padding(start = 16.dp, top = 4.dp).clip(androidx.compose.foundation.shape.RoundedCornerShape(8.dp)).background(Color.White).padding(10.dp).size(150.dp))
+    when (s) {
+        is PlexStep.Servers -> s.list.forEach { srv -> SettingRow(srv.name, "", null) { stay { flow.pick(srv) } } }
+        is PlexStep.Libraries -> {
+            s.libs.forEach { (key, title, kind) ->
+                SwitchRow(title, stringResource(if (kind == Kind.MOVIE) R.string.set_a_kind_movies else R.string.set_a_kind_series), key !in s.skip) { flow.toggle(key) }
+            }
+            SettingRow(stringResource(R.string.set_b_plex_add_server), stringResource(R.string.set_b_plex_add_server_expl), null) { stay { flow.add() } }
+        }
+        else -> Unit
+    }
+    if (s != null && s !is PlexStep.Adding && s !is PlexStep.Done && s !is PlexStep.Failed)
+        SettingRow(stringResource(R.string.live_cancel), "", null, Modifier.padding(top = 4.dp)) { stay { flow.cancel() } }
     providers.filter { it.type == ProviderType.PLEX }.forEach { p ->
         SettingRow(p.name, updatedLabel(p.lastSync), "›", Modifier.focusRequester(openers.getOrPut(p.id) { FocusRequester() })) { onOpen(p.id) }
     }
