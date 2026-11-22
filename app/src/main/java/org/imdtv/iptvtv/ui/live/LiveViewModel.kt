@@ -365,9 +365,15 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
         previewJob?.cancel() // a latency check for the channel scrolled past stops here
         previewJob = viewModelScope.launch {
             val on = if (c.settings.settings.first().parentalOn) onNow(ch) else null
-            if (!c.parental.allow(lockedNow(ch, on), "c${ch.id}", on?.stop ?: (System.currentTimeMillis() + 3_600_000L), ask)) {
-                if (previewed.value?.id == ch.id) { previewed.value = null; player.stop(); lockedChannel.value = ch }
-                return@launch
+            val locked = lockedNow(ch, on)
+            val until = on?.stop ?: (System.currentTimeMillis() + 3_600_000L)
+            if (!c.parental.allow(locked, "c${ch.id}", until, ask = false)) {
+                // Not unlocked yet: stop first, so the locked channel (still playing after the app reopens on it) isn't seen behind the PIN dialog.
+                player.stop()
+                if (!ask || !c.parental.allow(locked, "c${ch.id}", until, ask = true)) {
+                    if (previewed.value?.id == ch.id) { previewed.value = null; lockedChannel.value = ch }
+                    return@launch
+                }
             }
             lockedChannel.value = null
             allowedOn = ch.id to on?.start
