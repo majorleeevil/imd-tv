@@ -71,6 +71,9 @@
     <string name="live_parental_wrong_pin">Wrong PIN, try again</string>
     <string name="live_parental_wrong_word">Wrong backup word, try again</string>
     <string name="live_parental_unlock">Unlock</string>
+    <string name="live_parental_locked">%1$s is child-locked by parental controls.</string>
+    <string name="live_parental_locked_app">The app has been closed since the PIN was last entered.</string>
+    <string name="live_parental_locked_ok">Press OK to enter the PIN.</string>
     <string name="live_parental_forgot">Forgot your PIN? Use your backup word</string>
     <string name="live_parental_use_pin">Use your PIN</string>
     <string name="live_menu_number_hint">New number</string>

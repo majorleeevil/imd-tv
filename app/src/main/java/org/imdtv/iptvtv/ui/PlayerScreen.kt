@@ -101,7 +101,8 @@ fun PlayerScreen(player: PlayerManager, title: String, liveVm: LiveViewModel? = 
             Box(Modifier.fillMaxSize().focusRequester(keys).focusable().onKeyEvent { e ->
                 if (overlay) return@onKeyEvent false
                 when {
-                    e.key in OK -> { if (e.type == KeyEventType.KeyUp) overlay = true; true }
+                    // A parental-locked channel: OK asks for the PIN again instead of opening the overlay.
+                    e.key in OK -> { if (e.type == KeyEventType.KeyUp) liveVm.lockedChannel.value?.let { liveVm.preview(it) } ?: run { overlay = true }; true }
                     // Catch-up channel: Left acts on key-up, and held it jumps 30 s back into catch-up of the programme on now.
                     e.key == Key.DirectionLeft && focused?.hasCatchUp == true -> {
                         if (e.type == KeyEventType.KeyDown && e.nativeKeyEvent.repeatCount > 0) { if (!leftHeld[0]) { leftHeld[0] = true; liveVm.jumpBack(focused) } }
@@ -125,6 +126,14 @@ fun PlayerScreen(player: PlayerManager, title: String, liveVm: LiveViewModel? = 
         if (showClock) PlayerClock(Modifier.align(Alignment.TopEnd).padding(top = 27.dp, end = 48.dp))
         error?.let {
             Text(it, color = Color.White, modifier = Modifier.align(Alignment.Center).background(Color(0xCC000000)).padding(24.dp))
+        }
+        liveVm?.lockedChannel?.collectAsState()?.value?.let { ch ->
+            val app = liveVm.settings.collectAsState().value.unlockFor == org.imdtv.iptvtv.data.parental.UnlockFor.APP
+            Text(androidx.compose.ui.res.stringResource(org.imdtv.iptvtv.R.string.live_parental_locked, ch.displayName(liveVm.strip.collectAsState().value)) +
+                (if (app) "\n" + androidx.compose.ui.res.stringResource(org.imdtv.iptvtv.R.string.live_parental_locked_app) else "") +
+                "\n" + androidx.compose.ui.res.stringResource(org.imdtv.iptvtv.R.string.live_parental_locked_ok),
+                color = Color.White, textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                modifier = Modifier.align(Alignment.Center).background(Color(0xCC000000), androidx.compose.foundation.shape.RoundedCornerShape(12.dp)).padding(24.dp))
         }
     }
 }

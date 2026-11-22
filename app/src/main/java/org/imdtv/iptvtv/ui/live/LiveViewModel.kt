@@ -356,6 +356,8 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
     }
     /** The channel and programme start last let through: a new programme on the same channel is checked again. */
     private var allowedOn: Pair<Long, Long?>? = null
+    /** A channel parental controls kept from playing (PIN cancelled, or autoplay): full screen says so, OK asks again. */
+    val lockedChannel = MutableStateFlow<ChannelEntity?>(null)
 
     /** [ask] false (autoplay while scrolling): a locked channel just doesn't play, the PIN is asked only on OK. */
     fun preview(ch: ChannelEntity, ask: Boolean = true) {
@@ -364,9 +366,10 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
         previewJob = viewModelScope.launch {
             val on = if (c.settings.settings.first().parentalOn) onNow(ch) else null
             if (!c.parental.allow(lockedNow(ch, on), "c${ch.id}", on?.stop ?: (System.currentTimeMillis() + 3_600_000L), ask)) {
-                if (previewed.value?.id == ch.id) { previewed.value = null; player.stop() }
+                if (previewed.value?.id == ch.id) { previewed.value = null; player.stop(); lockedChannel.value = ch }
                 return@launch
             }
+            lockedChannel.value = null
             allowedOn = ch.id to on?.start
             // The playlist's login fills the link. At app start (last channel) it may not have loaded yet, and a link
             // without it is refused (401) on every retry. Loaded (every other time), this doesn't suspend.
