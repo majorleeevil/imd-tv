@@ -1,5 +1,7 @@
 package org.imdtv.iptvtv.data.source
 
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
@@ -36,6 +38,7 @@ class StremioSourceTest {
         """{"id":"tt$it","type":"movie","name":"Film $it","releaseInfo":"2024","imdbRating":"7.5","poster":"https://p/$it"}""" } + "]}"
 
     private val paths = mutableListOf<String>()
+    private val puts = mutableListOf<String>()
     private fun auth() = StremioAuth(http, json, server.url("/").toString().trimEnd('/'), server.url("/link").toString())
 
     private fun start() {
@@ -47,6 +50,17 @@ class StremioSourceTest {
                     p == "/api/login" -> if ("\"password\":\"good\"" in request.body.readUtf8()) """{"result":{"authKey":"KEY"}}"""
                         else """{"error":{"code":3,"message":"Wrong passphrase","wrongPass":true}}"""
                     p == "/api/addonCollectionGet" -> addons()
+                    // Library items as stremio-core stores them: in progress, finished (offset 0), removed, removed but temp.
+                    p == "/api/datastorePut" -> { puts += request.body.readUtf8(); """{"result":{"success":true}}""" }
+                    p == "/api/datastoreGet" && "\"all\":false" in request.body.peek().readUtf8() ->
+                        if ("tt1" in request.body.readUtf8()) """{"result":[{"_id":"tt1","type":"movie","name":"Film","removed":false,"temp":false,"_mtime":"x","myField":7,
+                            "state":{"timeOffset":600000,"duration":5400000,"timesWatched":2,"flaggedWatched":0,"timeWatched":5,"overallTimeWatched":9,"noNotif":false}}]}"""
+                        else """{"result":[]}"""
+                    p == "/api/datastoreGet" -> """{"result":[
+                        {"_id":"tt1","type":"movie","name":"Film","removed":false,"temp":false,"state":{"timeOffset":600000,"duration":5400000,"lastWatched":"2026-11-20T21:00:00.000Z"}},
+                        {"_id":"tt2","type":"movie","removed":false,"temp":false,"state":{"timeOffset":0,"duration":5400000}},
+                        {"_id":"tt3","type":"movie","removed":true,"temp":false,"state":{"timeOffset":5000,"duration":5400000}},
+                        {"_id":"tt9","type":"series","removed":true,"temp":true,"state":{"timeOffset":1200000,"duration":3400000,"video_id":"tt9:1:2","lastWatched":"2026-11-21T20:00:00.000Z"}}]}"""
                     p == "/cm/catalog/movie/top.json" -> metas(0, 50)
                     p == "/cm/catalog/movie/top/skip=50.json" -> metas(50, 3) // short: the last page
                     p == "/cm/catalog/series/top.json" -> """{"metas":[{"id":"tt9","type":"series","name":"Show","releaseInfo":"2011–2019"}]}"""
@@ -63,6 +77,29 @@ class StremioSourceTest {
     }
 
     @After fun tearDown() = server.shutdown()
+
+    @Test fun progressKeepsTheLibraryItemAndAddsATempOneWhenNew() = runTest {
+        start()
+        val t = java.time.Instant.parse("2026-11-22T22:00:00Z").toEpochMilli()
+        auth().saveProgress("KEY", ProgressReport(Kind.MOVIE, "tt1", "", 900_000, 5_400_000, false, "Film", null), t)
+        auth().saveProgress("KEY", ProgressReport(Kind.SERIES, "tt9", "tt9:1:2", 0, 3_400_000, true, "Show", "https://p"), t)
+        val (kept, made) = puts.map { json.parseToJsonElement(it).jsonObject["changes"]!!.jsonArray.single().jsonObject }
+        assertEquals("7", kept["myField"].toString()); assertEquals("false", kept["temp"].toString()) // existing item: only state and _mtime change
+        val ks = kept["state"]!!.jsonObject
+        assertEquals("900000", ks["timeOffset"].toString()); assertEquals("2", ks["timesWatched"].toString()); assertEquals("5", ks["timeWatched"].toString())
+        assertEquals("\"2026-11-22T22:00:00Z\"", kept["_mtime"].toString())
+        assertEquals("true", made["temp"].toString()); assertEquals("true", made["removed"].toString()); assertEquals("\"series\"", made["type"].toString())
+        val ms = made["state"]!!.jsonObject
+        assertEquals("0", ms["timeOffset"].toString()); assertEquals("1", ms["flaggedWatched"].toString()); assertEquals("\"tt9:1:2\"", ms["video_id"].toString())
+        assertTrue(made["behaviorHints"]!!.jsonObject.containsKey("hasScheduledVideos"))
+    }
+
+    @Test fun continueWatchingFollowsStremiosRule() = runTest {
+        start()
+        val r = auth().continueWatching("KEY")
+        assertEquals(listOf(org.imdtv.iptvtv.data.source.ResumePoint(Kind.MOVIE, "tt1", "", 600_000, 5_400_000, java.time.Instant.parse("2026-11-20T21:00:00Z").toEpochMilli()),
+            org.imdtv.iptvtv.data.source.ResumePoint(Kind.SERIES, "tt9", "tt9:1:2", 1_200_000, 3_400_000, java.time.Instant.parse("2026-11-21T20:00:00Z").toEpochMilli())), r)
+    }
 
     @Test fun signInAndCatalogs() = runTest {
         start()

@@ -23,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -78,6 +79,8 @@ fun PlusGuideScreen(vm: LiveViewModel, nav: @Composable () -> Unit, onFullScreen
     val previewingId by vm.previewingId.collectAsState()
     val formats by vm.player.formats.collectAsState()
     val logoSource by vm.logoSource.collectAsState()
+    val cursor = vm.cursor.collectAsState() // read only inside derivedStateOf below
+    val inPast = vm.inPast.collectAsState()
     val colors = LocalTheme.current.colors
     val focusManager = LocalFocusManager.current
     val tabsFocus = remember { FocusRequester() }
@@ -112,14 +115,18 @@ fun PlusGuideScreen(vm: LiveViewModel, nav: @Composable () -> Unit, onFullScreen
         // Description left, badges right-aligned on the title line.
         val ch = channels.find { it.id == focused?.id } ?: focused
         if (ch != null) {
-            val cur = programmes[ch.id].orEmpty().firstOrNull { it.start <= now && now < it.stop }
+            // The highlighted programme (later, or past on catch-up), as GuideHero (#17); derived so a cursor move recomposes only when it changes.
+            val cur = remember(ch.id, programmes, now) { derivedStateOf {
+                val at = Timeline.cursorAt(cursor.value, now, inPast.value)
+                programmes[ch.id].orEmpty().firstOrNull { it.start <= at && at < it.stop }
+            } }.value
             Row(Modifier.padding(start = 40.dp, top = 52.dp).width(570.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Box(Modifier.size(70.dp, 50.dp).clip(RoundedCornerShape(3.dp)).background(Color(0x33FFFFFF)), contentAlignment = Alignment.Center) {
                 ChannelLogo(ch, logoSource, Modifier.fillMaxSize().padding(4.dp))
             }
             Column(Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(if (cur != null) "${clockTime(cur.start)}  ${cur.title}" else ch.displayName(strip), fontSize = 15.sp * org.imdtv.iptvtv.ui.LocalTitleScale.current,
+                    Text(if (cur != null) "${if (dayDate(cur.start) != dayDate(now)) "${dayDate(cur.start)} " else ""}${clockTime(cur.start)}  ${cur.title}" else ch.displayName(strip), fontSize = 15.sp * org.imdtv.iptvtv.ui.LocalTitleScale.current,
                         color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
                     heroBadges(focused?.id, previewingId, formats).forEach { b ->
                         Text(b, fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = Color.White,

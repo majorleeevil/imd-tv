@@ -138,7 +138,7 @@ class AppContainer(context: Context) {
     /** First access must be on the main thread. */
     val playerManager: PlayerManager by player
     /** First access on the main thread, like the player (first played movie or episode). */
-    val watchProgress by lazy { org.imdtv.iptvtv.player.WatchProgress(playerManager, db.progressDao(), background) }
+    val watchProgress by lazy { org.imdtv.iptvtv.player.WatchProgress(playerManager, db.progressDao(), background) { providerRepository.reportProgress(it) } }
 
     /** The player is showing a provider stream (read from any thread; false before the player exists). */
     fun isWatching(): Boolean = player.isInitialized() && playerManager.playingUrl.value?.let { !org.imdtv.iptvtv.recording.isRecordingLocation(it) } == true

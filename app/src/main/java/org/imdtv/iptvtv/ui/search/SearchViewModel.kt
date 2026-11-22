@@ -1,5 +1,6 @@
 package org.imdtv.iptvtv.ui.search
 
+import org.imdtv.iptvtv.data.model.Kind
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -61,7 +62,7 @@ class SearchViewModel(app: Application) : AndroidViewModel(app) {
     val results: StateFlow<SearchResults?> = searchFlow(query, c.search.version) { q ->
         val p = c.providerRepository.activeProviderId.first() ?: return@searchFlow SearchResults.EMPTY
         val strip = org.imdtv.iptvtv.data.catalogue.channelStrip(c.db.providerDao().get(p)?.nameStrip, c.settings.settings.first().removeNameSymbols)
-        c.search.universal(p, strip, q)
+        c.search.universal(p, strip, q) { k -> c.providerRepository.inUse(p, k) } // movies and series: every playlist in use
     }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     /** Guide (EPG) matches, split at midnight: airing or starting today, and later. Its own flow, so the slower guide never holds up the rest. */
@@ -85,7 +86,9 @@ class SearchViewModel(app: Application) : AndroidViewModel(app) {
     fun warm() {
         viewModelScope.launch {
             val p = c.providerRepository.activeProviderId.first() ?: return@launch
-            c.search.warm(p, org.imdtv.iptvtv.data.catalogue.channelStrip(c.db.providerDao().get(p)?.nameStrip, c.settings.settings.first().removeNameSymbols))
+            val strip = org.imdtv.iptvtv.data.catalogue.channelStrip(c.db.providerDao().get(p)?.nameStrip, c.settings.settings.first().removeNameSymbols)
+            c.search.warm(p, strip)
+            listOf(Kind.MOVIE, Kind.SERIES).forEach { k -> c.providerRepository.inUse(p, k).drop(1).forEach { c.search.warm(it, strip, listOf(k)) } }
         }
     }
 

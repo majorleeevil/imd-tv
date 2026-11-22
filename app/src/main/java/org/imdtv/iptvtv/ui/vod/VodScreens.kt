@@ -128,7 +128,7 @@ fun VodHomeScreen(vm: VodViewModel, nav: @Composable () -> Unit, onOpen: (VodIte
                     .background(Color(0x1AFFFFFF)).padding(horizontal = 8.dp, vertical = 3.dp))
         }
         // In-category search sits just above the title (search spec); it searches what the rows/grid show.
-        LaunchedEffect(kind) { vm.warmSearch() }
+        LaunchedEffect(kind) { vm.warmSearch(); vm.refreshResume() }
         org.imdtv.iptvtv.ui.search.SearchBar(query, { vm.query.value = it },
             stringResource(R.string.vod_search_in, gridCat?.name ?: stringResource(if (kind == Kind.MOVIE) R.string.vod_all_movies else R.string.vod_all_series)),
             Modifier.padding(start = 50.dp, top = 62.dp).width(410.dp))

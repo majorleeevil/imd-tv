@@ -60,12 +60,14 @@ class SearchRepository(private val db: AppDatabase) {
     suspend fun warm(providerId: Long, strip: List<String>, kinds: List<Kind> = Kind.entries) =
         withContext(Dispatchers.Default) { kinds.forEach { index(providerId, it, strip) } }
 
-    suspend fun universal(providerId: Long, strip: List<String>, query: String, cap: Int = 50): SearchResults = withContext(Dispatchers.Default) {
+    /** Channels from [providerId]; movies and series from every playlist [vod] gives (that one's matches first). */
+    suspend fun universal(providerId: Long, strip: List<String>, query: String, cap: Int = 50,
+                          vod: suspend (Kind) -> List<Long> = { listOf(providerId) }): SearchResults = withContext(Dispatchers.Default) {
         val words = queryWords(query)
         if (words.isEmpty()) return@withContext SearchResults.EMPTY
         val ch = find(providerId, Kind.LIVE, strip, words, null)
-        val mv = find(providerId, Kind.MOVIE, strip, words, null)
-        val se = find(providerId, Kind.SERIES, strip, words, null)
+        val mv = vod(Kind.MOVIE).flatMap { find(it, Kind.MOVIE, strip, words, null) }
+        val se = vod(Kind.SERIES).flatMap { find(it, Kind.SERIES, strip, words, null) }
         SearchResults(
             Section(load(ch.take(cap)) { db.channelDao().byIds(it).associateBy { c -> c.id } }, ch.size),
             Section(load(mv.take(cap)) { db.movieDao().byIds(it).associate { m -> m.id to m.item() } }, mv.size),

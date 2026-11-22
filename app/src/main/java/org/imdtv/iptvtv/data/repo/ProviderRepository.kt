@@ -1,5 +1,6 @@
 package org.imdtv.iptvtv.data.repo
 
+import org.imdtv.iptvtv.data.model.Kind
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.sync.withLock
@@ -45,6 +46,47 @@ class ProviderRepository(
     val activeProviderId: Flow<Long?> = prefs.data.map { it[activeKey] }.distinctUntilChanged().map { id ->
         val ids = db.providerDao().ids()
         id?.takeIf { it in ids } ?: ids.firstOrNull()
+    }
+
+    /** [active], then the other playlists switched on with [k] loaded, by name: what All and Search cover. */
+    suspend fun inUse(active: Long, k: Kind): List<Long> =
+        listOf(active) + db.providerDao().all().filter { it.id != active && it.enabled && it.loads(k) }.sortedBy { it.name }.map { it.id }
+
+    private val resumeChecked = java.util.concurrent.ConcurrentHashMap<Long, Long>()
+
+    /**
+     * Copies what a media server says is part-watched into Continue watching, so something started in Plex or Jellyfin
+     * shows here. A row of ours that's newer wins. At most every [minGapMs] per playlist; failures only log.
+     */
+    // shortcut: one way only, the server never hears about what's watched here; report progress back if people ask.
+    suspend fun importResume(providerId: Long, minGapMs: Long = 5 * 60_000L) {
+        val now = now()
+        if (now - (resumeChecked[providerId] ?: 0) < minGapMs) return
+        resumeChecked[providerId] = now
+        val p = db.providerDao().get(providerId) ?: return
+        val points = try { sourceFor(p).resumePoints() } catch (e: CancellationException) { throw e } catch (e: Exception) {
+            Log.w("ProviderRepository", "resume points failed: $e"); return
+        }
+        if (points.isEmpty()) return
+        fun ids(rows: List<org.imdtv.iptvtv.data.db.RemoteRow>) = rows.associate { it.remoteId to it.id }
+        val movies = ids(db.movieDao().idsFor(providerId, points.filter { it.kind == Kind.MOVIE }.map { it.remoteId }.distinct()))
+        val series = ids(db.seriesDao().idsFor(providerId, points.filter { it.kind == Kind.SERIES }.map { it.remoteId }.distinct()))
+        val mine = db.progressDao().all(providerId).associateBy { Triple(it.kind, it.itemId, it.episode) }
+        points.forEach { r ->
+            val id = (if (r.kind == Kind.MOVIE) movies else series)[r.remoteId] ?: return@forEach
+            if ((mine[Triple(r.kind, id, r.episode)]?.updatedAt ?: Long.MIN_VALUE) >= r.at) return@forEach
+            db.progressDao().upsert(org.imdtv.iptvtv.data.db.ProgressEntity(providerId, r.kind, id, r.positionMs, r.durationMs, r.at, false, r.episode))
+        }
+    }
+
+    /** Tells a media server where [row]'s title was left (Continue watching both ways); playlists and failures only log. */
+    suspend fun reportProgress(row: org.imdtv.iptvtv.data.db.ProgressEntity) {
+        val p = db.providerDao().get(row.providerId)?.takeIf { it.type.mediaServer } ?: return
+        val (remoteId, title, poster) = if (row.kind == Kind.MOVIE) db.movieDao().byIds(listOf(row.itemId)).firstOrNull()?.let { Triple(it.remoteId, it.name, it.poster) } ?: return
+            else db.seriesDao().byIds(listOf(row.itemId)).firstOrNull()?.let { Triple(it.remoteId, it.name, it.poster) } ?: return
+        try {
+            sourceFor(p).reportProgress(org.imdtv.iptvtv.data.source.ProgressReport(row.kind, remoteId, row.episode, row.positionMs, row.durationMs, row.completed, title, poster))
+        } catch (e: CancellationException) { throw e } catch (e: Exception) { Log.w("ProviderRepository", "progress report failed: $e") }
     }
 
     suspend fun setActive(id: Long) {
@@ -178,13 +220,15 @@ class ProviderRepository(
         val p = db.providerDao().get(providerId) ?: throw NoSuchElementException("No provider $providerId")
         val result = lockFor(providerId).withLock { try {
             // Each kind reads the switch as saved now: it may change while the sync runs.
-            sync.sync(providerId, sourceFor(p), { k -> db.providerDao().get(providerId)?.loads(k) ?: false }, onProgress) { k ->
+            // A day's overlap: the TV's and the server's clocks may differ.
+            sync.sync(providerId, sourceFor(p), { k -> db.providerDao().get(providerId)?.loads(k) ?: false }, onProgress, { k ->
                 syncing.value = syncing.value + (providerId to k)
-            }
+            }, since = p.lastSync?.minus(24 * 3600_000L))
         } finally {
             syncing.value = syncing.value - providerId
         } }
         db.providerDao().setLastSync(providerId, now())
+        importResume(providerId, minGapMs = 0)
         runAfterSync(providerId)
         result
     }

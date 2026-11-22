@@ -48,6 +48,25 @@ class ProviderRepositoryTest {
         assertTrue(db.providerDao().get(p)!!.lastSync != null)
     }
 
+    @Test fun serverResumePointsFillContinueWatchingButOursWinWhenNewer() = runTest {
+        val vod = FakeSource(vodCats = listOf(org.imdtv.iptvtv.data.model.Category("1", "Films", Kind.MOVIE)),
+            movieList = listOf("a", "b").map { org.imdtv.iptvtv.data.model.Movie(it, "1", it, null, null, null, "http://s/$it") })
+        var points = listOf(org.imdtv.iptvtv.data.source.ResumePoint(Kind.MOVIE, "a", "", 60_000, 600_000, 1_000),
+            org.imdtv.iptvtv.data.source.ResumePoint(Kind.MOVIE, "gone", "", 1, 2, 3)) // not in the catalogue: ignored
+        val r = ProviderRepository(db = db, sync = CatalogueSync(db),
+            sourceFor = { object : org.imdtv.iptvtv.data.source.PlaylistSource by vod { override suspend fun resumePoints() = points } },
+            prefs = PreferenceDataStoreFactory.create(scope = backgroundScope) { tmp.newFile("prefs.preferences_pb") })
+        val p = r.add(provider("plex", "http://p/e.xml"))
+        r.syncNow(p) // imports at the end of a sync
+        val a = db.movieDao().byProvider(p).single { it.remoteId == "a" }.id
+        assertEquals(listOf(a to 60_000L), db.progressDao().all(p).map { it.itemId to it.positionMs })
+
+        db.progressDao().upsert(db.progressDao().all(p).single().copy(positionMs = 90_000, updatedAt = 5_000)) // watched further here, later
+        points = listOf(org.imdtv.iptvtv.data.source.ResumePoint(Kind.MOVIE, "a", "", 70_000, 600_000, 2_000))
+        r.importResume(p, minGapMs = 0)
+        assertEquals(90_000L, db.progressDao().all(p).single().positionMs)
+    }
+
     private fun provider(name: String, epg: String) = ProviderEntity(
         name = name, type = ProviderType.M3U, url = "http://$name/list.m3u", username = null, password = null,
         userAgent = null, streamFormat = StreamFormat.TS, epgOverrideUrls = listOf(epg), lastSync = null,

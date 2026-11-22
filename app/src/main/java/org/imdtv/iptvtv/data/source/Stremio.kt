@@ -13,6 +13,8 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.doubleOrNull
 import kotlinx.serialization.json.intOrNull
+import kotlinx.serialization.json.longOrNull
+import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -58,7 +60,7 @@ class StremioAuth(private val http: OkHttpClient, private val json: Json, privat
         return (e as? JsonObject)?.get("result") ?: e
     }
     private fun post(path: String, vararg kv: Pair<String, Any>) = Request.Builder().url("$api/api/$path")
-        .post(JsonObject(kv.associate { (k, v) -> k to if (v is Boolean) JsonPrimitive(v) else JsonPrimitive(v.toString()) }).toString().toRequestBody("application/json".toMediaType())).build()
+        .post(JsonObject(kv.associate { (k, v) -> k to when (v) { is JsonElement -> v; is Boolean -> JsonPrimitive(v); else -> JsonPrimitive(v.toString()) } }).toString().toRequestBody("application/json".toMediaType())).build()
 
     /** A code to enter (or a QR to scan) at [StremioLink.url]. */
     suspend fun createLink(): StremioLink = call(Request.Builder().url("$link/api/v2/create?type=Create").build()).let { StremioLink(it.str("code").orEmpty(), it.str("link").orEmpty()) }
@@ -78,6 +80,57 @@ class StremioAuth(private val http: OkHttpClient, private val json: Json, privat
             val url = a.str("transportUrl") ?: return@mapNotNull null
             StremioAddon.of(url, (a as JsonObject)["manifest"] ?: return@mapNotNull null)
         }
+
+    /**
+     * The account's Continue watching, from its library: as Stremio's own rule, an item with a position that's still in the
+     * library or only watched (temp). A series' position is on its last video ("tt…:season:episode").
+     */
+    suspend fun continueWatching(authKey: String): List<ResumePoint> =
+        call(post("datastoreGet", "type" to "DatastoreGet", "authKey" to authKey, "collection" to "libraryItem", "ids" to JsonArray(emptyList()), "all" to true))
+            .let { it as? JsonArray ?: JsonArray(emptyList()) }.mapNotNull { i ->
+                val o = i as? JsonObject ?: return@mapNotNull null
+                val st = o["state"] as? JsonObject ?: return@mapNotNull null
+                val off = st["timeOffset"]?.jsonPrimitive?.longOrNull ?: 0
+                val removed = o["removed"]?.jsonPrimitive?.booleanOrNull == true
+                if (off <= 0 || (removed && o["temp"]?.jsonPrimitive?.booleanOrNull != true)) return@mapNotNull null
+                val id = o.str("_id") ?: return@mapNotNull null
+                val at = st.str("lastWatched")?.let { runCatching { java.time.Instant.parse(it).toEpochMilli() }.getOrNull() } ?: 0
+                val dur = st["duration"]?.jsonPrimitive?.longOrNull ?: 0
+                when (o.str("type")) {
+                    "movie" -> ResumePoint(Kind.MOVIE, id, "", off, dur, at)
+                    "series" -> st.str("video_id")?.let { ResumePoint(Kind.SERIES, id, it, off, dur, at) }
+                    else -> null
+                }
+            }
+
+    /**
+     * Saves where [p] was left in the account's library, as Stremio's apps do: the existing item with its state updated, or
+     * a new temp item (watched, not added to the library) with every field Stremio's apps expect.
+     */
+    suspend fun saveProgress(authKey: String, p: ProgressReport, now: Long = System.currentTimeMillis()) {
+        val old = call(post("datastoreGet", "type" to "DatastoreGet", "authKey" to authKey, "collection" to "libraryItem",
+            "ids" to JsonArray(listOf(JsonPrimitive(p.remoteId))), "all" to false)).let { (it as? JsonArray)?.firstOrNull() as? JsonObject }
+        val iso = java.time.Instant.ofEpochMilli(now).toString()
+        val was = old?.get("state") as? JsonObject
+        fun n(k: String) = was?.get(k)?.jsonPrimitive?.longOrNull ?: 0
+        val state = JsonObject((was ?: JsonObject(mapOf("timeWatched" to JsonPrimitive(0), "overallTimeWatched" to JsonPrimitive(0),
+            "watched" to kotlinx.serialization.json.JsonNull, "noNotif" to JsonPrimitive(false)))) + mapOf(
+            "lastWatched" to JsonPrimitive(iso),
+            "timeOffset" to JsonPrimitive(if (p.watched) 0 else p.positionMs),
+            "duration" to JsonPrimitive(p.durationMs.takeIf { it > 0 } ?: n("duration")),
+            "video_id" to JsonPrimitive(p.episode.ifEmpty { p.remoteId }),
+            "timesWatched" to JsonPrimitive(n("timesWatched") + if (p.watched) 1 else 0),
+            "flaggedWatched" to JsonPrimitive(if (p.watched) 1 else if (p.positionMs == 0L) 0 else n("flaggedWatched")),
+        ))
+        val item = JsonObject((old ?: JsonObject(mapOf(
+            "_id" to JsonPrimitive(p.remoteId), "name" to JsonPrimitive(p.title), "type" to JsonPrimitive(if (p.kind == Kind.MOVIE) "movie" else "series"),
+            "poster" to (p.poster?.let(::JsonPrimitive) ?: kotlinx.serialization.json.JsonNull), "posterShape" to JsonPrimitive("poster"),
+            "removed" to JsonPrimitive(true), "temp" to JsonPrimitive(true), "_ctime" to JsonPrimitive(iso),
+            "behaviorHints" to JsonObject(mapOf("defaultVideoId" to kotlinx.serialization.json.JsonNull, "featuredVideoId" to kotlinx.serialization.json.JsonNull,
+                "hasScheduledVideos" to JsonPrimitive(false))),
+        ))) + mapOf("_mtime" to JsonPrimitive(iso), "state" to state))
+        call(post("datastorePut", "type" to "DatastorePut", "authKey" to authKey, "collection" to "libraryItem", "changes" to JsonArray(listOf(item))))
+    }
 
     /** Movie and series catalogs as (key, "Catalog · Add-on", kind): one needing a search or genre to answer is left out. */
     fun catalogs(addons: List<StremioAddon>): List<Triple<String, String, Kind>> = addons.flatMap { a -> a.catalogs.map { Triple(it.key, "${it.name} · ${a.name}", it.kind) } }
@@ -131,12 +184,13 @@ class StremioSource(private val authKey: String, private val skip: Set<String>, 
     private suspend fun get(url: String) = http.json(json, Request.Builder().url(url).header("Accept", "application/json").build())
 
     /** Every page of a catalog, up to [MAX] titles (Cinemeta's Popular never ends). */
-    private suspend fun items(a: StremioAddon, c: StremioCatalog): List<JsonElement> {
+    private suspend fun items(a: StremioAddon, c: StremioCatalog, fetched: (Int, Int?) -> Unit = { _, _ -> }): List<JsonElement> {
         val out = ArrayList<JsonElement>()
         while (out.size < MAX) {
             val page = get("${a.base}/catalog/${c.type}/${c.id}" + (if (out.isEmpty()) "" else "/skip=${out.size}") + ".json").arr("metas")
             if (page.isEmpty()) break
             out += page
+            fetched(minOf(out.size, MAX), null)
             if (page.size < 10) break // a short page is the last
         }
         return out.take(MAX)
@@ -161,6 +215,14 @@ class StremioSource(private val authKey: String, private val skip: Set<String>, 
     override suspend fun seriesCategories() = catalogs(Kind.SERIES).map { (a, c) -> Category(c.key, "${c.name} · ${a.name}", Kind.SERIES) }
     override suspend fun movies() = list(Kind.MOVIE) { m, cat -> movie(m, cat) }
     override suspend fun series() = list(Kind.SERIES) { m, cat -> series(m, cat) }
+    // Catalogs are rankings (Popular, New…) with no "changed since": always the whole catalog (up to MAX).
+    override suspend fun moviesIn(cat: String, since: Long?, fetched: (Int, Int?) -> Unit) = catalog(Kind.MOVIE, cat, fetched) { m, c -> movie(m, c) }
+    override suspend fun seriesIn(cat: String, since: Long?, fetched: (Int, Int?) -> Unit) = catalog(Kind.SERIES, cat, fetched) { m, c -> series(m, c) }
+    private suspend fun <T> catalog(kind: Kind, cat: String, fetched: (Int, Int?) -> Unit, make: (JsonElement, String) -> T): LibraryPage<T> {
+        val (a, c) = catalogs(kind).first { it.second.key == cat }
+        val metas = runCatching { items(a, c, fetched) }.getOrElse { android.util.Log.w("Stremio", "${a.name} ${c.name} failed: $it"); emptyList() }
+        return metas.filter { it.str("id") != null }.map { make(it, cat) }.let { LibraryPage(it, it.size, changesOnly = false) }
+    }
 
     private suspend fun meta(type: String, id: String): JsonElement? =
         addons().filter { it.serves("meta", type, id) }.firstNotNullOfOrNull { a -> runCatching { (get("${a.base}/meta/$type/$id.json") as? JsonObject)?.get("meta") }.getOrNull() }
@@ -196,6 +258,10 @@ class StremioSource(private val authKey: String, private val skip: Set<String>, 
         }
         return null
     }
+
+    // shortcut: only titles in the chosen catalogs can show (the rest have no row here); add them to a category if people ask.
+    override suspend fun resumePoints() = auth.continueWatching(authKey)
+    override suspend fun reportProgress(p: ProgressReport) = auth.saveProgress(authKey, p)
 
     companion object { const val MAX = 500 }
 }

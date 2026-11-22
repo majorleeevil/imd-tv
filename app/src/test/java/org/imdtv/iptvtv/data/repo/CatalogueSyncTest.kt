@@ -226,8 +226,9 @@ class CatalogueSyncTest {
         assertEquals(
             listOf(
                 "Downloading channels…",
+                "Saving channels… 2 of 2",
                 "Downloading movies… · 2 channels saved",
-                "Downloading series… · 2 channels, 0 movies saved",
+                "Downloading series… · 2 channels saved", // zero counts are left out
             ),
             steps,
         )

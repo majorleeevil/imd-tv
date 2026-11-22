@@ -102,6 +102,15 @@ class SearchRepositoryTest {
         assertTrue(repo.universal(p, emptyList(), "   ").movies.items.isEmpty())
     }
 
+    @Test fun moviesFromEveryPlaylistGiven() = runTest {
+        val q = db.insertTestProvider("plex")
+        db.categoryDao().upsert(listOf(CategoryEntity(providerId = q, kind = Kind.MOVIE, remoteId = "1", name = "Films")))
+        val qc = db.categoryDao().byRemoteIds(q, Kind.MOVIE).single().id
+        db.movieDao().upsert(listOf(movie(cat(Kind.MOVIE, "all"), "m1", "Alien"), movie(qc, "x1", "Aliens").copy(providerId = q)))
+        assertEquals(listOf("Alien"), repo.universal(p, emptyList(), "alien").movies.items.map { it.name }) // default: this playlist only
+        assertEquals(listOf("Alien", "Aliens"), repo.universal(p, emptyList(), "alien") { listOf(p, q) }.movies.items.map { it.name })
+    }
+
     @Test fun inCategoryScoped() = runTest {
         val a = cat(Kind.SERIES, "a")
         val b = cat(Kind.SERIES, "b")

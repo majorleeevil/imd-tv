@@ -43,7 +43,8 @@ fun nextEpisode(episodes: List<Episode>, rows: List<ProgressEntity>): NextEpisod
  * Remembers where the movie or episode playing now is: whenever the player stops (Back, Home, a tab change) and every
  * 30 s, so a crash or power cut loses little. Writes run on [scope] (the app's), so they finish after the screen is gone.
  */
-class WatchProgress(private val player: PlayerManager, private val dao: ProgressDao, private val scope: CoroutineScope) {
+class WatchProgress(private val player: PlayerManager, private val dao: ProgressDao, private val scope: CoroutineScope,
+                    /** Also tells a media server (after the row is saved). */ private val report: suspend (ProgressEntity) -> Unit = {}) {
     private data class Watching(val providerId: Long, val kind: Kind, val itemId: Long, val episode: String, val url: String)
     private var watching: Watching? = null
     private var ticker: Job? = null
@@ -68,6 +69,6 @@ class WatchProgress(private val player: PlayerManager, private val dao: Progress
         val done = p.playbackState == Player.STATE_ENDED || isWatched(pos, dur)
         if (!done && pos < MIN_PROGRESS_MS) return
         val row = ProgressEntity(w.providerId, w.kind, w.itemId, if (done) 0 else pos, dur, System.currentTimeMillis(), done, w.episode)
-        scope.launch { dao.upsert(row) }
+        scope.launch { dao.upsert(row); report(row) }
     }
 }

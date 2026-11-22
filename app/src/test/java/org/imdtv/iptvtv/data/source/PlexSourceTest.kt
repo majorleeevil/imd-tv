@@ -14,10 +14,15 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 
+@RunWith(RobolectricTestRunner::class) // Plex logs per library (android.util.Log)
 class PlexSourceTest {
     private val server = MockWebServer()
-    private val pages = mutableListOf<String>()
+    private val pages = java.util.Collections.synchronizedList(mutableListOf<String>()) // pages are fetched in parallel
+    private var showPageSize: String? = null
+    private val reports = java.util.Collections.synchronizedList(mutableListOf<String>())
 
     // Shapes as the user's server returns them (2026-11-22), trimmed.
     private val sections = """{"MediaContainer":{"Directory":[{"key":"1","type":"movie","title":"Movies"},{"key":"28","type":"movie","title":"Adult"},
@@ -40,12 +45,17 @@ class PlexSourceTest {
             override fun dispatch(request: RecordedRequest): MockResponse {
                 val u = request.requestUrl!!
                 if (request.getHeader("X-Plex-Token") != "srvtoken") return MockResponse().setResponseCode(401)
+                if (u.encodedPath.startsWith("/:/")) { reports += u.encodedPath + "?" + u.encodedQuery; return MockResponse() }
                 return MockResponse().setBody(when (u.encodedPath) {
                     "/library/sections" -> sections
                     "/library/sections/1/all" -> { pages += u.queryParameter("X-Plex-Container-Start")!!; moviePage(pages.last().toInt()) }
-                    "/library/sections/3/all" -> shows
+                    "/library/sections/3/all" -> { showPageSize = u.queryParameter("X-Plex-Container-Size"); shows }
                     "/library/metadata/s1" -> show
                     "/library/metadata/s1/allLeaves" -> leaves
+                    "/library/onDeck" -> """{"MediaContainer":{"Metadata":[
+                        {"type":"episode","ratingKey":"e2","grandparentRatingKey":"s1","viewOffset":456539,"duration":3114195,"lastViewedAt":1795383579},
+                        {"type":"episode","ratingKey":"e3","grandparentRatingKey":"s1","duration":437984,"lastViewedAt":1795374398},
+                        {"type":"movie","ratingKey":"m1","viewOffset":1627316,"duration":5800480,"lastViewedAt":1795262856}]}}"""
                     else -> return MockResponse().setResponseCode(404)
                 })
             }
@@ -74,11 +84,29 @@ class PlexSourceTest {
         assertTrue(withLogin(m.poster!!, Login("cid", "srvtoken")).contains("X-Plex-Token=srvtoken"))
     }
 
+    @Test fun seriesUseSmallPages() = runTest {
+        assertEquals(listOf("s1"), source().series().map { it.remoteId })
+        assertEquals("500", showPageSize) // a 2000-show page passed the 60 s timeout on a busy shared server
+    }
+
     @Test fun seriesDetailListsPlayableEpisodes() = runTest {
         val d = source().seriesDetail("s1")
         assertEquals("Plot", d.plot); assertEquals("Drama", d.genre)
         assertEquals(1, d.episodes.size) // the one without a file is left out
         assertEquals(1 to 1, d.episodes[0].season to d.episodes[0].number); assertEquals(2616, d.episodes[0].durationSecs)
+    }
+
+    @Test fun onDeckPositionsBecomeResumePoints() = runTest {
+        assertEquals(listOf(ResumePoint(Kind.SERIES, "s1", "e2", 456539, 3114195, 1795383579000), // next-up e3 has no position: left out
+            ResumePoint(Kind.MOVIE, "m1", "", 1627316, 5800480, 1795262856000)), source().resumePoints())
+    }
+
+    @Test fun progressGoesBackToPlex() = runTest {
+        val s = source()
+        fun r(pos: Long, watched: Boolean, ep: String = "") = ProgressReport(Kind.SERIES, "s1", ep, pos, 3_000_000, watched, "Show", null)
+        s.reportProgress(r(456_000, false, "e2")); s.reportProgress(r(0, true, "e2")); s.reportProgress(r(0, false))
+        assertEquals(listOf("/:/progress?key=e2&identifier=com.plexapp.plugins.library&time=456000&state=stopped",
+            "/:/scrobble?key=e2&identifier=com.plexapp.plugins.library", "/:/unscrobble?key=s1&identifier=com.plexapp.plugins.library"), reports)
     }
 
     @Test fun connectionsDirectLocalHttpsFirst() {

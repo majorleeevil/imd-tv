@@ -19,6 +19,7 @@ import org.junit.Test
 class JellyfinSourceTest {
     private val server = MockWebServer()
     private val pages = mutableListOf<String>()
+    private val writes = mutableListOf<String>()
     private val auth = """MediaBrowser Client="IMD TV", Device="TV", DeviceId="dev", Version="1""""
 
     // Shapes as Jellyfin's demo server (12.4) returns them (2026-11-22), trimmed.
@@ -45,8 +46,14 @@ class JellyfinSourceTest {
             override fun dispatch(request: RecordedRequest): MockResponse {
                 val u = request.requestUrl!!
                 if (request.getHeader("Authorization") != "$auth, Token=\"tok\"") return MockResponse().setResponseCode(401)
+                if (request.method != "GET") { writes += "${request.method} ${u.encodedPath} ${request.body.readUtf8()}".trim(); return MockResponse().setResponseCode(204) }
                 return MockResponse().setBody(when (u.encodedPath) {
                     "/jf/Users/uid/Views" -> views
+                    // As the demo answered: an in-progress movie and episode, and a played one with no position.
+                    "/jf/Users/uid/Items/Resume" -> """{"Items":[
+                        {"Id":"m0","Type":"Movie","RunTimeTicks":55842000000,"UserData":{"PlaybackPositionTicks":3000000000,"LastPlayedDate":"2026-11-22T21:00:00.0000000Z"}},
+                        {"Id":"e1","Type":"Episode","SeriesId":"s1","RunTimeTicks":18963580000,"UserData":{"PlaybackPositionTicks":600000000,"LastPlayedDate":"2026-11-21T20:00:00Z"}},
+                        {"Id":"m1","Type":"Movie","UserData":{"PlaybackPositionTicks":0}}]}"""
                     "/jf/Users/uid/Items" -> when (u.queryParameter("ParentId")) {
                         "mv" -> { assertEquals("Movie", u.queryParameter("IncludeItemTypes")); pages += u.queryParameter("StartIndex")!!; moviePage(pages.last().toInt()) }
                         "tv" -> shows
@@ -96,6 +103,16 @@ class JellyfinSourceTest {
         val d = source().movieDetail("m0")
         assertEquals("Randal Kleiser", d.director); assertEquals("John Travolta", d.cast)
         assertEquals(5584, d.durationSecs); assertEquals(480, d.height); assertNull(d.backdrop)
+    }
+
+    @Test fun continueWatchingBothWays() = runTest {
+        val s = source()
+        assertEquals(listOf(ResumePoint(Kind.MOVIE, "m0", "", 300_000, 5_584_200, java.time.Instant.parse("2026-11-22T21:00:00Z").toEpochMilli()),
+            ResumePoint(Kind.SERIES, "s1", "e1", 60_000, 1_896_358, java.time.Instant.parse("2026-11-21T20:00:00Z").toEpochMilli())), s.resumePoints())
+        fun r(pos: Long, watched: Boolean) = ProgressReport(Kind.SERIES, "s1", "e1", pos, 1_896_358, watched, "Pioneer One", null)
+        s.reportProgress(r(60_000, false)); s.reportProgress(r(0, true)); s.reportProgress(r(0, false))
+        assertEquals(listOf("""POST /jf/Sessions/Playing/Stopped {"ItemId":"e1","PositionTicks":600000000}""",
+            "POST /jf/Users/uid/PlayedItems/e1", "DELETE /jf/Users/uid/PlayedItems/e1"), writes)
     }
 
     @Test fun typedAddressesAreTidied() {

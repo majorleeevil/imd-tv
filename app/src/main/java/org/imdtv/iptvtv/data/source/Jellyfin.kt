@@ -41,7 +41,9 @@ import org.imdtv.iptvtv.data.security.PASS_TOKEN
     @SerialName("RunTimeTicks") val ticks: Long? = null, @SerialName("Height") val height: Int? = null,
     @SerialName("ParentIndexNumber") val season: Int? = null, @SerialName("IndexNumber") val number: Int? = null,
     @SerialName("LocationType") val location: String? = null,
+    @SerialName("Type") val type: String = "", @SerialName("SeriesId") val seriesId: String? = null, @SerialName("UserData") val userData: JfUserData? = null,
 )
+@Serializable data class JfUserData(@SerialName("PlaybackPositionTicks") val positionTicks: Long = 0, @SerialName("LastPlayedDate") val lastPlayed: String? = null)
 @Serializable data class JfItems(@SerialName("Items") val items: List<JfItem> = emptyList(), @SerialName("TotalRecordCount") val total: Int? = null)
 
 /** The server address as typed (scheme optional, maybe copied from the web app's address bar) as the API base. */
@@ -124,16 +126,20 @@ class JellyfinSource(
     private suspend fun views(type: String) = (viewCache ?: get(url("/Users/$userId/Views"), JfItems.serializer()).items.also { viewCache = it })
         .filter { it.collection == type && it.id !in skip }
 
-    // shortcut: a full fetch every sync, like Plex; ask only for items created since the last sync (MinDateLastSaved) if it bites.
-    private suspend fun all(parent: String, type: String): List<JfItem> {
+    /** Library [parent]'s items of [type] (only those saved since [since], epoch ms, when given) and how many it holds. */
+    private suspend fun all(parent: String, type: String, since: Long?, fetched: (Int, Int?) -> Unit): LibraryPage<JfItem> {
+        fun q(vararg extra: Pair<String, String>) = url("/Users/$userId/Items", "ParentId" to parent, "IncludeItemTypes" to type, "Recursive" to "true", *extra)
+        val filter = listOfNotNull(since?.let { "MinDateLastSaved" to java.time.Instant.ofEpochMilli(it).toString() }).toTypedArray()
         val out = ArrayList<JfItem>()
         while (true) {
-            val page = get(url("/Users/$userId/Items", "ParentId" to parent, "IncludeItemTypes" to type, "Recursive" to "true",
-                "Fields" to "DateCreated", "SortBy" to "SortName", "EnableUserData" to "false", "EnableImageTypes" to "Primary", "ImageTypeLimit" to "1",
+            val page = get(q(*filter, "Fields" to "DateCreated", "SortBy" to "SortName", "EnableUserData" to "false", "EnableImageTypes" to "Primary", "ImageTypeLimit" to "1",
                 "StartIndex" to "${out.size}", "Limit" to "$PAGE"), JfItems.serializer())
             out += page.items // StartIndex by the items returned: a server may send fewer per page
-            if (page.items.isEmpty() || out.size >= (page.total ?: 0)) return out
+            fetched(out.size, page.total)
+            if (page.items.isEmpty() || out.size >= (page.total ?: 0)) break
         }
+        val total = if (since == null) out.size else get(q("Limit" to "0"), JfItems.serializer()).total ?: 0
+        return LibraryPage(out, total, since != null)
     }
 
     fun stream(id: String) = url("/Videos/$id/stream", "static" to "true", "api_key" to PASS_TOKEN).toString()
@@ -150,8 +156,40 @@ class JellyfinSource(
     override fun epgUrls(): List<String> = emptyList()
     override suspend fun vodCategories() = views("movies").map { Category(it.id, it.name, Kind.MOVIE) }
     override suspend fun seriesCategories() = views("tvshows").map { Category(it.id, it.name, Kind.SERIES) }
-    override suspend fun movies() = views("movies").flatMap { v -> all(v.id, "Movie").map { it.movie(v.id) } }
-    override suspend fun series() = views("tvshows").flatMap { v -> all(v.id, "Series").map { it.series(v.id) } }
+    override suspend fun movies() = views("movies").flatMap { v -> moviesIn(v.id, null) { _, _ -> }.items }
+    override suspend fun series() = views("tvshows").flatMap { v -> seriesIn(v.id, null) { _, _ -> }.items }
+    override suspend fun moviesIn(cat: String, since: Long?, fetched: (Int, Int?) -> Unit) =
+        all(cat, "Movie", since, fetched).let { p -> LibraryPage(p.items.map { it.movie(cat) }, p.total, p.changesOnly) }
+    override suspend fun seriesIn(cat: String, since: Long?, fetched: (Int, Int?) -> Unit) =
+        all(cat, "Series", since, fetched).let { p -> LibraryPage(p.items.map { it.series(cat) }, p.total, p.changesOnly) }
+
+    /** The user's Resume list: part-watched movies and episodes. */
+    override suspend fun resumePoints() = get(url("/Users/$userId/Items/Resume", "IncludeItemTypes" to "Movie,Episode", "Recursive" to "true",
+        "Fields" to "RunTimeTicks", "EnableImages" to "false"), JfItems.serializer()).items.mapNotNull { i ->
+        val pos = (i.userData?.positionTicks ?: 0) / 10_000
+        if (pos <= 0) return@mapNotNull null
+        val at = i.userData?.lastPlayed?.let { runCatching { java.time.Instant.parse(it).toEpochMilli() }.getOrNull() } ?: 0
+        val dur = (i.ticks ?: 0) / 10_000
+        when (i.type) {
+            "Movie" -> ResumePoint(Kind.MOVIE, i.id, "", pos, dur, at)
+            "Episode" -> i.seriesId?.let { ResumePoint(Kind.SERIES, it, i.id, pos, dur, at) }
+            else -> null
+        }
+    }
+
+    /** Played / unplayed, or a position saved as a stopped playback (what Jellyfin clients send when you stop). */
+    override suspend fun reportProgress(p: ProgressReport) {
+        val id = p.episode.ifEmpty { p.remoteId }
+        val r = Request.Builder().header("Authorization", auth).let { b ->
+            when {
+                p.watched -> b.url(url("/Users/$userId/PlayedItems/$id")).post(ByteArray(0).toRequestBody())
+                p.positionMs > 0 -> b.url(url("/Sessions/Playing/Stopped"))
+                    .post("""{"ItemId":"$id","PositionTicks":${p.positionMs * 10_000}}""".toRequestBody("application/json".toMediaType()))
+                else -> b.url(url("/Users/$userId/PlayedItems/$id")).delete()
+            }
+        }.build()
+        withContext(Dispatchers.IO) { http.newCall(r).execute().use { if (!it.isSuccessful) throw JellyfinException(it.code, r.url.encodedPath) } }
+    }
 
     override suspend fun movieDetail(id: String): MovieDetail {
         val m = get(url("/Users/$userId/Items/$id"), JfItem.serializer())

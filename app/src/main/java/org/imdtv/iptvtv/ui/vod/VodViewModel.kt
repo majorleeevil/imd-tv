@@ -158,11 +158,10 @@ class VodViewModel(private val app: Application) : AndroidViewModel(app) {
         else c.search.inCategory(p.id, k, cat.takeIf { it != CONTINUE_ID }, q)
     }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
-    /** This playlist, then the others switched on with [k] loaded. */
-    private suspend fun inUse(k: Kind): List<Long> {
-        val active = provider.value?.id ?: return emptyList()
-        return listOf(active) + c.db.providerDao().all().filter { it.id != active && it.enabled && it.loads(k) }.sortedBy { it.name }.map { it.id }
-    }
+    private suspend fun inUse(k: Kind): List<Long> = provider.value?.id?.let { c.providerRepository.inUse(it, k) } ?: emptyList()
+
+    /** Media servers' own part-watched titles into Continue watching (each at most every 5 min). */
+    fun refreshResume() { viewModelScope.launch { inUse(kind.value).forEach { c.providerRepository.importResume(it) } } }
 
     fun warmSearch() { viewModelScope.launch { inUse(kind.value).forEach { c.search.warm(it, emptyList(), listOf(kind.value)) } } }
 
@@ -237,9 +236,10 @@ class VodViewModel(private val app: Application) : AndroidViewModel(app) {
     /** Mark watched (Play then starts over) or unwatched (forgets the position too). */
     fun setWatched(item: VodItem, watched: Boolean, episode: String = "") {
         viewModelScope.launch {
-            if (watched) c.db.progressDao().upsert(ProgressEntity(item.providerId, item.kind, item.id, 0, progressOf(item, episode)?.durationMs ?: 0,
-                System.currentTimeMillis(), completed = true, episode = episode))
-            else c.db.progressDao().delete(item.providerId, item.kind, item.id, episode)
+            val row = ProgressEntity(item.providerId, item.kind, item.id, 0, progressOf(item, episode)?.durationMs ?: 0,
+                System.currentTimeMillis(), completed = watched, episode = episode)
+            if (watched) c.db.progressDao().upsert(row) else c.db.progressDao().delete(item.providerId, item.kind, item.id, episode)
+            c.providerRepository.reportProgress(row) // unwatched: position 0, not completed = the server forgets it too
         }
     }
 
