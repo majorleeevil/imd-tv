@@ -314,4 +314,5 @@
     <string name="set_a_epg_text_size_expl">Rehberdeki tüm metnin boyutu</string>
     <string name="set_a_update_playlists_every">Oynatma listelerini şu sıklıkla güncelle</string>
     <string name="set_a_update_playlists_every_expl">Plex ve Jellyfin sunucuları dahil her oynatma listesinin arka planda ne sıklıkla yeniden indirileceği</string>
+    <string name="set_a_deleting">Siliniyor…</string>
 </resources>

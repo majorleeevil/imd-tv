@@ -77,8 +77,12 @@ fun PlaylistPage(
 ) {
     BackHandler(onBack = onClose)
     val providers by vm.providers.collectAsState()
-    val p = providers.firstOrNull { it.id == id }
-    LaunchedEffect(p == null) { if (p == null && providers.isNotEmpty()) onClose() } // deleted
+    // Shown as last seen once deleted, until it closes: the focused row vanishing threw focus to the group list.
+    val seen = providers.firstOrNull { it.id == id }
+    val last = remember { arrayOfNulls<ProviderEntity>(1) }
+    val p = seen?.also { last[0] = it } ?: last[0]
+    LaunchedEffect(seen == null) { if (seen == null && last[0] != null) onClose() } // deleted
+    val deleting = id in vm.deletingPlaylists.collectAsState().value
     val update by vm.playlistUpdate.collectAsState()
     val activeId by vm.providerId.collectAsState()
     var confirmDelete by remember { mutableStateOf(false) }
@@ -105,10 +109,10 @@ fun PlaylistPage(
         }
         SettingRow(
             stringResource(R.string.set_a_delete_playlist),
-            if (confirmDelete) stringResource(R.string.set_a_delete_playlist_confirm, p.name)
-            else stringResource(R.string.set_a_delete_playlist_expl),
-            null,
-        ) { if (confirmDelete) { runCatching { first.requestFocus() }; onDelete(id) } else confirmDelete = true }
+            when { deleting -> stringResource(R.string.set_a_deleting); confirmDelete -> stringResource(R.string.set_a_delete_playlist_confirm, p.name)
+                else -> stringResource(R.string.set_a_delete_playlist_expl) },
+            null, busy = deleting,
+        ) { if (deleting) Unit else if (confirmDelete) onDelete(id) else confirmDelete = true }
 
     }
 }

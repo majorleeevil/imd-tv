@@ -65,6 +65,7 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
     val plex = PlexAddFlow(c, viewModelScope)
     val jellyfin = JellyfinAddFlow(c, viewModelScope)
     val stremio = StremioAddFlow(c, viewModelScope)
+    val deletingPlaylists = c.providerRepository.removing
     val sync get() = c.sync
     private val categoryRepo = CategoryRepository(c.db)
 

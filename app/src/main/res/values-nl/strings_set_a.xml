@@ -314,4 +314,5 @@
     <string name="set_a_epg_text_size_expl">Grootte van alle tekst in de gids</string>
     <string name="set_a_update_playlists_every">Afspeellijsten bijwerken elke</string>
     <string name="set_a_update_playlists_every_expl">Hoe vaak elke afspeellijst, inclusief Plex- en Jellyfin-servers, op de achtergrond opnieuw wordt gedownload</string>
+    <string name="set_a_deleting">Verwijderen…</string>
 </resources>

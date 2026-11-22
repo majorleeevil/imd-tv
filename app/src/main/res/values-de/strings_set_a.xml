@@ -314,4 +314,5 @@
     <string name="set_a_epg_text_size_expl">Größe des gesamten Texts im Programm</string>
     <string name="set_a_update_playlists_every">Playlists aktualisieren alle</string>
     <string name="set_a_update_playlists_every_expl">Wie oft jede Playlist, auch Plex- und Jellyfin-Server, im Hintergrund neu heruntergeladen wird</string>
+    <string name="set_a_deleting">Wird gelöscht…</string>
 </resources>

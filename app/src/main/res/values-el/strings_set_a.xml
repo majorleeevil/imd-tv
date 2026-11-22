@@ -314,4 +314,5 @@
     <string name="set_a_epg_text_size_expl">Μέγεθος όλου του κειμένου στον οδηγό</string>
     <string name="set_a_update_playlists_every">Ενημέρωση λιστών κάθε</string>
     <string name="set_a_update_playlists_every_expl">Πόσο συχνά κάθε λίστα, συμπεριλαμβανομένων των διακομιστών Plex και Jellyfin, ξαναλαμβάνεται στο παρασκήνιο</string>
+    <string name="set_a_deleting">Διαγραφή…</string>
 </resources>

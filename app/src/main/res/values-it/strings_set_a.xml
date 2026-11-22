@@ -314,4 +314,5 @@
     <string name="set_a_epg_text_size_expl">Dimensione di tutto il testo nella guida</string>
     <string name="set_a_update_playlists_every">Aggiorna le playlist ogni</string>
     <string name="set_a_update_playlists_every_expl">Con quale frequenza ogni playlist, inclusi i server Plex e Jellyfin, viene scaricata di nuovo in background</string>
+    <string name="set_a_deleting">Eliminazione…</string>
 </resources>

@@ -226,6 +226,7 @@ abstract class ChannelDao {
     /** Channels deleted by a sync: anything merged into them shows again. */
     @Query("UPDATE channel SET mergedInto = NULL, mergedAuto = 0 WHERE mergedInto IN (:ids)") abstract suspend fun unmergeFrom(ids: List<Long>)
 
+    @Query("DELETE FROM channel WHERE providerId = :providerId") abstract suspend fun deleteForProvider(providerId: Long)
     @Query("DELETE FROM channel WHERE id IN (:ids)")
     abstract suspend fun deleteIds(ids: List<Long>)
 
@@ -264,6 +265,7 @@ abstract class MovieDao {
     abstract fun observeCounts(providerId: Long): Flow<List<CategoryCount>>
     @Upsert abstract suspend fun upsert(list: List<MovieEntity>)
 
+    @Query("DELETE FROM movie WHERE providerId = :providerId") abstract suspend fun deleteForProvider(providerId: Long)
     @Query("DELETE FROM movie WHERE id IN (:ids)")
     abstract suspend fun deleteIds(ids: List<Long>)
 
@@ -304,6 +306,7 @@ abstract class SeriesDao {
     abstract suspend fun episodes(seriesId: Long): List<EpisodeEntity>
     @Upsert abstract suspend fun upsertEpisodes(list: List<EpisodeEntity>)
 
+    @Query("DELETE FROM series WHERE providerId = :providerId") abstract suspend fun deleteForProvider(providerId: Long)
     @Query("DELETE FROM series WHERE id IN (:ids)")
     abstract suspend fun deleteIds(ids: List<Long>)
 

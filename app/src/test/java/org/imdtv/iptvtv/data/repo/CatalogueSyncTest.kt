@@ -344,6 +344,22 @@ class CatalogueSyncTest {
     }
 
     @Test
+    fun removingDeletesItsWholeCatalogue() = runTest {
+        val src = FakeSource(liveCats = listOf(live("5", "News")), channels = listOf(channel("1", "BBC")),
+            vodCats = listOf(org.imdtv.iptvtv.data.model.Category("9", "Films", Kind.MOVIE)), movieList = listOf(Movie("501", "9", "Film", null, null, null, "http://h/m.mkv")),
+            seriesList = listOf(org.imdtv.iptvtv.data.model.Series("s1", null, "One", null, null, null)))
+        val repo = repo(src)
+        val keep = repo.add(m3uProvider(emptyList()))
+        val id = repo.add(m3uProvider(emptyList()))
+        repo.syncNow(keep); repo.syncNow(id)
+        repo.remove(id)
+        assertEquals(listOf(0, 0, 0, 0), listOf(db.channelDao().byProvider(id).size, db.movieDao().byProvider(id).size, db.seriesDao().byProvider(id).size,
+            db.categoryDao().byRemoteIds(id, Kind.LIVE).size))
+        assertEquals(1, db.channelDao().byProvider(keep).size) // the other playlist untouched
+        assertEquals(emptySet<Long>(), repo.removing.value)
+    }
+
+    @Test
     fun removingTheActiveProviderClearsActive() = runTest {
         val repo = repo(FakeSource())
         val id = repo.add(m3uProvider(emptyList()))

@@ -314,4 +314,5 @@
     <string name="set_a_epg_text_size_expl">Storlek på all text i guiden</string>
     <string name="set_a_update_playlists_every">Uppdatera spellistor var</string>
     <string name="set_a_update_playlists_every_expl">Hur ofta varje spellista, inklusive Plex- och Jellyfin-servrar, laddas ned igen i bakgrunden</string>
+    <string name="set_a_deleting">Tar bort…</string>
 </resources>

@@ -315,4 +315,5 @@
     <string name="set_a_remove_symbols_expl">Remove small and circled letters and symbols such as “ᴿᴬᵂ”, “ⓋⒾⓅ” and “◉” from channel names</string>
     <string name="set_a_update_playlists_every">Update playlists every</string>
     <string name="set_a_update_playlists_every_expl">How often every playlist, Plex and Jellyfin server included, downloads again in the background</string>
+    <string name="set_a_deleting">Deleting…</string>
 </resources>

@@ -55,11 +55,25 @@ class ProviderRepository(
      * Deletes the provider and the rows that have no FK to it (programmes, favourites, progress);
      * the cascade takes the rest. If it was active, the first remaining provider becomes active.
      */
-    suspend fun remove(id: Long) {
+    /** Playlists being deleted (Settings shows a spinner; a second press does nothing). */
+    val removing = kotlinx.coroutines.flow.MutableStateFlow<Set<Long>>(emptySet())
+
+    suspend fun remove(id: Long) = withContext(Dispatchers.Default) {
+        if (id in removing.value) return@withContext
+        removing.value = removing.value + id
+        try { lockFor(id).withLock { removeNow(id) } } finally { removing.value = removing.value - id } // after a running sync, not into it
+    }
+
+    private suspend fun removeNow(id: Long) {
         db.withTransaction {
             db.epgDao().sources(id).forEach { db.programmeDao().deleteForSource(it.id) }
             db.favouriteDao().deleteForProvider(id)
             db.progressDao().deleteForProvider(id)
+            // Items before categories: the provider's cascade deleted categories first, which set every movie's and
+            // channel's category to null (a write per row) just before deleting those rows anyway. Twice the work.
+            db.channelDao().deleteForProvider(id)
+            db.movieDao().deleteForProvider(id)
+            db.seriesDao().deleteForProvider(id)
             db.providerDao().get(id)?.let { db.providerDao().delete(it) }
         }
         val next = db.providerDao().all().firstOrNull()?.id

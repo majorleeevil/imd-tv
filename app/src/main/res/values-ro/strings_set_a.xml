@@ -325,4 +325,5 @@
     <string name="set_a_epg_text_size_expl">Dimensiunea întregului text din ghid</string>
     <string name="set_a_update_playlists_every">Actualizează playlisturile la fiecare</string>
     <string name="set_a_update_playlists_every_expl">Cât de des este descărcat din nou în fundal fiecare playlist, inclusiv serverele Plex și Jellyfin</string>
+    <string name="set_a_deleting">Se șterge…</string>
 </resources>

@@ -314,4 +314,5 @@
     <string name="set_a_epg_text_size_expl">Tamanho de todo o texto do guia</string>
     <string name="set_a_update_playlists_every">Atualizar listas a cada</string>
     <string name="set_a_update_playlists_every_expl">Com que frequência cada lista, incluindo servidores Plex e Jellyfin, é transferida novamente em segundo plano</string>
+    <string name="set_a_deleting">A eliminar…</string>
 </resources>
