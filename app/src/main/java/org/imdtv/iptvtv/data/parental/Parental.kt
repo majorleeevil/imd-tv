@@ -10,8 +10,6 @@ import org.imdtv.iptvtv.data.settings.SettingsRepository
 import java.security.MessageDigest
 import java.security.SecureRandom
 import java.util.Base64
-import javax.crypto.SecretKeyFactory
-import javax.crypto.spec.PBEKeySpec
 
 /** App behaviour › Parental controls › Lock content rated: this age and up needs the PIN. */
 enum class AgeLimit(val age: Int, @StringRes val labelRes: Int) {
@@ -38,7 +36,7 @@ private val NAMED = mapOf(
     "R" to 17, "TV-MA" to 17, "NC-17" to 18, "R18" to 18, "X" to 18,
 )
 
-/** The PIN and backup word are stored only as salted PBKDF2 hashes. */
+/** The PIN and backup word are stored only as salted, repeated SHA-256 hashes. */
 object Pin {
     fun hash(secret: String): String {
         val salt = ByteArray(16).also { SecureRandom().nextBytes(it) }
@@ -51,8 +49,13 @@ object Pin {
     }
     /** The backup word is typed on a TV keyboard: case and surrounding spaces don't count. */
     private fun norm(s: String) = s.trim().lowercase()
-    private fun derive(s: String, salt: ByteArray): ByteArray =
-        SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256").generateSecret(PBEKeySpec(s.toCharArray(), salt, 20_000, 256)).encoded
+    // Salted SHA-256 repeated, not PBKDF2: the Chromecast's provider threw "Could not generate secret key" (crash on saving the word).
+    private fun derive(s: String, salt: ByteArray): ByteArray {
+        val md = MessageDigest.getInstance("SHA-256")
+        var h = md.digest(salt + s.toByteArray())
+        repeat(20_000) { h = md.digest(h + salt) }
+        return h
+    }
     private val b64 = Base64.getEncoder()
     private val unb64 = Base64.getDecoder()
 }
