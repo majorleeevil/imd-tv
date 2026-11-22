@@ -153,6 +153,9 @@ class XtreamSource(
             )
         }
 
+    /** Xtream dates are unix seconds as text; 0 or junk = none. */
+    private fun unixMs(s: String?): Long? = s?.trim()?.toLongOrNull()?.takeIf { it > 0 }?.times(1000)
+
     private fun XVodStream.toMovie(): Movie? {
         val id = streamId ?: return null
         return Movie(
@@ -163,6 +166,7 @@ class XtreamSource(
             year = year,
             rating = rating,
             streamUrl = streamUrl("movie", "$id.${containerExtension ?: "mp4"}"),
+            added = unixMs(added),
         )
     }
 
@@ -195,7 +199,7 @@ class XtreamSource(
     override suspend fun series() =
         list("get_series", XSeries.serializer()).mapNotNull { s ->
             val id = s.seriesId ?: return@mapNotNull null
-            Series(id, s.categoryId, s.name ?: id, s.cover, yearOf(s.releaseDate), s.rating)
+            Series(id, s.categoryId, s.name ?: id, s.cover, yearOf(s.releaseDate), s.rating, unixMs(s.lastModified))
         }
 
     override suspend fun seriesDetail(id: String): SeriesDetail {

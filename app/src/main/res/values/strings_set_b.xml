@@ -206,6 +206,12 @@
     <string name="set_b_name_expl">Blank: named after the URL, e.g. example.com</string>
     <string name="set_b_automatic">Automatic</string>
     <string name="set_b_confirm">Confirm</string>
+    <string name="set_b_group_vod">Movies &amp; Series</string>
+    <string name="set_b_vod_sort">Sort by</string>
+    <string name="set_b_vod_sort_expl">Order of movies and series in every category</string>
+    <string name="set_b_vod_sort_playlist">Playlist</string>
+    <string name="set_b_vod_sort_az">Alphabetical</string>
+    <string name="set_b_vod_sort_added">Recently added</string>
     <string name="set_b_save">Save</string>
     <string name="set_b_refresh_guide">Refresh guide now</string>
     <string name="set_b_watch">Watch</string>

@@ -86,6 +86,9 @@ enum class EpgTextSize(@StringRes val labelRes: Int, val scale: Float) {
     XLARGE(R.string.set_a_size_xlarge, 1.2f), LARGE(R.string.set_a_size_large, 1.1f), MEDIUM(R.string.set_a_size_medium, 1f), SMALL(R.string.set_a_size_small, .88f)
 }
 
+/** Settings › Movies & Series › Sort by: one order for every movie and series list (issue #11). */
+enum class VodSort(@StringRes val labelRes: Int) { PLAYLIST(R.string.set_b_vod_sort_playlist), AZ(R.string.set_b_vod_sort_az), ADDED(R.string.set_b_vod_sort_added) }
+
 data class AppSettings(
     val theme: ThemeId = ThemeId.CELESTIAL_GLASS,
     val autoplayOnScroll: Boolean = false,
@@ -164,6 +167,7 @@ data class AppSettings(
     val vodTitleSize: TitleSize = TitleSize.LARGE,
     val epgTextSize: EpgTextSize = EpgTextSize.MEDIUM,
     val guideLogos: Boolean = false,
+    val vodSort: VodSort = VodSort.PLAYLIST,
     /** Playback › Catch-up: off hides every catch-up control, even on channels that have it. */
     val catchUpOn: Boolean = true,
     val headerSize: HeaderSize = HeaderSize.LARGE,

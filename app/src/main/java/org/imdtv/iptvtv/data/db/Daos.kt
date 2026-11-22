@@ -240,8 +240,10 @@ abstract class MovieDao {
     @Query("SELECT id, remoteId FROM movie WHERE providerId = :providerId") abstract suspend fun remoteIds(providerId: Long): List<RemoteRow>
     @Query("SELECT * FROM movie WHERE categoryId = :categoryId ORDER BY name")
     abstract fun observeByCategory(categoryId: Long): Flow<List<MovieEntity>>
-    @Query("SELECT * FROM movie WHERE categoryId = :categoryId ORDER BY name LIMIT :limit")
-    abstract suspend fun inCategory(categoryId: Long, limit: Int): List<MovieEntity>
+    /** [sort]: a [org.imdtv.iptvtv.data.settings.VodSort] name; PLAYLIST = the provider's order (first seen, by id). */
+    @Query("""SELECT * FROM movie WHERE categoryId = :categoryId
+              ORDER BY CASE :sort WHEN 'AZ' THEN name END, CASE :sort WHEN 'ADDED' THEN addedAt END DESC, id LIMIT :limit""")
+    abstract suspend fun inCategory(categoryId: Long, limit: Int, sort: String): List<MovieEntity>
     @Query("SELECT * FROM movie WHERE id IN (:ids)") abstract suspend fun byIds(ids: List<Long>): List<MovieEntity>
     @Query(
         """SELECT m.id, m.name, NULL AS customName, NULL AS number, m.categoryId FROM movie m
@@ -275,8 +277,9 @@ abstract class SeriesDao {
     @Query("SELECT id, remoteId FROM series WHERE providerId = :providerId") abstract suspend fun remoteIds(providerId: Long): List<RemoteRow>
     @Query("SELECT * FROM series WHERE categoryId = :categoryId ORDER BY name")
     abstract fun observeByCategory(categoryId: Long): Flow<List<SeriesEntity>>
-    @Query("SELECT * FROM series WHERE categoryId = :categoryId ORDER BY name LIMIT :limit")
-    abstract suspend fun inCategory(categoryId: Long, limit: Int): List<SeriesEntity>
+    @Query("""SELECT * FROM series WHERE categoryId = :categoryId
+              ORDER BY CASE :sort WHEN 'AZ' THEN name END, CASE :sort WHEN 'ADDED' THEN addedAt END DESC, id LIMIT :limit""")
+    abstract suspend fun inCategory(categoryId: Long, limit: Int, sort: String): List<SeriesEntity>
     @Query("SELECT * FROM series WHERE id IN (:ids)") abstract suspend fun byIds(ids: List<Long>): List<SeriesEntity>
     @Query(
         """SELECT s.id, s.name, NULL AS customName, NULL AS number, s.categoryId FROM series s
@@ -518,5 +521,5 @@ abstract class RecentDao {
 
 data class ChannelFromProvider(val id: Long, val name: String, val logo: String?, val number: Int?, val tvgId: String?, val streamUrl: String, val categoryId: Long?,
                                val drmType: String? = null, val drmKey: String? = null, val archiveDays: Int? = null, val catchupSource: String? = null)
-data class MovieFromProvider(val id: Long, val name: String, val poster: String?, val year: Int?, val rating: Double?, val streamUrl: String?, val categoryId: Long?)
-data class SeriesFromProvider(val id: Long, val name: String, val poster: String?, val year: Int?, val rating: Double?, val categoryId: Long?)
+data class MovieFromProvider(val id: Long, val name: String, val poster: String?, val year: Int?, val rating: Double?, val streamUrl: String?, val categoryId: Long?, val addedAt: Long)
+data class SeriesFromProvider(val id: Long, val name: String, val poster: String?, val year: Int?, val rating: Double?, val categoryId: Long?, val addedAt: Long)

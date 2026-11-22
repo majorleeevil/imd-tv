@@ -40,6 +40,7 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
     private val vodTitleSize = stringPreferencesKey("vod_title_size")
     private val epgTextSize = stringPreferencesKey("epg_text_size")
     private val guideLogos = booleanPreferencesKey("guide_logos")
+    private val vodSort = stringPreferencesKey("vod_sort")
     private val catchUpOn = booleanPreferencesKey("catch_up_on")
     private val holdBackOther = booleanPreferencesKey("hold_back_other")
     private val guideTimeoutMin = intPreferencesKey("guide_timeout_min")
@@ -119,6 +120,7 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
             vodTitleSize = TitleSize.entries.find { it.name == this[vodTitleSize] } ?: d.vodTitleSize,
             epgTextSize = EpgTextSize.entries.find { it.name == this[epgTextSize] } ?: d.epgTextSize,
             guideLogos = this[guideLogos] ?: d.guideLogos,
+            vodSort = VodSort.entries.find { it.name == this[vodSort] } ?: d.vodSort,
             catchUpOn = this[catchUpOn] ?: d.catchUpOn,
             holdBackOther = this[holdBackOther] ?: d.holdBackOther,
             guideTimeoutMin = this[guideTimeoutMin] ?: d.guideTimeoutMin,
@@ -188,6 +190,7 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
         this[vodTitleSize] = s.vodTitleSize.name
         this[epgTextSize] = s.epgTextSize.name
         this[guideLogos] = s.guideLogos
+        this[vodSort] = s.vodSort.name
         this[catchUpOn] = s.catchUpOn
         this[holdBackOther] = s.holdBackOther
         this[guideTimeoutMin] = s.guideTimeoutMin

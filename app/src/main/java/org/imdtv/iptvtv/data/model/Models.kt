@@ -31,6 +31,8 @@ data class Movie(
     val year: Int?,
     val rating: Double?,
     val streamUrl: String?,
+    /** When the provider added it (epoch ms); null = it doesn't say (M3U). */
+    val added: Long? = null,
 )
 
 data class Series(
@@ -40,6 +42,8 @@ data class Series(
     val poster: String?,
     val year: Int?,
     val rating: Double?,
+    /** When the provider added or last changed it (epoch ms); null = it doesn't say. */
+    val added: Long? = null,
 )
 
 data class Episode(

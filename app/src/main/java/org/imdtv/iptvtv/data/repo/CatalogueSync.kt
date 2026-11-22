@@ -160,9 +160,10 @@ class CatalogueSync(
             val catId = c.idByRemote[resolve(m.categoryRemoteId)]
             val old = existing[m.remoteId]
             if (old == null) fresh += MovieEntity(providerId = providerId, categoryId = catId, remoteId = m.remoteId, name = m.name,
-                poster = m.poster, year = m.year, rating = m.rating, streamUrl = m.streamUrl, addedAt = t)
-            else MovieFromProvider(old.id, m.name, m.poster, m.year, m.rating, m.streamUrl, catId).let { n ->
-                if (n != MovieFromProvider(old.id, old.name, old.poster, old.year, old.rating, old.streamUrl, old.categoryId)) changed += n
+                poster = m.poster, year = m.year, rating = m.rating, streamUrl = m.streamUrl, addedAt = m.added ?: t)
+            // The provider's date replaces when the app first saw it (all items of a fresh install share that).
+            else MovieFromProvider(old.id, m.name, m.poster, m.year, m.rating, m.streamUrl, catId, m.added ?: old.addedAt).let { n ->
+                if (n != MovieFromProvider(old.id, old.name, old.poster, old.year, old.rating, old.streamUrl, old.categoryId, old.addedAt)) changed += n
             }
         }
         fresh.chunked(WRITE_CHUNK).forEach { dao.upsert(it) }
@@ -190,9 +191,9 @@ class CatalogueSync(
             val catId = c.idByRemote[resolve(s.categoryRemoteId)]
             val old = existing[s.remoteId]
             if (old == null) fresh += SeriesEntity(providerId = providerId, categoryId = catId, remoteId = s.remoteId, name = s.name,
-                poster = s.poster, year = s.year, rating = s.rating, addedAt = t)
-            else SeriesFromProvider(old.id, s.name, s.poster, s.year, s.rating, catId).let { n ->
-                if (n != SeriesFromProvider(old.id, old.name, old.poster, old.year, old.rating, old.categoryId)) changed += n
+                poster = s.poster, year = s.year, rating = s.rating, addedAt = s.added ?: t)
+            else SeriesFromProvider(old.id, s.name, s.poster, s.year, s.rating, catId, s.added ?: old.addedAt).let { n ->
+                if (n != SeriesFromProvider(old.id, old.name, old.poster, old.year, old.rating, old.categoryId, old.addedAt)) changed += n
             }
         }
         fresh.chunked(WRITE_CHUNK).forEach { dao.upsert(it) }

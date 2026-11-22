@@ -98,6 +98,7 @@ data class XVodStream(
     val year: LInt = null,
     @SerialName("category_id") val categoryId: LString = null,
     @SerialName("container_extension") val containerExtension: LString = null,
+    /** Unix seconds. */ val added: LString = null,
 )
 
 @Serializable
@@ -108,6 +109,7 @@ data class XSeries(
     val rating: LDouble = null,
     val releaseDate: LString = null,
     @SerialName("category_id") val categoryId: LString = null,
+    /** Unix seconds. */ @SerialName("last_modified") val lastModified: LString = null,
 )
 
 /** Free-form sections (`info`, `episodes`) are kept as JSON: providers send `[]` where an object is expected. */

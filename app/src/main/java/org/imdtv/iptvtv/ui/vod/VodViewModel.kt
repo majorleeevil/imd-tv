@@ -8,6 +8,7 @@ import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -172,10 +173,12 @@ class VodViewModel(private val app: Application) : AndroidViewModel(app) {
         focused.value = null
     }
 
-    suspend fun inCategory(categoryId: Long, limit: Int = ROW_LIMIT): List<VodItem> =
-        if (categoryId == CONTINUE_ID) continueWatching.value.take(limit)
-        else if (kind.value == Kind.MOVIE) c.db.movieDao().inCategory(categoryId, limit).map { it.item() }
-        else c.db.seriesDao().inCategory(categoryId, limit).map { it.item() }
+    suspend fun inCategory(categoryId: Long, limit: Int = ROW_LIMIT): List<VodItem> {
+        if (categoryId == CONTINUE_ID) return continueWatching.value.take(limit)
+        val sort = c.settings.settings.first().vodSort.name // Settings › Movies & Series › Sort by
+        return if (kind.value == Kind.MOVIE) c.db.movieDao().inCategory(categoryId, limit, sort).map { it.item() }
+        else c.db.seriesDao().inCategory(categoryId, limit, sort).map { it.item() }
+    }
 
     private suspend fun items(k: Kind, ids: List<Long>): List<VodItem> {
         if (ids.isEmpty()) return emptyList()

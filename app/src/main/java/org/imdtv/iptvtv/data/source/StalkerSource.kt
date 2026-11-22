@@ -245,12 +245,12 @@ class StalkerSource(
                     val id = r.str("id") ?: return@forEach
                     val name = r.str("name") ?: r.str("o_name") ?: id
                     if (r.str("is_series") == "1") {
-                        series += Series("vod:$id", "vod:${c.remoteId}", name, logo(r.str("screenshot_uri")), r.str("year")?.let(::yearOf), r.str("rating_imdb")?.toDoubleOrNull())
+                        series += Series("vod:$id", "vod:${c.remoteId}", name, logo(r.str("screenshot_uri")), r.str("year")?.let(::yearOf), r.str("rating_imdb")?.toDoubleOrNull(), addedMs(r.str("added")))
                         seriesCats += Category("vod:${c.remoteId}", c.name, Kind.SERIES)
                     } else {
                         val cmd = r.str("cmd") ?: return@forEach
                         movies += Movie(id, c.remoteId, name, logo(r.str("screenshot_uri")), r.str("year")?.let(::yearOf),
-                            r.str("rating_imdb")?.toDoubleOrNull(), StalkerLink(providerId, "vod", cmd).toString())
+                            r.str("rating_imdb")?.toDoubleOrNull(), StalkerLink(providerId, "vod", cmd).toString(), addedMs(r.str("added")))
                     }
                 }
             }
@@ -329,3 +329,6 @@ class StalkerLinks(
         return withStreamHeaders(c.createLink(l), mapOf("User-Agent" to c.agent))
     }
 }
+
+/** Stalker's "added" ("2024-05-01 18:30:00", portal time taken as UTC: only the order matters); null when absent or odd. */
+internal fun addedMs(s: String?): Long? = runCatching { java.time.LocalDateTime.parse(s!!.trim().replace(' ', 'T')).toEpochSecond(java.time.ZoneOffset.UTC) * 1000 }.getOrNull()
