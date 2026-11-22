@@ -286,7 +286,7 @@
     <string name="set_b_vod_sort_az">Alfabetik</string>
     <string name="set_b_vod_sort_added">Son eklenenler</string>
     <string name="set_b_use_phone">Telefonunuzu kullanın</string>
-    <string name="set_b_phone_scan">Bu formu telefonunuzda doldurmak için telefonunuzla tarayın. Telefon, TV ile aynı ağda olmalıdır.\n%1$s</string>
+    <string name="set_b_phone_scan">Bu formu telefonunuzda doldurmak için telefonunuzla tarayın.\nVeya bu adresi elle girin:\n%1$s\nTelefon, TV ile aynı ağda olmalıdır.</string>
     <string name="set_b_phone_send">TV\'ye gönder</string>
     <string name="set_b_phone_done">Gönderildi. TV\'de bilgileri kontrol edin ve Kaydet\'e basın.</string>
     <string name="set_b_phone_blank_keeps">korumak için boş bırakın</string>

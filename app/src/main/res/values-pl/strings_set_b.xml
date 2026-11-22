@@ -286,7 +286,7 @@
     <string name="set_b_vod_sort_az">Alfabetycznie</string>
     <string name="set_b_vod_sort_added">Ostatnio dodane</string>
     <string name="set_b_use_phone">Użyj telefonu</string>
-    <string name="set_b_phone_scan">Zeskanuj telefonem, aby wypełnić ten formularz na telefonie. Telefon musi być w tej samej sieci co telewizor.\n%1$s</string>
+    <string name="set_b_phone_scan">Zeskanuj telefonem, aby wypełnić ten formularz na telefonie.\nLub wpisz ten adres ręcznie:\n%1$s\nTelefon musi być w tej samej sieci co telewizor.</string>
     <string name="set_b_phone_send">Wyślij do telewizora</string>
     <string name="set_b_phone_done">Wysłano. Na telewizorze sprawdź dane i naciśnij Zapisz.</string>
     <string name="set_b_phone_blank_keeps">zostaw puste, aby zachować</string>

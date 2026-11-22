@@ -286,7 +286,7 @@
     <string name="set_b_vod_sort_az">Alphabetisch</string>
     <string name="set_b_vod_sort_added">Zuletzt hinzugefügt</string>
     <string name="set_b_use_phone">Dein Smartphone verwenden</string>
-    <string name="set_b_phone_scan">Scanne mit deinem Smartphone, um dieses Formular dort auszufüllen. Das Smartphone muss im selben Netzwerk sein wie der Fernseher.\n%1$s</string>
+    <string name="set_b_phone_scan">Scanne mit deinem Smartphone, um dieses Formular dort auszufüllen.\nOder gib diese Adresse manuell ein:\n%1$s\nDas Smartphone muss im selben Netzwerk sein wie der Fernseher.</string>
     <string name="set_b_phone_send">An Fernseher senden</string>
     <string name="set_b_phone_done">Gesendet. Prüfe die Angaben am Fernseher und drücke auf Speichern.</string>
     <string name="set_b_phone_blank_keeps">leer lassen, um es zu behalten</string>

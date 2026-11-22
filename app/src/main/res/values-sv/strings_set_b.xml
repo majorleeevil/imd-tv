@@ -286,7 +286,7 @@
     <string name="set_b_vod_sort_az">Alfabetiskt</string>
     <string name="set_b_vod_sort_added">Nyligen tillagda</string>
     <string name="set_b_use_phone">Använd din telefon</string>
-    <string name="set_b_phone_scan">Skanna med din telefon för att fylla i formuläret där. Telefonen måste vara på samma nätverk som TV:n.\n%1$s</string>
+    <string name="set_b_phone_scan">Skanna med din telefon för att fylla i formuläret där.\nEller ange den här adressen manuellt:\n%1$s\nTelefonen måste vara på samma nätverk som TV:n.</string>
     <string name="set_b_phone_send">Skicka till TV</string>
     <string name="set_b_phone_done">Skickat. Kontrollera uppgifterna på TV:n och tryck på Spara.</string>
     <string name="set_b_phone_blank_keeps">lämna tomt för att behålla det</string>

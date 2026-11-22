@@ -286,7 +286,7 @@
     <string name="set_b_vod_sort_az">Alfabético</string>
     <string name="set_b_vod_sort_added">Añadidos recientemente</string>
     <string name="set_b_use_phone">Usa tu teléfono</string>
-    <string name="set_b_phone_scan">Escanea con tu teléfono para rellenar este formulario allí. El teléfono debe estar en la misma red que el televisor.\n%1$s</string>
+    <string name="set_b_phone_scan">Escanea con tu teléfono para rellenar este formulario allí.\nO introduce esta dirección manualmente:\n%1$s\nEl teléfono debe estar en la misma red que el televisor.</string>
     <string name="set_b_phone_send">Enviar al televisor</string>
     <string name="set_b_phone_done">Enviado. En el televisor, revisa los datos y pulsa Guardar.</string>
     <string name="set_b_phone_blank_keeps">déjalo vacío para no cambiar nada</string>
