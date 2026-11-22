@@ -72,10 +72,24 @@ class XtreamSource(
                 if (resp.code == 401 || resp.code == 403) {
                     throw XtreamAuthException("Login rejected by server (HTTP ${resp.code})", R.string.set_b_xt_rejected, listOf(resp.code))
                 }
-                if (!resp.isSuccessful) throw UiIOException("Xtream request failed: HTTP ${resp.code} ${resp.message}", R.string.set_b_xt_request_failed, listOf(resp.code, resp.message))
+                if (!resp.isSuccessful) { logRefusal(url, req, resp); throw UiIOException("Xtream request failed: HTTP ${resp.code} ${resp.message}", R.string.set_b_xt_request_failed, listOf(resp.code, resp.message)) }
                 read(resp.body!!.source())
             }
         }
+
+    /**
+     * For Send logs: what the panel answered and how it could be reached. A playlist refused on one network but not another
+     * (issue: HTTP 512 on a 5G router) points at IPv6 or the user agent. No login: the URL isn't logged.
+     */
+    private fun logRefusal(url: okhttp3.HttpUrl, req: Request, resp: okhttp3.Response) {
+        val body = runCatching { resp.peekBody(300).string() }.getOrDefault("").replace(Regex("\\s+"), " ")
+            .let { if (username.isNotEmpty()) it.replace(username, "<user>") else it }.let { if (password.isNotEmpty()) it.replace(password, "<pass>") else it }
+        val server = runCatching { java.net.InetAddress.getAllByName(url.host).joinToString { it.hostAddress.orEmpty() } }.getOrDefault("?")
+        val boxV6 = runCatching { java.net.NetworkInterface.getNetworkInterfaces().toList().flatMap { it.inetAddresses.toList() }
+            .any { it is java.net.Inet6Address && !it.isLinkLocalAddress && !it.isLoopbackAddress } }.getOrDefault(false)
+        android.util.Log.w("Xtream", "HTTP ${resp.code} '${resp.message}' from ${url.host}:${url.port} [$server], box IPv6 ${if (boxV6) "yes" else "no"}, " +
+            "${resp.protocol}, server '${resp.header("Server")}', agent '${req.header("User-Agent") ?: "default"}', body: $body")
+    }
 
     private suspend fun ensureAuth() = authMutex.withLock {
         if (authenticated) return@withLock

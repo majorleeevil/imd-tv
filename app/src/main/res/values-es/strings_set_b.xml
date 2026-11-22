@@ -331,4 +331,5 @@
     <string name="set_b_stremio_failed">Stremio: %1$s</string>
     <string name="set_b_stremio_no_catalogs">Los complementos de esta cuenta de Stremio no tienen catálogos de películas ni series</string>
     <string name="set_b_stremio_limit">Solo se reproducen enlaces directos: los títulos cuyos complementos ofrecen solo torrents no se pueden reproducir aquí.</string>
+    <string name="set_b_show">Mostrar</string>
 </resources>

@@ -331,4 +331,5 @@
     <string name="set_b_stremio_failed">Stremio : %1$s</string>
     <string name="set_b_stremio_no_catalogs">Les modules complémentaires de ce compte Stremio n\'ont aucun catalogue de films ou de séries</string>
     <string name="set_b_stremio_limit">Seuls les liens directs sont lus : les titres dont les modules complémentaires n\'offrent que des torrents ne peuvent pas être lus ici.</string>
+    <string name="set_b_show">Afficher</string>
 </resources>

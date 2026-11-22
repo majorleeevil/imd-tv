@@ -331,4 +331,5 @@
     <string name="set_b_stremio_failed">Stremio: %1$s</string>
     <string name="set_b_stremio_no_catalogs">Τα πρόσθετα αυτού του λογαριασμού Stremio δεν έχουν καταλόγους ταινιών ή σειρών</string>
     <string name="set_b_stremio_limit">Παίζουν μόνο άμεσοι σύνδεσμοι: οι τίτλοι των οποίων τα πρόσθετα προσφέρουν μόνο torrent δεν μπορούν να παιχθούν εδώ.</string>
+    <string name="set_b_show">Εμφάνιση</string>
 </resources>

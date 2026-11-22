@@ -331,4 +331,5 @@
     <string name="set_b_stremio_failed">Stremio: %1$s</string>
     <string name="set_b_stremio_no_catalogs">Tilläggen på det här Stremio-kontot har inga film- eller serikataloger</string>
     <string name="set_b_stremio_limit">Bara direktlänkar spelas upp: titlar vars tillägg bara erbjuder torrents kan inte spelas upp här.</string>
+    <string name="set_b_show">Visa</string>
 </resources>

@@ -331,4 +331,5 @@
     <string name="set_b_stremio_failed">Stremio: %1$s</string>
     <string name="set_b_stremio_no_catalogs">Bu Stremio hesabındaki eklentilerin film veya dizi kataloğu yok</string>
     <string name="set_b_stremio_limit">Yalnızca doğrudan bağlantılar oynatılır: eklentileri yalnızca torrent sunan yapımlar burada oynatılamaz.</string>
+    <string name="set_b_show">Göster</string>
 </resources>

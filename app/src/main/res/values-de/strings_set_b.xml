@@ -331,4 +331,5 @@
     <string name="set_b_stremio_failed">Stremio: %1$s</string>
     <string name="set_b_stremio_no_catalogs">Die Add-ons dieses Stremio-Kontos haben keine Film- oder Serienkataloge</string>
     <string name="set_b_stremio_limit">Nur direkte Links werden abgespielt: Titel, deren Add-ons nur Torrents anbieten, können hier nicht abgespielt werden.</string>
+    <string name="set_b_show">Anzeigen</string>
 </resources>

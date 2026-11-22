@@ -331,4 +331,5 @@
     <string name="set_b_stremio_failed">Stremio: %1$s</string>
     <string name="set_b_stremio_no_catalogs">I componenti aggiuntivi di questo account Stremio non hanno cataloghi di film o serie</string>
     <string name="set_b_stremio_limit">Vengono riprodotti solo i link diretti: i titoli i cui componenti aggiuntivi offrono solo torrent non possono essere riprodotti qui.</string>
+    <string name="set_b_show">Mostra</string>
 </resources>

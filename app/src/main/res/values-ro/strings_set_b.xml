@@ -331,4 +331,5 @@
     <string name="set_b_stremio_failed">Stremio: %1$s</string>
     <string name="set_b_stremio_no_catalogs">Add-on-urile acestui cont Stremio nu au cataloage de filme sau seriale</string>
     <string name="set_b_stremio_limit">Se redau doar linkurile directe: titlurile ale căror add-on-uri oferă doar torrente nu pot fi redate aici.</string>
+    <string name="set_b_show">Arată</string>
 </resources>

@@ -3,6 +3,7 @@ package org.imdtv.iptvtv.ui
 import org.imdtv.iptvtv.R
 import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.border
+import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -201,9 +202,17 @@ private fun ProviderForm(vm: AppViewModel, editing: ProviderEntity?) {
 /** A [Field] with its label on the left, so the form fits one screen. */
 @Composable
 private fun FormField(label: String, value: String, keyboard: KeyboardType = KeyboardType.Text, secret: Boolean = false, onChange: (String) -> Unit) {
+    // A secret gets Show / Hide on its right (Right from the field), so what's typed can be checked.
+    var shown by remember { mutableStateOf(false) }
     Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
         Text(label, color = Color.LightGray, fontSize = 14.sp, modifier = Modifier.width(170.dp))
-        Column(Modifier.weight(1f)) { Field("", value, keyboard, secret, openOnOk = true, onChange = onChange) }
+        Column(Modifier.weight(1f)) { Field("", value, keyboard, secret && !shown, openOnOk = true, onChange = onChange) }
+        if (secret) org.imdtv.iptvtv.ui.FocusBox(onClick = { shown = !shown }, modifier = Modifier.padding(start = 10.dp)) { f ->
+            Text(stringResource(if (shown) R.string.set_b_hide else R.string.set_b_show), fontSize = 14.sp, color = if (f) Color.Black else Color.White,
+                modifier = Modifier.width(90.dp).border(2.dp, if (f) Color.White else Color.Gray, RoundedCornerShape(8.dp))
+                    .background(if (f) Color.White else Color.Transparent, RoundedCornerShape(8.dp)).padding(vertical = 12.dp),
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+        }
     }
 }
 
@@ -234,6 +243,8 @@ fun Field(
                 when (e.key) {
                     Key.DirectionDown -> { focus.moveFocus(FocusDirection.Down); true }
                     Key.DirectionUp -> { focus.moveFocus(FocusDirection.Up); true }
+                    // Not typing: Right reaches what's beside the field (a password's Show), not the cursor.
+                    Key.DirectionRight -> if (editing) false else focus.moveFocus(FocusDirection.Right)
                     Key.DirectionCenter, Key.Enter -> if (editing) false else { editing = true; keyboardCtl?.show(); true }
                     else -> false
                 }

@@ -331,4 +331,5 @@
     <string name="set_b_stremio_failed">Stremio: %1$s</string>
     <string name="set_b_stremio_no_catalogs">Shtesat e kësaj llogarie Stremio nuk kanë katalogë filmash ose serialesh</string>
     <string name="set_b_stremio_limit">Luhen vetëm lidhjet e drejtpërdrejta: titujt që shtesat e tyre ofrojnë vetëm torrente nuk mund të luhen këtu.</string>
+    <string name="set_b_show">Shfaq</string>
 </resources>
