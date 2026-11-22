@@ -112,4 +112,18 @@
     <string name="live_menu_merge_options">Opsionet e bashkimit</string>
     <string name="live_menu_merge_options_title">Opsionet e bashkimit · %1$s</string>
     <string name="live_rail_jump_hint">Mbani lart: në krye / lista e mëparshme\nMbani poshtë: lista tjetër / në fund</string>
+    <string name="live_menu_change_number">Ndrysho numrin e kanalit</string>
+    <string name="live_menu_parental_on">Aktivizo Kyçjen prindërore</string>
+    <string name="live_menu_parental_off">Çaktivizo Kyçjen prindërore</string>
+    <string name="live_parental_enter_pin">Shkruani PIN-in tuaj</string>
+    <string name="live_parental_enter_word">Shkruani fjalën tuaj rezervë</string>
+    <string name="live_parental_pin">PIN</string>
+    <string name="live_parental_word">Fjala rezervë</string>
+    <string name="live_parental_wrong_pin">PIN i gabuar, provoni përsëri</string>
+    <string name="live_parental_wrong_word">Fjalë rezervë e gabuar, provoni përsëri</string>
+    <string name="live_parental_unlock">Zhbllokoje</string>
+    <string name="live_parental_forgot">Harruat PIN-in? Përdorni fjalën rezervë</string>
+    <string name="live_parental_use_pin">Përdorni PIN-in tuaj</string>
+    <string name="live_menu_number_hint">Numër i ri</string>
+    <string name="live_number_taken">Kanali %1$d i është caktuar %2$s. Nëse shtypni Konfirmo, %2$s do të kalojë te %3$d.</string>
 </resources>

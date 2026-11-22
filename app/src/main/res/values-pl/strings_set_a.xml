@@ -322,4 +322,13 @@
     </plurals>
     <string name="set_a_remove_symbols">Usuń znaki specjalne</string>
     <string name="set_a_remove_symbols_expl">Usuwa małe i otoczone kółkiem litery oraz symbole, np. „ᴿᴬᵂ”, „ⓋⒾⓅ” i „◉”, z nazw kanałów</string>
+    <string name="set_a_size_xlarge">Bardzo duży</string>
+    <string name="set_a_select_all">Zaznacz wszystko</string>
+    <string name="set_a_select_all_expl">Zaznacz każdy kanał w tej kategorii</string>
+    <string name="set_a_unselect_all">Odznacz wszystko</string>
+    <string name="set_a_unselect_all_expl">Usuń wszystkie zaznaczenia</string>
+    <string name="set_a_guide_logos">Logo zamiast nazw</string>
+    <string name="set_a_guide_logos_expl">Pokazuj logo każdego kanału w przewodniku zamiast jego nazwy</string>
+    <string name="set_a_epg_text_size">Rozmiar tekstu</string>
+    <string name="set_a_epg_text_size_expl">Rozmiar całego tekstu w przewodniku</string>
 </resources>

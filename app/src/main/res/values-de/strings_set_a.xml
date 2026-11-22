@@ -300,4 +300,13 @@
     </plurals>
     <string name="set_a_remove_symbols">Sonderzeichen entfernen</string>
     <string name="set_a_remove_symbols_expl">Hochgestellte und eingekreiste Buchstaben sowie Symbole wie „ᴿᴬᵂ“, „ⓋⒾⓅ“ und „◉“ aus Sendernamen entfernen</string>
+    <string name="set_a_size_xlarge">Sehr groß</string>
+    <string name="set_a_select_all">Alle auswählen</string>
+    <string name="set_a_select_all_expl">Alle Sender dieser Kategorie anhaken</string>
+    <string name="set_a_unselect_all">Alle abwählen</string>
+    <string name="set_a_unselect_all_expl">Alle Haken entfernen</string>
+    <string name="set_a_guide_logos">Logos statt Namen</string>
+    <string name="set_a_guide_logos_expl">Zeigt im Programm das Logo jedes Senders statt seines Namens</string>
+    <string name="set_a_epg_text_size">Textgröße</string>
+    <string name="set_a_epg_text_size_expl">Größe des gesamten Texts im Programm</string>
 </resources>

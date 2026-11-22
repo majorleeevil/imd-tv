@@ -112,4 +112,18 @@
     <string name="live_menu_merge_options">Birleştirme seçenekleri</string>
     <string name="live_menu_merge_options_title">Birleştirme seçenekleri · %1$s</string>
     <string name="live_rail_jump_hint">Yukarı basılı tut: başa / önceki liste\nAşağı basılı tut: sonraki liste / sona</string>
+    <string name="live_menu_change_number">Kanal numarasını değiştir</string>
+    <string name="live_menu_parental_on">Ebeveyn Kilidini etkinleştir</string>
+    <string name="live_menu_parental_off">Ebeveyn Kilidini devre dışı bırak</string>
+    <string name="live_parental_enter_pin">PIN\'inizi girin</string>
+    <string name="live_parental_enter_word">Yedek kelimenizi girin</string>
+    <string name="live_parental_pin">PIN</string>
+    <string name="live_parental_word">Yedek kelime</string>
+    <string name="live_parental_wrong_pin">Yanlış PIN, tekrar deneyin</string>
+    <string name="live_parental_wrong_word">Yanlış yedek kelime, tekrar deneyin</string>
+    <string name="live_parental_unlock">Kilidi aç</string>
+    <string name="live_parental_forgot">PIN\'inizi mi unuttunuz? Yedek kelimenizi kullanın</string>
+    <string name="live_parental_use_pin">PIN\'inizi kullanın</string>
+    <string name="live_menu_number_hint">Yeni numara</string>
+    <string name="live_number_taken">%1$d numaralı kanal %2$s kanalına atanmış. Onayla\'ya basarsanız %2$s kanalı %3$d numarasına taşınır.</string>
 </resources>

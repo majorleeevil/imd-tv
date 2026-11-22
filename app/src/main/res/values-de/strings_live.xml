@@ -112,4 +112,18 @@
     <string name="live_menu_merge_options">Zusammenführen</string>
     <string name="live_menu_merge_options_title">Zusammenführen · %1$s</string>
     <string name="live_rail_jump_hint">Hoch halten: oben / vorige Playlist\nRunter halten: nächste Playlist / unten</string>
+    <string name="live_menu_change_number">Sendernummer ändern</string>
+    <string name="live_menu_parental_on">Kindersicherung aktivieren</string>
+    <string name="live_menu_parental_off">Kindersicherung deaktivieren</string>
+    <string name="live_parental_enter_pin">Gib deine PIN ein</string>
+    <string name="live_parental_enter_word">Gib dein Ersatzwort ein</string>
+    <string name="live_parental_pin">PIN</string>
+    <string name="live_parental_word">Ersatzwort</string>
+    <string name="live_parental_wrong_pin">Falsche PIN, versuche es erneut</string>
+    <string name="live_parental_wrong_word">Falsches Ersatzwort, versuche es erneut</string>
+    <string name="live_parental_unlock">Entsperren</string>
+    <string name="live_parental_forgot">PIN vergessen? Nutze dein Ersatzwort</string>
+    <string name="live_parental_use_pin">Deine PIN verwenden</string>
+    <string name="live_menu_number_hint">Neue Nummer</string>
+    <string name="live_number_taken">Sender %1$d ist %2$s zugewiesen. Wenn du auf Bestätigen drückst, wechselt %2$s zu %3$d.</string>
 </resources>

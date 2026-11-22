@@ -300,4 +300,13 @@
     </plurals>
     <string name="set_a_remove_symbols">Rimuovi caratteri speciali</string>
     <string name="set_a_remove_symbols_expl">Rimuove lettere piccole o cerchiate e simboli come “ᴿᴬᵂ”, “ⓋⒾⓅ” e “◉” dai nomi dei canali</string>
+    <string name="set_a_size_xlarge">Extra grande</string>
+    <string name="set_a_select_all">Seleziona tutto</string>
+    <string name="set_a_select_all_expl">Spunta tutti i canali di questa categoria</string>
+    <string name="set_a_unselect_all">Deseleziona tutto</string>
+    <string name="set_a_unselect_all_expl">Rimuove tutte le spunte</string>
+    <string name="set_a_guide_logos">Loghi al posto dei nomi</string>
+    <string name="set_a_guide_logos_expl">Mostra nella guida il logo di ogni canale al posto del nome</string>
+    <string name="set_a_epg_text_size">Dimensione del testo</string>
+    <string name="set_a_epg_text_size_expl">Dimensione di tutto il testo nella guida</string>
 </resources>

@@ -112,4 +112,18 @@
     <string name="live_menu_merge_options">Opcje scalania</string>
     <string name="live_menu_merge_options_title">Opcje scalania · %1$s</string>
     <string name="live_rail_jump_hint">Przytrzymaj w górę: początek / poprzednia lista\nPrzytrzymaj w dół: następna lista / koniec</string>
+    <string name="live_menu_change_number">Zmień numer kanału</string>
+    <string name="live_menu_parental_on">Włącz kontrolę rodzicielską</string>
+    <string name="live_menu_parental_off">Wyłącz kontrolę rodzicielską</string>
+    <string name="live_parental_enter_pin">Wpisz swój PIN</string>
+    <string name="live_parental_enter_word">Wpisz swoje słowo zapasowe</string>
+    <string name="live_parental_pin">PIN</string>
+    <string name="live_parental_word">Słowo zapasowe</string>
+    <string name="live_parental_wrong_pin">Zły PIN, spróbuj ponownie</string>
+    <string name="live_parental_wrong_word">Złe słowo zapasowe, spróbuj ponownie</string>
+    <string name="live_parental_unlock">Odblokuj</string>
+    <string name="live_parental_forgot">Nie pamiętasz PIN-u? Użyj słowa zapasowego</string>
+    <string name="live_parental_use_pin">Użyj PIN-u</string>
+    <string name="live_menu_number_hint">Nowy numer</string>
+    <string name="live_number_taken">Kanał %1$d jest przypisany do: %2$s. Jeśli naciśniesz Potwierdź, kanał %2$s zostanie przeniesiony na %3$d.</string>
 </resources>

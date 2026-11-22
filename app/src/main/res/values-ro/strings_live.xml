@@ -112,4 +112,18 @@
     <string name="live_menu_merge_options">Opțiuni de combinare</string>
     <string name="live_menu_merge_options_title">Opțiuni de combinare · %1$s</string>
     <string name="live_rail_jump_hint">Ține sus: început / lista anterioară\nȚine jos: lista următoare / sfârșit</string>
+    <string name="live_menu_change_number">Schimbă numărul canalului</string>
+    <string name="live_menu_parental_on">Activează controlul parental</string>
+    <string name="live_menu_parental_off">Dezactivează controlul parental</string>
+    <string name="live_parental_enter_pin">Introdu PIN-ul</string>
+    <string name="live_parental_enter_word">Introdu cuvântul de rezervă</string>
+    <string name="live_parental_pin">PIN</string>
+    <string name="live_parental_word">Cuvânt de rezervă</string>
+    <string name="live_parental_wrong_pin">PIN greșit, încearcă din nou</string>
+    <string name="live_parental_wrong_word">Cuvânt de rezervă greșit, încearcă din nou</string>
+    <string name="live_parental_unlock">Deblochează</string>
+    <string name="live_parental_forgot">Ai uitat PIN-ul? Folosește cuvântul de rezervă</string>
+    <string name="live_parental_use_pin">Folosește PIN-ul</string>
+    <string name="live_menu_number_hint">Număr nou</string>
+    <string name="live_number_taken">Canalul %1$d este atribuit lui %2$s. Dacă apeși Confirmă, %2$s va trece la %3$d.</string>
 </resources>

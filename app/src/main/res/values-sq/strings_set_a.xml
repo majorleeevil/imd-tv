@@ -301,4 +301,13 @@
     </plurals>
     <string name="set_a_remove_symbols">Hiq shenjat speciale</string>
     <string name="set_a_remove_symbols_expl">Hiq shkronjat e vogla dhe të rrethuara dhe simbolet si “ᴿᴬᵂ”, “ⓋⒾⓅ” dhe “◉” nga emrat e kanaleve</string>
+    <string name="set_a_size_xlarge">Shumë e madhe</string>
+    <string name="set_a_select_all">Zgjidh të gjitha</string>
+    <string name="set_a_select_all_expl">Shënoni çdo kanal në këtë kategori</string>
+    <string name="set_a_unselect_all">Hiq zgjedhjen e të gjitha</string>
+    <string name="set_a_unselect_all_expl">Pastro çdo shenjë</string>
+    <string name="set_a_guide_logos">Logo në vend të emrave</string>
+    <string name="set_a_guide_logos_expl">Shfaq logon e çdo kanali në program në vend të emrit të tij</string>
+    <string name="set_a_epg_text_size">Madhësia e tekstit</string>
+    <string name="set_a_epg_text_size_expl">Madhësia e gjithë tekstit në program</string>
 </resources>

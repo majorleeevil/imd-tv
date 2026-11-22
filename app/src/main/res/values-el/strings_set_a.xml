@@ -300,4 +300,13 @@
     </plurals>
     <string name="set_a_remove_symbols">Αφαίρεση ειδικών χαρακτήρων</string>
     <string name="set_a_remove_symbols_expl">Αφαίρεση μικρών και κυκλωμένων γραμμάτων και συμβόλων όπως «ᴿᴬᵂ», «ⓋⒾⓅ» και «◉» από τα ονόματα καναλιών</string>
+    <string name="set_a_size_xlarge">Πολύ μεγάλο</string>
+    <string name="set_a_select_all">Επιλογή όλων</string>
+    <string name="set_a_select_all_expl">Επιλογή όλων των καναλιών αυτής της κατηγορίας</string>
+    <string name="set_a_unselect_all">Αποεπιλογή όλων</string>
+    <string name="set_a_unselect_all_expl">Εκκαθάριση όλων των επιλογών</string>
+    <string name="set_a_guide_logos">Λογότυπα αντί για ονόματα</string>
+    <string name="set_a_guide_logos_expl">Εμφάνιση του λογοτύπου κάθε καναλιού στον οδηγό αντί για το όνομά του</string>
+    <string name="set_a_epg_text_size">Μέγεθος κειμένου</string>
+    <string name="set_a_epg_text_size_expl">Μέγεθος όλου του κειμένου στον οδηγό</string>
 </resources>

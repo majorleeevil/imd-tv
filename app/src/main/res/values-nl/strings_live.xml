@@ -112,4 +112,18 @@
     <string name="live_menu_merge_options">Samenvoegopties</string>
     <string name="live_menu_merge_options_title">Samenvoegopties · %1$s</string>
     <string name="live_rail_jump_hint">Houd omhoog: boven / vorige afspeellijst\nHoud omlaag: volgende afspeellijst / onder</string>
+    <string name="live_menu_change_number">Zendernummer wijzigen</string>
+    <string name="live_menu_parental_on">Ouderlijk toezicht inschakelen</string>
+    <string name="live_menu_parental_off">Ouderlijk toezicht uitschakelen</string>
+    <string name="live_parental_enter_pin">Voer je pincode in</string>
+    <string name="live_parental_enter_word">Voer je back-upwoord in</string>
+    <string name="live_parental_pin">Pincode</string>
+    <string name="live_parental_word">Back-upwoord</string>
+    <string name="live_parental_wrong_pin">Verkeerde pincode, probeer opnieuw</string>
+    <string name="live_parental_wrong_word">Verkeerd back-upwoord, probeer opnieuw</string>
+    <string name="live_parental_unlock">Ontgrendelen</string>
+    <string name="live_parental_forgot">Pincode vergeten? Gebruik je back-upwoord</string>
+    <string name="live_parental_use_pin">Gebruik je pincode</string>
+    <string name="live_menu_number_hint">Nieuw nummer</string>
+    <string name="live_number_taken">Zender %1$d is toegewezen aan %2$s. Als je op Bevestigen drukt, gaat %2$s naar %3$d.</string>
 </resources>

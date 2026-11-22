@@ -300,4 +300,13 @@
     </plurals>
     <string name="set_a_remove_symbols">Özel karakterleri kaldır</string>
     <string name="set_a_remove_symbols_expl">Kanal adlarından “ᴿᴬᵂ”, “ⓋⒾⓅ” ve “◉” gibi küçük ve daire içindeki harfleri ve sembolleri kaldırır</string>
+    <string name="set_a_size_xlarge">Çok büyük</string>
+    <string name="set_a_select_all">Tümünü seç</string>
+    <string name="set_a_select_all_expl">Bu kategorideki her kanalı işaretle</string>
+    <string name="set_a_unselect_all">Tüm seçimi kaldır</string>
+    <string name="set_a_unselect_all_expl">Tüm işaretleri temizle</string>
+    <string name="set_a_guide_logos">Ad yerine logo</string>
+    <string name="set_a_guide_logos_expl">Rehberde her kanalın adı yerine logosunu göster</string>
+    <string name="set_a_epg_text_size">Metin boyutu</string>
+    <string name="set_a_epg_text_size_expl">Rehberdeki tüm metnin boyutu</string>
 </resources>

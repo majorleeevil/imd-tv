@@ -112,4 +112,18 @@
     <string name="live_menu_merge_options">Opciones de fusión</string>
     <string name="live_menu_merge_options_title">Opciones de fusión · %1$s</string>
     <string name="live_rail_jump_hint">Mantén arriba: inicio / lista anterior\nMantén abajo: lista siguiente / final</string>
+    <string name="live_menu_change_number">Cambiar número de canal</string>
+    <string name="live_menu_parental_on">Activar el control parental</string>
+    <string name="live_menu_parental_off">Desactivar el control parental</string>
+    <string name="live_parental_enter_pin">Introduce tu PIN</string>
+    <string name="live_parental_enter_word">Introduce tu palabra de respaldo</string>
+    <string name="live_parental_pin">PIN</string>
+    <string name="live_parental_word">Palabra de respaldo</string>
+    <string name="live_parental_wrong_pin">PIN incorrecto, inténtalo de nuevo</string>
+    <string name="live_parental_wrong_word">Palabra de respaldo incorrecta, inténtalo de nuevo</string>
+    <string name="live_parental_unlock">Desbloquear</string>
+    <string name="live_parental_forgot">¿Olvidaste tu PIN? Usa tu palabra de respaldo</string>
+    <string name="live_parental_use_pin">Usar tu PIN</string>
+    <string name="live_menu_number_hint">Número nuevo</string>
+    <string name="live_number_taken">El canal %1$d está asignado a %2$s. Si pulsas Confirmar, %2$s pasará al %3$d.</string>
 </resources>

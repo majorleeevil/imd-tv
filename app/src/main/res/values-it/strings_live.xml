@@ -112,4 +112,18 @@
     <string name="live_menu_merge_options">Opzioni di unione</string>
     <string name="live_menu_merge_options_title">Opzioni di unione · %1$s</string>
     <string name="live_rail_jump_hint">Tieni su: inizio / playlist precedente\nTieni giù: playlist successiva / fine</string>
+    <string name="live_menu_change_number">Cambia numero del canale</string>
+    <string name="live_menu_parental_on">Attiva il controllo parentale</string>
+    <string name="live_menu_parental_off">Disattiva il controllo parentale</string>
+    <string name="live_parental_enter_pin">Inserisci il tuo PIN</string>
+    <string name="live_parental_enter_word">Inserisci la tua parola di riserva</string>
+    <string name="live_parental_pin">PIN</string>
+    <string name="live_parental_word">Parola di riserva</string>
+    <string name="live_parental_wrong_pin">PIN errato, riprova</string>
+    <string name="live_parental_wrong_word">Parola di riserva errata, riprova</string>
+    <string name="live_parental_unlock">Sblocca</string>
+    <string name="live_parental_forgot">PIN dimenticato? Usa la parola di riserva</string>
+    <string name="live_parental_use_pin">Usa il tuo PIN</string>
+    <string name="live_menu_number_hint">Nuovo numero</string>
+    <string name="live_number_taken">Il canale %1$d è assegnato a %2$s. Se premi Conferma, %2$s passerà al %3$d.</string>
 </resources>

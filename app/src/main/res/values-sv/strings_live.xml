@@ -112,4 +112,18 @@
     <string name="live_menu_merge_options">Sammanslagning</string>
     <string name="live_menu_merge_options_title">Sammanslagning · %1$s</string>
     <string name="live_rail_jump_hint">Håll upp: toppen / föregående spellista\nHåll ner: nästa spellista / botten</string>
+    <string name="live_menu_change_number">Ändra kanalnummer</string>
+    <string name="live_menu_parental_on">Aktivera föräldralås</string>
+    <string name="live_menu_parental_off">Inaktivera föräldralås</string>
+    <string name="live_parental_enter_pin">Ange din PIN-kod</string>
+    <string name="live_parental_enter_word">Ange ditt reservord</string>
+    <string name="live_parental_pin">PIN-kod</string>
+    <string name="live_parental_word">Reservord</string>
+    <string name="live_parental_wrong_pin">Fel PIN-kod, försök igen</string>
+    <string name="live_parental_wrong_word">Fel reservord, försök igen</string>
+    <string name="live_parental_unlock">Lås upp</string>
+    <string name="live_parental_forgot">Glömt PIN-koden? Använd ditt reservord</string>
+    <string name="live_parental_use_pin">Använd din PIN-kod</string>
+    <string name="live_menu_number_hint">Nytt nummer</string>
+    <string name="live_number_taken">Kanal %1$d är tilldelad %2$s. Om du trycker på Bekräfta flyttas %2$s till %3$d.</string>
 </resources>

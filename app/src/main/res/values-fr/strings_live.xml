@@ -112,4 +112,18 @@
     <string name="live_menu_merge_options">Options de fusion</string>
     <string name="live_menu_merge_options_title">Options de fusion · %1$s</string>
     <string name="live_rail_jump_hint">Maintenir haut : début / playlist précédente\nMaintenir bas : playlist suivante / fin</string>
+    <string name="live_menu_change_number">Modifier le numéro de chaîne</string>
+    <string name="live_menu_parental_on">Activer le contrôle parental</string>
+    <string name="live_menu_parental_off">Désactiver le contrôle parental</string>
+    <string name="live_parental_enter_pin">Saisissez votre code PIN</string>
+    <string name="live_parental_enter_word">Saisissez votre mot de secours</string>
+    <string name="live_parental_pin">Code PIN</string>
+    <string name="live_parental_word">Mot de secours</string>
+    <string name="live_parental_wrong_pin">Code PIN incorrect, réessayez</string>
+    <string name="live_parental_wrong_word">Mot de secours incorrect, réessayez</string>
+    <string name="live_parental_unlock">Déverrouiller</string>
+    <string name="live_parental_forgot">Code PIN oublié ? Utilisez votre mot de secours</string>
+    <string name="live_parental_use_pin">Utiliser votre code PIN</string>
+    <string name="live_menu_number_hint">Nouveau numéro</string>
+    <string name="live_number_taken">La chaîne %1$d est attribuée à %2$s. Si vous appuyez sur Confirmer, %2$s passera au %3$d.</string>
 </resources>

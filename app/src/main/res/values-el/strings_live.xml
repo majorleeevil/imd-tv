@@ -112,4 +112,18 @@
     <string name="live_menu_merge_options">Επιλογές συγχώνευσης</string>
     <string name="live_menu_merge_options_title">Επιλογές συγχώνευσης · %1$s</string>
     <string name="live_rail_jump_hint">Κρατήστε πάνω: αρχή / προηγούμενη λίστα\nΚρατήστε κάτω: επόμενη λίστα / τέλος</string>
+    <string name="live_menu_change_number">Αλλαγή αριθμού καναλιού</string>
+    <string name="live_menu_parental_on">Ενεργοποίηση γονικού ελέγχου</string>
+    <string name="live_menu_parental_off">Απενεργοποίηση γονικού ελέγχου</string>
+    <string name="live_parental_enter_pin">Εισάγετε το PIN σας</string>
+    <string name="live_parental_enter_word">Εισάγετε την εφεδρική λέξη σας</string>
+    <string name="live_parental_pin">PIN</string>
+    <string name="live_parental_word">Εφεδρική λέξη</string>
+    <string name="live_parental_wrong_pin">Λάθος PIN, δοκιμάστε ξανά</string>
+    <string name="live_parental_wrong_word">Λάθος εφεδρική λέξη, δοκιμάστε ξανά</string>
+    <string name="live_parental_unlock">Ξεκλείδωμα</string>
+    <string name="live_parental_forgot">Ξεχάσατε το PIN; Χρησιμοποιήστε την εφεδρική λέξη</string>
+    <string name="live_parental_use_pin">Χρήση του PIN σας</string>
+    <string name="live_menu_number_hint">Νέος αριθμός</string>
+    <string name="live_number_taken">Το κανάλι %1$d έχει ανατεθεί στο %2$s. Αν πατήσετε Επιβεβαίωση, το %2$s θα μετακινηθεί στο %3$d.</string>
 </resources>

@@ -300,4 +300,13 @@
     </plurals>
     <string name="set_a_remove_symbols">Speciale tekens verwijderen</string>
     <string name="set_a_remove_symbols_expl">Verwijder kleine en omcirkelde letters en symbolen zoals “ᴿᴬᵂ”, “ⓋⒾⓅ” en “◉” uit zendernamen</string>
+    <string name="set_a_size_xlarge">Extra groot</string>
+    <string name="set_a_select_all">Alles selecteren</string>
+    <string name="set_a_select_all_expl">Vink alle zenders in deze categorie aan</string>
+    <string name="set_a_unselect_all">Alles deselecteren</string>
+    <string name="set_a_unselect_all_expl">Alle vinkjes wissen</string>
+    <string name="set_a_guide_logos">Logo\'s in plaats van namen</string>
+    <string name="set_a_guide_logos_expl">Toon het logo van elke zender in de gids in plaats van de naam</string>
+    <string name="set_a_epg_text_size">Tekstgrootte</string>
+    <string name="set_a_epg_text_size_expl">Grootte van alle tekst in de gids</string>
 </resources>

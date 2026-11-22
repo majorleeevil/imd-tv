@@ -311,4 +311,13 @@
     </plurals>
     <string name="set_a_remove_symbols">Elimină caracterele speciale</string>
     <string name="set_a_remove_symbols_expl">Elimină literele mici sau încercuite și simbolurile precum „ᴿᴬᵂ”, „ⓋⒾⓅ” și „◉” din numele canalelor</string>
+    <string name="set_a_size_xlarge">Foarte mare</string>
+    <string name="set_a_select_all">Selectează tot</string>
+    <string name="set_a_select_all_expl">Bifează toate canalele din această categorie</string>
+    <string name="set_a_unselect_all">Deselectează tot</string>
+    <string name="set_a_unselect_all_expl">Șterge toate bifele</string>
+    <string name="set_a_guide_logos">Logouri în loc de nume</string>
+    <string name="set_a_guide_logos_expl">Arată logoul fiecărui canal în ghid în locul numelui</string>
+    <string name="set_a_epg_text_size">Dimensiunea textului</string>
+    <string name="set_a_epg_text_size_expl">Dimensiunea întregului text din ghid</string>
 </resources>

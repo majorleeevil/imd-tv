@@ -112,4 +112,18 @@
     <string name="live_menu_merge_options">Opções de junção</string>
     <string name="live_menu_merge_options_title">Opções de junção · %1$s</string>
     <string name="live_rail_jump_hint">Manter cima: topo / lista anterior\nManter baixo: lista seguinte / fim</string>
+    <string name="live_menu_change_number">Alterar número do canal</string>
+    <string name="live_menu_parental_on">Ativar controlo parental</string>
+    <string name="live_menu_parental_off">Desativar controlo parental</string>
+    <string name="live_parental_enter_pin">Introduza o seu PIN</string>
+    <string name="live_parental_enter_word">Introduza a sua palavra de recuperação</string>
+    <string name="live_parental_pin">PIN</string>
+    <string name="live_parental_word">Palavra de recuperação</string>
+    <string name="live_parental_wrong_pin">PIN errado, tente novamente</string>
+    <string name="live_parental_wrong_word">Palavra de recuperação errada, tente novamente</string>
+    <string name="live_parental_unlock">Desbloquear</string>
+    <string name="live_parental_forgot">Esqueceu-se do PIN? Use a sua palavra de recuperação</string>
+    <string name="live_parental_use_pin">Usar o seu PIN</string>
+    <string name="live_menu_number_hint">Novo número</string>
+    <string name="live_number_taken">O canal %1$d está atribuído a %2$s. Se premir Confirmar, %2$s passará para %3$d.</string>
 </resources>
