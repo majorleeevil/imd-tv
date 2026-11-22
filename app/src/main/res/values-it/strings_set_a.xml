@@ -93,7 +93,7 @@
     <string name="set_a_vod_rows_expl">Quante righe di locandine mostrano insieme le pagine Film e Serie; con 2 righe le locandine sono più piccole</string>
     <string name="set_a_vod_rows_2">2 righe</string>
     <string name="set_a_vod_rows_1">1 riga</string>
-    <string name="set_a_title_size">Dimensione titoli</string>
+    <string name="set_a_title_size">Dimensione del testo</string>
     <string name="set_a_multi_line">Nomi su più righe</string>
     <string name="set_a_multi_line_expl">Permette ai nomi dei canali e ai titoli dei programmi di andare su 2 righe nella guida. In Celestial Glass e Liquid Glass servono righe più alte: 5 canali nella guida (o 6 in Celestial Glass)</string>
     <string name="set_a_reset_appearance">Ripristina aspetto</string>
@@ -312,4 +312,6 @@
     <string name="set_a_guide_display_both">Nome + logo</string>
     <string name="set_a_epg_text_size">Dimensione del testo</string>
     <string name="set_a_epg_text_size_expl">Dimensione di tutto il testo nella guida</string>
+    <string name="set_a_update_playlists_every">Aggiorna le playlist ogni</string>
+    <string name="set_a_update_playlists_every_expl">Con quale frequenza ogni playlist, inclusi i server Plex e Jellyfin, viene scaricata di nuovo in background</string>
 </resources>

@@ -294,7 +294,7 @@
     <string name="set_b_plex_add">Adaugă server Plex</string>
     <string name="set_b_plex_add_expl">Filmele și serialele tale Plex, alături de cele din playlist</string>
     <string name="set_b_plex_code">Cod: %1$s</string>
-    <string name="set_b_plex_code_expl">Pe telefon sau computer, mergi la plex.tv/link și introdu acest cod. OK anulează</string>
+    <string name="set_b_plex_code_expl">Pe telefon sau computer, mergi la plex.tv/link și introdu acest cod.</string>
     <string name="set_b_plex_working">Se verifică contul Plex…</string>
     <string name="set_b_plex_pick_server">Alege un server</string>
     <string name="set_b_plex_pick_libraries">Biblioteci de încărcat de pe %1$s</string>
@@ -309,15 +309,16 @@
     <string name="set_b_jf_add">Adaugă server Jellyfin</string>
     <string name="set_b_jf_add_expl">Filmele și serialele tale Jellyfin, alături de cele din playlist</string>
     <string name="set_b_jf_address">Adresa serverului Jellyfin</string>
-    <string name="set_b_jf_address_expl">Introdu-o mai jos ca în aplicația Jellyfin, de exemplu http://192.168.1.10:8096. OK anulează</string>
+    <string name="set_b_jf_address_expl">Introdu-o mai jos ca în aplicația Jellyfin, de exemplu http://192.168.1.10:8096.</string>
     <string name="set_b_jf_address_row">Adresa serverului</string>
     <string name="set_b_jf_connect">Conectează</string>
     <string name="set_b_jf_connecting">Se conectează…</string>
-    <string name="set_b_jf_code_expl">Pe un telefon sau computer conectat la Jellyfin, deschide Setări › Quick Connect și introdu acest cod. OK anulează</string>
+    <string name="set_b_jf_code_expl">Pe un telefon sau computer conectat la Jellyfin, deschide Setări › Quick Connect și introdu acest cod.</string>
     <string name="set_b_jf_use_password">Folosește nume de utilizator și parolă</string>
     <string name="set_b_jf_sign_in_title">Conectare la %1$s</string>
-    <string name="set_b_jf_sign_in_expl">Introdu mai jos numele de utilizator și parola Jellyfin. OK anulează</string>
+    <string name="set_b_jf_sign_in_expl">Introdu mai jos numele de utilizator și parola Jellyfin.</string>
     <string name="set_b_jf_sign_in">Conectare</string>
     <string name="set_b_jf_failed">Cererea Jellyfin a eșuat: HTTP %1$d</string>
     <string name="set_b_jf_wrong_login">Nume de utilizator sau parolă greșite</string>
+    <string name="set_b_plex_all_added">Toate serverele din acest cont Plex sunt deja adăugate</string>
 </resources>

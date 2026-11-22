@@ -55,6 +55,7 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
     private val previewFade = booleanPreferencesKey("preview_fade")
     private val startOnBoot = booleanPreferencesKey("start_on_boot")
     private val interval = intPreferencesKey("epg_update_interval_hours")
+    private val playlistHours = intPreferencesKey("playlist_update_hours")
     private val epgOnStart = booleanPreferencesKey("epg_update_on_start")
     private val epgOnPlaylist = booleanPreferencesKey("epg_update_on_playlist_change")
     private val daysToKeep = intPreferencesKey("epg_days_to_keep")
@@ -139,6 +140,7 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
             previewFade = this[previewFade] ?: d.previewFade,
             startOnBoot = this[startOnBoot] ?: d.startOnBoot,
             epgUpdateIntervalHours = this[interval] ?: d.epgUpdateIntervalHours,
+            playlistUpdateHours = this[playlistHours] ?: d.playlistUpdateHours,
             epgUpdateOnStart = this[epgOnStart] ?: d.epgUpdateOnStart,
             epgUpdateOnPlaylistChange = this[epgOnPlaylist] ?: d.epgUpdateOnPlaylistChange,
             epgDaysToKeep = this[daysToKeep] ?: d.epgDaysToKeep,
@@ -214,6 +216,7 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
         this[previewFade] = s.previewFade
         this[startOnBoot] = s.startOnBoot
         this[interval] = s.epgUpdateIntervalHours
+        this[playlistHours] = s.playlistUpdateHours
         this[epgOnStart] = s.epgUpdateOnStart
         this[epgOnPlaylist] = s.epgUpdateOnPlaylistChange
         this[daysToKeep] = s.epgDaysToKeep

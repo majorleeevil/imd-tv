@@ -294,7 +294,7 @@
     <string name="set_b_plex_add">Lägg till Plex-server</string>
     <string name="set_b_plex_add_expl">Dina Plex-filmer och -serier, bredvid de i din spellista</string>
     <string name="set_b_plex_code">Kod: %1$s</string>
-    <string name="set_b_plex_code_expl">Gå till plex.tv/link på mobilen eller datorn och ange den här koden. OK avbryter</string>
+    <string name="set_b_plex_code_expl">Gå till plex.tv/link på mobilen eller datorn och ange den här koden.</string>
     <string name="set_b_plex_working">Kontrollerar ditt Plex-konto…</string>
     <string name="set_b_plex_pick_server">Välj en server</string>
     <string name="set_b_plex_pick_libraries">Bibliotek att läsa in från %1$s</string>
@@ -309,15 +309,16 @@
     <string name="set_b_jf_add">Lägg till Jellyfin-server</string>
     <string name="set_b_jf_add_expl">Dina Jellyfin-filmer och -serier, bredvid de i din spellista</string>
     <string name="set_b_jf_address">Jellyfin-serverns adress</string>
-    <string name="set_b_jf_address_expl">Ange den nedan som i Jellyfin-appen, till exempel http://192.168.1.10:8096. OK avbryter</string>
+    <string name="set_b_jf_address_expl">Ange den nedan som i Jellyfin-appen, till exempel http://192.168.1.10:8096.</string>
     <string name="set_b_jf_address_row">Serveradress</string>
     <string name="set_b_jf_connect">Anslut</string>
     <string name="set_b_jf_connecting">Ansluter…</string>
-    <string name="set_b_jf_code_expl">Öppna Inställningar › Quick Connect på en mobil eller dator som är inloggad i Jellyfin och ange den här koden. OK avbryter</string>
+    <string name="set_b_jf_code_expl">Öppna Inställningar › Quick Connect på en mobil eller dator som är inloggad i Jellyfin och ange den här koden.</string>
     <string name="set_b_jf_use_password">Använd användarnamn och lösenord</string>
     <string name="set_b_jf_sign_in_title">Logga in på %1$s</string>
-    <string name="set_b_jf_sign_in_expl">Ange ditt användarnamn och lösenord för Jellyfin nedan. OK avbryter</string>
+    <string name="set_b_jf_sign_in_expl">Ange ditt användarnamn och lösenord för Jellyfin nedan.</string>
     <string name="set_b_jf_sign_in">Logga in</string>
     <string name="set_b_jf_failed">Jellyfin-förfrågan misslyckades: HTTP %1$d</string>
     <string name="set_b_jf_wrong_login">Fel användarnamn eller lösenord</string>
+    <string name="set_b_plex_all_added">Alla servrar på det här Plex-kontot har redan lagts till</string>
 </resources>

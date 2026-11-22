@@ -93,7 +93,7 @@
     <string name="set_a_vod_rows_expl">Hur många rader med affischer sidorna Filmer och Serier visar samtidigt; 2 rader ger mindre affischer</string>
     <string name="set_a_vod_rows_2">2 rader</string>
     <string name="set_a_vod_rows_1">1 rad</string>
-    <string name="set_a_title_size">Titelstorlek</string>
+    <string name="set_a_title_size">Textstorlek</string>
     <string name="set_a_multi_line">Flerradiga namn</string>
     <string name="set_a_multi_line_expl">Låt kanalnamn och programtitlar brytas över 2 rader i guiden. I Celestial Glass och Liquid Glass krävs högre rader: 5 kanaler i guiden (eller 6 i Celestial Glass)</string>
     <string name="set_a_reset_appearance">Återställ utseende</string>
@@ -312,4 +312,6 @@
     <string name="set_a_guide_display_both">Namn + logotyp</string>
     <string name="set_a_epg_text_size">Textstorlek</string>
     <string name="set_a_epg_text_size_expl">Storlek på all text i guiden</string>
+    <string name="set_a_update_playlists_every">Uppdatera spellistor var</string>
+    <string name="set_a_update_playlists_every_expl">Hur ofta varje spellista, inklusive Plex- och Jellyfin-servrar, laddas ned igen i bakgrunden</string>
 </resources>

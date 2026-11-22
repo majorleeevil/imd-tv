@@ -171,6 +171,9 @@ abstract class ChannelDao {
              AND ch.hidden = 0 AND ch.mergedInto IS NULL ORDER BY f.sortOrder, f.addedAt DESC"""
     )
     abstract fun observeFavourites(providerId: Long): Flow<List<ChannelEntity>>
+    /** The largest guide time offset set on one of [providerId]'s channels, in minutes (0 if none). */
+    @Query("SELECT coalesce(MAX(ABS(epgOffsetMinutes)), 0) FROM channel WHERE providerId = :providerId")
+    abstract suspend fun maxEpgOffset(providerId: Long): Int
 
     @Query("UPDATE channel SET hidden = :hidden WHERE id = :id") abstract suspend fun setHidden(id: Long, hidden: Boolean)
     @Query("UPDATE channel SET hidden = :hidden WHERE id IN (:ids)") abstract suspend fun setHiddenForIds(ids: List<Long>, hidden: Boolean)
@@ -322,6 +325,13 @@ abstract class ProgrammeDao {
     )
     abstract suspend fun window(keys: List<String>, from: Long, to: Long): List<ProgrammeEntity>
 
+    /** Search: programmes of [keys] still to end by [now] whose title is LIKE [pattern] (escape \), soonest first. */
+    @Query(
+        """SELECT * FROM programme WHERE epgChannelKey IN (:keys) AND stop > :now AND title LIKE :pattern ESCAPE '\'
+           AND gen = (SELECT gen FROM epg_source WHERE id = programme.sourceId) ORDER BY start LIMIT :limit"""
+    )
+    abstract suspend fun search(keys: List<String>, now: Long, pattern: String, limit: Int): List<ProgrammeEntity>
+
     @Insert abstract suspend fun insertAll(list: List<ProgrammeEntity>)
     /** For use inside [androidx.room.RoomDatabase.runInTransaction] on a background thread. */
     @Insert abstract fun insertAllBlocking(list: List<ProgrammeEntity>)
@@ -406,6 +416,9 @@ abstract class ProgressDao {
     abstract suspend fun all(providerId: Long): List<ProgressEntity>
     @Query("SELECT * FROM progress WHERE providerId = :providerId ORDER BY updatedAt DESC")
     abstract fun observe(providerId: Long): kotlinx.coroutines.flow.Flow<List<ProgressEntity>>
+    /** Every playlist in use (Continue watching is global, like Favourites); [active] is always included. A kind switched off has no rows. */
+    @Query("""SELECT g.* FROM progress g JOIN provider p ON p.id = g.providerId WHERE g.providerId = :active OR p.enabled = 1 ORDER BY g.updatedAt DESC""")
+    abstract fun observeShown(active: Long): kotlinx.coroutines.flow.Flow<List<ProgressEntity>>
     @Query("DELETE FROM progress WHERE providerId = :providerId AND kind = :kind AND itemId = :itemId AND episode = :episode")
     abstract suspend fun delete(providerId: Long, kind: Kind, itemId: Long, episode: String)
 
@@ -426,6 +439,10 @@ abstract class FavouriteDao {
     abstract suspend fun list(providerId: Long, kind: Kind): List<FavouriteEntity>
     @Query("SELECT * FROM favourite WHERE providerId = :providerId AND kind = :kind ORDER BY sortOrder, addedAt DESC")
     abstract fun observe(providerId: Long, kind: Kind): Flow<List<FavouriteEntity>>
+    /** Favourite movies or series of every playlist in use, as live Favourites (issue #12); [active] is always included. */
+    @Query("""SELECT f.* FROM favourite f JOIN provider p ON p.id = f.providerId WHERE f.kind = :kind AND (f.providerId = :active OR p.enabled = 1)
+           ORDER BY f.sortOrder, f.addedAt DESC""")
+    abstract fun observeShown(active: Long, kind: Kind): Flow<List<FavouriteEntity>>
     /** Favourite live channels of every playlist (channel ids are unique across playlists). */
     @Query("SELECT itemId FROM favourite WHERE kind = 'LIVE'") abstract fun observeLiveIds(): Flow<List<Long>>
     @Query("UPDATE favourite SET sortOrder = :sortOrder WHERE providerId = :providerId AND kind = :kind AND itemId = :itemId")

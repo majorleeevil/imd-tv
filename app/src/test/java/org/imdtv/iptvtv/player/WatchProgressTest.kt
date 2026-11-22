@@ -68,7 +68,7 @@ class WatchProgressTest {
     }
 
     @Test fun posterBarUsesTheNewestRowAndHidesWhenWatched() {
-        val item = org.imdtv.iptvtv.ui.vod.VodItem(7, Kind.SERIES, "r", "n", null, null, null, null, null)
+        val item = org.imdtv.iptvtv.ui.vod.VodItem(7, Kind.SERIES, "r", "n", null, null, null, null, null, 1)
         assertEquals(.25f, org.imdtv.iptvtv.ui.vod.progressFraction(item, listOf(row("s1e2", pos = 900_000, at = 5), row("s1e1", done = true, at = 1)))!!, 1e-6f)
         assertNull(org.imdtv.iptvtv.ui.vod.progressFraction(item, listOf(row("s1e2", done = true, at = 5))))
         assertNull(org.imdtv.iptvtv.ui.vod.progressFraction(item, emptyList()))

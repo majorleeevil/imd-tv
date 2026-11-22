@@ -18,6 +18,8 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.verticalScroll
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -109,8 +111,15 @@ class PlexAddFlow(c: AppContainer, scope: CoroutineScope) : ServerAddFlow(c, sco
             } catch (e: PlexException) { if (e.code == 404) null else throw e }
         }
         step.value = ServerStep.Working(R.string.set_b_plex_working)
-        val servers = auth.servers(token)
-        step.value = if (servers.isEmpty()) ServerStep.Failed(c.appContext.getString(R.string.set_b_plex_no_servers)) else ServerStep.Servers(servers)
+        val all = auth.servers(token)
+        // Servers already added aren't offered again (the playlist's username is the server's client id).
+        val added = c.db.providerDao().all().filter { it.type == ProviderType.PLEX }.mapTo(HashSet()) { it.username }
+        val servers = all.filter { it.clientId !in added }
+        step.value = when {
+            all.isEmpty() -> ServerStep.Failed(c.appContext.getString(R.string.set_b_plex_no_servers))
+            servers.isEmpty() -> ServerStep.Failed(c.appContext.getString(R.string.set_b_plex_all_added))
+            else -> ServerStep.Servers(servers)
+        }
     }
 
     fun pick(s: PlexServer) = launchStep {
@@ -171,14 +180,38 @@ class JellyfinAddFlow(c: AppContainer, scope: CoroutineScope) : ServerAddFlow(c,
     }
 }
 
-/** Settings › Media servers: Add Plex server, Add Jellyfin server, then the servers added. */
+/** The media server kinds, each a page of Settings › Media servers. */
+val SERVER_TYPES = listOf(ProviderType.PLEX, ProviderType.JELLYFIN)
+private fun ProviderType.serverName() = if (this == ProviderType.PLEX) "Plex" else "Jellyfin"
+
+/** Settings › Media servers: Plex ›, Jellyfin › (the servers added, or what adding one gives), then the update interval. */
 @Composable
-fun MediaServerRows(vm: SettingsViewModel, rowsFocus: FocusRequester, openers: MutableMap<Long, FocusRequester>, onOpen: (Long) -> Unit) {
+fun MediaServerRows(vm: SettingsViewModel, first: Modifier, openers: Map<ProviderType, FocusRequester>, onOpen: (ProviderType) -> Unit) {
     val providers by vm.providers.collectAsState()
-    ServerFlowRows(vm.plex, rowsFocus, stringResource(R.string.set_b_plex_add), stringResource(R.string.set_b_plex_add_expl))
-    ServerFlowRows(vm.jellyfin, remember { FocusRequester() }, stringResource(R.string.set_b_jf_add), stringResource(R.string.set_b_jf_add_expl))
-    providers.filter { it.type.mediaServer }.forEach { p ->
-        SettingRow(p.name, updatedLabel(p.lastSync), "›", Modifier.focusRequester(openers.getOrPut(p.id) { FocusRequester() })) { onOpen(p.id) }
+    SERVER_TYPES.forEachIndexed { i, t ->
+        val names = providers.filter { it.type == t }.joinToString { it.name }
+        SettingRow(t.serverName(), names.ifEmpty { stringResource(if (t == ProviderType.PLEX) R.string.set_b_plex_add_expl else R.string.set_b_jf_add_expl) }, "›",
+            (if (i == 0) first else Modifier).focusRequester(openers.getValue(t))) { onOpen(t) }
+    }
+    PlaylistUpdateRow(vm)
+}
+
+/** Settings › Media servers › Plex or Jellyfin: Add … server, then the servers added (hidden while adding one). Back closes it. */
+@Composable
+fun MediaServerPage(vm: SettingsViewModel, type: ProviderType, modifier: Modifier, first: FocusRequester, focusFirst: Boolean,
+                    openers: MutableMap<Long, FocusRequester>, onOpen: (Long) -> Unit, onClose: () -> Unit) {
+    androidx.activity.compose.BackHandler(onBack = onClose)
+    val providers by vm.providers.collectAsState()
+    val flow = if (type == ProviderType.PLEX) vm.plex else vm.jellyfin
+    val step by flow.step.collectAsState()
+    androidx.compose.runtime.LaunchedEffect(type) { if (focusFirst) { withFrameNanos { }; runCatching { first.requestFocus() } } }
+    androidx.compose.foundation.layout.Column(modifier.verticalScroll(androidx.compose.foundation.rememberScrollState()), verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(6.dp)) {
+        androidx.tv.material3.Text(type.serverName(), fontSize = 20.sp, color = Color.White, modifier = Modifier.padding(top = 6.dp, bottom = 18.dp))
+        if (type == ProviderType.PLEX) ServerFlowRows(flow, first, stringResource(R.string.set_b_plex_add), stringResource(R.string.set_b_plex_add_expl))
+        else ServerFlowRows(flow, first, stringResource(R.string.set_b_jf_add), stringResource(R.string.set_b_jf_add_expl))
+        if (step == null || step is ServerStep.Done || step is ServerStep.Failed) providers.filter { it.type == type }.forEach { p ->
+            SettingRow(p.name, updatedLabel(p.lastSync), "›", Modifier.focusRequester(openers.getOrPut(p.id) { FocusRequester() })) { onOpen(p.id) }
+        }
     }
 }
 

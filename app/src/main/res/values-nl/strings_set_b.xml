@@ -294,7 +294,7 @@
     <string name="set_b_plex_add">Plex-server toevoegen</string>
     <string name="set_b_plex_add_expl">Je Plex-films en -series, naast die van je afspeellijst</string>
     <string name="set_b_plex_code">Code: %1$s</string>
-    <string name="set_b_plex_code_expl">Ga op je telefoon of computer naar plex.tv/link en voer deze code in. OK annuleert</string>
+    <string name="set_b_plex_code_expl">Ga op je telefoon of computer naar plex.tv/link en voer deze code in.</string>
     <string name="set_b_plex_working">Je Plex-account controleren…</string>
     <string name="set_b_plex_pick_server">Kies een server</string>
     <string name="set_b_plex_pick_libraries">Bibliotheken om te laden van %1$s</string>
@@ -309,15 +309,16 @@
     <string name="set_b_jf_add">Jellyfin-server toevoegen</string>
     <string name="set_b_jf_add_expl">Je Jellyfin-films en -series, naast die van je afspeellijst</string>
     <string name="set_b_jf_address">Adres van de Jellyfin-server</string>
-    <string name="set_b_jf_address_expl">Voer het hieronder in zoals in de Jellyfin-app, bijvoorbeeld http://192.168.1.10:8096. OK annuleert</string>
+    <string name="set_b_jf_address_expl">Voer het hieronder in zoals in de Jellyfin-app, bijvoorbeeld http://192.168.1.10:8096.</string>
     <string name="set_b_jf_address_row">Serveradres</string>
     <string name="set_b_jf_connect">Verbinden</string>
     <string name="set_b_jf_connecting">Verbinden…</string>
-    <string name="set_b_jf_code_expl">Open op een telefoon of computer die bij Jellyfin is aangemeld Instellingen › Quick Connect en voer deze code in. OK annuleert</string>
+    <string name="set_b_jf_code_expl">Open op een telefoon of computer die bij Jellyfin is aangemeld Instellingen › Quick Connect en voer deze code in.</string>
     <string name="set_b_jf_use_password">Gebruikersnaam en wachtwoord gebruiken</string>
     <string name="set_b_jf_sign_in_title">Aanmelden bij %1$s</string>
-    <string name="set_b_jf_sign_in_expl">Voer hieronder je Jellyfin-gebruikersnaam en -wachtwoord in. OK annuleert</string>
+    <string name="set_b_jf_sign_in_expl">Voer hieronder je Jellyfin-gebruikersnaam en -wachtwoord in.</string>
     <string name="set_b_jf_sign_in">Aanmelden</string>
     <string name="set_b_jf_failed">Jellyfin-verzoek mislukt: HTTP %1$d</string>
     <string name="set_b_jf_wrong_login">Onjuiste gebruikersnaam of wachtwoord</string>
+    <string name="set_b_plex_all_added">Alle servers van dit Plex-account zijn al toegevoegd</string>
 </resources>

@@ -95,7 +95,7 @@
     <string name="set_a_vod_rows_expl">How many rows of posters the Movies and Series pages show at once; 2 rows uses smaller posters</string>
     <string name="set_a_vod_rows_2">2 rows</string>
     <string name="set_a_vod_rows_1">1 row</string>
-    <string name="set_a_title_size">Title size</string>
+    <string name="set_a_title_size">Text sizing</string>
     <string name="set_a_multi_line">Multi-line names</string>
     <string name="set_a_multi_line_expl">Let channel names and programme titles wrap onto 2 lines in the guide. In Celestial Glass and Liquid Glass this needs taller rows: 5 channels in the guide (or 6 in Celestial Glass)</string>
     <string name="set_a_reset_appearance">Reset appearance</string>
@@ -313,4 +313,6 @@
     </plurals>
     <string name="set_a_remove_symbols">Remove special characters</string>
     <string name="set_a_remove_symbols_expl">Remove small and circled letters and symbols such as “ᴿᴬᵂ”, “ⓋⒾⓅ” and “◉” from channel names</string>
+    <string name="set_a_update_playlists_every">Update playlists every</string>
+    <string name="set_a_update_playlists_every_expl">How often every playlist, Plex and Jellyfin server included, downloads again in the background</string>
 </resources>

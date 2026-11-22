@@ -294,7 +294,7 @@
     <string name="set_b_plex_add">Añadir servidor Plex</string>
     <string name="set_b_plex_add_expl">Tus películas y series de Plex, junto a las de tu lista</string>
     <string name="set_b_plex_code">Código: %1$s</string>
-    <string name="set_b_plex_code_expl">En tu teléfono u ordenador, ve a plex.tv/link e introduce este código. OK cancela</string>
+    <string name="set_b_plex_code_expl">En tu teléfono u ordenador, ve a plex.tv/link e introduce este código.</string>
     <string name="set_b_plex_working">Comprobando tu cuenta de Plex…</string>
     <string name="set_b_plex_pick_server">Elige un servidor</string>
     <string name="set_b_plex_pick_libraries">Bibliotecas que cargar desde %1$s</string>
@@ -309,15 +309,16 @@
     <string name="set_b_jf_add">Añadir servidor Jellyfin</string>
     <string name="set_b_jf_add_expl">Tus películas y series de Jellyfin, junto a las de tu lista</string>
     <string name="set_b_jf_address">Dirección del servidor Jellyfin</string>
-    <string name="set_b_jf_address_expl">Introdúcela abajo como en la app de Jellyfin, por ejemplo http://192.168.1.10:8096. OK cancela</string>
+    <string name="set_b_jf_address_expl">Introdúcela abajo como en la app de Jellyfin, por ejemplo http://192.168.1.10:8096.</string>
     <string name="set_b_jf_address_row">Dirección del servidor</string>
     <string name="set_b_jf_connect">Conectar</string>
     <string name="set_b_jf_connecting">Conectando…</string>
-    <string name="set_b_jf_code_expl">En un teléfono u ordenador con sesión iniciada en Jellyfin, abre Ajustes › Quick Connect e introduce este código. OK cancela</string>
+    <string name="set_b_jf_code_expl">En un teléfono u ordenador con sesión iniciada en Jellyfin, abre Ajustes › Quick Connect e introduce este código.</string>
     <string name="set_b_jf_use_password">Usar usuario y contraseña</string>
     <string name="set_b_jf_sign_in_title">Iniciar sesión en %1$s</string>
-    <string name="set_b_jf_sign_in_expl">Introduce abajo tu usuario y contraseña de Jellyfin. OK cancela</string>
+    <string name="set_b_jf_sign_in_expl">Introduce abajo tu usuario y contraseña de Jellyfin.</string>
     <string name="set_b_jf_sign_in">Iniciar sesión</string>
     <string name="set_b_jf_failed">La solicitud a Jellyfin falló: HTTP %1$d</string>
     <string name="set_b_jf_wrong_login">Usuario o contraseña incorrectos</string>
+    <string name="set_b_plex_all_added">Todos los servidores de esta cuenta de Plex ya están añadidos</string>
 </resources>

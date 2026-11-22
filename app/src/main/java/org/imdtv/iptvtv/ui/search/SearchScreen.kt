@@ -98,6 +98,13 @@ fun SearchScreen(
     fun Modifier.channelMenu(ch: ChannelEntity) = if (menus == null) this else onLongOk { menus.menu = org.imdtv.iptvtv.ui.live.GuideMenu.Channel(ch) }
     val query by vm.query.collectAsState()
     val results by vm.results.collectAsState()
+    val guide by vm.guide.collectAsState()
+    val recordingOn = live?.recordingOn?.collectAsState()?.value ?: false
+    // On now: watch it. Later: Record (or Cancel recording) when recording is on, else the channel.
+    fun openHit(h: org.imdtv.iptvtv.data.search.GuideHit) {
+        if (h.p.start > System.currentTimeMillis() && recordingOn && menus != null) menus.menu = org.imdtv.iptvtv.ui.live.GuideMenu.Programme(h.ch, h.p)
+        else onChannel(h.ch)
+    }
     val logos by vm.logoSource.collectAsState()
     val strip by vm.strip.collectAsState()
     val field = remember { FocusRequester() }
@@ -156,7 +163,8 @@ fun SearchScreen(
         }
         // Up out of the top results goes to the field: the wide field's far-off centre made focus search pick the nav tab.
         val resultsGroup = Modifier.focusProperties { exit = { if (it == FocusDirection.Up) field else FocusRequester.Default } }.focusGroup()
-        val firstSection = listOf(r.channels.items, r.movies.items, r.series.items).indexOfFirst { it.isNotEmpty() }
+        val g = guide ?: GuideResults.EMPTY
+        val firstSection = listOf(r.channels.items, r.movies.items, r.series.items, g.today.items, g.later.items).indexOfFirst { it.isNotEmpty() }
         if (lists) Row(resultsGroup.padding(top = 14.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
             val strip2 = strip
             listOf(Triple(R.string.vod_search_channels, r.channels, 0), Triple(R.string.vod_search_movies, r.movies, 1), Triple(R.string.vod_search_series, r.series, 2)).forEach { (title, s, n) ->
@@ -168,12 +176,27 @@ fun SearchScreen(
                     }
                 }
             }
+            // The guide as a fourth list: today's first, then later ones.
+            Column(Modifier.weight(1f)) {
+                val all = Section(g.today.items + g.later.items, g.today.total + g.later.total)
+                ResultList(R.string.set_b_group_epg, all, 3, returnTo, back, firstResult.takeIf { firstSection >= 3 }, textColor) { i, h, m ->
+                    ListBar("${hitTime(h)}  ${h.p.title}", m.channelMenu(h.ch), vod = false) { vm.returnTo = 3 to i; openHit(h) }
+                }
+            }
         } else Column(resultsGroup.verticalScroll(rememberScrollState()).padding(top = 14.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             ResultRow(R.string.vod_search_channels, R.string.vod_search_no_channels, r.channels, 0, returnTo, back, firstResult.takeIf { firstSection == 0 }) { i, ch, m ->
                 ChannelTile(ch, ch.displayName(strip), logos, m.channelMenu(ch)) { vm.returnTo = 0 to i; onChannel(ch) }
             }
             ResultRow(R.string.vod_search_movies, R.string.vod_search_no_movies, r.movies, 1, returnTo, back, firstResult.takeIf { firstSection == 1 }) { i, item, m -> Poster(item, m, caption = true, onFocused = {}) { vm.returnTo = 1 to i; onOpen(item) } }
             ResultRow(R.string.vod_search_series, R.string.vod_search_no_series, r.series, 2, returnTo, back, firstResult.takeIf { firstSection == 2 }) { i, item, m -> Poster(item, m, caption = true, onFocused = {}) { vm.returnTo = 2 to i; onOpen(item) } }
+            // TV guide: what airs today on one row, later days on the next.
+            Text(stringResource(R.string.set_b_group_epg), fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = Color.White, modifier = Modifier.padding(top = 6.dp))
+            ResultRow(R.string.live_today, R.string.vod_search_no_programmes, g.today, 3, returnTo, back, firstResult.takeIf { firstSection == 3 }) { i, h, m ->
+                ProgrammeTile(h, h.ch.displayName(strip), m.channelMenu(h.ch)) { vm.returnTo = 3 to i; openHit(h) }
+            }
+            ResultRow(R.string.vod_search_later, R.string.vod_search_no_programmes, g.later, 4, returnTo, back, firstResult.takeIf { firstSection == 4 }) { i, h, m ->
+                ProgrammeTile(h, h.ch.displayName(strip), m.channelMenu(h.ch)) { vm.returnTo = 4 to i; openHit(h) }
+            }
         }
     }
 }
@@ -210,6 +233,33 @@ private fun ChannelTile(ch: ChannelEntity, name: String, logos: List<org.imdtv.i
             Text(name, fontSize = 13.sp * org.imdtv.iptvtv.ui.LocalTitleScale.current, fontWeight = FontWeight.Medium, color = if (f) Color.Black else Color.White, maxLines = 1,
                 overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 6.dp))
             Text((ch.customNumber ?: ch.number)?.toString()?.takeIf { org.imdtv.iptvtv.ui.LocalShowNumbers.current } ?: " ", fontSize = 11.sp, color = if (f) Color(0xFF555555) else LocalTheme.current.colors.muted)
+        }
+    }
+}
+
+/** "Now", "21:00" today, else "Sat 22/11 21:00". */
+@Composable
+private fun hitTime(h: org.imdtv.iptvtv.data.search.GuideHit): String {
+    val now = System.currentTimeMillis()
+    if (h.p.start <= now) return stringResource(R.string.vod_search_on_now)
+    val day = org.imdtv.iptvtv.ui.dayDate(h.p.start).takeIf { it != org.imdtv.iptvtv.ui.dayDate(now) }
+    return listOfNotNull(day, org.imdtv.iptvtv.ui.clockTime(h.p.start)).joinToString(" ")
+}
+
+/** A guide result: when, the title, the channel, and the episode (number or the description's start). */
+@Composable
+private fun ProgrammeTile(h: org.imdtv.iptvtv.data.search.GuideHit, channel: String, modifier: Modifier, onClick: () -> Unit) {
+    FocusBox(onClick = onClick, modifier = modifier) { f ->
+        val muted = if (f) Color(0xFF555555) else LocalTheme.current.colors.muted
+        Column(
+            Modifier.width(240.dp).clip(RoundedCornerShape(10.dp)).background(if (f) Color.White else Color(0x1FFFFFFF))
+                .border(2.dp, if (f) Color.White else Color.Transparent, RoundedCornerShape(10.dp)).padding(10.dp),
+        ) {
+            Text(hitTime(h), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = if (f) Color.Black else LocalTheme.current.colors.accent)
+            Text(h.p.title, fontSize = 14.sp * org.imdtv.iptvtv.ui.LocalTitleScale.current, fontWeight = FontWeight.Medium, color = if (f) Color.Black else Color.White,
+                maxLines = 2, minLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 4.dp))
+            Text(channel, fontSize = 12.sp, color = muted, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 4.dp))
+            Text(h.p.episodeNum ?: h.p.desc.orEmpty().lineSequence().firstOrNull().orEmpty(), fontSize = 11.sp, color = muted, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
     }
 }

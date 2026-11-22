@@ -8,6 +8,8 @@ import org.imdtv.iptvtv.ui.theme.LocalTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.ui.Alignment
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -44,10 +46,14 @@ fun ContextMenu(title: String, items: List<Pair<String, () -> Unit>>, onDismiss:
 
 /** As above, with focus starting on item [focusIndex]. */
 @Composable
-fun ContextMenu(title: String, items: List<Pair<String, () -> Unit>>, focusIndex: Int, onDismiss: () -> Unit) {
+fun ContextMenu(title: String, items: List<Pair<String, () -> Unit>>, focusIndex: Int, onDismiss: () -> Unit) = ContextMenu(title, items, focusIndex, emptySet(), onDismiss)
+
+/** [more]: labels of items that open another menu (drawn with a ›). */
+@Composable
+fun ContextMenu(title: String, items: List<Pair<String, () -> Unit>>, focusIndex: Int, more: Set<String>, onDismiss: () -> Unit) {
     MenuFrame(title, onDismiss) { first ->
         items.forEachIndexed { i, (label, action) ->
-            MenuItem(label, if (i == focusIndex) Modifier.focusRequester(first) else Modifier, onClick = action)
+            MenuItem(label, if (i == focusIndex) Modifier.focusRequester(first) else Modifier, more = label in more, onClick = action)
         }
     }
 }
@@ -79,7 +85,7 @@ internal fun MenuFrame(title: String, onDismiss: () -> Unit, content: @Composabl
                 if (e.type == KeyEventType.KeyDown && e.nativeKeyEvent.repeatCount == 0) { armed = true; false } else true
             }.width(420.dp).clip(RoundedCornerShape(12.dp)).background(Color(0xF2101A3A)).padding(20.dp)
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+            verticalArrangement = Arrangement.spacedBy(2.dp), // compact: the channel menu's 13 items fit a 1080p screen unscrolled
         ) {
             Text(title, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = LocalTheme.current.colors.muted, maxLines = 2,
                 overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(bottom = 10.dp))
@@ -89,11 +95,14 @@ internal fun MenuFrame(title: String, onDismiss: () -> Unit, content: @Composabl
 }
 
 @Composable
-internal fun MenuItem(label: String, modifier: Modifier, enabled: Boolean = true, onClick: () -> Unit) {
+internal fun MenuItem(label: String, modifier: Modifier, enabled: Boolean = true, more: Boolean = false, onClick: () -> Unit) {
     // Disabled: still focusable so it reads as unavailable, greyed, OK does nothing.
     FocusBox(onClick = { if (enabled) onClick() }, modifier = modifier) { f ->
-        Text(label, fontSize = 16.sp, color = if (!enabled) Color(0x80FFFFFF).let { if (f) Color(0x99000000) else it } else if (f) Color.Black else Color.White,
-            modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(if (f) Color.White else Color.Transparent)
-                .padding(horizontal = 14.dp, vertical = 10.dp))
+        val fg = if (!enabled) Color(0x80FFFFFF).let { if (f) Color(0x99000000) else it } else if (f) Color.Black else Color.White
+        Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(if (f) Color.White else Color.Transparent)
+            .padding(horizontal = 14.dp, vertical = 7.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(label, fontSize = 15.sp, color = fg, modifier = Modifier.weight(1f))
+            if (more) Text("›", fontSize = 18.sp, color = fg, modifier = Modifier.padding(start = 12.dp))
+        }
     }
 }

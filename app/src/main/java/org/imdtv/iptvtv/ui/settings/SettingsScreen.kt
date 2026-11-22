@@ -94,6 +94,9 @@ fun SettingsScreen(vm: SettingsViewModel, onAddPlaylist: () -> Unit, onEditPlayl
     var reopenSources by remember { mutableStateOf(false) }
     val sourcesOpener = remember { FocusRequester() }
     var reopenPlaylist by remember { mutableStateOf<Long?>(null) }
+    var server by remember { mutableStateOf<org.imdtv.iptvtv.data.db.ProviderType?>(null) } // Media servers › Plex / Jellyfin
+    var reopenServer by remember { mutableStateOf<org.imdtv.iptvtv.data.db.ProviderType?>(null) }
+    val serverOpeners = remember { SERVER_TYPES.associateWith { FocusRequester() } }
     val openers = remember { ChannelPage.entries.associateWith { FocusRequester() } }
     /** Where focus goes when it next enters the rows pane (null = its first row). Not state: read only by `enter`. */
     val enterTarget = remember { object { var value: FocusRequester? = null } }
@@ -140,6 +143,14 @@ fun SettingsScreen(vm: SettingsViewModel, onAddPlaylist: () -> Unit, onEditPlayl
         enterTarget.value = null
         reopenBackup = false
     }
+    LaunchedEffect(server) {
+        val back = reopenServer?.takeIf { server == null } ?: return@LaunchedEffect
+        enterTarget.value = serverOpeners.getValue(back)
+        withFrameNanos { }
+        runCatching { serverOpeners.getValue(back).requestFocus() }
+        enterTarget.value = null
+        reopenServer = null
+    }
     LaunchedEffect(playlist) {
         val back = reopenPlaylist?.takeIf { playlist == null } ?: return@LaunchedEffect
         withFrameNanos { }
@@ -157,7 +168,7 @@ fun SettingsScreen(vm: SettingsViewModel, onAddPlaylist: () -> Unit, onEditPlayl
     // How far the open page has scrolled (px, <= 0): the logo shows only at the top, so rows never pass under it.
     // Every page's list reports through nested scroll; a new page starts at the top.
     val scrolled = remember { mutableStateOf(0f) }
-    LaunchedEffect(group, page, playlist, sourcesOpen, recordingOpen, syncOpen, backupOpen) { scrolled.value = 0f }
+    LaunchedEffect(group, page, playlist, sourcesOpen, recordingOpen, syncOpen, backupOpen, server) { scrolled.value = 0f }
     val scrollWatch = remember {
         object : androidx.compose.ui.input.nestedscroll.NestedScrollConnection {
             override fun onPostScroll(consumed: androidx.compose.ui.geometry.Offset, available: androidx.compose.ui.geometry.Offset,
@@ -177,7 +188,7 @@ fun SettingsScreen(vm: SettingsViewModel, onAddPlaylist: () -> Unit, onEditPlayl
                     FocusBox(
                         onClick = { runCatching { rowsFocus.requestFocus() } },
                         modifier = if (g == group) Modifier.focusRequester(groupFocus) else Modifier,
-                        onFocused = { if (g != group) { page = null; playlist = null; sourcesOpen = false; recordingOpen = false; syncOpen = false; backupOpen = false }; group = g },
+                        onFocused = { if (g != group) { page = null; playlist = null; sourcesOpen = false; recordingOpen = false; syncOpen = false; backupOpen = false; server = null }; group = g },
                     ) { f ->
                         Text(
                             stringResource(g.labelRes), fontSize = 15.sp, color = if (f && !parked) Color.Black else if (g == group) Color.White else LocalTheme.current.colors.muted,
@@ -212,11 +223,17 @@ fun SettingsScreen(vm: SettingsViewModel, onAddPlaylist: () -> Unit, onEditPlayl
             playlist?.let { id ->
                 PlaylistPage(vm, id, pane, rowsFocus, { vm.playlistToReopen = it; onEditPlaylist(it) }, onDeletePlaylist, onUsePlaylist) { park(); reopenPlaylist = id; playlist = null }
             }
+            // A server's playlist page opens over its Media servers page, which comes back on closing it.
+            server?.takeIf { playlist == null }?.let { t ->
+                key(t) {
+                    MediaServerPage(vm, t, pane, rowsFocus, focusFirst = reopenPlaylist == null, playlistOpeners, { park(); playlist = it }) { park(); reopenServer = t; server = null }
+                }
+            }
             if (sourcesOpen) EpgSourcesPage(vm, pane, rowsFocus, { park() }) { park(); reopenSources = true; sourcesOpen = false }
             if (recordingOpen) org.imdtv.iptvtv.recording.RecordingPage(vm, pane, rowsFocus) { park(); reopenRecording = true; recordingOpen = false }
             if (syncOpen) SyncPage(vm, pane, rowsFocus) { park(); reopenSync = true; syncOpen = false }
             if (backupOpen) BackupPage(vm, pane, rowsFocus) { park(); reopenBackup = true; backupOpen = false }
-            if (page == null && playlist == null && !sourcesOpen && !recordingOpen && !syncOpen && !backupOpen) Column(pane.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            if (page == null && playlist == null && server == null && !sourcesOpen && !recordingOpen && !syncOpen && !backupOpen) Column(pane.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 val syncNow by vm.sync.state.collectAsState()
                 syncNow.master?.takeIf { syncNow.role == org.imdtv.iptvtv.data.sync.SyncRole.FOLLOWER }?.let {
                     Text(stringResource(R.string.set_b_following, it.name), fontSize = 14.sp, color = LocalTheme.current.colors.muted)
@@ -226,7 +243,7 @@ fun SettingsScreen(vm: SettingsViewModel, onAddPlaylist: () -> Unit, onEditPlayl
                 val first = Modifier.focusRequester(rowsFocus)
                 when (group) {
                     SettingsGroup.PLAYLISTS -> PlaylistGroupRows(vm, first, playlistOpeners, onAddPlaylist) { park(); playlist = it }
-                    SettingsGroup.MEDIA_SERVERS -> MediaServerRows(vm, rowsFocus, playlistOpeners) { park(); playlist = it }
+                    SettingsGroup.MEDIA_SERVERS -> MediaServerRows(vm, first, serverOpeners) { park(); server = it }
                     SettingsGroup.EPG -> EpgGroupRows(vm, first, Modifier.focusRequester(sourcesOpener)) { park(); sourcesOpen = true }
                     SettingsGroup.CHANNELS -> ChannelGroupRows(vm, first, openers) { park(); page = it }
                     SettingsGroup.VOD -> ChoiceRow(stringResource(R.string.set_b_vod_sort), stringResource(R.string.set_b_vod_sort_expl), org.imdtv.iptvtv.data.settings.VodSort.entries, s.vodSort,

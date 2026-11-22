@@ -93,7 +93,7 @@
     <string name="set_a_vod_rows_expl">Πόσες γραμμές αφισών δείχνουν ταυτόχρονα οι σελίδες Ταινιών και Σειρών· με 2 γραμμές οι αφίσες είναι μικρότερες</string>
     <string name="set_a_vod_rows_2">2 γραμμές</string>
     <string name="set_a_vod_rows_1">1 γραμμή</string>
-    <string name="set_a_title_size">Μέγεθος τίτλων</string>
+    <string name="set_a_title_size">Μέγεθος κειμένου</string>
     <string name="set_a_multi_line">Ονόματα σε πολλές γραμμές</string>
     <string name="set_a_multi_line_expl">Τα ονόματα καναλιών και οι τίτλοι εκπομπών μπορούν να χωρίζονται σε 2 γραμμές στον οδηγό. Στα Celestial Glass και Liquid Glass χρειάζονται ψηλότερες γραμμές: 5 κανάλια στον οδηγό (ή 6 στο Celestial Glass)</string>
     <string name="set_a_reset_appearance">Επαναφορά εμφάνισης</string>
@@ -312,4 +312,6 @@
     <string name="set_a_guide_display_both">Όνομα + λογότυπο</string>
     <string name="set_a_epg_text_size">Μέγεθος κειμένου</string>
     <string name="set_a_epg_text_size_expl">Μέγεθος όλου του κειμένου στον οδηγό</string>
+    <string name="set_a_update_playlists_every">Ενημέρωση λιστών κάθε</string>
+    <string name="set_a_update_playlists_every_expl">Πόσο συχνά κάθε λίστα, συμπεριλαμβανομένων των διακομιστών Plex και Jellyfin, ξαναλαμβάνεται στο παρασκήνιο</string>
 </resources>

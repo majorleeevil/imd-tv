@@ -294,7 +294,7 @@
     <string name="set_b_plex_add">Plex sunucusu ekle</string>
     <string name="set_b_plex_add_expl">Plex film ve dizileriniz, oynatma listenizdekilerin yanında</string>
     <string name="set_b_plex_code">Kod: %1$s</string>
-    <string name="set_b_plex_code_expl">Telefonunuzda veya bilgisayarınızda plex.tv/link adresine gidip bu kodu girin. Tamam iptal eder</string>
+    <string name="set_b_plex_code_expl">Telefonunuzda veya bilgisayarınızda plex.tv/link adresine gidip bu kodu girin.</string>
     <string name="set_b_plex_working">Plex hesabınız kontrol ediliyor…</string>
     <string name="set_b_plex_pick_server">Bir sunucu seçin</string>
     <string name="set_b_plex_pick_libraries">%1$s sunucusundan yüklenecek kitaplıklar</string>
@@ -309,15 +309,16 @@
     <string name="set_b_jf_add">Jellyfin sunucusu ekle</string>
     <string name="set_b_jf_add_expl">Jellyfin film ve dizileriniz, oynatma listenizdekilerin yanında</string>
     <string name="set_b_jf_address">Jellyfin sunucu adresi</string>
-    <string name="set_b_jf_address_expl">Jellyfin uygulamasındaki gibi aşağıya girin, örneğin http://192.168.1.10:8096. Tamam iptal eder</string>
+    <string name="set_b_jf_address_expl">Jellyfin uygulamasındaki gibi aşağıya girin, örneğin http://192.168.1.10:8096.</string>
     <string name="set_b_jf_address_row">Sunucu adresi</string>
     <string name="set_b_jf_connect">Bağlan</string>
     <string name="set_b_jf_connecting">Bağlanıyor…</string>
-    <string name="set_b_jf_code_expl">Jellyfin\'de oturum açmış bir telefon veya bilgisayarda Ayarlar › Quick Connect\'i açıp bu kodu girin. Tamam iptal eder</string>
+    <string name="set_b_jf_code_expl">Jellyfin\'de oturum açmış bir telefon veya bilgisayarda Ayarlar › Quick Connect\'i açıp bu kodu girin.</string>
     <string name="set_b_jf_use_password">Kullanıcı adı ve şifre kullan</string>
     <string name="set_b_jf_sign_in_title">%1$s sunucusunda oturum aç</string>
-    <string name="set_b_jf_sign_in_expl">Jellyfin kullanıcı adınızı ve şifrenizi aşağıya girin. Tamam iptal eder</string>
+    <string name="set_b_jf_sign_in_expl">Jellyfin kullanıcı adınızı ve şifrenizi aşağıya girin.</string>
     <string name="set_b_jf_sign_in">Oturum aç</string>
     <string name="set_b_jf_failed">Jellyfin isteği başarısız: HTTP %1$d</string>
     <string name="set_b_jf_wrong_login">Kullanıcı adı veya şifre yanlış</string>
+    <string name="set_b_plex_all_added">Bu Plex hesabındaki tüm sunucular zaten eklendi</string>
 </resources>

@@ -52,9 +52,20 @@ fun PlaylistGroupRows(vm: SettingsViewModel, first: Modifier, openers: MutableMa
     val providers by vm.providers.collectAsState()
     val activeId by vm.providerId.collectAsState()
     SettingRow(stringResource(R.string.set_a_add_playlist), stringResource(R.string.set_a_add_playlist_expl), null, first, onClick = onAdd)
+    PlaylistUpdateRow(vm)
     providers.forEach { p ->
         SettingRow(p.name, stringResource(if (p.id == activeId) R.string.set_a_playlist_row_in_use else R.string.set_a_playlist_row, p.typeLabel(), updatedLabel(p.lastSync)), "›",
             Modifier.focusRequester(openers.getOrPut(p.id) { FocusRequester() })) { onOpen(p.id) }
+    }
+}
+
+/** Settings › Playlists and Media servers: one interval for every playlist (CatalogueSyncWorker). */
+@Composable
+fun PlaylistUpdateRow(vm: SettingsViewModel) {
+    val s by vm.settings.collectAsState()
+    ChoiceRow(stringResource(R.string.set_a_update_playlists_every), stringResource(R.string.set_a_update_playlists_every_expl), org.imdtv.iptvtv.data.settings.EPG_INTERVALS,
+        s.playlistUpdateHours, { androidx.compose.ui.res.pluralStringResource(R.plurals.set_a_hours, it, it) }, default = org.imdtv.iptvtv.data.settings.AppSettings().playlistUpdateHours) { h ->
+        vm.update { it.copy(playlistUpdateHours = h) }
     }
 }
 

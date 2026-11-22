@@ -209,4 +209,7 @@
     <string name="vod_pack_no_space">Nuk ka hapësirë të mjaftueshme për ta importuar këtë paketë</string>
     <string name="vod_pack_no_images">Ky zip nuk ka imazhe</string>
     <string name="vod_pack_unreadable">Ky zip nuk u lexua dot</string>
+    <string name="vod_search_later">Më vonë</string>
+    <string name="vod_search_no_programmes">Nuk u gjetën programe</string>
+    <string name="vod_search_on_now">Tani në transmetim</string>
 </resources>

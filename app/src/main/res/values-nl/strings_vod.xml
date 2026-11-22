@@ -188,4 +188,7 @@
     <string name="vod_pack_no_space">Niet genoeg ruimte om dit pakket te importeren</string>
     <string name="vod_pack_no_images">Geen afbeeldingen in deze zip</string>
     <string name="vod_pack_unreadable">Deze zip kon niet worden gelezen</string>
+    <string name="vod_search_later">Later</string>
+    <string name="vod_search_no_programmes">Geen programma\'s gevonden</string>
+    <string name="vod_search_on_now">Nu bezig</string>
 </resources>

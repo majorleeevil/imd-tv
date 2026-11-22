@@ -209,4 +209,7 @@
     <string name="vod_pack_no_space">Not enough space to import this pack</string>
     <string name="vod_pack_no_images">No images in this zip</string>
     <string name="vod_pack_unreadable">This zip could not be read</string>
+    <string name="vod_search_later">Later</string>
+    <string name="vod_search_no_programmes">No programmes found</string>
+    <string name="vod_search_on_now">On now</string>
 </resources>

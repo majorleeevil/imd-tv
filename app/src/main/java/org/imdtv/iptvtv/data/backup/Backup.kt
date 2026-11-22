@@ -114,6 +114,7 @@ data class BSettings(
     val smbShare: String = "",
     val smbFolder: String = "",
     val smbUser: String = "",
+    val playlistUpdateHours: Int = AppSettings().playlistUpdateHours,
     val guideRows: Int = AppSettings().guideRows,
     val multiLineGuide: Boolean = AppSettings().multiLineGuide,
     val zapLeftRight: Boolean = AppSettings().zapLeftRight,
@@ -201,6 +202,7 @@ data class BSettings(
             endLateMin = endLateMin,
             keepAwake = keepAwake,
             smbServer = smbServer, smbShare = smbShare, smbFolder = smbFolder, smbUser = smbUser,
+            playlistUpdateHours = playlistUpdateHours,
         ).clamped()
     }
 
@@ -215,7 +217,7 @@ data class BSettings(
             playerClockMode = s.playerClock.name, showDate = s.showDate, themeLooks = s.themeLooks, guidesOff = s.guidesOff.toList(), liveSubtitlesOn = s.liveSubtitlesOn, showRecent = s.showRecent, videoAspect = s.videoAspect.name, vodTwoRows = s.vodTwoRows, titleSize = s.titleSize.name, vodTitleSize = s.vodTitleSize.name, epgTextSize = s.epgTextSize.name, guideDisplay = s.guideDisplay.name, vodSort = s.vodSort.name, parentalOn = s.parentalOn, parentalPin = s.parentalPin, parentalWord = s.parentalWord, ageLimit = s.ageLimit.name, unlockFor = s.unlockFor.name, catchUpOn = s.catchUpOn, holdBackOther = s.holdBackOther, guideTimeoutMin = s.guideTimeoutMin, favouritesSortBy = s.favouritesSortBy?.name,
             headerSize = s.headerSize.name, previewFade = s.previewFade, themeDark = s.themeDark, guideKinds = s.guideOrder.map { it.name },
             recordingOn = s.recordingOn, recordTo = s.recordTo.name, startEarlyMin = s.startEarlyMin, endLateMin = s.endLateMin,
-            keepAwake = s.keepAwake, smbServer = s.smbServer, smbShare = s.smbShare, smbFolder = s.smbFolder, smbUser = s.smbUser,
+            keepAwake = s.keepAwake, smbServer = s.smbServer, smbShare = s.smbShare, smbFolder = s.smbFolder, smbUser = s.smbUser, playlistUpdateHours = s.playlistUpdateHours,
         )
     }
 }

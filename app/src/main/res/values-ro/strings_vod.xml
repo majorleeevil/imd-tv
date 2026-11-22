@@ -190,4 +190,7 @@
     <string name="vod_pack_no_space">Spațiu insuficient pentru a importa acest pachet</string>
     <string name="vod_pack_no_images">Nicio imagine în acest zip</string>
     <string name="vod_pack_unreadable">Acest zip nu a putut fi citit</string>
+    <string name="vod_search_later">Mai târziu</string>
+    <string name="vod_search_no_programmes">Nu s-au găsit programe</string>
+    <string name="vod_search_on_now">Acum la TV</string>
 </resources>

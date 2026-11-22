@@ -294,7 +294,7 @@
     <string name="set_b_plex_add">Προσθήκη διακομιστή Plex</string>
     <string name="set_b_plex_add_expl">Οι ταινίες και οι σειρές σας από το Plex, δίπλα σε αυτές της λίστας σας</string>
     <string name="set_b_plex_code">Κωδικός: %1$s</string>
-    <string name="set_b_plex_code_expl">Στο κινητό ή τον υπολογιστή σας, μεταβείτε στο plex.tv/link και εισαγάγετε αυτόν τον κωδικό. Το OK ακυρώνει</string>
+    <string name="set_b_plex_code_expl">Στο κινητό ή τον υπολογιστή σας, μεταβείτε στο plex.tv/link και εισαγάγετε αυτόν τον κωδικό.</string>
     <string name="set_b_plex_working">Έλεγχος του λογαριασμού Plex…</string>
     <string name="set_b_plex_pick_server">Επιλέξτε διακομιστή</string>
     <string name="set_b_plex_pick_libraries">Βιβλιοθήκες για φόρτωση από τον %1$s</string>
@@ -309,15 +309,16 @@
     <string name="set_b_jf_add">Προσθήκη διακομιστή Jellyfin</string>
     <string name="set_b_jf_add_expl">Οι ταινίες και οι σειρές σας από το Jellyfin, δίπλα σε αυτές της λίστας σας</string>
     <string name="set_b_jf_address">Διεύθυνση διακομιστή Jellyfin</string>
-    <string name="set_b_jf_address_expl">Εισαγάγετέ την παρακάτω όπως στην εφαρμογή Jellyfin, για παράδειγμα http://192.168.1.10:8096. Το OK ακυρώνει</string>
+    <string name="set_b_jf_address_expl">Εισαγάγετέ την παρακάτω όπως στην εφαρμογή Jellyfin, για παράδειγμα http://192.168.1.10:8096.</string>
     <string name="set_b_jf_address_row">Διεύθυνση διακομιστή</string>
     <string name="set_b_jf_connect">Σύνδεση</string>
     <string name="set_b_jf_connecting">Σύνδεση…</string>
-    <string name="set_b_jf_code_expl">Σε ένα κινητό ή υπολογιστή συνδεδεμένο στο Jellyfin, ανοίξτε Ρυθμίσεις › Quick Connect και εισαγάγετε αυτόν τον κωδικό. Το OK ακυρώνει</string>
+    <string name="set_b_jf_code_expl">Σε ένα κινητό ή υπολογιστή συνδεδεμένο στο Jellyfin, ανοίξτε Ρυθμίσεις › Quick Connect και εισαγάγετε αυτόν τον κωδικό.</string>
     <string name="set_b_jf_use_password">Χρήση ονόματος χρήστη και κωδικού</string>
     <string name="set_b_jf_sign_in_title">Σύνδεση στον %1$s</string>
-    <string name="set_b_jf_sign_in_expl">Εισαγάγετε παρακάτω το όνομα χρήστη και τον κωδικό σας στο Jellyfin. Το OK ακυρώνει</string>
+    <string name="set_b_jf_sign_in_expl">Εισαγάγετε παρακάτω το όνομα χρήστη και τον κωδικό σας στο Jellyfin.</string>
     <string name="set_b_jf_sign_in">Σύνδεση</string>
     <string name="set_b_jf_failed">Το αίτημα Jellyfin απέτυχε: HTTP %1$d</string>
     <string name="set_b_jf_wrong_login">Λάθος όνομα χρήστη ή κωδικός</string>
+    <string name="set_b_plex_all_added">Όλοι οι διακομιστές αυτού του λογαριασμού Plex έχουν ήδη προστεθεί</string>
 </resources>

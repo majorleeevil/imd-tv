@@ -93,7 +93,7 @@
     <string name="set_a_vod_rows_expl">Câte rânduri de afișe arată paginile Filme și Seriale simultan; 2 rânduri folosesc afișe mai mici</string>
     <string name="set_a_vod_rows_2">2 rânduri</string>
     <string name="set_a_vod_rows_1">1 rând</string>
-    <string name="set_a_title_size">Dimensiunea titlurilor</string>
+    <string name="set_a_title_size">Dimensiunea textului</string>
     <string name="set_a_multi_line">Nume pe mai multe rânduri</string>
     <string name="set_a_multi_line_expl">Permite ca numele canalelor și titlurile emisiunilor să treacă pe 2 rânduri în ghid. În Celestial Glass și Liquid Glass sunt necesare rânduri mai înalte: 5 canale în ghid (sau 6 în Celestial Glass)</string>
     <string name="set_a_reset_appearance">Resetează aspectul</string>
@@ -323,4 +323,6 @@
     <string name="set_a_guide_display_both">Nume + logo</string>
     <string name="set_a_epg_text_size">Dimensiunea textului</string>
     <string name="set_a_epg_text_size_expl">Dimensiunea întregului text din ghid</string>
+    <string name="set_a_update_playlists_every">Actualizează playlisturile la fiecare</string>
+    <string name="set_a_update_playlists_every_expl">Cât de des este descărcat din nou în fundal fiecare playlist, inclusiv serverele Plex și Jellyfin</string>
 </resources>

@@ -21,6 +21,8 @@ import kotlinx.coroutines.launch
 import org.imdtv.iptvtv.IptvApp
 import org.imdtv.iptvtv.data.catalogue.parseStripList
 import org.imdtv.iptvtv.data.search.SearchResults
+import org.imdtv.iptvtv.data.search.GuideHit
+import org.imdtv.iptvtv.data.search.Section
 import org.imdtv.iptvtv.data.search.queryWords
 import org.imdtv.iptvtv.data.settings.AppSettings
 import org.imdtv.iptvtv.data.settings.LogoKind
@@ -30,12 +32,24 @@ import org.imdtv.iptvtv.data.settings.LogoKind
  * A [version] change (catalogue write: hide, rename, sync) re-runs the same query so shown results never go stale.
  */
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
-fun searchFlow(query: Flow<String>, version: Flow<Long> = kotlinx.coroutines.flow.flowOf(0L), search: suspend (String) -> SearchResults): Flow<SearchResults?> =
+fun <T> searchFlow(query: Flow<String>, version: Flow<Long> = kotlinx.coroutines.flow.flowOf(0L), search: suspend (String) -> T): Flow<T?> =
     query.debounce { if (queryWords(it).isEmpty()) 0L else 300L }
         .distinctUntilChanged()
         .combine(version) { q, v -> q to v }
         .distinctUntilChanged()
         .mapLatest { (q, _) -> if (queryWords(q).isEmpty()) null else search(q) }
+
+data class GuideResults(val today: Section<GuideHit>, val later: Section<GuideHit>) {
+    companion object { val EMPTY = GuideResults(Section(emptyList(), 0), Section(emptyList(), 0)) }
+}
+
+/** [hits] (soonest first) split at the end of [now]'s day, at most [cap] shown in each. */
+fun guideResults(hits: List<GuideHit>, now: Long, cap: Int = 50): GuideResults {
+    val midnight = java.time.Instant.ofEpochMilli(now).atZone(java.time.ZoneId.systemDefault()).toLocalDate().plusDays(1)
+        .atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+    val (today, later) = hits.partition { it.p.start < midnight }
+    return GuideResults(Section(today.take(cap), today.size), Section(later.take(cap), later.size))
+}
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SearchViewModel(app: Application) : AndroidViewModel(app) {
@@ -48,6 +62,14 @@ class SearchViewModel(app: Application) : AndroidViewModel(app) {
         val p = c.providerRepository.activeProviderId.first() ?: return@searchFlow SearchResults.EMPTY
         val strip = org.imdtv.iptvtv.data.catalogue.channelStrip(c.db.providerDao().get(p)?.nameStrip, c.settings.settings.first().removeNameSymbols)
         c.search.universal(p, strip, q)
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    /** Guide (EPG) matches, split at midnight: airing or starting today, and later. Its own flow, so the slower guide never holds up the rest. */
+    val guide: StateFlow<GuideResults?> = searchFlow(query, c.search.version) { q ->
+        val p = c.providerRepository.activeProviderId.first() ?: return@searchFlow GuideResults.EMPTY
+        val strip = org.imdtv.iptvtv.data.catalogue.channelStrip(c.db.providerDao().get(p)?.nameStrip, c.settings.settings.first().removeNameSymbols)
+        val now = System.currentTimeMillis()
+        guideResults(c.search.guide(p, strip, q, now), now)
     }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     val logoSource: StateFlow<List<LogoKind>> = c.settings.settings.map { it.logoOrder }.distinctUntilChanged()
@@ -67,6 +89,6 @@ class SearchViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    /** The result opened last (section 0–2, index), focused again on return from full screen or detail; null = a fresh visit. */
+    /** The result opened last (section 0–4, index), focused again on return from full screen or detail; null = a fresh visit. */
     var returnTo: Pair<Int, Int>? = null
 }

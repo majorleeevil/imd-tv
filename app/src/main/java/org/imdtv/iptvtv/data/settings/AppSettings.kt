@@ -185,6 +185,8 @@ data class AppSettings(
     val themeLooks: Map<String, String> = emptyMap(),
     /** Open-source guide files (URLs) turned off in EPG sources: kept in the list, never imported or matched. */
     val guidesOff: Set<String> = emptySet(),
+    /** Settings › Playlists › Update playlists every: each playlist (media servers too) is synced again once this old. */
+    val playlistUpdateHours: Int = 24,
 ) {
     /** The per-theme appearance: colour, mode, guide rows, header size, preview fade. */
     fun look() = listOf(themeColour.name, themeDark, guideRows, headerSize.name, previewFade).joinToString(";")
@@ -221,6 +223,7 @@ data class AppSettings(
 
     fun clamped() = copy(
         epgUpdateIntervalHours = epgUpdateIntervalHours.takeIf { it in EPG_INTERVALS } ?: 12,
+        playlistUpdateHours = playlistUpdateHours.takeIf { it in EPG_INTERVALS } ?: 24,
         epgDaysToKeep = epgDaysToKeep.coerceIn(1, 14),
         epgPastDays = epgPastDays.coerceIn(0, 7),
         startEarlyMin = startEarlyMin.takeIf { it in START_EARLY } ?: 2,

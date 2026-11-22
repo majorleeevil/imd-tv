@@ -93,7 +93,7 @@
     <string name="set_a_vod_rows_expl">Filmler ve Diziler sayfalarının aynı anda kaç afiş satırı göstereceği; 2 satır daha küçük afiş kullanır</string>
     <string name="set_a_vod_rows_2">2 satır</string>
     <string name="set_a_vod_rows_1">1 satır</string>
-    <string name="set_a_title_size">Başlık boyutu</string>
+    <string name="set_a_title_size">Metin boyutu</string>
     <string name="set_a_multi_line">Çok satırlı adlar</string>
     <string name="set_a_multi_line_expl">Rehberde kanal adları ve program başlıklarının 2 satıra sarmasına izin verir. Celestial Glass ve Liquid Glass temalarında daha yüksek satırlar gerekir: rehberde 5 kanal (Celestial Glass için 6)</string>
     <string name="set_a_reset_appearance">Görünümü sıfırla</string>
@@ -312,4 +312,6 @@
     <string name="set_a_guide_display_both">Ad + logo</string>
     <string name="set_a_epg_text_size">Metin boyutu</string>
     <string name="set_a_epg_text_size_expl">Rehberdeki tüm metnin boyutu</string>
+    <string name="set_a_update_playlists_every">Oynatma listelerini şu sıklıkla güncelle</string>
+    <string name="set_a_update_playlists_every_expl">Plex ve Jellyfin sunucuları dahil her oynatma listesinin arka planda ne sıklıkla yeniden indirileceği</string>
 </resources>

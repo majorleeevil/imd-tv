@@ -198,4 +198,7 @@
     <string name="vod_pack_no_space">Bu paketi içe aktarmak için yeterli alan yok</string>
     <string name="vod_pack_no_images">Bu zip içinde görsel yok</string>
     <string name="vod_pack_unreadable">Bu zip okunamadı</string>
+    <string name="vod_search_later">Daha sonra</string>
+    <string name="vod_search_no_programmes">Program bulunamadı</string>
+    <string name="vod_search_on_now">Şimdi yayında</string>
 </resources>

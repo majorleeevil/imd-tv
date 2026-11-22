@@ -43,6 +43,34 @@ class SearchRepositoryTest {
     private fun movie(cat: Long, id: String, name: String) =
         MovieEntity(providerId = p, categoryId = cat, remoteId = id, name = name, poster = null, year = null, rating = null, streamUrl = null)
 
+    @Test fun guideSearch() = runTest {
+        val news = cat(Kind.LIVE, "news")
+        channels(news, ch("1", "BBC One HD"), ch("2", "BBC One SD"), ch("3", "Gone", hidden = true), ch("4", "ITV"))
+        val ids = db.channelDao().searchable(p).associate { it.name to it.id }
+        val all = db.channelDao().byIds(db.channelDao().searchable(p).map { it.id })
+        val src = db.epgDao().insertSource(org.imdtv.iptvtv.data.db.EpgSourceEntity(providerId = p, url = "u", priority = 0, offsetMinutes = 60))
+        val itvCh = all.single { it.name == "ITV" }.id
+        db.epgDao().upsertLinks(listOf(
+            org.imdtv.iptvtv.data.db.EpgLinkEntity(ids.getValue("BBC One HD"), src, "bbc1", false),
+            org.imdtv.iptvtv.data.db.EpgLinkEntity(ids.getValue("BBC One SD"), src, "bbc1", false), // same guide: listed once
+            org.imdtv.iptvtv.data.db.EpgLinkEntity(itvCh, src, "itv", false),
+        ))
+        val h = 3_600_000L
+        val now = 100 * h
+        fun prog(key: String, title: String, start: Long, stop: Long) = org.imdtv.iptvtv.data.db.ProgrammeEntity(sourceId = src,
+            epgChannelKey = org.imdtv.iptvtv.data.db.ProgrammeEntity.key(src, key), start = start, stop = stop, title = title, desc = null, episodeNum = null, icon = null)
+        db.programmeDao().insertAll(listOf(
+            prog("bbc1", "Doctor Who", now + 5 * h, now + 6 * h),
+            prog("bbc1", "Doctor Who", now - 3 * h, now - 2 * h), // ended (2 h ago, +1 h offset: still ended)
+            prog("bbc1", "Doctor Who", now - h - h / 2, now - h / 2), // +1 h offset: on now
+            prog("itv", "Doctor Foster", now + h, now + 2 * h),
+            prog("itv", "100% Doctor Who", now + 2 * h, now + 3 * h),
+        ))
+        val r = repo.guide(p, emptyList(), "doctor who", now)
+        assertEquals(listOf(now - h / 2 to "BBC One HD", now + 3 * h to "ITV", now + 6 * h to "BBC One HD"), r.map { it.p.start to it.ch.name })
+        assertEquals(listOf("100% Doctor Who"), repo.guide(p, emptyList(), "100%", now).map { it.p.title }) // % is literal, not a wildcard
+    }
+
     @Test fun hiddenExcluded() = runTest {
         val shown = cat(Kind.LIVE, "news")
         val gone = cat(Kind.LIVE, "gone", hidden = true)

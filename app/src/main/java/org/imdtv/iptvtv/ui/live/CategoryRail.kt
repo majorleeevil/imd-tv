@@ -77,17 +77,8 @@ internal fun Rail(
     // Hold Up/Down jumps by section: this playlist's categories, then each other playlist (see railJump).
     val keys = remember(items, others, expanded) { items.map { it.entry.key } + otherPlaylistKeys(others, expanded) }
     val starts = remember(keys) { keys.indices.filter { it == 0 || keys[it].startsWith("p") && it >= items.size } }
-    val focusedKey = remember { arrayOfNulls<String>(1) }
-    val holdFrom = remember { IntArray(1) }
-    var jumpKey by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<String?>(null) }
-    val jumpFocus = remember { FocusRequester() }
-    LaunchedEffect(jumpKey) {
-        val k = jumpKey ?: return@LaunchedEffect
-        state.scrollToItem((keys.indexOf(k) - 3).coerceAtLeast(0)); withFrameNanos { }
-        runCatching { jumpFocus.requestFocus() }; jumpKey = null
-    }
-    fun track(key: String) = Modifier.onFocusChanged { if (it.hasFocus) focusedKey[0] = key }
-        .then(if (key == jumpKey) Modifier.focusRequester(jumpFocus) else Modifier)
+    val railKeys = rememberRailKeys(state, keys, starts)
+    val track = railKeys::track
     LaunchedEffect(movingIndex) {
         if (movingIndex >= 0 && movingIndex !in state.layoutInfo.visibleItemsInfo.map { it.index }.drop(1).dropLast(1)) {
             state.scrollToItem((movingIndex - 3).coerceAtLeast(0))
@@ -111,18 +102,7 @@ internal fun Rail(
                     }
                     return@onPreviewKeyEvent true
                 }
-                pageKey(e.key)?.let { d -> // a screen of entries at a time (issue #10)
-                    val at = keys.indexOf(focusedKey[0])
-                    if (down && at >= 0) jumpKey = keys[(at + d * (state.layoutInfo.visibleItemsInfo.size - 1).coerceAtLeast(1)).coerceIn(0, keys.lastIndex)]
-                    return@onPreviewKeyEvent true
-                }
-                if (e.key == Key.DirectionUp || e.key == Key.DirectionDown) {
-                    val r = e.nativeKeyEvent.repeatCount
-                    // Remember where the press started: its first step already moved focus a row before the hold shows.
-                    if (down && r == 0) { holdFrom[0] = keys.indexOf(focusedKey[0]); return@onPreviewKeyEvent false }
-                    if (down && r == 1 && holdFrom[0] >= 0) jumpKey = keys[railJump(starts, keys.size, holdFrom[0], e.key == Key.DirectionUp)]
-                    if (down) return@onPreviewKeyEvent true // the rest of the hold does nothing
-                }
+                if (railKeys.onKey(e)) return@onPreviewKeyEvent true
                 // Left only on a fresh press: the repeats of the hold that opened the rail would close it again at once.
                 if (down && (e.key == Key.Back || e.key == Key.DirectionLeft && e.nativeKeyEvent.repeatCount == 0)) { onClose(); true } else false
             },
@@ -161,7 +141,7 @@ internal fun Rail(
                     }
                 }
             }
-            if (move == null) otherPlaylistItems(others, expanded, onToggle, onPickOther, ::track) { title, trailing, header, nested, onClick ->
+            if (move == null) otherPlaylistItems(others, expanded, onToggle, onPickOther, track) { title, trailing, header, nested, onClick ->
                 SectionRowBox(title, trailing, header, nested, onClick, LocalTheme.current.colors.focus, LocalTheme.current.colors.onFocus)
             }
         }

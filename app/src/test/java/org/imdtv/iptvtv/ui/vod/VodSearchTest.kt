@@ -10,7 +10,7 @@ import org.junit.Test
 import org.imdtv.iptvtv.data.model.Kind
 
 class VodSearchTest {
-    private fun item(id: Long, cat: Long) = VodItem(id, Kind.MOVIE, "r$id", "Minecraft $id", null, null, null, cat, null)
+    private fun item(id: Long, cat: Long) = VodItem(id, Kind.MOVIE, "r$id", "Minecraft $id", null, null, null, cat, null, 1)
 
     /** A fake in-category search over two categories: A (1) holds item 1, B (2) holds item 2. */
     private val calls = mutableListOf<Triple<Kind, Long?, String>>()

@@ -93,7 +93,7 @@
     <string name="set_a_vod_rows_expl">Wie viele Posterzeilen Filme und Serien gleichzeitig zeigen; 2 Zeilen nutzen kleinere Poster</string>
     <string name="set_a_vod_rows_2">2 Zeilen</string>
     <string name="set_a_vod_rows_1">1 Zeile</string>
-    <string name="set_a_title_size">Titelgröße</string>
+    <string name="set_a_title_size">Textgröße</string>
     <string name="set_a_multi_line">Mehrzeilige Namen</string>
     <string name="set_a_multi_line_expl">Sendernamen und Sendungstitel im Programm auf 2 Zeilen umbrechen. In Celestial Glass und Liquid Glass braucht das höhere Zeilen: 5 Sender im Programm (oder 6 in Celestial Glass)</string>
     <string name="set_a_reset_appearance">Darstellung zurücksetzen</string>
@@ -312,4 +312,6 @@
     <string name="set_a_guide_display_both">Name + Logo</string>
     <string name="set_a_epg_text_size">Textgröße</string>
     <string name="set_a_epg_text_size_expl">Größe des gesamten Texts im Programm</string>
+    <string name="set_a_update_playlists_every">Playlists aktualisieren alle</string>
+    <string name="set_a_update_playlists_every_expl">Wie oft jede Playlist, auch Plex- und Jellyfin-Server, im Hintergrund neu heruntergeladen wird</string>
 </resources>

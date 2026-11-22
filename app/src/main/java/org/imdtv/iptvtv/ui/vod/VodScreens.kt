@@ -74,6 +74,7 @@ import org.imdtv.iptvtv.ui.duration
 import org.imdtv.iptvtv.ui.live.RailCategory
 import org.imdtv.iptvtv.ui.live.SectionRowBox
 import org.imdtv.iptvtv.ui.live.otherPlaylistItems
+import org.imdtv.iptvtv.ui.live.railTitle
 import org.imdtv.iptvtv.ui.live.toggled
 
 private val leftKey: (androidx.compose.ui.input.key.KeyEvent) -> Boolean = { it.type == KeyEventType.KeyDown && it.key == Key.DirectionLeft }
@@ -94,6 +95,7 @@ fun VodHomeScreen(vm: VodViewModel, nav: @Composable () -> Unit, onOpen: (VodIte
     val details by vm.details.collectAsState()
     val query by vm.query.collectAsState()
     val matches by vm.matches.collectAsState()
+    val others by vm.otherPlaylists.collectAsState()
     var railOpen by remember { mutableStateOf(false) }
     val firstItem = remember { FocusRequester() }
     val railFocus = remember { FocusRequester() }
@@ -180,6 +182,14 @@ fun VodHomeScreen(vm: VodViewModel, nav: @Composable () -> Unit, onOpen: (VodIte
                         PosterRow(rc.category.name.ifEmpty { stringResource(R.string.vod_uncategorised) }, items, firstItem.takeIf { i == 0 && favs.isEmpty() }, vm, onOpen, openRail, claim,
                             progress = { if (cont) progressFraction(it, rows) else null }, poster = poster, gap = gap, sideways = sideways)
                     }
+                    // All covers every playlist in use: the other playlists' categories follow, "Plex (Home) › Films".
+                    others.forEach { o ->
+                        items(o.categories, key = { "o${it.first.id}" }) { (cat, _) ->
+                            val items by produceState<List<VodItem>?>(null, cat.id) { value = vm.inCategory(cat.id) }
+                            PosterRow("${o.provider.railTitle()} › ${cat.name.ifEmpty { stringResource(R.string.vod_uncategorised) }}", items, firstItem.takeIf { favs.isEmpty() && cats.isEmpty() && o === others.first() && cat == o.categories.first().first },
+                                vm, onOpen, openRail, claim, poster = poster, gap = gap, sideways = sideways)
+                        }
+                    }
                 } } }
             }
         }
@@ -189,9 +199,10 @@ fun VodHomeScreen(vm: VodViewModel, nav: @Composable () -> Unit, onOpen: (VodIte
         if (railOpen) VodRail(cats, gridCat?.id, railFocus, onLongPress = { c -> if (vm.parentalOn.value) lockMenu = c },
             onPick = { vm.gridCategory.value = it; railOpen = false },
             onClose = { railOpen = false; refocus++ },
-            others = vm.otherPlaylists.collectAsState().value, expanded = vm.expandedPlaylists.collectAsState().value,
+            others = others, expanded = vm.expandedPlaylists.collectAsState().value,
             onToggle = { id -> vm.expandedPlaylists.value = vm.expandedPlaylists.value.toggled(id) },
-            onPickOther = { cat -> vm.openAfterSwitch(cat); onUsePlaylist(cat); railOpen = false })
+            onPickOther = { cat -> vm.openAfterSwitch(cat); onUsePlaylist(cat); railOpen = false },
+            activeTitle = vm.activeProvider.collectAsState().value?.railTitle())
     }
 }
 
@@ -298,32 +309,54 @@ private fun Hero(item: VodItem, d: VodDetail?, modifier: Modifier, extra: String
     }
 }
 
+/**
+ * All and Continue watching (every playlist's) on top; then this playlist as a section header ([activeTitle], OK opens
+ * or closes it) with its categories under it, then the other playlists' sections.
+ */
 @Composable
 private fun VodRail(cats: List<RailCategory>, selectedId: Long?, focus: FocusRequester, onLongPress: (CategoryEntity) -> Unit, onPick: (CategoryEntity?) -> Unit, onClose: () -> Unit,
-                    others: List<org.imdtv.iptvtv.data.repo.OtherPlaylist>, expanded: Set<Long>, onToggle: (Long) -> Unit, onPickOther: (CategoryEntity) -> Unit) {
-    val start = (cats.indexOfFirst { it.category.id == selectedId } + 1).coerceAtLeast(0)
-    val state = rememberLazyListState(start)
+                    others: List<org.imdtv.iptvtv.data.repo.OtherPlaylist>, expanded: Set<Long>, onToggle: (Long) -> Unit, onPickOther: (CategoryEntity) -> Unit,
+                    activeTitle: String?) {
+    var open by remember { mutableStateOf(true) }
+    val (lead, own) = (listOf<RailCategory?>(null) + cats).partition { it == null || it.category.id == VodViewModel.CONTINUE_ID }
+    fun key(rc: RailCategory?) = "v${rc?.category?.id ?: -1L}"
+    val shownOwn = if (open || activeTitle == null) own else emptyList()
+    // Hold Up/Down jumps by section: the top rows, this playlist, then each other playlist, as on the Live rail.
+    val keys = remember(cats, others, expanded, open, activeTitle) {
+        lead.map(::key) + listOfNotNull(activeTitle?.let { "pa" }) + shownOwn.map(::key) + org.imdtv.iptvtv.ui.live.otherPlaylistKeys(others, expanded)
+    }
+    val starts = remember(keys) { keys.indices.filter { it == 0 || keys[it].startsWith("p") } }
+    val selectedKey = "v${selectedId ?: -1L}".takeIf { it in keys } ?: "v-1"
+    val state = rememberLazyListState(keys.indexOf(selectedKey).coerceAtLeast(0))
+    val railKeys = org.imdtv.iptvtv.ui.live.rememberRailKeys(state, keys, starts)
     Column(
         Modifier.fillMaxHeight().width(260.dp).shadow(30.dp).background(Color(0xF515171D)).padding(horizontal = 20.dp, vertical = 35.dp)
-            .onPreviewKeyEvent { e -> if (e.type == KeyEventType.KeyDown && (e.key == Key.Back || e.key == Key.DirectionLeft)) { onClose(); true } else false },
+            .onPreviewKeyEvent { e -> if (railKeys.onKey(e)) true else if (e.type == KeyEventType.KeyDown && (e.key == Key.Back || e.key == Key.DirectionLeft && e.nativeKeyEvent.repeatCount == 0)) { onClose(); true } else false },
     ) {
         Text(stringResource(R.string.vod_categories_header), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = LocalTheme.current.colors.muted, letterSpacing = 2.sp, modifier = Modifier.padding(bottom = 12.dp))
-        LazyColumn(state = state, verticalArrangement = Arrangement.spacedBy(3.dp)) {
-            val all = listOf<RailCategory?>(null) + cats
-            itemsIndexed(all, key = { _, c -> c?.category?.id ?: -1L }) { i, rc ->
-                // Right picks, as on the Live rail; unhandled it moved focus behind the rail and left the rail open.
-                FocusBox(onClick = { onPick(rc?.category) }, modifier = (if (i == start) Modifier.focusRequester(focus) else Modifier)
-                    .then(rc?.category?.let { c -> Modifier.onLongOk { onLongPress(c) } } ?: Modifier)
-                    .onPreviewKeyEvent { e -> if (e.type == KeyEventType.KeyDown && e.key == Key.DirectionRight) { onPick(rc?.category); true } else false }) { f ->
-                    Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(5.dp)).background(if (f) Color.White else Color.Transparent).padding(horizontal = 11.dp, vertical = 8.dp)) {
-                        val fg = if (f) Color.Black else Color.White
-                        Text(rc?.category?.name?.ifEmpty { stringResource(R.string.vod_uncategorised) } ?: stringResource(R.string.vod_all), fontSize = 14.sp, color = fg, maxLines = 1,
-                            overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
-                        rc?.let { Text(it.count.toString(), fontSize = 11.sp, color = if (f) fg else LocalTheme.current.colors.muted) }
-                    }
+        if (others.isNotEmpty()) Text(stringResource(R.string.live_rail_jump_hint), fontSize = 11.sp, color = LocalTheme.current.colors.muted, modifier = Modifier.padding(bottom = 8.dp))
+        @Composable
+        fun CatRow(rc: RailCategory?, nested: Boolean) {
+            // Right picks, as on the Live rail; unhandled it moved focus behind the rail and left the rail open.
+            FocusBox(onClick = { onPick(rc?.category) }, modifier = (if (key(rc) == selectedKey) Modifier.focusRequester(focus) else Modifier).then(railKeys.track(key(rc)))
+                .then(rc?.category?.takeIf { it.id != VodViewModel.CONTINUE_ID }?.let { c -> Modifier.onLongOk { onLongPress(c) } } ?: Modifier)
+                .onPreviewKeyEvent { e -> if (e.type == KeyEventType.KeyDown && e.key == Key.DirectionRight) { onPick(rc?.category); true } else false }) { f ->
+                Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(5.dp)).background(if (f) Color.White else Color.Transparent)
+                    .padding(start = if (nested) 25.dp else 11.dp, end = 11.dp, top = 8.dp, bottom = 8.dp)) {
+                    val fg = if (f) Color.Black else Color.White
+                    Text(rc?.category?.name?.ifEmpty { stringResource(R.string.vod_uncategorised) } ?: stringResource(R.string.vod_all), fontSize = 14.sp, color = fg, maxLines = 1,
+                        overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                    rc?.let { Text(it.count.toString(), fontSize = 11.sp, color = if (f) fg else LocalTheme.current.colors.muted) }
                 }
             }
-            otherPlaylistItems(others, expanded, onToggle, onPickOther) { title, trailing, header, nested, onClick ->
+        }
+        LazyColumn(state = state, verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            items(lead, key = ::key) { CatRow(it, nested = false) }
+            if (activeTitle != null) item(key = "pa") {
+                Box(railKeys.track("pa")) { SectionRowBox(activeTitle, if (open) "⌃" else "⌄", true, false, { open = !open }, Color.White, Color.Black) }
+            }
+            items(shownOwn, key = ::key) { CatRow(it, nested = activeTitle != null) }
+            otherPlaylistItems(others, expanded, onToggle, onPickOther, railKeys::track) { title, trailing, header, nested, onClick ->
                 SectionRowBox(title, trailing, header, nested, onClick, Color.White, Color.Black)
             }
         }

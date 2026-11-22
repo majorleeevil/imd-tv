@@ -11,11 +11,17 @@ import org.imdtv.iptvtv.data.catalogue.isHeaderChannel
 import org.imdtv.iptvtv.data.db.AppDatabase
 import org.imdtv.iptvtv.data.db.ChannelEntity
 import org.imdtv.iptvtv.data.db.SearchRow
+import org.imdtv.iptvtv.data.db.ProgrammeEntity
+import org.imdtv.iptvtv.data.db.SQL_CHUNK
+import org.imdtv.iptvtv.data.epg.effectiveOffsetMinutes
 import org.imdtv.iptvtv.data.model.Kind
 import org.imdtv.iptvtv.ui.vod.VodItem
 import org.imdtv.iptvtv.ui.vod.item
 
 data class Section<T>(val items: List<T>, val total: Int)
+
+/** A guide search result: a programme (on the channel's clock) and the channel showing it. */
+data class GuideHit(val ch: ChannelEntity, val p: org.imdtv.iptvtv.data.repo.GuideProgramme)
 
 data class SearchResults(val channels: Section<ChannelEntity>, val movies: Section<VodItem>, val series: Section<VodItem>) {
     companion object { val EMPTY = SearchResults(Section(emptyList(), 0), Section(emptyList(), 0), Section(emptyList(), 0)) }
@@ -65,6 +71,34 @@ class SearchRepository(private val db: AppDatabase) {
             Section(load(mv.take(cap)) { db.movieDao().byIds(it).associate { m -> m.id to m.item() } }, mv.size),
             Section(load(se.take(cap)) { db.seriesDao().byIds(it).associate { s -> s.id to s.item() } }, se.size),
         )
+    }
+
+    /**
+     * Programmes not yet ended whose title has every word, on the playlist's searchable channels, soonest first (at most
+     * [cap]). A guide channel shown by several channels (HD and SD) lists once, on the best-ranked of them.
+     */
+    suspend fun guide(providerId: Long, strip: List<String>, query: String, now: Long, cap: Int = 300): List<GuideHit> = withContext(Dispatchers.Default) {
+        val words = queryWords(query)
+        if (words.isEmpty()) return@withContext emptyList()
+        val order = index(providerId, Kind.LIVE, strip).withIndex().associate { (i, e) -> e.id to i }
+        val links = order.keys.chunked(SQL_CHUNK).flatMap { db.epgDao().linksFor(it) }
+            .sortedBy { order[it.channelId] }.distinctBy { ProgrammeEntity.key(it.sourceId, it.xmltvId) }
+        if (links.isEmpty()) return@withContext emptyList()
+        val byKey = links.associateBy { ProgrammeEntity.key(it.sourceId, it.xmltvId) }
+        // shortcut: SQLite LIKE folds ASCII case only, so the longest word narrows in SQL and the rest (and non-ASCII case) are checked here.
+        val longest = words.maxBy { it.length }
+        val pattern = "%" + longest.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
+        val sources = db.epgDao().sources(providerId).associateBy { it.id }
+        // Rows are on the guide's clock until shifted below: widen by the largest offset, so none ending "now" is missed.
+        val slack = maxOf(db.channelDao().maxEpgOffset(providerId), sources.values.maxOfOrNull { kotlin.math.abs(it.offsetMinutes) } ?: 0) * 60_000L
+        val rows = byKey.keys.chunked(SQL_CHUNK).flatMap { db.programmeDao().search(it, now - slack, pattern, cap) }
+            .filter { matchesAll(foldForSearch(it.title), words) }
+        val channels = rows.mapNotNull { byKey[it.epgChannelKey]?.channelId }.distinct().chunked(SQL_CHUNK).flatMap { db.channelDao().byIds(it) }.associateBy { it.id }
+        rows.mapNotNull { r ->
+            val ch = channels[byKey[r.epgChannelKey]?.channelId] ?: return@mapNotNull null
+            val off = sources[r.sourceId]?.let { effectiveOffsetMinutes(ch, it) * 60_000L } ?: 0L
+            GuideHit(ch, org.imdtv.iptvtv.data.repo.GuideProgramme(r.title, r.desc, r.episodeNum, r.start + off, r.stop + off, r.ageRating))
+        }.filter { it.p.stop > now }.sortedBy { it.p.start }.take(cap)
     }
 
     /** [categoryId] null = every visible item of [kind]. No cap. */

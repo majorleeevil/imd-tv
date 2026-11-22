@@ -81,6 +81,9 @@ fun GuideMenus(vm: LiveViewModel, state: GuideState) {
     val marks by vm.marks.collectAsState()
     when (m) {
         is GuideMenu.Channel -> {
+            // Items opening another menu (a ›): Add to category, Recording, Catch-up, Guide options, Merge options, Change logo.
+            val more = setOf(R.string.live_menu_add_to_category, R.string.live_menu_recording, R.string.live_menu_catchup, R.string.live_menu_guide_options,
+                R.string.live_menu_merge_options, R.string.live_menu_change_logo).map { stringResource(it) }.toSet()
             ContextMenu(m.ch.displayName(strip), buildList {
             val fav = m.ch.id in favourites
             add((if (fav) stringResource(R.string.live_menu_fav_remove) else stringResource(R.string.live_menu_fav_add)) to {
@@ -94,18 +97,18 @@ fun GuideMenus(vm: LiveViewModel, state: GuideState) {
             if (recordingOn) add(stringResource(R.string.live_menu_recording) to { state.menu = GuideMenu.Recording(m.ch) })
             if (m.ch.hasCatchUp) add(stringResource(R.string.live_menu_catchup) to { state.menu = GuideMenu.CatchUp(m.ch) })
             add(stringResource(R.string.live_menu_guide_options) to { state.menu = GuideMenu.GuideOptions(m.ch) })
-            add(stringResource(R.string.live_menu_rename) to { state.menu = GuideMenu.Rename(m.ch) })
-            add(stringResource(R.string.live_menu_change_number) to { state.menu = GuideMenu.ChangeNumber(m.ch) })
+            if (state.hasGrid || m.ch.mergeHead) add(stringResource(R.string.live_menu_merge_options) to { state.menu = GuideMenu.MergeOptions(m.ch) })
             add(stringResource(R.string.live_menu_change_logo) to { state.menu = GuideMenu.ChangeLogo(m.ch) })
+            add(stringResource(R.string.live_menu_change_number) to { state.menu = GuideMenu.ChangeNumber(m.ch) })
+            if (vm.settings.value.parentalOn) add(stringResource(if (m.ch.parentalLock) R.string.live_menu_parental_off else R.string.live_menu_parental_on) to {
+                vm.setChannelLock(m.ch, !m.ch.parentalLock); state.menu = null })
             // Picks the channel up in place, as categories move: arrows carry it, OK drops, Back cancels.
             if (state.hasGrid && entry != null && entry != RailEntry.Recent) add(stringResource(R.string.live_menu_move) to {
                 if (vm.selectedSort.value == SortBy.MANUAL) { state.rowMove = RowMove(m.ch, vm.channels.value); state.menu = null } else entry?.let { state.menu = GuideMenu.ToManual(m.ch, it) }
             })
-            if (state.hasGrid || m.ch.mergeHead) add(stringResource(R.string.live_menu_merge_options) to { state.menu = GuideMenu.MergeOptions(m.ch) })
-            if (vm.settings.value.parentalOn) add(stringResource(if (m.ch.parentalLock) R.string.live_menu_parental_off else R.string.live_menu_parental_on) to {
-                vm.setChannelLock(m.ch, !m.ch.parentalLock); state.menu = null })
+            add(stringResource(R.string.live_menu_rename) to { state.menu = GuideMenu.Rename(m.ch) })
             add(stringResource(R.string.live_menu_hide) to { state.refocusOnChange = true; vm.hide(m.ch); state.menu = null })
-            }) { state.menu = null }
+            }, 0, more) { state.menu = null }
         }
         is GuideMenu.MergeOptions -> {
             val merged by androidx.compose.runtime.produceState(0, m.ch.id, m.ch.mergeHead) { value = if (m.ch.mergeHead) vm.mergedMembers(m.ch).size else 0 }

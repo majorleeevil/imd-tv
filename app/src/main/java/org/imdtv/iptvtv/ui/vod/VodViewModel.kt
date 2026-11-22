@@ -44,6 +44,8 @@ import org.imdtv.iptvtv.ui.live.RailCategory
 data class VodItem(
     val id: Long, val kind: Kind, val remoteId: String, val name: String, val poster: String?,
     val year: Int?, val rating: Double?, val categoryId: Long?, val streamUrl: String?,
+    /** Its playlist: Continue watching and Favourites show every playlist's. */
+    val providerId: Long,
 )
 
 /** Fetched on demand from the provider (Xtream get_vod_info / get_series_info). */
@@ -52,8 +54,8 @@ data class VodDetail(
     val durationSecs: Int?, val episodes: List<Episode> = emptyList(), val height: Int? = null,
 )
 
-fun MovieEntity.item() = VodItem(id, Kind.MOVIE, remoteId, name, poster, year, rating, categoryId, streamUrl)
-fun SeriesEntity.item() = VodItem(id, Kind.SERIES, remoteId, name, poster, year, rating, categoryId, null)
+fun MovieEntity.item() = VodItem(id, Kind.MOVIE, remoteId, name, poster, year, rating, categoryId, streamUrl, providerId)
+fun SeriesEntity.item() = VodItem(id, Kind.SERIES, remoteId, name, poster, year, rating, categoryId, null, providerId)
 
 /** In-category matches: null for a blank query (normal view), else [search] of the scope (kind, category or null = all) after a 300 ms pause. */
 @OptIn(kotlinx.coroutines.FlowPreview::class, ExperimentalCoroutinesApi::class)
@@ -89,6 +91,8 @@ class VodViewModel(private val app: Application) : AndroidViewModel(app) {
     private fun source(p: ProviderEntity) = source?.takeIf { it.first == p }?.second
         ?: c.sourceFor(p).also { source = p to it }
 
+    /** The playlist in use: the rail's section header for its categories. */
+    val activeProvider: StateFlow<ProviderEntity?> get() = provider
     val kind = MutableStateFlow(Kind.MOVIE)
     // Rows key on the id only: the provider row also changes on every sync and name clean-up edit.
     private val providerId = provider.filterNotNull().map { it.id }.distinctUntilChanged()
@@ -100,8 +104,8 @@ class VodViewModel(private val app: Application) : AndroidViewModel(app) {
         p != null && p.loads(k) && (s[p.id]?.let { it.ordinal <= k.ordinal } ?: false)
     }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
-    /** Every progress row of the active playlist (movies and episodes; small), newest first. */
-    val progress: StateFlow<List<ProgressEntity>> = providerId.flatMapLatest { c.db.progressDao().observe(it) }
+    /** Every progress row of the playlists in use (movies and episodes; small), newest first. Item ids are unique across playlists. */
+    val progress: StateFlow<List<ProgressEntity>> = providerId.flatMapLatest { c.db.progressDao().observeShown(it) }
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     /** Movies left part-way, and series with an episode in progress or one watched in the last 30 days (the next is due). */
@@ -124,7 +128,7 @@ class VodViewModel(private val app: Application) : AndroidViewModel(app) {
         }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     val favourites: StateFlow<List<VodItem>> = combine(providerId, kind) { p, k -> p to k }
-        .flatMapLatest { (p, k) -> c.db.favouriteDao().observe(p, k) }
+        .flatMapLatest { (p, k) -> c.db.favouriteDao().observeShown(p, k) }
         .mapLatest { favs -> items(kind.value, favs.map(FavouriteEntity::itemId)) }
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
@@ -148,10 +152,19 @@ class VodViewModel(private val app: Application) : AndroidViewModel(app) {
     val query = MutableStateFlow("")
     private val searchScope = combine(kind, gridCategory) { k, g -> k to g?.id }
     val matches: StateFlow<List<VodItem>?> = vodMatches(query, searchScope, c.search.version) { k, cat, q ->
-        provider.value?.let { c.search.inCategory(it.id, k, cat?.takeIf { it != CONTINUE_ID }, q) }.orEmpty()
+        val p = provider.value ?: return@vodMatches emptyList()
+        // All searches every playlist in use (this one's matches first); a category, only its own playlist.
+        if (cat == null) inUse(k).flatMap { c.search.inCategory(it, k, null, q) }
+        else c.search.inCategory(p.id, k, cat.takeIf { it != CONTINUE_ID }, q)
     }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
-    fun warmSearch() { viewModelScope.launch { provider.value?.let { c.search.warm(it.id, emptyList(), listOf(kind.value)) } } }
+    /** This playlist, then the others switched on with [k] loaded. */
+    private suspend fun inUse(k: Kind): List<Long> {
+        val active = provider.value?.id ?: return emptyList()
+        return listOf(active) + c.db.providerDao().all().filter { it.id != active && it.enabled && it.loads(k) }.sortedBy { it.name }.map { it.id }
+    }
+
+    fun warmSearch() { viewModelScope.launch { inUse(kind.value).forEach { c.search.warm(it, emptyList(), listOf(kind.value)) } } }
 
     val focused = MutableStateFlow<VodItem?>(null)
     val details = MutableStateFlow<Map<Long, VodDetail>>(emptyMap())
@@ -191,10 +204,10 @@ class VodViewModel(private val app: Application) : AndroidViewModel(app) {
     /** Loads plot/backdrop/episodes once per item; failures are logged and leave the hero without them. */
     fun loadDetail(item: VodItem) {
         if (details.value.containsKey(item.id)) return
-        val p = provider.value ?: return
-        // M3U has no movie details, and asking would download and hold the whole playlist; Stalker has no detail call.
-        if (item.kind == Kind.MOVIE && p.type != ProviderType.XTREAM && !p.type.mediaServer) return
         viewModelScope.launch {
+            val p = providerOf(item) ?: return@launch
+            // M3U has no movie details, and asking would download and hold the whole playlist; Stalker has no detail call.
+            if (item.kind == Kind.MOVIE && p.type != ProviderType.XTREAM && !p.type.mediaServer) return@launch
             runCatching {
                 if (item.kind == Kind.MOVIE) source(p).movieDetail(item.remoteId).let {
                     VodDetail(it.backdrop, it.plot, it.genre, it.director, it.cast, it.durationSecs, height = it.height)
@@ -206,11 +219,14 @@ class VodViewModel(private val app: Application) : AndroidViewModel(app) {
         }
     }
 
+    /** The item's own playlist (another one's, from Continue watching or Favourites). */
+    private suspend fun providerOf(item: VodItem): ProviderEntity? =
+        provider.value?.takeIf { it.id == item.providerId } ?: c.db.providerDao().get(item.providerId)
+
     fun toggleFavourite(item: VodItem) {
-        val p = provider.value ?: return
         viewModelScope.launch {
-            if (favourites.value.any { it.id == item.id }) c.db.favouriteDao().remove(p.id, item.kind, item.id)
-            else c.db.favouriteDao().add(FavouriteEntity(p.id, item.kind, item.id, System.currentTimeMillis()))
+            if (favourites.value.any { it.id == item.id }) c.db.favouriteDao().remove(item.providerId, item.kind, item.id)
+            else c.db.favouriteDao().add(FavouriteEntity(item.providerId, item.kind, item.id, System.currentTimeMillis()))
         }
     }
 
@@ -220,17 +236,16 @@ class VodViewModel(private val app: Application) : AndroidViewModel(app) {
 
     /** Mark watched (Play then starts over) or unwatched (forgets the position too). */
     fun setWatched(item: VodItem, watched: Boolean, episode: String = "") {
-        val p = provider.value ?: return
         viewModelScope.launch {
-            if (watched) c.db.progressDao().upsert(ProgressEntity(p.id, item.kind, item.id, 0, progressOf(item, episode)?.durationMs ?: 0,
+            if (watched) c.db.progressDao().upsert(ProgressEntity(item.providerId, item.kind, item.id, 0, progressOf(item, episode)?.durationMs ?: 0,
                 System.currentTimeMillis(), completed = true, episode = episode))
-            else c.db.progressDao().delete(p.id, item.kind, item.id, episode)
+            else c.db.progressDao().delete(item.providerId, item.kind, item.id, episode)
         }
     }
 
     // shortcut: learned heights live in a small prefs file, not Room; move them to the DB if the list grows large.
     private val heightPrefs = app.getSharedPreferences("vod_heights", android.content.Context.MODE_PRIVATE)
-    private fun heightKey(item: VodItem) = "${provider.value?.id}:${item.kind}:${item.remoteId}"
+    private fun heightKey(item: VodItem) = "${item.providerId}:${item.kind}:${item.remoteId}"
     /** Heights read from streams as they played (B1), so the detail page can show them next time. */
     val learnedHeights = MutableStateFlow<Map<String, Int>>(emptyMap())
     init {
@@ -246,11 +261,15 @@ class VodViewModel(private val app: Application) : AndroidViewModel(app) {
      * the picture height once known, and where it's left (see WatchProgress).
      */
     fun play(url: String, item: VodItem? = null, episode: String = "", startMs: Long = 0) {
-        val cat = item?.categoryId ?: return startPlay(url, item, episode, startMs)
-        // Parental controls: a locked category's titles need the PIN. shortcut: no VOD age ratings (list APIs carry none), add them if a provider field proves reliable.
         viewModelScope.launch {
-            val locked = c.settings.settings.first().let { s -> s.parentalOn && s.parentalLocked(c.db.categoryDao().get(cat)?.parentalLock == true, null) }
-            if (c.parental.allow(locked, "v${item.kind}${item.id}", Long.MAX_VALUE, ask = true)) startPlay(url, item, episode, startMs)
+            val p = item?.let { providerOf(it) } ?: provider.value
+            // Parental controls: a locked category's titles need the PIN. shortcut: no VOD age ratings (list APIs carry none), add them if a provider field proves reliable.
+            val cat = item?.categoryId
+            if (cat != null) {
+                val locked = c.settings.settings.first().let { s -> s.parentalOn && s.parentalLocked(c.db.categoryDao().get(cat)?.parentalLock == true, null) }
+                if (!c.parental.allow(locked, "v${item.kind}${item.id}", Long.MAX_VALUE, ask = true)) return@launch
+            }
+            startPlay(p, url, item, episode, startMs)
         }
     }
 
@@ -260,11 +279,11 @@ class VodViewModel(private val app: Application) : AndroidViewModel(app) {
         viewModelScope.launch { if (on || c.parental.askPin()) c.db.categoryDao().setParentalLock(cat.id, on) }
     }
 
-    private fun startPlay(url: String, item: VodItem?, episode: String, startMs: Long) {
-        player.play(url, provider.value?.userAgent, provider.value?.login(), vod = true, startMs = startMs)
+    private fun startPlay(p: ProviderEntity?, url: String, item: VodItem?, episode: String, startMs: Long) {
+        player.play(url, p?.userAgent, p?.login(), vod = true, startMs = startMs)
         learn?.cancel()
         if (item == null) return
-        provider.value?.let { c.watchProgress.start(it.id, item.kind, item.id, episode, url) }
+        p?.let { c.watchProgress.start(it.id, item.kind, item.id, episode, url) }
         val key = heightKey(item)
         learn = viewModelScope.launch {
             // Only while this stream is still the one playing: a live channel tuned after a failed start mustn't count.

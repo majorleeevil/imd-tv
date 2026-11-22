@@ -93,7 +93,7 @@
     <string name="set_a_vod_rows_expl">Ile wierszy plakatów pokazują strony Filmy i Seriale naraz; 2 wiersze to mniejsze plakaty</string>
     <string name="set_a_vod_rows_2">2 wiersze</string>
     <string name="set_a_vod_rows_1">1 wiersz</string>
-    <string name="set_a_title_size">Rozmiar tytułów</string>
+    <string name="set_a_title_size">Rozmiar tekstu</string>
     <string name="set_a_multi_line">Nazwy wielowierszowe</string>
     <string name="set_a_multi_line_expl">Pozwala zawijać nazwy kanałów i tytuły audycji do 2 wierszy w przewodniku. W Celestial Glass i Liquid Glass wymaga to wyższych wierszy: 5 kanałów w przewodniku (lub 6 w Celestial Glass)</string>
     <string name="set_a_reset_appearance">Przywróć wygląd</string>
@@ -334,4 +334,6 @@
     <string name="set_a_guide_display_both">Nazwa + logo</string>
     <string name="set_a_epg_text_size">Rozmiar tekstu</string>
     <string name="set_a_epg_text_size_expl">Rozmiar całego tekstu w przewodniku</string>
+    <string name="set_a_update_playlists_every">Aktualizuj playlisty co</string>
+    <string name="set_a_update_playlists_every_expl">Jak często każda playlista, w tym serwery Plex i Jellyfin, jest ponownie pobierana w tle</string>
 </resources>

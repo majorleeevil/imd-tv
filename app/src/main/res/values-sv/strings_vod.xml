@@ -198,4 +198,7 @@
     <string name="vod_pack_no_space">Inte tillräckligt med utrymme för att importera paketet</string>
     <string name="vod_pack_no_images">Inga bilder i zip-filen</string>
     <string name="vod_pack_unreadable">Zip-filen kunde inte läsas</string>
+    <string name="vod_search_later">Senare</string>
+    <string name="vod_search_no_programmes">Inga program hittades</string>
+    <string name="vod_search_on_now">Sänds nu</string>
 </resources>

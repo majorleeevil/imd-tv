@@ -93,7 +93,7 @@
     <string name="set_a_vod_rows_expl">Hoeveel rijen posters de pagina\'s Films en Series tegelijk tonen; 2 rijen gebruikt kleinere posters</string>
     <string name="set_a_vod_rows_2">2 rijen</string>
     <string name="set_a_vod_rows_1">1 rij</string>
-    <string name="set_a_title_size">Titelgrootte</string>
+    <string name="set_a_title_size">Tekstgrootte</string>
     <string name="set_a_multi_line">Namen over meerdere regels</string>
     <string name="set_a_multi_line_expl">Laat zendernamen en programmatitels in de gids over 2 regels lopen. In Celestial Glass en Liquid Glass vraagt dit hogere rijen: 5 zenders in de gids (of 6 in Celestial Glass)</string>
     <string name="set_a_reset_appearance">Weergave resetten</string>
@@ -312,4 +312,6 @@
     <string name="set_a_guide_display_both">Naam + logo</string>
     <string name="set_a_epg_text_size">Tekstgrootte</string>
     <string name="set_a_epg_text_size_expl">Grootte van alle tekst in de gids</string>
+    <string name="set_a_update_playlists_every">Afspeellijsten bijwerken elke</string>
+    <string name="set_a_update_playlists_every_expl">Hoe vaak elke afspeellijst, inclusief Plex- en Jellyfin-servers, op de achtergrond opnieuw wordt gedownload</string>
 </resources>

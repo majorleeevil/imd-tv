@@ -93,7 +93,7 @@
     <string name="set_a_vod_rows_expl">Nombre de lignes d\'affiches affichées sur les pages Films et Séries ; 2 lignes utilisent des affiches plus petites</string>
     <string name="set_a_vod_rows_2">2 lignes</string>
     <string name="set_a_vod_rows_1">1 ligne</string>
-    <string name="set_a_title_size">Taille des titres</string>
+    <string name="set_a_title_size">Taille du texte</string>
     <string name="set_a_multi_line">Noms sur plusieurs lignes</string>
     <string name="set_a_multi_line_expl">Permet aux noms de chaînes et aux titres de programmes de passer sur 2 lignes dans le guide. Dans Celestial Glass et Liquid Glass, cela demande des lignes plus hautes : 5 chaînes dans le guide (ou 6 dans Celestial Glass)</string>
     <string name="set_a_reset_appearance">Réinitialiser l\'apparence</string>
@@ -312,4 +312,6 @@
     <string name="set_a_guide_display_both">Nom + logo</string>
     <string name="set_a_epg_text_size">Taille du texte</string>
     <string name="set_a_epg_text_size_expl">Taille de tout le texte du guide</string>
+    <string name="set_a_update_playlists_every">Actualiser les listes toutes les</string>
+    <string name="set_a_update_playlists_every_expl">Fréquence de téléchargement en arrière-plan de chaque liste, serveurs Plex et Jellyfin compris</string>
 </resources>

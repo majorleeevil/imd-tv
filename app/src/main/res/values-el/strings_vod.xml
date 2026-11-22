@@ -188,4 +188,7 @@
     <string name="vod_pack_no_space">Δεν υπάρχει αρκετός χώρος για εισαγωγή αυτού του πακέτου</string>
     <string name="vod_pack_no_images">Δεν υπάρχουν εικόνες σε αυτό το zip</string>
     <string name="vod_pack_unreadable">Δεν ήταν δυνατή η ανάγνωση αυτού του zip</string>
+    <string name="vod_search_later">Αργότερα</string>
+    <string name="vod_search_no_programmes">Δεν βρέθηκαν προγράμματα</string>
+    <string name="vod_search_on_now">Παίζει τώρα</string>
 </resources>

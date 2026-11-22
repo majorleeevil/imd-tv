@@ -198,4 +198,7 @@
     <string name="vod_pack_no_space">Spazio insufficiente per importare questo pacchetto</string>
     <string name="vod_pack_no_images">Nessuna immagine in questo zip</string>
     <string name="vod_pack_unreadable">Impossibile leggere questo zip</string>
+    <string name="vod_search_later">Più tardi</string>
+    <string name="vod_search_no_programmes">Nessun programma trovato</string>
+    <string name="vod_search_on_now">In onda ora</string>
 </resources>

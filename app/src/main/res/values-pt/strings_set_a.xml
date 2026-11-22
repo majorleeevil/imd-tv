@@ -93,7 +93,7 @@
     <string name="set_a_vod_rows_expl">Quantas linhas de cartazes as páginas de Filmes e Séries mostram de cada vez; 2 linhas usam cartazes mais pequenos</string>
     <string name="set_a_vod_rows_2">2 linhas</string>
     <string name="set_a_vod_rows_1">1 linha</string>
-    <string name="set_a_title_size">Tamanho dos títulos</string>
+    <string name="set_a_title_size">Tamanho do texto</string>
     <string name="set_a_multi_line">Nomes em várias linhas</string>
     <string name="set_a_multi_line_expl">Permite que nomes de canais e títulos de programas ocupem 2 linhas no guia. No Celestial Glass e no Liquid Glass requer linhas mais altas: 5 canais no guia (ou 6 no Celestial Glass)</string>
     <string name="set_a_reset_appearance">Repor aspeto</string>
@@ -312,4 +312,6 @@
     <string name="set_a_guide_display_both">Nome + logótipo</string>
     <string name="set_a_epg_text_size">Tamanho do texto</string>
     <string name="set_a_epg_text_size_expl">Tamanho de todo o texto do guia</string>
+    <string name="set_a_update_playlists_every">Atualizar listas a cada</string>
+    <string name="set_a_update_playlists_every_expl">Com que frequência cada lista, incluindo servidores Plex e Jellyfin, é transferida novamente em segundo plano</string>
 </resources>
