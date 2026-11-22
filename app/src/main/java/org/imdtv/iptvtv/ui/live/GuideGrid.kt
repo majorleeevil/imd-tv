@@ -144,6 +144,8 @@ fun GuideGrid(
 ) {
     val multiLine = vm.settings.collectAsState().value.multiLineGuide
     val epg = vm.settings.collectAsState().value.epgTextSize.scale
+    val logoSource by vm.logoSource.collectAsState()
+    val logos = logoSource.takeIf { vm.settings.collectAsState().value.guideLogos }
     val style = remember(base, multiLine, epg) { base.forGuide(multiLine, epg) }
     val listed by vm.channels.collectAsState()
     val move = state.rowMove
@@ -216,7 +218,7 @@ fun GuideGrid(
                 itemsIndexed(channels, key = { _, ch -> ch.id }) { i, ch ->
                     val moving = move?.ch?.id == ch.id && !move.dropped || merging?.ch?.id == ch.id
                     GuideRow(
-                        ch, (if (moving && merging == null) "↕ " else "") + ch.displayName(strip), programmes[ch.id].orEmpty(), now, at, windowStart, style, isFocused = focused?.id == ch.id && !state.railOpen && state.heldFocus == null, moving = moving,
+                        ch, (if (moving && merging == null) "↕ " else "") + ch.displayName(strip), programmes[ch.id].orEmpty(), now, at, windowStart, style, isFocused = focused?.id == ch.id && !state.railOpen && state.heldFocus == null, moving = moving, logos = logos,
                         marked = { p -> (ch.id to p.start) in marks || ch.id in recordingOnChannel && p.start <= now && now < p.stop },
                         modifier = (if (i == state.focusIndex) Modifier.focusRequester(state.rowFocus) else Modifier)
                             .onPreviewKeyEvent { e ->
@@ -333,6 +335,8 @@ private fun GuideRow(
     marked: (GuideProgramme) -> Boolean, modifier: Modifier, onFocused: () -> Unit, onClick: () -> Unit,
     /** Picked up by Move: the gold of every move (Settings, the category rail). */
     moving: Boolean = false,
+    /** Non-null: the channel's logo replaces its name (Settings › Channels › Logos instead of names, issue #13). */
+    logos: List<org.imdtv.iptvtv.data.settings.LogoKind>? = null,
 ) {
     val colors = LocalTheme.current.colors
     Row(Modifier.height(style.rowHeight).then(if (style.rowDividers) Modifier.drawBehind {
@@ -352,7 +356,17 @@ private fun GuideRow(
                 // The focused row scrolls a name too long for its box (issue #5); multi-line names wrap instead.
                 val marquee = f && style.lines == 1
                 val number = (ch.customNumber ?: ch.number)?.takeIf { org.imdtv.iptvtv.ui.LocalShowNumbers.current }
-                if (style.numberFirst) {
+                // No logo for this channel: the name, as with the setting off.
+                val logo = logos?.takeIf { org.imdtv.iptvtv.data.logos.shownLogos(ch, it).isNotEmpty() }
+                val nameText = @Composable { Text(name, fontSize = style.sp(14f) * org.imdtv.iptvtv.ui.LocalTitleScale.current, fontWeight = style.font, color = fg, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+                if (logo != null) {
+                    if (style.numberFirst) number?.let { Text("$it  ", fontSize = style.sp(14f) * org.imdtv.iptvtv.ui.LocalTitleScale.current, fontWeight = style.font, color = fg) }
+                    Box(Modifier.weight(1f).fillMaxHeight().padding(vertical = 3.dp), contentAlignment = Alignment.CenterStart) {
+                        org.imdtv.iptvtv.ui.ChannelLogo(ch, logo, Modifier.fillMaxSize(), fallback = nameText)
+                    }
+                    if (ch.hasCatchUp) CatchUpClock(fg, Modifier.padding(start = 6.dp))
+                    if (!style.numberFirst) number?.let { Text("  $it", fontSize = style.sp(12f), color = fg.copy(alpha = .85f)) }
+                } else if (style.numberFirst) {
                     Text(listOfNotNull(number, name).joinToString("  "), fontSize = style.sp(14f) * org.imdtv.iptvtv.ui.LocalTitleScale.current, fontWeight = style.font, color = fg, maxLines = style.lines,
                         overflow = if (marquee) TextOverflow.Clip else TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false).then(if (marquee) Modifier.basicMarquee(Int.MAX_VALUE) else Modifier))
                     if (ch.hasCatchUp) CatchUpClock(fg, Modifier.padding(start = 6.dp))

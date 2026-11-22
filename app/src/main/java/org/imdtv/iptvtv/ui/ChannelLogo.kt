@@ -37,8 +37,9 @@ val org.imdtv.iptvtv.data.db.ChannelEntity.hasCatchUp get() = catchUpOn && archi
 
 /** The channel's logo per the Channel logos setting; the number tile while loading, on error and when there is none. */
 @Composable
-fun ChannelLogo(ch: ChannelEntity, source: List<LogoKind>, modifier: Modifier = Modifier, fontSize: TextUnit = 16.sp) {
-    val tile = @Composable {
+fun ChannelLogo(ch: ChannelEntity, source: List<LogoKind>, modifier: Modifier = Modifier, fontSize: TextUnit = 16.sp,
+    /** Shown instead of the number tile while loading or on error. */ fallback: (@Composable () -> Unit)? = null) {
+    val tile = fallback ?: @Composable {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text((ch.customNumber ?: ch.number)?.toString()?.takeIf { LocalShowNumbers.current } ?: stringResource(R.string.live_logo_tv), fontSize = fontSize, fontWeight = FontWeight.Bold, color = Color.White)
         }

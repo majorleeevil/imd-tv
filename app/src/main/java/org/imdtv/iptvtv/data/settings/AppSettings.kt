@@ -163,6 +163,7 @@ data class AppSettings(
     val titleSize: TitleSize = TitleSize.LARGE,
     val vodTitleSize: TitleSize = TitleSize.LARGE,
     val epgTextSize: EpgTextSize = EpgTextSize.MEDIUM,
+    val guideLogos: Boolean = false,
     /** Playback › Catch-up: off hides every catch-up control, even on channels that have it. */
     val catchUpOn: Boolean = true,
     val headerSize: HeaderSize = HeaderSize.LARGE,
