@@ -184,6 +184,21 @@ abstract class ChannelDao {
     @Query("UPDATE channel SET sortOrder = :sortOrder WHERE id = :id") abstract suspend fun setSortOrder(id: Long, sortOrder: Int?)
     @Query("UPDATE channel SET sortOrder = NULL WHERE providerId = :p") abstract suspend fun clearSortOrders(p: Long)
     @Query("UPDATE channel SET customName = :name WHERE id = :id") abstract suspend fun setCustomName(id: Long, name: String?)
+    @Query("UPDATE channel SET customNumber = :n WHERE id = :id") abstract suspend fun setCustomNumber(id: Long, n: Int?)
+    /** Other channels of the playlist already showing number [n]. */
+    @Query("SELECT * FROM channel WHERE providerId = :p AND id != :id AND coalesce(customNumber, number) = :n")
+    abstract suspend fun numberHolders(p: Long, id: Long, n: Int): List<ChannelEntity>
+    @Query("SELECT max(coalesce(customNumber, number)) FROM channel WHERE providerId = :p") abstract suspend fun maxNumber(p: Long): Int?
+    /** Where [numberHolders] of [n] go when [ch] takes [n]: [ch]'s old number, or past the playlist's last one if it had none. */
+    suspend fun swapTarget(ch: ChannelEntity, n: Int): Int = (ch.customNumber ?: ch.number)?.takeIf { it != n } ?: ((maxNumber(ch.providerId) ?: 0) + 1)
+    /** Gives [ch] number [n] (numbers stay unique within the playlist): channels holding it move to [swapTarget]. */
+    @Transaction
+    open suspend fun changeNumber(ch: ChannelEntity, n: Int) {
+        val to = swapTarget(ch, n)
+        // A custom number equal to the playlist's own is stored as none, so the channel follows the playlist again.
+        numberHolders(ch.providerId, ch.id, n).forEach { setCustomNumber(it.id, to.takeIf { t -> t != it.number }) }
+        setCustomNumber(ch.id, n.takeIf { it != ch.number })
+    }
     @Query("UPDATE channel SET epgOffsetMinutes = :minutes WHERE id = :id") abstract suspend fun setEpgOffset(id: Long, minutes: Int?)
 
     /** Merge: channels played through [id] (its sources other than itself). */

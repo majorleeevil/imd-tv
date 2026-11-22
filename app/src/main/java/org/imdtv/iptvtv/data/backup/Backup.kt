@@ -49,7 +49,12 @@ data class BPlaylist(
     val contentOff: String = "",
     /** "Use this playlist" (older backups: on). */
     val enabled: Boolean = true,
+    /** Channel numbers the user changed (older backups have none). */
+    val channelNumbers: List<BChannelNumber> = emptyList(),
 )
+
+@Serializable
+data class BChannelNumber(val channel: String, val number: Int)
 
 /** [url] null = the playlist's own guide, whose URL carries the login: restored from the new login. */
 @Serializable

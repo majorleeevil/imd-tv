@@ -54,10 +54,10 @@ fun ContextMenu(title: String, items: List<Pair<String, () -> Unit>>, focusIndex
 
 /** A one-field prompt (rename, new category). Save passes the trimmed text, which may be empty. */
 @Composable
-fun TextPrompt(title: String, initial: String, hint: String, onSave: (String) -> Unit, onDismiss: () -> Unit) {
+fun TextPrompt(title: String, initial: String, hint: String, onSave: (String) -> Unit, keyboard: androidx.compose.ui.text.input.KeyboardType = androidx.compose.ui.text.input.KeyboardType.Text, onDismiss: () -> Unit) {
     var text by remember { mutableStateOf(initial) }
     MenuFrame(title, onDismiss) { first ->
-        Field(hint, text, modifier = Modifier.focusRequester(first)) { text = it }
+        Field(hint, text, keyboard, modifier = Modifier.focusRequester(first)) { text = it }
         MenuItem(stringResource(R.string.live_save), Modifier) { onSave(text.trim()) }
         MenuItem(stringResource(R.string.live_cancel), Modifier, onClick = onDismiss)
     }

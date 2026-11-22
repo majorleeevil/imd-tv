@@ -508,6 +508,15 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch { c.db.channelDao().setCustomName(ch.id, name?.trim()?.takeIf { it.isNotEmpty() }) }
     }
 
+    /** Gives [ch] number [n]; a number another channel shows first asks [onTaken] (unless [confirmed]), then swaps. */
+    fun changeNumber(ch: ChannelEntity, n: Int, confirmed: Boolean = false, onTaken: (ChannelEntity, Int) -> Unit = { _, _ -> }) {
+        viewModelScope.launch {
+            val dao = c.db.channelDao()
+            val holder = dao.numberHolders(ch.providerId, ch.id, n).firstOrNull()
+            if (holder != null && !confirmed) onTaken(holder, dao.swapTarget(ch, n)) else dao.changeNumber(ch, n)
+        }
+    }
+
     // Change logo… (spec §4.3)
     suspend fun logoCandidates(ch: ChannelEntity): List<String> = c.logos.candidatesFor(ch)
     fun setCustomLogoUrl(ch: ChannelEntity, url: String) { viewModelScope.launch { c.logos.setCustomUrl(ch.id, url) } }

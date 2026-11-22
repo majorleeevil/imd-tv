@@ -32,6 +32,9 @@ internal sealed interface GuideMenu {
     data class AddTo(val ch: ChannelEntity) : GuideMenu
     data class NewGroup(val ch: ChannelEntity) : GuideMenu
     data class Rename(val ch: ChannelEntity) : GuideMenu
+    data class ChangeNumber(val ch: ChannelEntity) : GuideMenu
+    /** [n] is shown by [holder]: Confirm gives it to [ch] and moves [holder] to [to]. */
+    data class NumberTaken(val ch: ChannelEntity, val n: Int, val holder: ChannelEntity, val to: Int) : GuideMenu
     data class ChangeLogo(val ch: ChannelEntity) : GuideMenu
     data class UseGuideFrom(val ch: ChannelEntity) : GuideMenu
     data class RecordLater(val ch: ChannelEntity) : GuideMenu
@@ -92,6 +95,7 @@ fun GuideMenus(vm: LiveViewModel, state: GuideState) {
             if (m.ch.hasCatchUp) add(stringResource(R.string.live_menu_catchup) to { state.menu = GuideMenu.CatchUp(m.ch) })
             add(stringResource(R.string.live_menu_guide_options) to { state.menu = GuideMenu.GuideOptions(m.ch) })
             add(stringResource(R.string.live_menu_rename) to { state.menu = GuideMenu.Rename(m.ch) })
+            add(stringResource(R.string.live_menu_change_number) to { state.menu = GuideMenu.ChangeNumber(m.ch) })
             add(stringResource(R.string.live_menu_change_logo) to { state.menu = GuideMenu.ChangeLogo(m.ch) })
             // Picks the channel up in place, as categories move: arrows carry it, OK drops, Back cancels.
             if (state.hasGrid && entry != null && entry != RailEntry.Recent) add(stringResource(R.string.live_menu_move) to {
@@ -149,6 +153,12 @@ fun GuideMenus(vm: LiveViewModel, state: GuideState) {
             onSave = { if (it.isNotEmpty()) vm.addToNewGroup(m.ch, it); state.menu = null }) { state.menu = null }
         is GuideMenu.Rename -> TextPrompt(stringResource(R.string.live_menu_rename_channel), m.ch.customName ?: m.ch.displayName(strip), stringResource(R.string.live_menu_rename_hint),
             onSave = { vm.rename(m.ch, it); state.menu = null }) { state.menu = null }
+        is GuideMenu.ChangeNumber -> TextPrompt(stringResource(R.string.live_menu_change_number), (m.ch.customNumber ?: m.ch.number)?.toString().orEmpty(), stringResource(R.string.live_menu_number_hint),
+            onSave = { t -> t.toIntOrNull()?.takeIf { it > 0 }?.let { n -> vm.changeNumber(m.ch, n) { h, to -> state.menu = GuideMenu.NumberTaken(m.ch, n, h, to) } }; state.menu = null },
+            keyboard = androidx.compose.ui.text.input.KeyboardType.Number) { state.menu = null }
+        is GuideMenu.NumberTaken -> ContextMenu(stringResource(R.string.live_number_taken, m.n, m.holder.displayName(strip), m.to), listOf(
+            stringResource(R.string.set_b_confirm) to { vm.changeNumber(m.ch, m.n, confirmed = true); state.menu = null },
+            stringResource(R.string.live_cancel) to { state.menu = null })) { state.menu = null }
         is GuideMenu.ChangeLogo -> LogoPicker(vm, m.ch, m.ch.displayName(strip)) { state.menu = null }
         is GuideMenu.UseGuideFrom -> GuidePicker(vm, m.ch, strip) { state.menu = null }
         is GuideMenu.PickDay -> {
