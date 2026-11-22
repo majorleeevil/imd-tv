@@ -117,6 +117,8 @@ data class ChannelEntity(
     @ColumnInfo(defaultValue = "0") val mergedAuto: Boolean = false,
     /** Other channels are merged into this one: its name is shown without quality tags (HD, 4K…). */
     @ColumnInfo(defaultValue = "0") val mergeHead: Boolean = false,
+    /** Hold OK on a channel › Enable Parental Lock: playing it needs the PIN. */
+    @ColumnInfo(defaultValue = "0") val parentalLock: Boolean = false,
 ) {
     fun drm(): org.imdtv.iptvtv.data.source.Drm? = drmType?.let { org.imdtv.iptvtv.data.source.Drm(it, drmKey) }
 }

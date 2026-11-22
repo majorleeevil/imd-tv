@@ -349,7 +349,7 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
     private suspend fun lockedNow(ch: ChannelEntity, on: GuideProgramme?): Boolean {
         val s = c.settings.settings.first() // not settings.value: at app start it still holds the defaults (parental off)
         if (!s.parentalOn) return false
-        return s.parentalLocked(ch.categoryId?.let { c.db.categoryDao().get(it) }?.parentalLock == true, on?.ageRating)
+        return s.parentalLocked(ch.parentalLock || ch.categoryId?.let { c.db.categoryDao().get(it) }?.parentalLock == true, on?.ageRating)
     }
     private suspend fun onNow(ch: ChannelEntity): GuideProgramme? = System.currentTimeMillis().let { now ->
         guide.programmes(ch.providerId, listOf(ch), now, now + 1)[ch.id].orEmpty().firstOrNull { it.start <= now && now < it.stop }
@@ -548,6 +548,11 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     /** Hold OK on a category › Enable / Disable Parental Lock; unlocking takes the PIN. */
+    /** Hold OK on a channel › Enable / Disable Parental Lock; unlocking takes the PIN. */
+    fun setChannelLock(ch: ChannelEntity, on: Boolean) {
+        viewModelScope.launch { if (on || c.parental.askPin()) c.db.channelDao().setParentalLock(ch.id, on) }
+    }
+
     fun setParentalLock(cat: org.imdtv.iptvtv.data.db.CategoryEntity, on: Boolean) {
         viewModelScope.launch { if (on || c.parental.askPin()) c.db.categoryDao().setParentalLock(cat.id, on) }
     }

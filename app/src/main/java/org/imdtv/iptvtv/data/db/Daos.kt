@@ -189,6 +189,7 @@ abstract class ChannelDao {
     @Query("UPDATE channel SET sortOrder = NULL WHERE providerId = :p") abstract suspend fun clearSortOrders(p: Long)
     @Query("UPDATE channel SET customName = :name WHERE id = :id") abstract suspend fun setCustomName(id: Long, name: String?)
     @Query("UPDATE channel SET customNumber = :n WHERE id = :id") abstract suspend fun setCustomNumber(id: Long, n: Int?)
+    @Query("UPDATE channel SET parentalLock = :on WHERE id = :id") abstract suspend fun setParentalLock(id: Long, on: Boolean)
     /** Other channels of the playlist already showing number [n]. */
     @Query("SELECT * FROM channel WHERE providerId = :p AND id != :id AND coalesce(customNumber, number) = :n")
     abstract suspend fun numberHolders(p: Long, id: Long, n: Int): List<ChannelEntity>

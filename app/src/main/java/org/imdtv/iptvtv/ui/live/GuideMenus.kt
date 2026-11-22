@@ -102,6 +102,8 @@ fun GuideMenus(vm: LiveViewModel, state: GuideState) {
                 if (vm.selectedSort.value == SortBy.MANUAL) { state.rowMove = RowMove(m.ch, vm.channels.value); state.menu = null } else entry?.let { state.menu = GuideMenu.ToManual(m.ch, it) }
             })
             if (state.hasGrid || m.ch.mergeHead) add(stringResource(R.string.live_menu_merge_options) to { state.menu = GuideMenu.MergeOptions(m.ch) })
+            if (vm.settings.value.parentalOn) add(stringResource(if (m.ch.parentalLock) R.string.live_menu_parental_off else R.string.live_menu_parental_on) to {
+                vm.setChannelLock(m.ch, !m.ch.parentalLock); state.menu = null })
             add(stringResource(R.string.live_menu_hide) to { state.refocusOnChange = true; vm.hide(m.ch); state.menu = null })
             }) { state.menu = null }
         }

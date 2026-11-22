@@ -45,7 +45,8 @@ fun ParentalRows(vm: SettingsViewModel, first: FocusRequester) {
             if (p == pin) step = 2 else { vm.notice.value = mismatch; step = null }
         }, keyboard = KeyboardType.NumberPassword, secret = true) { step = null }
         2 -> TextPrompt(stringResource(R.string.set_b_parental_word), "", stringResource(R.string.set_b_parental_word_hint), onSave = { w ->
-            if (w.isNotBlank()) vm.update { it.copy(parentalOn = true, parentalPin = Pin.hash(pin), parentalWord = Pin.hash(w)) }
+            // Hash now: update runs later, after `pin = ""` below (it saved the hash of an empty PIN).
+            if (w.isNotBlank()) { val p = Pin.hash(pin); val h = Pin.hash(w); vm.update { it.copy(parentalOn = true, parentalPin = p, parentalWord = h) } }
             step = null; pin = ""
         }) { step = null; pin = "" }
     }

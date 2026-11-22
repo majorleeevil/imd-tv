@@ -51,6 +51,8 @@ data class BPlaylist(
     val enabled: Boolean = true,
     /** Channel numbers the user changed (older backups have none). */
     val channelNumbers: List<BChannelNumber> = emptyList(),
+    /** Channels with Parental Lock on, by remote id (older backups have none). */
+    val lockedChannels: List<String> = emptyList(),
 )
 
 @Serializable
