@@ -305,8 +305,11 @@
     <string name="set_a_select_all_expl">Επιλογή όλων των καναλιών αυτής της κατηγορίας</string>
     <string name="set_a_unselect_all">Αποεπιλογή όλων</string>
     <string name="set_a_unselect_all_expl">Εκκαθάριση όλων των επιλογών</string>
-    <string name="set_a_guide_logos">Λογότυπα αντί για ονόματα</string>
-    <string name="set_a_guide_logos_expl">Εμφάνιση του λογοτύπου κάθε καναλιού στον οδηγό αντί για το όνομά του</string>
+    <string name="set_a_guide_logos">Εμφάνιση καναλιών</string>
+    <string name="set_a_guide_logos_expl">Τι εμφανίζει ο οδηγός TV για κάθε κανάλι</string>
+    <string name="set_a_guide_display_name">Όνομα καναλιού</string>
+    <string name="set_a_guide_display_logo">Μόνο λογότυπο</string>
+    <string name="set_a_guide_display_both">Όνομα + λογότυπο</string>
     <string name="set_a_epg_text_size">Μέγεθος κειμένου</string>
     <string name="set_a_epg_text_size_expl">Μέγεθος όλου του κειμένου στον οδηγό</string>
 </resources>

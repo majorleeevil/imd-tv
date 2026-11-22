@@ -130,7 +130,8 @@ data class BSettings(
     val titleSize: String? = null,
     val vodTitleSize: String? = null,
     val epgTextSize: String? = null,
-    val guideLogos: Boolean = false,
+    val guideLogos: Boolean = false, // old backups only
+    val guideDisplay: String? = null,
     val vodSort: String? = null,
     /** Parental controls: the PIN and backup word as hashes only; sync passes them on to followers. */
     val parentalOn: Boolean = false,
@@ -166,7 +167,7 @@ data class BSettings(
             titleSize = org.imdtv.iptvtv.data.settings.TitleSize.entries.find { it.name == titleSize } ?: org.imdtv.iptvtv.data.settings.TitleSize.LARGE,
             vodTitleSize = org.imdtv.iptvtv.data.settings.TitleSize.entries.find { it.name == vodTitleSize } ?: org.imdtv.iptvtv.data.settings.TitleSize.LARGE,
             epgTextSize = org.imdtv.iptvtv.data.settings.EpgTextSize.entries.find { it.name == epgTextSize } ?: org.imdtv.iptvtv.data.settings.EpgTextSize.MEDIUM,
-            guideLogos = guideLogos,
+            guideDisplay = org.imdtv.iptvtv.data.settings.GuideChannelDisplay.entries.find { it.name == guideDisplay } ?: if (guideLogos) org.imdtv.iptvtv.data.settings.GuideChannelDisplay.LOGO else org.imdtv.iptvtv.data.settings.GuideChannelDisplay.NAME,
             vodSort = org.imdtv.iptvtv.data.settings.VodSort.entries.find { it.name == vodSort } ?: org.imdtv.iptvtv.data.settings.VodSort.PLAYLIST,
             parentalOn = parentalOn && parentalPin != null, parentalPin = parentalPin, parentalWord = parentalWord,
             ageLimit = org.imdtv.iptvtv.data.parental.AgeLimit.entries.find { it.name == ageLimit } ?: org.imdtv.iptvtv.data.parental.AgeLimit.A12,
@@ -209,7 +210,7 @@ data class BSettings(
             s.borrowSiblingGuide, s.hideHeaderChannels, s.showDateTime, s.showPing, s.subtitlesOn, s.subtitleLanguage,
             guideRows = s.guideRows, multiLineGuide = s.multiLineGuide,
             zapLeftRight = s.zapLeftRight, backToFullScreen = s.backToFullScreen, showChannelNumbers = s.showChannelNumbers, clock24h = s.clock24h,
-            playerClockMode = s.playerClock.name, showDate = s.showDate, themeLooks = s.themeLooks, guidesOff = s.guidesOff.toList(), liveSubtitlesOn = s.liveSubtitlesOn, showRecent = s.showRecent, videoAspect = s.videoAspect.name, vodTwoRows = s.vodTwoRows, titleSize = s.titleSize.name, vodTitleSize = s.vodTitleSize.name, epgTextSize = s.epgTextSize.name, guideLogos = s.guideLogos, vodSort = s.vodSort.name, parentalOn = s.parentalOn, parentalPin = s.parentalPin, parentalWord = s.parentalWord, ageLimit = s.ageLimit.name, unlockFor = s.unlockFor.name, catchUpOn = s.catchUpOn, holdBackOther = s.holdBackOther, guideTimeoutMin = s.guideTimeoutMin, favouritesSortBy = s.favouritesSortBy?.name,
+            playerClockMode = s.playerClock.name, showDate = s.showDate, themeLooks = s.themeLooks, guidesOff = s.guidesOff.toList(), liveSubtitlesOn = s.liveSubtitlesOn, showRecent = s.showRecent, videoAspect = s.videoAspect.name, vodTwoRows = s.vodTwoRows, titleSize = s.titleSize.name, vodTitleSize = s.vodTitleSize.name, epgTextSize = s.epgTextSize.name, guideDisplay = s.guideDisplay.name, vodSort = s.vodSort.name, parentalOn = s.parentalOn, parentalPin = s.parentalPin, parentalWord = s.parentalWord, ageLimit = s.ageLimit.name, unlockFor = s.unlockFor.name, catchUpOn = s.catchUpOn, holdBackOther = s.holdBackOther, guideTimeoutMin = s.guideTimeoutMin, favouritesSortBy = s.favouritesSortBy?.name,
             headerSize = s.headerSize.name, previewFade = s.previewFade, themeDark = s.themeDark, guideKinds = s.guideOrder.map { it.name },
             recordingOn = s.recordingOn, recordTo = s.recordTo.name, startEarlyMin = s.startEarlyMin, endLateMin = s.endLateMin,
             keepAwake = s.keepAwake, smbServer = s.smbServer, smbShare = s.smbShare, smbFolder = s.smbFolder, smbUser = s.smbUser,

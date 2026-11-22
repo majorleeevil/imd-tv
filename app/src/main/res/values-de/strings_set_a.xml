@@ -305,8 +305,11 @@
     <string name="set_a_select_all_expl">Alle Sender dieser Kategorie anhaken</string>
     <string name="set_a_unselect_all">Alle abwählen</string>
     <string name="set_a_unselect_all_expl">Alle Haken entfernen</string>
-    <string name="set_a_guide_logos">Logos statt Namen</string>
-    <string name="set_a_guide_logos_expl">Zeigt im Programm das Logo jedes Senders statt seines Namens</string>
+    <string name="set_a_guide_logos">Senderanzeige</string>
+    <string name="set_a_guide_logos_expl">Was das TV-Programm für jeden Sender zeigt</string>
+    <string name="set_a_guide_display_name">Sendername</string>
+    <string name="set_a_guide_display_logo">Nur Logo</string>
+    <string name="set_a_guide_display_both">Name + Logo</string>
     <string name="set_a_epg_text_size">Textgröße</string>
     <string name="set_a_epg_text_size_expl">Größe des gesamten Texts im Programm</string>
 </resources>

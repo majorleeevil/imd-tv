@@ -305,8 +305,11 @@
     <string name="set_a_select_all_expl">Bu kategorideki her kanalı işaretle</string>
     <string name="set_a_unselect_all">Tüm seçimi kaldır</string>
     <string name="set_a_unselect_all_expl">Tüm işaretleri temizle</string>
-    <string name="set_a_guide_logos">Ad yerine logo</string>
-    <string name="set_a_guide_logos_expl">Rehberde her kanalın adı yerine logosunu göster</string>
+    <string name="set_a_guide_logos">Kanal görünümü</string>
+    <string name="set_a_guide_logos_expl">TV rehberinin her kanal için neyi göstereceği</string>
+    <string name="set_a_guide_display_name">Kanal adı</string>
+    <string name="set_a_guide_display_logo">Yalnızca logo</string>
+    <string name="set_a_guide_display_both">Ad + logo</string>
     <string name="set_a_epg_text_size">Metin boyutu</string>
     <string name="set_a_epg_text_size_expl">Rehberdeki tüm metnin boyutu</string>
 </resources>

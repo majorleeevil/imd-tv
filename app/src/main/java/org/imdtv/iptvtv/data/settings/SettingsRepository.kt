@@ -39,7 +39,8 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
     private val titleSize = stringPreferencesKey("title_size")
     private val vodTitleSize = stringPreferencesKey("vod_title_size")
     private val epgTextSize = stringPreferencesKey("epg_text_size")
-    private val guideLogos = booleanPreferencesKey("guide_logos")
+    private val guideLogos = booleanPreferencesKey("guide_logos") // read-only: the pre-"Channel display" switch
+    private val guideDisplay = stringPreferencesKey("guide_display")
     private val vodSort = stringPreferencesKey("vod_sort")
     private val parentalOn = booleanPreferencesKey("parental_on")
     private val parentalPin = stringPreferencesKey("parental_pin")
@@ -124,7 +125,7 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
             titleSize = TitleSize.entries.find { it.name == this[titleSize] } ?: d.titleSize,
             vodTitleSize = TitleSize.entries.find { it.name == this[vodTitleSize] } ?: d.vodTitleSize,
             epgTextSize = EpgTextSize.entries.find { it.name == this[epgTextSize] } ?: d.epgTextSize,
-            guideLogos = this[guideLogos] ?: d.guideLogos,
+            guideDisplay = GuideChannelDisplay.entries.find { it.name == this[guideDisplay] } ?: if (this[guideLogos] == true) GuideChannelDisplay.LOGO else d.guideDisplay,
             vodSort = VodSort.entries.find { it.name == this[vodSort] } ?: d.vodSort,
             parentalOn = this[parentalOn] ?: d.parentalOn,
             parentalPin = this[parentalPin], parentalWord = this[parentalWord],
@@ -198,7 +199,7 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
         this[titleSize] = s.titleSize.name
         this[vodTitleSize] = s.vodTitleSize.name
         this[epgTextSize] = s.epgTextSize.name
-        this[guideLogos] = s.guideLogos
+        this[guideDisplay] = s.guideDisplay.name
         this[vodSort] = s.vodSort.name
         this[parentalOn] = s.parentalOn
         if (s.parentalPin != null) this[parentalPin] = s.parentalPin else remove(parentalPin)

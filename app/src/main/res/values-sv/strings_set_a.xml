@@ -305,8 +305,11 @@
     <string name="set_a_select_all_expl">Kryssa för alla kanaler i den här kategorin</string>
     <string name="set_a_unselect_all">Avmarkera alla</string>
     <string name="set_a_unselect_all_expl">Ta bort alla kryss</string>
-    <string name="set_a_guide_logos">Logotyper i stället för namn</string>
-    <string name="set_a_guide_logos_expl">Visa varje kanals logotyp i guiden i stället för namnet</string>
+    <string name="set_a_guide_logos">Kanalvisning</string>
+    <string name="set_a_guide_logos_expl">Vad tv-guiden visar för varje kanal</string>
+    <string name="set_a_guide_display_name">Kanalnamn</string>
+    <string name="set_a_guide_display_logo">Endast logotyp</string>
+    <string name="set_a_guide_display_both">Namn + logotyp</string>
     <string name="set_a_epg_text_size">Textstorlek</string>
     <string name="set_a_epg_text_size_expl">Storlek på all text i guiden</string>
 </resources>

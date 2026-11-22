@@ -86,6 +86,9 @@ enum class EpgTextSize(@StringRes val labelRes: Int, val scale: Float) {
     XLARGE(R.string.set_a_size_xlarge, 1.2f), LARGE(R.string.set_a_size_large, 1.1f), MEDIUM(R.string.set_a_size_medium, 1f), SMALL(R.string.set_a_size_small, .88f)
 }
 
+/** Settings › Channels › Channel display: what the TV guide's channel column shows. */
+enum class GuideChannelDisplay(@StringRes val labelRes: Int) { NAME(R.string.set_a_guide_display_name), LOGO(R.string.set_a_guide_display_logo), BOTH(R.string.set_a_guide_display_both) }
+
 /** Settings › Movies & Series › Sort by: one order for every movie and series list (issue #11). */
 enum class VodSort(@StringRes val labelRes: Int) { PLAYLIST(R.string.set_b_vod_sort_playlist), AZ(R.string.set_b_vod_sort_az), ADDED(R.string.set_b_vod_sort_added) }
 
@@ -166,7 +169,7 @@ data class AppSettings(
     val titleSize: TitleSize = TitleSize.LARGE,
     val vodTitleSize: TitleSize = TitleSize.LARGE,
     val epgTextSize: EpgTextSize = EpgTextSize.MEDIUM,
-    val guideLogos: Boolean = false,
+    val guideDisplay: GuideChannelDisplay = GuideChannelDisplay.NAME,
     val vodSort: VodSort = VodSort.PLAYLIST,
     /** Parental controls (App behaviour); [parentalPin] and [parentalWord] are hashes (Pin.hash), never the PIN itself. */
     val parentalOn: Boolean = false,

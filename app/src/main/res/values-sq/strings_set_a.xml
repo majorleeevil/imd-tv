@@ -306,8 +306,11 @@
     <string name="set_a_select_all_expl">Shënoni çdo kanal në këtë kategori</string>
     <string name="set_a_unselect_all">Hiq zgjedhjen e të gjitha</string>
     <string name="set_a_unselect_all_expl">Pastro çdo shenjë</string>
-    <string name="set_a_guide_logos">Logo në vend të emrave</string>
-    <string name="set_a_guide_logos_expl">Shfaq logon e çdo kanali në program në vend të emrit të tij</string>
+    <string name="set_a_guide_logos">Shfaqja e kanaleve</string>
+    <string name="set_a_guide_logos_expl">Çfarë shfaq programi televiziv për çdo kanal</string>
+    <string name="set_a_guide_display_name">Emri i kanalit</string>
+    <string name="set_a_guide_display_logo">Vetëm logo</string>
+    <string name="set_a_guide_display_both">Emri + logo</string>
     <string name="set_a_epg_text_size">Madhësia e tekstit</string>
     <string name="set_a_epg_text_size_expl">Madhësia e gjithë tekstit në program</string>
 </resources>

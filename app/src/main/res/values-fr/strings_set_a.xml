@@ -305,8 +305,11 @@
     <string name="set_a_select_all_expl">Cocher toutes les chaînes de cette catégorie</string>
     <string name="set_a_unselect_all">Tout désélectionner</string>
     <string name="set_a_unselect_all_expl">Décocher tout</string>
-    <string name="set_a_guide_logos">Logos au lieu des noms</string>
-    <string name="set_a_guide_logos_expl">Affiche le logo de chaque chaîne dans le guide à la place de son nom</string>
+    <string name="set_a_guide_logos">Affichage des chaînes</string>
+    <string name="set_a_guide_logos_expl">Ce que le guide affiche pour chaque chaîne</string>
+    <string name="set_a_guide_display_name">Nom de la chaîne</string>
+    <string name="set_a_guide_display_logo">Logo seul</string>
+    <string name="set_a_guide_display_both">Nom + logo</string>
     <string name="set_a_epg_text_size">Taille du texte</string>
     <string name="set_a_epg_text_size_expl">Taille de tout le texte du guide</string>
 </resources>

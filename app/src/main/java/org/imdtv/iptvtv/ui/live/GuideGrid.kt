@@ -10,6 +10,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -145,7 +146,8 @@ fun GuideGrid(
     val multiLine = vm.settings.collectAsState().value.multiLineGuide
     val epg = vm.settings.collectAsState().value.epgTextSize.scale
     val logoSource by vm.logoSource.collectAsState()
-    val logos = logoSource.takeIf { vm.settings.collectAsState().value.guideLogos }
+    val display = vm.settings.collectAsState().value.guideDisplay
+    val logos = logoSource.takeIf { display != org.imdtv.iptvtv.data.settings.GuideChannelDisplay.NAME }
     val style = remember(base, multiLine, epg) { base.forGuide(multiLine, epg) }
     val listed by vm.channels.collectAsState()
     val move = state.rowMove
@@ -218,7 +220,7 @@ fun GuideGrid(
                 itemsIndexed(channels, key = { _, ch -> ch.id }) { i, ch ->
                     val moving = move?.ch?.id == ch.id && !move.dropped || merging?.ch?.id == ch.id
                     GuideRow(
-                        ch, (if (moving && merging == null) "↕ " else "") + ch.displayName(strip), programmes[ch.id].orEmpty(), now, at, windowStart, style, isFocused = focused?.id == ch.id && !state.railOpen && state.heldFocus == null, moving = moving, logos = logos,
+                        ch, (if (moving && merging == null) "↕ " else "") + ch.displayName(strip), programmes[ch.id].orEmpty(), now, at, windowStart, style, isFocused = focused?.id == ch.id && !state.railOpen && state.heldFocus == null, moving = moving, logos = logos, display = display,
                         marked = { p -> (ch.id to p.start) in marks || ch.id in recordingOnChannel && p.start <= now && now < p.stop },
                         modifier = (if (i == state.focusIndex) Modifier.focusRequester(state.rowFocus) else Modifier)
                             .onPreviewKeyEvent { e ->
@@ -337,6 +339,7 @@ private fun GuideRow(
     moving: Boolean = false,
     /** Non-null: the channel's logo replaces its name (Settings › Channels › Logos instead of names, issue #13). */
     logos: List<org.imdtv.iptvtv.data.settings.LogoKind>? = null,
+    display: org.imdtv.iptvtv.data.settings.GuideChannelDisplay = org.imdtv.iptvtv.data.settings.GuideChannelDisplay.NAME,
 ) {
     val colors = LocalTheme.current.colors
     Row(Modifier.height(style.rowHeight).then(if (style.rowDividers) Modifier.drawBehind {
@@ -359,7 +362,18 @@ private fun GuideRow(
                 // No logo for this channel: the name, as with the setting off.
                 val logo = logos?.takeIf { org.imdtv.iptvtv.data.logos.shownLogos(ch, it).isNotEmpty() }
                 val nameText = @Composable { Text(name, fontSize = style.sp(14f) * org.imdtv.iptvtv.ui.LocalTitleScale.current, fontWeight = style.font, color = fg, maxLines = 1, overflow = TextOverflow.Ellipsis) }
-                if (logo != null) {
+                if (logo != null && display == org.imdtv.iptvtv.data.settings.GuideChannelDisplay.BOTH) {
+                    // Logo in a fixed box, then the name (marquee when focused, as the plain name).
+                    if (style.numberFirst) number?.let { Text("$it  ", fontSize = style.sp(14f) * org.imdtv.iptvtv.ui.LocalTitleScale.current, fontWeight = style.font, color = fg) }
+                    Box(Modifier.fillMaxHeight().padding(vertical = 3.dp).aspectRatio(1.6f), contentAlignment = Alignment.Center) {
+                        org.imdtv.iptvtv.ui.ChannelLogo(ch, logo, Modifier.fillMaxSize(), fallback = {})
+                    }
+                    Text(name, fontSize = style.sp(14f) * org.imdtv.iptvtv.ui.LocalTitleScale.current, fontWeight = style.font, color = fg, maxLines = style.lines,
+                        overflow = if (marquee) TextOverflow.Clip else TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f).padding(start = 6.dp).then(if (marquee) Modifier.basicMarquee(Int.MAX_VALUE) else Modifier))
+                    if (ch.hasCatchUp) CatchUpClock(fg, Modifier.padding(start = 6.dp))
+                    if (!style.numberFirst) number?.let { Text("  $it", fontSize = style.sp(12f), color = fg.copy(alpha = .85f)) }
+                } else if (logo != null) {
                     if (style.numberFirst) number?.let { Text("$it  ", fontSize = style.sp(14f) * org.imdtv.iptvtv.ui.LocalTitleScale.current, fontWeight = style.font, color = fg) }
                     Box(Modifier.weight(1f).fillMaxHeight().padding(vertical = 3.dp), contentAlignment = Alignment.CenterStart) {
                         org.imdtv.iptvtv.ui.ChannelLogo(ch, logo, Modifier.fillMaxSize(), fallback = nameText)

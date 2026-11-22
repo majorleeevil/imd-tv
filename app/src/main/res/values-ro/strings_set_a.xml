@@ -316,8 +316,11 @@
     <string name="set_a_select_all_expl">Bifează toate canalele din această categorie</string>
     <string name="set_a_unselect_all">Deselectează tot</string>
     <string name="set_a_unselect_all_expl">Șterge toate bifele</string>
-    <string name="set_a_guide_logos">Logouri în loc de nume</string>
-    <string name="set_a_guide_logos_expl">Arată logoul fiecărui canal în ghid în locul numelui</string>
+    <string name="set_a_guide_logos">Afișarea canalelor</string>
+    <string name="set_a_guide_logos_expl">Ce arată ghidul TV pentru fiecare canal</string>
+    <string name="set_a_guide_display_name">Numele canalului</string>
+    <string name="set_a_guide_display_logo">Doar logo</string>
+    <string name="set_a_guide_display_both">Nume + logo</string>
     <string name="set_a_epg_text_size">Dimensiunea textului</string>
     <string name="set_a_epg_text_size_expl">Dimensiunea întregului text din ghid</string>
 </resources>

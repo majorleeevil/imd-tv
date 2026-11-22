@@ -327,8 +327,11 @@
     <string name="set_a_select_all_expl">Zaznacz każdy kanał w tej kategorii</string>
     <string name="set_a_unselect_all">Odznacz wszystko</string>
     <string name="set_a_unselect_all_expl">Usuń wszystkie zaznaczenia</string>
-    <string name="set_a_guide_logos">Logo zamiast nazw</string>
-    <string name="set_a_guide_logos_expl">Pokazuj logo każdego kanału w przewodniku zamiast jego nazwy</string>
+    <string name="set_a_guide_logos">Wyświetlanie kanałów</string>
+    <string name="set_a_guide_logos_expl">Co przewodnik TV pokazuje dla każdego kanału</string>
+    <string name="set_a_guide_display_name">Nazwa kanału</string>
+    <string name="set_a_guide_display_logo">Tylko logo</string>
+    <string name="set_a_guide_display_both">Nazwa + logo</string>
     <string name="set_a_epg_text_size">Rozmiar tekstu</string>
     <string name="set_a_epg_text_size_expl">Rozmiar całego tekstu w przewodniku</string>
 </resources>

@@ -282,8 +282,11 @@
     <string name="set_a_page_live_tv_expl">Guide rows, header and titles</string>
     <string name="set_a_page_vod_expl">Rows and titles</string>
     <string name="set_a_title_size_live_expl">Size of channel names and programme titles</string>
-    <string name="set_a_guide_logos">Logos instead of names</string>
-    <string name="set_a_guide_logos_expl">Show each channel\'s logo in the TV guide in place of its name</string>
+    <string name="set_a_guide_logos">Channel display</string>
+    <string name="set_a_guide_logos_expl">What the TV guide shows for each channel</string>
+    <string name="set_a_guide_display_name">Channel name</string>
+    <string name="set_a_guide_display_logo">Logo only</string>
+    <string name="set_a_guide_display_both">Name + logo</string>
     <string name="set_a_epg_text_size">Text size</string>
     <string name="set_a_epg_text_size_expl">Size of all text in the TV guide</string>
     <string name="set_a_title_size_vod_expl">Size of movie, series and episode titles</string>

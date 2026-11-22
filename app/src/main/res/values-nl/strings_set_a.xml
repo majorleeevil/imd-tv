@@ -305,8 +305,11 @@
     <string name="set_a_select_all_expl">Vink alle zenders in deze categorie aan</string>
     <string name="set_a_unselect_all">Alles deselecteren</string>
     <string name="set_a_unselect_all_expl">Alle vinkjes wissen</string>
-    <string name="set_a_guide_logos">Logo\'s in plaats van namen</string>
-    <string name="set_a_guide_logos_expl">Toon het logo van elke zender in de gids in plaats van de naam</string>
+    <string name="set_a_guide_logos">Weergave van zenders</string>
+    <string name="set_a_guide_logos_expl">Wat de tv-gids bij elke zender toont</string>
+    <string name="set_a_guide_display_name">Zendernaam</string>
+    <string name="set_a_guide_display_logo">Alleen logo</string>
+    <string name="set_a_guide_display_both">Naam + logo</string>
     <string name="set_a_epg_text_size">Tekstgrootte</string>
     <string name="set_a_epg_text_size_expl">Grootte van alle tekst in de gids</string>
 </resources>

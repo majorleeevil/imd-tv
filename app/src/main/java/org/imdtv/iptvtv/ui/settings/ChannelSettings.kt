@@ -135,7 +135,8 @@ private fun ChannelsPageRows(vm: SettingsViewModel, first: FocusRequester, opene
             vm.update { it.copy(hideHeaderChannels = on) }
         }
         SwitchRow(stringResource(R.string.set_a_channel_numbers), stringResource(R.string.set_a_channel_numbers_expl), s.showChannelNumbers) { n -> vm.update { it.copy(showChannelNumbers = n) } }
-        SwitchRow(stringResource(R.string.set_a_guide_logos), stringResource(R.string.set_a_guide_logos_expl), s.guideLogos) { on -> vm.update { it.copy(guideLogos = on) } }
+        ChoiceRow(stringResource(R.string.set_a_guide_logos), stringResource(R.string.set_a_guide_logos_expl), org.imdtv.iptvtv.data.settings.GuideChannelDisplay.entries, s.guideDisplay,
+            { stringResource(it.labelRes) }, default = AppSettings().guideDisplay) { v -> vm.update { it.copy(guideDisplay = v) } }
     }
 }
 

@@ -305,8 +305,11 @@
     <string name="set_a_select_all_expl">Marca todos los canales de esta categoría</string>
     <string name="set_a_unselect_all">Deseleccionar todo</string>
     <string name="set_a_unselect_all_expl">Quita todas las marcas</string>
-    <string name="set_a_guide_logos">Logotipos en lugar de nombres</string>
-    <string name="set_a_guide_logos_expl">Muestra el logotipo de cada canal en la guía en lugar de su nombre</string>
+    <string name="set_a_guide_logos">Visualización de canales</string>
+    <string name="set_a_guide_logos_expl">Lo que muestra la guía para cada canal</string>
+    <string name="set_a_guide_display_name">Nombre del canal</string>
+    <string name="set_a_guide_display_logo">Solo logotipo</string>
+    <string name="set_a_guide_display_both">Nombre + logotipo</string>
     <string name="set_a_epg_text_size">Tamaño del texto</string>
     <string name="set_a_epg_text_size_expl">Tamaño de todo el texto de la guía</string>
 </resources>

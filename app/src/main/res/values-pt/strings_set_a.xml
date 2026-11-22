@@ -305,8 +305,11 @@
     <string name="set_a_select_all_expl">Assinala todos os canais desta categoria</string>
     <string name="set_a_unselect_all">Desselecionar tudo</string>
     <string name="set_a_unselect_all_expl">Remove todas as marcas</string>
-    <string name="set_a_guide_logos">Logótipos em vez de nomes</string>
-    <string name="set_a_guide_logos_expl">Mostra o logótipo de cada canal no guia em vez do nome</string>
+    <string name="set_a_guide_logos">Apresentação dos canais</string>
+    <string name="set_a_guide_logos_expl">O que o guia de TV mostra para cada canal</string>
+    <string name="set_a_guide_display_name">Nome do canal</string>
+    <string name="set_a_guide_display_logo">Só logótipo</string>
+    <string name="set_a_guide_display_both">Nome + logótipo</string>
     <string name="set_a_epg_text_size">Tamanho do texto</string>
     <string name="set_a_epg_text_size_expl">Tamanho de todo o texto do guia</string>
 </resources>
