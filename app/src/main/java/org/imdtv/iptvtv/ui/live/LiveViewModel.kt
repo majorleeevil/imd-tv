@@ -347,7 +347,7 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
 
     /** Parental controls: whether [ch] showing [on] needs the PIN (its category is locked, or [on] is rated at the limit or above). */
     private suspend fun lockedNow(ch: ChannelEntity, on: GuideProgramme?): Boolean {
-        val s = settings.value
+        val s = c.settings.settings.first() // not settings.value: at app start it still holds the defaults (parental off)
         if (!s.parentalOn) return false
         return s.parentalLocked(ch.categoryId?.let { c.db.categoryDao().get(it) }?.parentalLock == true, on?.ageRating)
     }
@@ -362,7 +362,7 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
         previewed.value = ch
         previewJob?.cancel() // a latency check for the channel scrolled past stops here
         previewJob = viewModelScope.launch {
-            val on = if (settings.value.parentalOn) onNow(ch) else null
+            val on = if (c.settings.settings.first().parentalOn) onNow(ch) else null
             if (!c.parental.allow(lockedNow(ch, on), "c${ch.id}", on?.stop ?: (System.currentTimeMillis() + 3_600_000L), ask)) {
                 if (previewed.value?.id == ch.id) { previewed.value = null; player.stop() }
                 return@launch
