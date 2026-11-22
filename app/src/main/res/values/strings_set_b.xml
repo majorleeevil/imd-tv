@@ -240,9 +240,8 @@
     <string name="set_b_vod_sort_az">Alphabetical</string>
     <string name="set_b_vod_sort_added">Recently added</string>
     <string name="set_b_save">Save</string>
-    <string name="set_b_refresh_guide">Refresh guide now</string>
     <string name="set_b_watch">Watch</string>
-    <string name="set_b_done">Done</string>
+    <string name="set_b_finish">Finish</string>
     <string name="set_b_loading_playlist">Loading playlist…</string>
     <string name="set_b_pair_again">Pair with the master again</string>
     <string name="set_b_unreachable">%1$s isn\'t reachable: is it on with IMD TV open?</string>

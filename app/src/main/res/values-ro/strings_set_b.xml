@@ -207,9 +207,8 @@
     <string name="set_b_automatic">Automat</string>
     <string name="set_b_confirm">Confirmă</string>
     <string name="set_b_save">Salvează</string>
-    <string name="set_b_refresh_guide">Reîmprospătează ghidul acum</string>
     <string name="set_b_watch">Vizionează</string>
-    <string name="set_b_done">Gata</string>
+    <string name="set_b_finish">Finalizează</string>
     <string name="set_b_loading_playlist">Se încarcă playlistul…</string>
     <string name="set_b_pair_again">Asociază din nou cu master-ul</string>
     <string name="set_b_unreachable">%1$s nu poate fi contactat: este pornit, cu IMD TV deschis?</string>

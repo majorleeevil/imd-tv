@@ -207,9 +207,8 @@
     <string name="set_b_automatic">Automatisk</string>
     <string name="set_b_confirm">Bekräfta</string>
     <string name="set_b_save">Spara</string>
-    <string name="set_b_refresh_guide">Uppdatera guiden nu</string>
     <string name="set_b_watch">Titta</string>
-    <string name="set_b_done">Klar</string>
+    <string name="set_b_finish">Slutför</string>
     <string name="set_b_loading_playlist">Läser in spellistan…</string>
     <string name="set_b_pair_again">Para ihop med huvudboxen igen</string>
     <string name="set_b_unreachable">%1$s går inte att nå: är den på med IMD TV öppet?</string>

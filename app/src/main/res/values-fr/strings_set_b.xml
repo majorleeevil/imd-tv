@@ -207,9 +207,8 @@
     <string name="set_b_automatic">Automatique</string>
     <string name="set_b_confirm">Confirmer</string>
     <string name="set_b_save">Enregistrer</string>
-    <string name="set_b_refresh_guide">Actualiser le guide maintenant</string>
     <string name="set_b_watch">Regarder</string>
-    <string name="set_b_done">Terminé</string>
+    <string name="set_b_finish">Terminer</string>
     <string name="set_b_loading_playlist">Chargement de la playlist…</string>
     <string name="set_b_pair_again">Associer de nouveau au maître</string>
     <string name="set_b_unreachable">%1$s est injoignable : est-il allumé avec IMD TV ouvert ?</string>

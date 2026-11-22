@@ -207,9 +207,8 @@
     <string name="set_b_automatic">Otomatik</string>
     <string name="set_b_confirm">Onayla</string>
     <string name="set_b_save">Kaydet</string>
-    <string name="set_b_refresh_guide">Rehberi şimdi yenile</string>
     <string name="set_b_watch">İzle</string>
-    <string name="set_b_done">Bitti</string>
+    <string name="set_b_finish">Bitir</string>
     <string name="set_b_loading_playlist">Oynatma listesi yükleniyor…</string>
     <string name="set_b_pair_again">Ana kutuyla yeniden eşleştir</string>
     <string name="set_b_unreachable">%1$s kutusuna ulaşılamıyor: açık ve IMD TV çalışıyor mu?</string>

@@ -207,9 +207,8 @@
     <string name="set_b_automatic">Automatycznie</string>
     <string name="set_b_confirm">Potwierdź</string>
     <string name="set_b_save">Zapisz</string>
-    <string name="set_b_refresh_guide">Odśwież przewodnik teraz</string>
     <string name="set_b_watch">Oglądaj</string>
-    <string name="set_b_done">Gotowe</string>
+    <string name="set_b_finish">Zakończ</string>
     <string name="set_b_loading_playlist">Wczytywanie playlisty…</string>
     <string name="set_b_pair_again">Sparuj z głównym ponownie</string>
     <string name="set_b_unreachable">%1$s jest nieosiągalny: czy jest włączony z otwartym IMD TV?</string>

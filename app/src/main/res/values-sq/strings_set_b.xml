@@ -207,9 +207,8 @@
     <string name="set_b_automatic">Automatik</string>
     <string name="set_b_confirm">Konfirmo</string>
     <string name="set_b_save">Ruaj</string>
-    <string name="set_b_refresh_guide">Rifresko programin tani</string>
     <string name="set_b_watch">Shiko</string>
-    <string name="set_b_done">U krye</string>
+    <string name="set_b_finish">Përfundo</string>
     <string name="set_b_loading_playlist">Po ngarkohet lista…</string>
     <string name="set_b_pair_again">Çifto përsëri me kryesoren</string>
     <string name="set_b_unreachable">%1$s nuk arrihet: a është i ndezur me IMD TV të hapur?</string>

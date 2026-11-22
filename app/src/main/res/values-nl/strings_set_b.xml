@@ -207,9 +207,8 @@
     <string name="set_b_automatic">Automatisch</string>
     <string name="set_b_confirm">Bevestigen</string>
     <string name="set_b_save">Opslaan</string>
-    <string name="set_b_refresh_guide">Gids nu vernieuwen</string>
     <string name="set_b_watch">Kijken</string>
-    <string name="set_b_done">Klaar</string>
+    <string name="set_b_finish">Voltooien</string>
     <string name="set_b_loading_playlist">Playlist laden…</string>
     <string name="set_b_pair_again">Opnieuw koppelen met de master</string>
     <string name="set_b_unreachable">%1$s is niet bereikbaar: staat hij aan met IMD TV open?</string>

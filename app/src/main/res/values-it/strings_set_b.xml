@@ -207,9 +207,8 @@
     <string name="set_b_automatic">Automatico</string>
     <string name="set_b_confirm">Conferma</string>
     <string name="set_b_save">Salva</string>
-    <string name="set_b_refresh_guide">Aggiorna guida ora</string>
     <string name="set_b_watch">Guarda</string>
-    <string name="set_b_done">Fine</string>
+    <string name="set_b_finish">Fine</string>
     <string name="set_b_loading_playlist">Caricamento playlist…</string>
     <string name="set_b_pair_again">Associa di nuovo al master</string>
     <string name="set_b_unreachable">%1$s non è raggiungibile: è acceso con IMD TV aperto?</string>

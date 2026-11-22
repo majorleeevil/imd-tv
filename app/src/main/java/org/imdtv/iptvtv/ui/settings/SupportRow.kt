@@ -119,44 +119,44 @@ fun qrImage(text: String): ImageBitmap {
     return Bitmap.createBitmap(IntArray(m.width * m.height) { i -> if (m.get(i % m.width, i / m.width)) 0xFF000000.toInt() else -1 }, m.width, m.height, Bitmap.Config.ARGB_8888).asImageBitmap()
 }
 
-/** Add / edit playlist from a phone: a QR code for [fields]' form on the local network; [onSubmit] gets the first form sent. */
+/**
+ * Add / edit playlist from a phone: a QR code (with the hint and address under it) for [fields]' form on the local network,
+ * served while this is on screen. Each send goes to [onSubmit] and starts a fresh link, so the phone can send again.
+ */
 @Composable
-fun PhoneFormPage(title: String, types: List<String>, type: String, fields: List<org.imdtv.iptvtv.data.support.PhoneField>,
-                  onSubmit: (Map<String, String>) -> Unit, onClose: () -> Unit) {
+fun PhoneFormQr(title: String, types: List<String>, type: String, fields: List<org.imdtv.iptvtv.data.support.PhoneField>,
+                onSubmit: (Map<String, String>) -> Unit, modifier: Modifier = Modifier) {
     var server by remember { mutableStateOf<org.imdtv.iptvtv.data.support.PhoneFormServer?>(null) }
     var qr by remember { mutableStateOf<ImageBitmap?>(null) }
     var failed by remember { mutableStateOf(false) }
+    var gen by remember { mutableStateOf(0) }
     val send = stringResource(R.string.set_b_phone_send)
     val done = stringResource(R.string.set_b_phone_done)
-    val submit by androidx.compose.runtime.rememberUpdatedState(onSubmit)
+    val now by androidx.compose.runtime.rememberUpdatedState(Triple(fields, type, onSubmit))
     val scope = rememberCoroutineScope()
-    LaunchedEffect(Unit) {
+    LaunchedEffect(gen) {
+        server?.stop()
         val s = withContext(Dispatchers.IO) {
             runCatching {
                 val addr = lanAddress() ?: return@runCatching null
-                // The server's thread calls back: hand the form to the main thread, then close the page.
-                org.imdtv.iptvtv.data.support.PhoneFormServer(addr, title, types, type, fields, send, done) { form -> scope.launch { submit(form); onClose() } }
-                    .also { server = it; qr = qrImage(it.url) }
+                // The server's thread calls back: hand the form to the main thread, then serve a new link (with the new values).
+                org.imdtv.iptvtv.data.support.PhoneFormServer(addr, title, types, now.second, now.first, send, done) { form -> scope.launch { now.third(form); gen++ } }
+                    .also { qr = qrImage(it.url) }
             }.getOrNull()
         }
         server = s
         failed = s == null
-        delay(LOG_PAGE_MS)
-        onClose()
     }
     DisposableEffect(Unit) { onDispose { server?.stop() } }
-    MenuFrame(stringResource(R.string.set_b_use_phone), onDismiss = onClose) { first ->
+    androidx.compose.foundation.layout.Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
         val img = qr
-        if (img != null) Box(Modifier.fillMaxWidth().padding(vertical = 8.dp), contentAlignment = Alignment.Center) {
-            Image(img, contentDescription = stringResource(R.string.set_b_use_phone), filterQuality = FilterQuality.None,
-                modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(Color.White).padding(12.dp).size(200.dp))
-        }
+        if (img != null) Image(img, contentDescription = stringResource(R.string.set_b_use_phone), filterQuality = FilterQuality.None,
+            modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(Color.White).padding(10.dp).size(170.dp))
         Text(when {
             img != null -> stringResource(R.string.set_b_phone_scan, server?.url ?: "")
             failed -> stringResource(R.string.set_b_log_no_net)
             else -> stringResource(R.string.set_b_log_preparing)
-        }, fontSize = 15.sp, color = Color.White, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp))
-        MenuItem(stringResource(R.string.set_b_close), Modifier.focusRequester(first)) { onClose() }
+        }, fontSize = 12.sp, color = Color.White, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 8.dp))
     }
 }
 

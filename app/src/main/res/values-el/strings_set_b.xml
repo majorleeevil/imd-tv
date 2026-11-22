@@ -207,9 +207,8 @@
     <string name="set_b_automatic">Αυτόματο</string>
     <string name="set_b_confirm">Επιβεβαίωση</string>
     <string name="set_b_save">Αποθήκευση</string>
-    <string name="set_b_refresh_guide">Ανανέωση οδηγού τώρα</string>
     <string name="set_b_watch">Προβολή</string>
-    <string name="set_b_done">Τέλος</string>
+    <string name="set_b_finish">Ολοκλήρωση</string>
     <string name="set_b_loading_playlist">Φόρτωση λίστας…</string>
     <string name="set_b_pair_again">Νέα σύζευξη με την κύρια</string>
     <string name="set_b_unreachable">Το %1$s δεν είναι προσβάσιμο: είναι ανοιχτό με το IMD TV ανοιχτό;</string>

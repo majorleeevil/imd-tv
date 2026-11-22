@@ -215,7 +215,6 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         else -> str(R.string.set_b_load_failed, e.uiText(getApplication()) ?: e::class.simpleName ?: "")
     }
 
-    fun refreshGuide() = EpgRefreshWorker.runNow(getApplication())
 
     /** Deleting the active playlist restarts at Live on the next one, or at first-run setup if none is left. */
     fun deletePlaylist(id: Long) {
@@ -244,5 +243,4 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     fun done() { form.value = FormState(); tab.value = Tab.LIVE; stack.value = listOf(Screen.Live) }
 
-    val canLeaveSetup get() = hasProvider
 }
