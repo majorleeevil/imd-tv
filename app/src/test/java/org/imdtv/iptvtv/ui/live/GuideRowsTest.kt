@@ -27,4 +27,10 @@ class GuideRowsTest {
         assertEquals(2, XCUBE_GRID.forGuide(true).lines)
         assertEquals(1, GLASS_GRID.copy(rowHeight = 18.5.dp).forGuide(true).lines)
     }
+
+    @Test fun epgTextSizeGrowsOnlyAsFarAsTheRowHolds() {
+        assertEquals(1.2f, GLASS_GRID.copy(rowHeight = 40.dp).forGuide(false, 1.2f).textScale, 0f)
+        assertEquals((22f - 4) / 17.5f, GLASS_GRID.copy(rowHeight = 22.dp).forGuide(false, 1.2f).textScale, .001f)
+        assertEquals(.88f, GLASS_GRID.forGuide(false, .88f).textScale, 0f)
+    }
 }

@@ -100,11 +100,12 @@ fun guideRowPx(areaPx: Int, count: Int, gapPx: Int): Int = (areaPx - gapPx * (co
  * Fonts shrink once the rows are shorter than ~21dp (14sp text), never below 65%. With [multiLine], names and titles get 2 lines
  * when the font can still be at least 70% size and fit both (rows of 27dp and up); shorter rows keep 1 line.
  */
-fun GridStyle.forGuide(multiLine: Boolean): GridStyle {
+fun GridStyle.forGuide(multiLine: Boolean, epgScale: Float = 1f): GridStyle {
     val h = rowHeight.value
     val fit = (h - 2) / 33.6f // two lines of 14sp at 1.2 line height
     val two = multiLine && fit >= .7f
-    val shrink = ((h - 4) / 17.5f).coerceIn(.65f, 1f)
+    // EPG text size, capped at what one line of the row holds (the 1f case is the old coerceIn(.65f, 1f)).
+    val shrink = minOf(epgScale, (h - 4) / 17.5f).coerceAtLeast(.65f)
     return copy(textScale = if (two) minOf(shrink, fit) else shrink, lines = if (two) 2 else 1)
 }
 
@@ -142,7 +143,8 @@ fun GuideGrid(
     modifier: Modifier = Modifier, onUpAtTop: (() -> Unit)? = null, rows: Int = 0,
 ) {
     val multiLine = vm.settings.collectAsState().value.multiLineGuide
-    val style = remember(base, multiLine) { base.forGuide(multiLine) }
+    val epg = vm.settings.collectAsState().value.epgTextSize.scale
+    val style = remember(base, multiLine, epg) { base.forGuide(multiLine, epg) }
     val listed by vm.channels.collectAsState()
     val move = state.rowMove
     val channels = move?.order ?: listed
@@ -189,10 +191,10 @@ fun GuideGrid(
     Column(modifier) {
         Row(Modifier.height(25.dp).drawBehind { drawRect(Color(0x33FFFFFF), Offset(0f, size.height - 1.dp.toPx()), Size(size.width, 1.dp.toPx())) },
             verticalAlignment = Alignment.Bottom) {
-            Text(if (windowStart - now > 12 * 3600_000) stringResource(R.string.live_later) else if (past && org.imdtv.iptvtv.ui.dayDate(windowStart) != org.imdtv.iptvtv.ui.dayDate(now)) org.imdtv.iptvtv.ui.dayDate(windowStart) else stringResource(R.string.live_today), fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
+            Text(if (windowStart - now > 12 * 3600_000) stringResource(R.string.live_later) else if (past && org.imdtv.iptvtv.ui.dayDate(windowStart) != org.imdtv.iptvtv.ui.dayDate(now)) org.imdtv.iptvtv.ui.dayDate(windowStart) else stringResource(R.string.live_today), fontSize = 13.sp * epg, fontWeight = FontWeight.SemiBold,
                 color = style.headerColor ?: Color.White, modifier = Modifier.width(style.channelCol).padding(bottom = 5.dp))
             for (i in 0 until style.windowMin / 30) {
-                Text(clockTime(windowStart + i * LiveViewModel.HALF_HOUR), fontSize = 11.sp, color = style.headerColor ?: LocalTheme.current.colors.muted,
+                Text(clockTime(windowStart + i * LiveViewModel.HALF_HOUR), fontSize = 11.sp * epg, color = style.headerColor ?: LocalTheme.current.colors.muted,
                     fontWeight = if (style.headerColor != null) FontWeight.Bold else null,
                     modifier = Modifier.width(style.dpPerMin * 30).padding(bottom = 5.dp))
             }
@@ -201,11 +203,11 @@ fun GuideGrid(
             // rows > 0: [rows] whole-pixel rows fill the measured height (5–9 in Glass and Liquid); else the style's row height.
             val density = LocalDensity.current
             val area = constraints.maxHeight
-            val (style, listHeight, scrollSpec) = remember(style, rows, area) {
+            val (style, listHeight, scrollSpec) = remember(style, rows, area, epg) {
                 if (rows <= 0) Triple(style, null, null) else with(density) {
                     val gap = style.gap.roundToPx()
                     val row = guideRowPx(area, rows, gap)
-                    Triple(base.copy(rowHeight = row.toDp()).forGuide(multiLine), (row * rows + gap * (rows - 1)).toDp(), wholeRowScroll(row + gap))
+                    Triple(base.copy(rowHeight = row.toDp()).forGuide(multiLine, epg), (row * rows + gap * (rows - 1)).toDp(), wholeRowScroll(row + gap))
                 }
             }
             CompositionLocalProvider(LocalBringIntoViewSpec provides (scrollSpec ?: LocalBringIntoViewSpec.current)) {

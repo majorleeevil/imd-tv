@@ -81,6 +81,11 @@ enum class TitleSize(val label: String, @StringRes val labelRes: Int, val scale:
     LARGE("Large", R.string.set_a_size_large, 1f), MEDIUM("Medium", R.string.set_a_size_medium, .85f), SMALL("Small", R.string.set_a_size_small, .72f)
 }
 
+/** Scales all TV guide text, on top of Title size (Appearance › Live TV › Text size); short rows still cap it to fit. */
+enum class EpgTextSize(@StringRes val labelRes: Int, val scale: Float) {
+    XLARGE(R.string.set_a_size_xlarge, 1.2f), LARGE(R.string.set_a_size_large, 1.1f), MEDIUM(R.string.set_a_size_medium, 1f), SMALL(R.string.set_a_size_small, .88f)
+}
+
 data class AppSettings(
     val theme: ThemeId = ThemeId.CELESTIAL_GLASS,
     val autoplayOnScroll: Boolean = false,
@@ -157,6 +162,7 @@ data class AppSettings(
     val vodTwoRows: Boolean = false,
     val titleSize: TitleSize = TitleSize.LARGE,
     val vodTitleSize: TitleSize = TitleSize.LARGE,
+    val epgTextSize: EpgTextSize = EpgTextSize.MEDIUM,
     /** Playback › Catch-up: off hides every catch-up control, even on channels that have it. */
     val catchUpOn: Boolean = true,
     val headerSize: HeaderSize = HeaderSize.LARGE,
@@ -196,7 +202,7 @@ data class AppSettings(
     fun resetAppearance() = AppSettings().let { d ->
         copy(theme = d.theme, themeColour = d.themeColour, themeDark = d.themeDark, guideRows = d.guideRows, headerSize = d.headerSize,
             previewFade = d.previewFade, themeLooks = emptyMap(), multiLineGuide = d.multiLineGuide, showDateTime = d.showDateTime,
-            showDate = d.showDate, clock24h = d.clock24h, playerClock = d.playerClock)
+            showDate = d.showDate, clock24h = d.clock24h, playerClock = d.playerClock, epgTextSize = d.epgTextSize)
     }
 
     fun clamped() = copy(
