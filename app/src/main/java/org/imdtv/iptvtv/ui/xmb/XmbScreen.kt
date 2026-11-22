@@ -236,7 +236,8 @@ fun XmbScreen(
                     Key.DirectionRight -> { live.xmb = x.right(columns); true }
                     Key.DirectionUp -> { live.xmb = x.up(count); true }
                     Key.DirectionDown -> { live.xmb = x.down(count); true }
-                    else -> false
+                    // shortcut: a fixed 8-item page (about what the XMB column shows), measure it if users ask.
+                    else -> org.imdtv.iptvtv.ui.live.pageKey(e.key)?.let { live.xmb = x.move(it * 8, count); true } ?: false
                 }
             }
             .onLongOk { (focusedChannel ?: searchHit as? ChannelEntity)?.let { guide.menu = GuideMenu.Channel(it) } }

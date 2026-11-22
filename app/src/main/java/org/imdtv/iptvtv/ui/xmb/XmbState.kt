@@ -20,7 +20,7 @@ data class XmbState(val column: XmbColumn = XmbColumn.LIVE, val item: Int = 0, v
 
     fun up(count: Int): XmbState = move(-1, count)
     fun down(count: Int): XmbState = move(1, count)
-    private fun move(d: Int, count: Int): XmbState = when {
+    fun move(d: Int, count: Int): XmbState = when {
         count == 0 -> this
         folder != null -> copy(folderItem = (folderItem + d).coerceIn(0, count - 1))
         else -> copy(item = (item + d).coerceIn(0, count - 1))

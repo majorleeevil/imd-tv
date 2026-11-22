@@ -242,7 +242,14 @@ fun GuideGrid(
                                 if (e.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
                                 when (e.key) {
                                     Key.DirectionUp -> if (i == 0 && onUpAtTop != null) { onUpAtTop(); true } else false
-                                    else -> false
+                                    // A screen of rows at a time, focus keeping its place on screen (issue #10).
+                                    else -> pageKey(e.key)?.let { d ->
+                                        val info = state.list.layoutInfo
+                                        val page = if (rows > 0) rows else info.visibleItemsInfo.count { it.offset >= info.viewportStartOffset && it.offset + it.size <= info.viewportEndOffset }
+                                        val j = (i + d * page.coerceAtLeast(1)).coerceIn(0, channels.lastIndex)
+                                        if (j != i) { state.focusIndex = j; scope.launch { state.list.scrollToItem((state.list.firstVisibleItemIndex + j - i).coerceAtLeast(0)); state.refocus() } }
+                                        true
+                                    } ?: false
                                 }
                             }
                             .onLongOk { state.focusIndex = i; state.menu = if (past && ch.hasCatchUp) GuideMenu.PickDay(ch, style.windowMin) else GuideMenu.Channel(ch) },
@@ -305,6 +312,9 @@ private fun moveKey(e: androidx.compose.ui.input.key.KeyEvent, m: RowMove, i: In
     }
     return true
 }
+
+/** Channel Up/Down and Page Up/Down page through a list: -1 up, 1 down, null for any other key. */
+internal fun pageKey(key: Key): Int? = when (key) { Key.ChannelUp, Key.PageUp -> -1; Key.ChannelDown, Key.PageDown -> 1; else -> null }
 
 private val OK_KEYS = setOf(Key.DirectionCenter, Key.Enter, Key.NumPadEnter)
 

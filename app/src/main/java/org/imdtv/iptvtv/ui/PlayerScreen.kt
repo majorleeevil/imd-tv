@@ -114,6 +114,8 @@ fun PlayerScreen(player: PlayerManager, title: String, liveVm: LiveViewModel? = 
                     // The other pair of arrows steps through the channels watched before (Playback › View Previous Channel With).
                     zapDelta(e.key, !zapLeftRight) != null -> { if (e.type == KeyEventType.KeyDown) zapDelta(e.key, !zapLeftRight)?.let(liveVm::toPreviousChannel); true }
                     zapDelta(e.key, zapLeftRight) != null -> { if (e.type == KeyEventType.KeyDown) zapDelta(e.key, zapLeftRight)?.let(liveVm::zapBy); true }
+                    // The remote's Channel Up/Down zap whatever the arrow setting (Up = next channel).
+                    e.key == Key.ChannelUp || e.key == Key.ChannelDown -> { if (e.type == KeyEventType.KeyDown) liveVm.zapBy(if (e.key == Key.ChannelUp) 1 else -1); true }
                     else -> false
                 }
             })

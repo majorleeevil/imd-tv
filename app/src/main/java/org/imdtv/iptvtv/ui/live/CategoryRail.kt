@@ -111,6 +111,11 @@ internal fun Rail(
                     }
                     return@onPreviewKeyEvent true
                 }
+                pageKey(e.key)?.let { d -> // a screen of entries at a time (issue #10)
+                    val at = keys.indexOf(focusedKey[0])
+                    if (down && at >= 0) jumpKey = keys[(at + d * (state.layoutInfo.visibleItemsInfo.size - 1).coerceAtLeast(1)).coerceIn(0, keys.lastIndex)]
+                    return@onPreviewKeyEvent true
+                }
                 if (e.key == Key.DirectionUp || e.key == Key.DirectionDown) {
                     val r = e.nativeKeyEvent.repeatCount
                     // Remember where the press started: its first step already moved focus a row before the hold shows.
