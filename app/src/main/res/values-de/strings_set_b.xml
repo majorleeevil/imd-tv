@@ -321,4 +321,14 @@
     <string name="set_b_jf_failed">Jellyfin-Anfrage fehlgeschlagen: HTTP %1$d</string>
     <string name="set_b_jf_wrong_login">Falscher Benutzername oder falsches Passwort</string>
     <string name="set_b_plex_all_added">Alle Server dieses Plex-Kontos wurden bereits hinzugefügt</string>
+    <string name="set_b_stremio_add">Stremio-Konto hinzufügen</string>
+    <string name="set_b_stremio_add_expl">Filme und Serien aus den Add-ons deines Stremio-Kontos</string>
+    <string name="set_b_stremio_code_expl">Scanne den QR-Code oder öffne auf deinem Handy oder Computer link.stremio.com, melde dich an und gib diesen Code ein.</string>
+    <string name="set_b_stremio_use_password">E-Mail und Passwort verwenden</string>
+    <string name="set_b_stremio_sign_in_expl">Gib unten deine Stremio-E-Mail-Adresse und dein Passwort ein.</string>
+    <string name="set_b_email">E-Mail</string>
+    <string name="set_b_stremio_wrong_login">Falsche E-Mail-Adresse oder falsches Passwort</string>
+    <string name="set_b_stremio_failed">Stremio: %1$s</string>
+    <string name="set_b_stremio_no_catalogs">Die Add-ons dieses Stremio-Kontos haben keine Film- oder Serienkataloge</string>
+    <string name="set_b_stremio_limit">Nur direkte Links werden abgespielt: Titel, deren Add-ons nur Torrents anbieten, können hier nicht abgespielt werden.</string>
 </resources>

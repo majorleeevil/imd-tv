@@ -201,4 +201,5 @@
     <string name="vod_search_later">Später</string>
     <string name="vod_search_no_programmes">Keine Sendungen gefunden</string>
     <string name="vod_search_on_now">Läuft jetzt</string>
+    <string name="vod_stremio_no_stream">Kein abspielbarer Stream: Die Add-ons dieses Titels bieten nur Torrents oder nichts an</string>
 </resources>

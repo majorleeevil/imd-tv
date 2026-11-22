@@ -201,4 +201,5 @@
     <string name="vod_search_later">Senare</string>
     <string name="vod_search_no_programmes">Inga program hittades</string>
     <string name="vod_search_on_now">Sänds nu</string>
+    <string name="vod_stremio_no_stream">Ingen uppspelningsbar ström: tilläggen för den här titeln erbjuder bara torrents, eller ingenting</string>
 </resources>

@@ -64,6 +64,7 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
     private val c = (app as IptvApp).container
     val plex = PlexAddFlow(c, viewModelScope)
     val jellyfin = JellyfinAddFlow(c, viewModelScope)
+    val stremio = StremioAddFlow(c, viewModelScope)
     val sync get() = c.sync
     private val categoryRepo = CategoryRepository(c.db)
 
@@ -395,7 +396,7 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
         it.type.name == p.type && when (it.type) {
             org.imdtv.iptvtv.data.db.ProviderType.XTREAM, org.imdtv.iptvtv.data.db.ProviderType.STALKER -> it.url == p.url && !it.username.isNullOrBlank()
             org.imdtv.iptvtv.data.db.ProviderType.M3U -> org.imdtv.iptvtv.data.security.m3uBackupUrl(it.url) == p.url // same playlist, login in its address
-            org.imdtv.iptvtv.data.db.ProviderType.PLEX, org.imdtv.iptvtv.data.db.ProviderType.JELLYFIN -> it.url == p.url && !it.password.isNullOrBlank()
+            org.imdtv.iptvtv.data.db.ProviderType.PLEX, org.imdtv.iptvtv.data.db.ProviderType.JELLYFIN, org.imdtv.iptvtv.data.db.ProviderType.STREMIO -> it.url == p.url && !it.password.isNullOrBlank()
         }
     }
 

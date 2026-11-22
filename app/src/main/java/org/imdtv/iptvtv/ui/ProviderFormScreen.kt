@@ -120,7 +120,7 @@ private fun ProviderForm(vm: AppViewModel, editing: ProviderEntity?) {
                 when (type) {
                     ProviderType.XTREAM -> { url = get("xurl"); user = get("user"); pass = secret("pass", pass) }
                     ProviderType.M3U -> { url = secret("murl", url); epg = get("epg") }
-                    ProviderType.PLEX, ProviderType.JELLYFIN -> Unit // added under Media servers, never by this form
+                    ProviderType.PLEX, ProviderType.JELLYFIN, ProviderType.STREMIO -> Unit // added under Media servers, never by this form
                     ProviderType.STALKER -> { url = get("surl"); user = secret("mac", user); pass = secret("serial", pass)
                         deviceId = secret("deviceId", deviceId); deviceId2 = secret("deviceId2", deviceId2); model = get("model") }
                 }
@@ -143,7 +143,7 @@ private fun ProviderForm(vm: AppViewModel, editing: ProviderEntity?) {
                         Button(onClick = { type = t }) { Text((if (t == type) "● " else "○ ") + t.name) }
                     }
                 }
-                FormField(stringResource(when (type) { ProviderType.XTREAM -> R.string.set_b_server_url; ProviderType.M3U -> R.string.set_b_playlist_url; ProviderType.PLEX, ProviderType.JELLYFIN -> R.string.set_b_server_url; ProviderType.STALKER -> R.string.set_b_portal_url }),
+                FormField(stringResource(when (type) { ProviderType.XTREAM -> R.string.set_b_server_url; ProviderType.M3U -> R.string.set_b_playlist_url; ProviderType.PLEX, ProviderType.JELLYFIN, ProviderType.STREMIO -> R.string.set_b_server_url; ProviderType.STALKER -> R.string.set_b_portal_url }),
                     url, KeyboardType.Uri) { url = it }
                 if (type == ProviderType.STALKER) {
                     FormField(stringResource(R.string.set_b_mac_form), user, KeyboardType.Password) { user = it }

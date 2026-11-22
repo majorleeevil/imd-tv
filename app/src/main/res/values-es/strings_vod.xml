@@ -212,4 +212,5 @@
     <string name="vod_search_later">Más tarde</string>
     <string name="vod_search_no_programmes">No se han encontrado programas</string>
     <string name="vod_search_on_now">En emisión</string>
+    <string name="vod_stremio_no_stream">No hay ninguna transmisión reproducible: los complementos de este título ofrecen solo torrents o nada</string>
 </resources>

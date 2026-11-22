@@ -321,4 +321,14 @@
     <string name="set_b_jf_failed">Cererea Jellyfin a eșuat: HTTP %1$d</string>
     <string name="set_b_jf_wrong_login">Nume de utilizator sau parolă greșite</string>
     <string name="set_b_plex_all_added">Toate serverele din acest cont Plex sunt deja adăugate</string>
+    <string name="set_b_stremio_add">Adaugă un cont Stremio</string>
+    <string name="set_b_stremio_add_expl">Filme și seriale din add-on-urile contului tău Stremio</string>
+    <string name="set_b_stremio_code_expl">Scanează codul QR sau mergi la link.stremio.com pe telefon sau computer, autentifică-te și introdu acest cod.</string>
+    <string name="set_b_stremio_use_password">Folosește e-mail și parolă</string>
+    <string name="set_b_stremio_sign_in_expl">Introdu mai jos e-mailul și parola Stremio.</string>
+    <string name="set_b_email">E-mail</string>
+    <string name="set_b_stremio_wrong_login">E-mail sau parolă greșite</string>
+    <string name="set_b_stremio_failed">Stremio: %1$s</string>
+    <string name="set_b_stremio_no_catalogs">Add-on-urile acestui cont Stremio nu au cataloage de filme sau seriale</string>
+    <string name="set_b_stremio_limit">Se redau doar linkurile directe: titlurile ale căror add-on-uri oferă doar torrente nu pot fi redate aici.</string>
 </resources>

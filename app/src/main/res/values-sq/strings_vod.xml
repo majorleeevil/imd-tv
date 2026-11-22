@@ -212,4 +212,5 @@
     <string name="vod_search_later">Më vonë</string>
     <string name="vod_search_no_programmes">Nuk u gjetën programe</string>
     <string name="vod_search_on_now">Tani në transmetim</string>
+    <string name="vod_stremio_no_stream">Nuk ka transmetim të luajtshëm: shtesat e këtij titulli ofrojnë vetëm torrente ose asgjë</string>
 </resources>

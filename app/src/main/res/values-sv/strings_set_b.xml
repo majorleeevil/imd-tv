@@ -321,4 +321,14 @@
     <string name="set_b_jf_failed">Jellyfin-förfrågan misslyckades: HTTP %1$d</string>
     <string name="set_b_jf_wrong_login">Fel användarnamn eller lösenord</string>
     <string name="set_b_plex_all_added">Alla servrar på det här Plex-kontot har redan lagts till</string>
+    <string name="set_b_stremio_add">Lägg till Stremio-konto</string>
+    <string name="set_b_stremio_add_expl">Filmer och serier från tilläggen på ditt Stremio-konto</string>
+    <string name="set_b_stremio_code_expl">Skanna QR-koden, eller gå till link.stremio.com på mobilen eller datorn, logga in och ange den här koden.</string>
+    <string name="set_b_stremio_use_password">Använd e-post och lösenord</string>
+    <string name="set_b_stremio_sign_in_expl">Ange din e-postadress och ditt lösenord för Stremio nedan.</string>
+    <string name="set_b_email">E-post</string>
+    <string name="set_b_stremio_wrong_login">Fel e-postadress eller lösenord</string>
+    <string name="set_b_stremio_failed">Stremio: %1$s</string>
+    <string name="set_b_stremio_no_catalogs">Tilläggen på det här Stremio-kontot har inga film- eller serikataloger</string>
+    <string name="set_b_stremio_limit">Bara direktlänkar spelas upp: titlar vars tillägg bara erbjuder torrents kan inte spelas upp här.</string>
 </resources>

@@ -269,7 +269,11 @@ class VodViewModel(private val app: Application) : AndroidViewModel(app) {
                 val locked = c.settings.settings.first().let { s -> s.parentalOn && s.parentalLocked(c.db.categoryDao().get(cat)?.parentalLock == true, null) }
                 if (!c.parental.allow(locked, "v${item.kind}${item.id}", Long.MAX_VALUE, ask = true)) return@launch
             }
-            startPlay(p, url, item, episode, startMs)
+            val real = if (url.startsWith(org.imdtv.iptvtv.data.source.STREMIO_PLAY) && p != null) {
+                runCatching { (source(p) as? org.imdtv.iptvtv.data.source.StremioSource)?.stream(url) }.getOrNull()
+                    ?: return@launch run { android.widget.Toast.makeText(app, R.string.vod_stremio_no_stream, android.widget.Toast.LENGTH_LONG).show() }
+            } else url
+            startPlay(p, real, item, episode, startMs)
         }
     }
 

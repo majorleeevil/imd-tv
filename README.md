@@ -20,6 +20,7 @@ Website: https://imd-tv.com
 - **Movies & series** — posters, plots, seasons and episodes, resume where you left off, embedded subtitles in your language.
 - **Search** — channels, films and series in one search, or within a single category.
 - **Playlists** — Xtream logins, M3U links and Stalker portals (beta). Add several, name them, switch in Settings.
+- **Media servers** — Plex and Jellyfin libraries, and the movie and series catalogs of your Stremio account's add-ons, next to your playlist.
 - **Your categories** — favourites, your own groups, hide what you never watch (whole categories or ticked channels in bulk), reorder the rest.
 - **DRM** — M3U channels protected with ClearKey or Widevine play.
 - **Recording** — record live TV now or schedule a programme from the guide, to the box, a USB drive or a network
@@ -43,6 +44,13 @@ Six themes, all with the same fast guide:
 |---|---|
 | ![Movies](site/img/movies.webp) Movies | ![Movie details](site/img/movie-detail.webp) Movie details |
 | ![Recordings](site/img/recordings.webp) Recordings | ![Recording settings](site/img/settings/recording.webp) Recording settings |
+
+## Stremio: known limitations
+
+- Only direct links (http/https) play. Torrent streams would need a torrent engine, which the app doesn't have, so a title
+  whose add-ons offer only torrents can't be played.
+- No stream picker: the first direct link the add-ons give is played, in your Stremio account's add-on order.
+- Each catalog is capped at 500 titles.
 
 ## Recording: known limitations
 

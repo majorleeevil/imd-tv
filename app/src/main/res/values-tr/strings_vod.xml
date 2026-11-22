@@ -201,4 +201,5 @@
     <string name="vod_search_later">Daha sonra</string>
     <string name="vod_search_no_programmes">Program bulunamadı</string>
     <string name="vod_search_on_now">Şimdi yayında</string>
+    <string name="vod_stremio_no_stream">Oynatılabilir yayın yok: bu yapımın eklentileri yalnızca torrent sunuyor ya da hiçbir şey sunmuyor</string>
 </resources>

@@ -57,6 +57,7 @@ class AppContainer(context: Context) {
             p.skipLibraries.split(',').filter { it.isNotEmpty() }.toSet(), http, json)
         ProviderType.JELLYFIN -> org.imdtv.iptvtv.data.source.JellyfinSource(p.url, p.password.orEmpty(), p.username.orEmpty(), jellyfinHeader,
             p.skipLibraries.split(',').filter { it.isNotEmpty() }.toSet(), http, json)
+        ProviderType.STREMIO -> org.imdtv.iptvtv.data.source.StremioSource(p.password.orEmpty(), p.skipLibraries.split(',').filter { it.isNotEmpty() }.toSet(), stremioAuth, http, json)
     }
 
     /** Plex's X-Plex-Client-Identifier: this install's Android id (stable, needs no storage). */
@@ -66,6 +67,7 @@ class AppContainer(context: Context) {
     val plexAuth by lazy { org.imdtv.iptvtv.data.source.PlexAuth(http, json, plexClientId, "IMD TV") }
     /** Jellyfin's Authorization header without the token; the same device id as Plex. */
     val jellyfinHeader by lazy { org.imdtv.iptvtv.data.source.jellyfinAuthHeader(android.os.Build.MODEL ?: "Android TV", plexClientId, org.imdtv.iptvtv.BuildConfig.VERSION_NAME) }
+    val stremioAuth by lazy { org.imdtv.iptvtv.data.source.StremioAuth(http, json) }
     val jellyfinAuth by lazy { org.imdtv.iptvtv.data.source.JellyfinAuth(http, json, jellyfinHeader) }
 
     /** Portal sessions per playlist, shared by sync, playback and recording. */

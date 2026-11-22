@@ -321,4 +321,14 @@
     <string name="set_b_jf_failed">Το αίτημα Jellyfin απέτυχε: HTTP %1$d</string>
     <string name="set_b_jf_wrong_login">Λάθος όνομα χρήστη ή κωδικός</string>
     <string name="set_b_plex_all_added">Όλοι οι διακομιστές αυτού του λογαριασμού Plex έχουν ήδη προστεθεί</string>
+    <string name="set_b_stremio_add">Προσθήκη λογαριασμού Stremio</string>
+    <string name="set_b_stremio_add_expl">Ταινίες και σειρές από τα πρόσθετα του λογαριασμού σας Stremio</string>
+    <string name="set_b_stremio_code_expl">Σαρώστε τον κωδικό QR ή μεταβείτε στο link.stremio.com από το κινητό ή τον υπολογιστή σας, συνδεθείτε και εισαγάγετε αυτόν τον κωδικό.</string>
+    <string name="set_b_stremio_use_password">Χρήση email και κωδικού</string>
+    <string name="set_b_stremio_sign_in_expl">Εισαγάγετε παρακάτω το email και τον κωδικό σας στο Stremio.</string>
+    <string name="set_b_email">Email</string>
+    <string name="set_b_stremio_wrong_login">Λάθος email ή κωδικός</string>
+    <string name="set_b_stremio_failed">Stremio: %1$s</string>
+    <string name="set_b_stremio_no_catalogs">Τα πρόσθετα αυτού του λογαριασμού Stremio δεν έχουν καταλόγους ταινιών ή σειρών</string>
+    <string name="set_b_stremio_limit">Παίζουν μόνο άμεσοι σύνδεσμοι: οι τίτλοι των οποίων τα πρόσθετα προσφέρουν μόνο torrent δεν μπορούν να παιχθούν εδώ.</string>
 </resources>

@@ -321,4 +321,14 @@
     <string name="set_b_jf_failed">Kërkesa Jellyfin dështoi: HTTP %1$d</string>
     <string name="set_b_jf_wrong_login">Emër përdoruesi ose fjalëkalim i gabuar</string>
     <string name="set_b_plex_all_added">Çdo server i kësaj llogarie Plex është shtuar tashmë</string>
+    <string name="set_b_stremio_add">Shto llogari Stremio</string>
+    <string name="set_b_stremio_add_expl">Filma dhe seriale nga shtesat e llogarisë tënde Stremio</string>
+    <string name="set_b_stremio_code_expl">Skano kodin QR, ose hap link.stremio.com në telefon ose kompjuter, hyr dhe shkruaj këtë kod.</string>
+    <string name="set_b_stremio_use_password">Përdor email-in dhe fjalëkalimin</string>
+    <string name="set_b_stremio_sign_in_expl">Shkruaj më poshtë email-in dhe fjalëkalimin e Stremio.</string>
+    <string name="set_b_email">Email</string>
+    <string name="set_b_stremio_wrong_login">Email ose fjalëkalim i gabuar</string>
+    <string name="set_b_stremio_failed">Stremio: %1$s</string>
+    <string name="set_b_stremio_no_catalogs">Shtesat e kësaj llogarie Stremio nuk kanë katalogë filmash ose serialesh</string>
+    <string name="set_b_stremio_limit">Luhen vetëm lidhjet e drejtpërdrejta: titujt që shtesat e tyre ofrojnë vetëm torrente nuk mund të luhen këtu.</string>
 </resources>

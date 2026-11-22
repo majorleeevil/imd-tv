@@ -201,4 +201,5 @@
     <string name="vod_search_later">Più tardi</string>
     <string name="vod_search_no_programmes">Nessun programma trovato</string>
     <string name="vod_search_on_now">In onda ora</string>
+    <string name="vod_stremio_no_stream">Nessuno stream riproducibile: i componenti aggiuntivi di questo titolo offrono solo torrent, o nulla</string>
 </resources>

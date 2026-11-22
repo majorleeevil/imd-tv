@@ -212,4 +212,5 @@
     <string name="vod_search_later">Plus tard</string>
     <string name="vod_search_no_programmes">Aucun programme trouvé</string>
     <string name="vod_search_on_now">En ce moment</string>
+    <string name="vod_stremio_no_stream">Aucun flux lisible : les modules complémentaires de ce titre n\'offrent que des torrents, ou rien</string>
 </resources>

@@ -321,4 +321,14 @@
     <string name="set_b_jf_failed">Jellyfin isteği başarısız: HTTP %1$d</string>
     <string name="set_b_jf_wrong_login">Kullanıcı adı veya şifre yanlış</string>
     <string name="set_b_plex_all_added">Bu Plex hesabındaki tüm sunucular zaten eklendi</string>
+    <string name="set_b_stremio_add">Stremio hesabı ekle</string>
+    <string name="set_b_stremio_add_expl">Stremio hesabınızdaki eklentilerden filmler ve diziler</string>
+    <string name="set_b_stremio_code_expl">QR kodunu tarayın veya telefonunuzda ya da bilgisayarınızda link.stremio.com adresine gidip oturum açın ve bu kodu girin.</string>
+    <string name="set_b_stremio_use_password">E-posta ve şifre kullan</string>
+    <string name="set_b_stremio_sign_in_expl">Stremio e-posta adresinizi ve şifrenizi aşağıya girin.</string>
+    <string name="set_b_email">E-posta</string>
+    <string name="set_b_stremio_wrong_login">E-posta veya şifre yanlış</string>
+    <string name="set_b_stremio_failed">Stremio: %1$s</string>
+    <string name="set_b_stremio_no_catalogs">Bu Stremio hesabındaki eklentilerin film veya dizi kataloğu yok</string>
+    <string name="set_b_stremio_limit">Yalnızca doğrudan bağlantılar oynatılır: eklentileri yalnızca torrent sunan yapımlar burada oynatılamaz.</string>
 </resources>

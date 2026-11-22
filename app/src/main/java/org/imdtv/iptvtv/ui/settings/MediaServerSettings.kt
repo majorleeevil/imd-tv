@@ -129,8 +129,22 @@ class PlexAddFlow(c: AppContainer, scope: CoroutineScope) : ServerAddFlow(c, sco
     }
 }
 
+/** A flow with a code step and a typed sign-in as the other way in (Jellyfin, Stremio). */
+interface PasswordSignIn {
+    @get:StringRes val usePasswordRes: Int
+    @get:StringRes val userRes: Int
+    @get:StringRes val signInExplRes: Int
+    fun usePassword()
+    fun setUser(u: String)
+    fun setPassword(p: String)
+    fun signIn()
+}
+
 /** Address → Quick Connect code (or username + password when it's off) → libraries. */
-class JellyfinAddFlow(c: AppContainer, scope: CoroutineScope) : ServerAddFlow(c, scope, "Jellyfin") {
+class JellyfinAddFlow(c: AppContainer, scope: CoroutineScope) : ServerAddFlow(c, scope, "Jellyfin"), PasswordSignIn {
+    override val usePasswordRes = R.string.set_b_jf_use_password
+    override val userRes = R.string.set_b_username
+    override val signInExplRes = R.string.set_b_jf_sign_in_expl
     private var base = ""
     private var name = ""
     private val auth get() = c.jellyfinAuth
@@ -158,11 +172,11 @@ class JellyfinAddFlow(c: AppContainer, scope: CoroutineScope) : ServerAddFlow(c,
         signedIn(a)
     }
 
-    fun usePassword() = launchStep { step.value = ServerStep.SignIn(name) } // also stops the Quick Connect polling
-    fun setUser(u: String) { (step.value as? ServerStep.SignIn)?.let { step.value = it.copy(user = u, error = null) } }
-    fun setPassword(p: String) { (step.value as? ServerStep.SignIn)?.let { step.value = it.copy(password = p, error = null) } }
+    override fun usePassword() = launchStep { step.value = ServerStep.SignIn(name) } // also stops the Quick Connect polling
+    override fun setUser(u: String) { (step.value as? ServerStep.SignIn)?.let { step.value = it.copy(user = u, error = null) } }
+    override fun setPassword(p: String) { (step.value as? ServerStep.SignIn)?.let { step.value = it.copy(password = p, error = null) } }
 
-    fun signIn() {
+    override fun signIn() {
         val s = step.value as? ServerStep.SignIn ?: return
         launchStep {
             step.value = ServerStep.Working(R.string.set_b_jf_connecting)
@@ -180,9 +194,51 @@ class JellyfinAddFlow(c: AppContainer, scope: CoroutineScope) : ServerAddFlow(c,
     }
 }
 
+/** Link code (link.stremio.com, or its QR) or email + password → the account's add-on catalogs. */
+class StremioAddFlow(c: AppContainer, scope: CoroutineScope) : ServerAddFlow(c, scope, "Stremio"), PasswordSignIn {
+    override val usePasswordRes = R.string.set_b_stremio_use_password
+    override val userRes = R.string.set_b_email
+    override val signInExplRes = R.string.set_b_stremio_sign_in_expl
+    private val auth get() = c.stremioAuth
+
+    override fun start() = launchStep {
+        var key: String? = null
+        while (key == null) { // a new code every 10 minutes
+            val l = auth.createLink()
+            step.value = ServerStep.Code(l.code, R.string.set_b_stremio_code_expl, l.url)
+            repeat(300) { if (key == null) { delay(2_000); key = auth.readLink(l.code) } }
+        }
+        signedIn(key!!)
+    }
+
+    override fun usePassword() = launchStep { step.value = ServerStep.SignIn("Stremio") }
+    override fun setUser(u: String) { (step.value as? ServerStep.SignIn)?.let { step.value = it.copy(user = u, error = null) } }
+    override fun setPassword(p: String) { (step.value as? ServerStep.SignIn)?.let { step.value = it.copy(password = p, error = null) } }
+
+    override fun signIn() {
+        val s = step.value as? ServerStep.SignIn ?: return
+        launchStep {
+            step.value = ServerStep.Working(R.string.set_b_jf_connecting)
+            val key = try { auth.withPassword(s.user.trim(), s.password) } catch (e: org.imdtv.iptvtv.data.source.StremioException) {
+                step.value = s.copy(error = e.uiText(c.appContext) ?: e.text); return@launchStep // try again, email kept
+            }
+            signedIn(key)
+        }
+    }
+
+    private suspend fun signedIn(key: String) {
+        step.value = ServerStep.Working(R.string.set_b_jf_connecting)
+        val cats = auth.catalogs(auth.addons(key))
+        if (cats.isEmpty()) { step.value = ServerStep.Failed(c.appContext.getString(R.string.set_b_stremio_no_catalogs)); return }
+        libraries("Stremio", cats, ProviderType.STREMIO, "https://api.strem.io", "", key)
+    }
+}
+
 /** The media server kinds, each a page of Settings › Media servers. */
-val SERVER_TYPES = listOf(ProviderType.PLEX, ProviderType.JELLYFIN)
-private fun ProviderType.serverName() = if (this == ProviderType.PLEX) "Plex" else "Jellyfin"
+val SERVER_TYPES = listOf(ProviderType.PLEX, ProviderType.JELLYFIN, ProviderType.STREMIO)
+private fun ProviderType.serverName() = when (this) { ProviderType.PLEX -> "Plex"; ProviderType.JELLYFIN -> "Jellyfin"; else -> "Stremio" }
+@StringRes private fun ProviderType.addRes() = when (this) { ProviderType.PLEX -> R.string.set_b_plex_add; ProviderType.JELLYFIN -> R.string.set_b_jf_add; else -> R.string.set_b_stremio_add }
+@StringRes private fun ProviderType.addExplRes() = when (this) { ProviderType.PLEX -> R.string.set_b_plex_add_expl; ProviderType.JELLYFIN -> R.string.set_b_jf_add_expl; else -> R.string.set_b_stremio_add_expl }
 
 /** Settings › Media servers: Plex ›, Jellyfin › (the servers added, or what adding one gives), then the update interval. */
 @Composable
@@ -190,7 +246,7 @@ fun MediaServerRows(vm: SettingsViewModel, first: Modifier, openers: Map<Provide
     val providers by vm.providers.collectAsState()
     SERVER_TYPES.forEachIndexed { i, t ->
         val names = providers.filter { it.type == t }.joinToString { it.name }
-        SettingRow(t.serverName(), names.ifEmpty { stringResource(if (t == ProviderType.PLEX) R.string.set_b_plex_add_expl else R.string.set_b_jf_add_expl) }, "›",
+        SettingRow(t.serverName(), names.ifEmpty { stringResource(t.addExplRes()) }, "›",
             (if (i == 0) first else Modifier).focusRequester(openers.getValue(t))) { onOpen(t) }
     }
     PlaylistUpdateRow(vm)
@@ -202,13 +258,14 @@ fun MediaServerPage(vm: SettingsViewModel, type: ProviderType, modifier: Modifie
                     openers: MutableMap<Long, FocusRequester>, onOpen: (Long) -> Unit, onClose: () -> Unit) {
     androidx.activity.compose.BackHandler(onBack = onClose)
     val providers by vm.providers.collectAsState()
-    val flow = if (type == ProviderType.PLEX) vm.plex else vm.jellyfin
+    val flow = when (type) { ProviderType.PLEX -> vm.plex; ProviderType.JELLYFIN -> vm.jellyfin; else -> vm.stremio }
     val step by flow.step.collectAsState()
     androidx.compose.runtime.LaunchedEffect(type) { if (focusFirst) { withFrameNanos { }; runCatching { first.requestFocus() } } }
     androidx.compose.foundation.layout.Column(modifier.verticalScroll(androidx.compose.foundation.rememberScrollState()), verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(6.dp)) {
         androidx.tv.material3.Text(type.serverName(), fontSize = 20.sp, color = Color.White, modifier = Modifier.padding(top = 6.dp, bottom = 18.dp))
-        if (type == ProviderType.PLEX) ServerFlowRows(flow, first, stringResource(R.string.set_b_plex_add), stringResource(R.string.set_b_plex_add_expl))
-        else ServerFlowRows(flow, first, stringResource(R.string.set_b_jf_add), stringResource(R.string.set_b_jf_add_expl))
+        ServerFlowRows(flow, first, stringResource(type.addRes()), stringResource(type.addExplRes()))
+        if (type == ProviderType.STREMIO && step == null) androidx.tv.material3.Text(stringResource(R.string.set_b_stremio_limit), fontSize = 12.sp,
+            color = org.imdtv.iptvtv.ui.theme.LocalTheme.current.colors.muted, modifier = Modifier.padding(start = 16.dp, top = 4.dp))
         if (step == null || step is ServerStep.Done || step is ServerStep.Failed) providers.filter { it.type == type }.forEach { p ->
             SettingRow(p.name, updatedLabel(p.lastSync), "›", Modifier.focusRequester(openers.getOrPut(p.id) { FocusRequester() })) { onOpen(p.id) }
         }
@@ -229,7 +286,7 @@ private fun ServerFlowRows(flow: ServerAddFlow, top: FocusRequester, addTitle: S
         is ServerStep.Working -> stringResource(s.text) to ""
         is ServerStep.Servers -> stringResource(R.string.set_b_plex_pick_server) to ""
         ServerStep.Address -> stringResource(R.string.set_b_jf_address) to stringResource(R.string.set_b_jf_address_expl)
-        is ServerStep.SignIn -> stringResource(R.string.set_b_jf_sign_in_title, s.name) to (s.error ?: stringResource(R.string.set_b_jf_sign_in_expl))
+        is ServerStep.SignIn -> stringResource(R.string.set_b_jf_sign_in_title, s.name) to (s.error ?: stringResource((flow as PasswordSignIn).signInExplRes))
         is ServerStep.Libraries -> stringResource(R.string.set_b_plex_pick_libraries, s.name) to ""
         is ServerStep.Adding -> stringResource(R.string.set_b_plex_adding) to s.progress
         is ServerStep.Done -> stringResource(R.string.set_b_plex_added) to s.text
@@ -251,10 +308,10 @@ private fun ServerFlowRows(flow: ServerAddFlow, top: FocusRequester, addTitle: S
         ServerStep.Address -> EditRow(stringResource(R.string.set_b_jf_address_row), "", null, "http://", saveLabel = stringResource(R.string.set_b_jf_connect)) { typed ->
             scope.launch { withFrameNanos { }; stay { (flow as JellyfinAddFlow).connect(typed) } }
         }
-        is ServerStep.Code -> if (flow is JellyfinAddFlow) SettingRow(stringResource(R.string.set_b_jf_use_password), "", null) { stay { flow.usePassword() } }
+        is ServerStep.Code -> if (flow is PasswordSignIn) SettingRow(stringResource(flow.usePasswordRes), "", null) { stay { flow.usePassword() } }
         is ServerStep.SignIn -> {
-            val jf = flow as JellyfinAddFlow
-            EditRow(stringResource(R.string.set_b_username), "", s.user.ifEmpty { null }, s.user) { jf.setUser(it) }
+            val jf = flow as PasswordSignIn
+            EditRow(stringResource(jf.userRes), "", s.user.ifEmpty { null }, s.user) { jf.setUser(it) }
             EditRow(stringResource(R.string.set_b_password), "", if (s.password.isEmpty()) null else "••••", "", secret = true) { jf.setPassword(it) }
             SettingRow(stringResource(R.string.set_b_jf_sign_in), "", null) { stay { jf.signIn() } }
         }

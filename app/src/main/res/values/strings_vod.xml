@@ -212,4 +212,5 @@
     <string name="vod_search_later">Later</string>
     <string name="vod_search_no_programmes">No programmes found</string>
     <string name="vod_search_on_now">On now</string>
+    <string name="vod_stremio_no_stream">No playable stream: this title\'s add-ons offer only torrents, or nothing</string>
 </resources>

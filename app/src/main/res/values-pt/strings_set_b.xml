@@ -321,4 +321,14 @@
     <string name="set_b_jf_failed">Falha na solicitação ao Jellyfin: HTTP %1$d</string>
     <string name="set_b_jf_wrong_login">Usuário ou senha incorretos</string>
     <string name="set_b_plex_all_added">Todos os servidores desta conta Plex já foram adicionados</string>
+    <string name="set_b_stremio_add">Adicionar conta do Stremio</string>
+    <string name="set_b_stremio_add_expl">Filmes e séries dos complementos da sua conta do Stremio</string>
+    <string name="set_b_stremio_code_expl">Escaneie o código QR ou acesse link.stremio.com no celular ou computador, entre na sua conta e digite este código.</string>
+    <string name="set_b_stremio_use_password">Usar e-mail e senha</string>
+    <string name="set_b_stremio_sign_in_expl">Digite abaixo seu e-mail e senha do Stremio.</string>
+    <string name="set_b_email">E-mail</string>
+    <string name="set_b_stremio_wrong_login">E-mail ou senha incorretos</string>
+    <string name="set_b_stremio_failed">Stremio: %1$s</string>
+    <string name="set_b_stremio_no_catalogs">Os complementos desta conta do Stremio não têm catálogos de filmes ou séries</string>
+    <string name="set_b_stremio_limit">Apenas links diretos são reproduzidos: títulos cujos complementos oferecem só torrents não podem ser reproduzidos aqui.</string>
 </resources>

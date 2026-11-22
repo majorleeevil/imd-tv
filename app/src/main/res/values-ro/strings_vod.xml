@@ -193,4 +193,5 @@
     <string name="vod_search_later">Mai târziu</string>
     <string name="vod_search_no_programmes">Nu s-au găsit programe</string>
     <string name="vod_search_on_now">Acum la TV</string>
+    <string name="vod_stremio_no_stream">Niciun flux redabil: add-on-urile acestui titlu oferă doar torrente sau nimic</string>
 </resources>
