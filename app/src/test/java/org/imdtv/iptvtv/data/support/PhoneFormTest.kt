@@ -6,12 +6,12 @@ import org.junit.Test
 
 class PhoneFormTest {
     @Test fun onlyTheTokenPathAnswers() {
-        assertEquals("GET", phoneRequest("GET /add-a-playlist HTTP/1.1", "add-a-playlist"))
-        assertEquals("GET", phoneRequest("GET /Add-A-Playlist/ HTTP/1.1", "add-a-playlist"))
-        assertEquals("POST", phoneRequest("POST /add-a-playlist HTTP/1.1\r", "add-a-playlist"))
-        assertNull(phoneRequest("GET /edit-a-playlist HTTP/1.1", "add-a-playlist"))
-        assertNull(phoneRequest("GET /add-a-playlist?x=1 HTTP/1.1", "add-a-playlist"))
-        assertNull(phoneRequest("PUT /add-a-playlist HTTP/1.1", "add-a-playlist"))
+        assertEquals("GET", phoneRequest("GET /addplaylist HTTP/1.1", "addplaylist"))
+        assertEquals("GET", phoneRequest("GET /AddPlaylist/ HTTP/1.1", "addplaylist"))
+        assertEquals("POST", phoneRequest("POST /addplaylist HTTP/1.1\r", "addplaylist"))
+        assertNull(phoneRequest("GET /editplaylist HTTP/1.1", "addplaylist"))
+        assertNull(phoneRequest("GET /addplaylist?x=1 HTTP/1.1", "addplaylist"))
+        assertNull(phoneRequest("PUT /addplaylist HTTP/1.1", "addplaylist"))
     }
 
     @Test fun formBodyDecodes() {

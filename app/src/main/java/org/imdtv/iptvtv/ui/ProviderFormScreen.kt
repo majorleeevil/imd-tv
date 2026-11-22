@@ -109,7 +109,7 @@ private fun ProviderForm(vm: AppViewModel, editing: ProviderEntity?) {
             f("agent", stringResource(R.string.set_b_user_agent), agent, false),
             f("name", stringResource(R.string.set_b_name_optional), name, false),
         )
-        org.imdtv.iptvtv.ui.settings.PhoneFormQr(if (edit) "edit-a-playlist" else "add-a-playlist",
+        org.imdtv.iptvtv.ui.settings.PhoneFormQr(if (edit) "editplaylist" else "addplaylist",
             if (editing == null) stringResource(R.string.set_b_add_playlist) else stringResource(R.string.set_b_edit_playlist, editing.name),
             if (edit) emptyList() else ProviderType.entries.map { it.name }, type.name, fields,
             onSubmit = { form ->
