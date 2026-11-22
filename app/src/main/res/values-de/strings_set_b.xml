@@ -306,4 +306,18 @@
     <string name="set_b_plex_failed">Plex-Anfrage fehlgeschlagen: HTTP %1$d</string>
     <string name="set_b_plex_no_servers">Dieses Plex-Konto hat keine Server</string>
     <string name="set_b_plex_unreachable">%1$s ist von diesem Fernseher aus nicht erreichbar</string>
+    <string name="set_b_jf_add">Jellyfin-Server hinzufügen</string>
+    <string name="set_b_jf_add_expl">Deine Jellyfin-Filme und -Serien neben denen deiner Playlist</string>
+    <string name="set_b_jf_address">Adresse des Jellyfin-Servers</string>
+    <string name="set_b_jf_address_expl">Gib sie unten so ein wie in der Jellyfin-App, zum Beispiel http://192.168.1.10:8096. OK bricht ab</string>
+    <string name="set_b_jf_address_row">Serveradresse</string>
+    <string name="set_b_jf_connect">Verbinden</string>
+    <string name="set_b_jf_connecting">Verbinde…</string>
+    <string name="set_b_jf_code_expl">Öffne auf einem Handy oder Computer, der bei Jellyfin angemeldet ist, Einstellungen › Quick Connect und gib diesen Code ein. OK bricht ab</string>
+    <string name="set_b_jf_use_password">Benutzername und Passwort verwenden</string>
+    <string name="set_b_jf_sign_in_title">Bei %1$s anmelden</string>
+    <string name="set_b_jf_sign_in_expl">Gib unten deinen Jellyfin-Benutzernamen und dein Passwort ein. OK bricht ab</string>
+    <string name="set_b_jf_sign_in">Anmelden</string>
+    <string name="set_b_jf_failed">Jellyfin-Anfrage fehlgeschlagen: HTTP %1$d</string>
+    <string name="set_b_jf_wrong_login">Falscher Benutzername oder falsches Passwort</string>
 </resources>

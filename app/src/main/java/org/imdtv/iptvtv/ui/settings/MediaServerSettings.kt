@@ -1,5 +1,6 @@
 package org.imdtv.iptvtv.ui.settings
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -8,14 +9,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.tv.material3.Text
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -27,77 +29,64 @@ import org.imdtv.iptvtv.data.db.ProviderEntity
 import org.imdtv.iptvtv.data.db.ProviderType
 import org.imdtv.iptvtv.data.model.Kind
 import org.imdtv.iptvtv.data.model.StreamFormat
+import org.imdtv.iptvtv.data.source.JellyfinException
+import org.imdtv.iptvtv.data.source.JfAuth
 import org.imdtv.iptvtv.data.source.PlexException
 import org.imdtv.iptvtv.data.source.PlexServer
+import org.imdtv.iptvtv.data.source.jellyfinBase
 import org.imdtv.iptvtv.data.source.plexSkipByDefault
 import org.imdtv.iptvtv.data.source.uiText
 
-/** Where Settings › Media servers › Add Plex server is up to. */
-sealed interface PlexStep {
-    data class Code(val code: String) : PlexStep
-    data object Working : PlexStep
-    data class Servers(val list: List<PlexServer>) : PlexStep
-    data class Libraries(val server: PlexServer, val uri: String, val libs: List<Triple<String, String, Kind>>, val skip: Set<String>) : PlexStep
-    data class Adding(val progress: String) : PlexStep
-    data class Done(val text: String) : PlexStep
-    data class Failed(val text: String) : PlexStep
+/** Where Settings › Media servers › Add Plex / Jellyfin server is up to. */
+sealed interface ServerStep {
+    data class Code(val code: String, @StringRes val expl: Int, val qr: String? = null) : ServerStep
+    data class Working(@StringRes val text: Int) : ServerStep
+    data class Servers(val list: List<PlexServer>) : ServerStep // Plex
+    data object Address : ServerStep // Jellyfin
+    data class SignIn(val name: String, val user: String = "", val password: String = "", val error: String? = null) : ServerStep // Jellyfin
+    /** [provider] is the playlist to add, its skipLibraries filled in from [skip] by add(). */
+    data class Libraries(val name: String, val libs: List<Triple<String, String, Kind>>, val skip: Set<String>, val provider: ProviderEntity) : ServerStep
+    data class Adding(val progress: String) : ServerStep
+    data class Done(val text: String) : ServerStep
+    data class Failed(val text: String) : ServerStep
 }
 
-/** Link code → server → libraries → a Plex playlist (Movies + Series only), synced but not made the one in use. */
-class PlexAddFlow(private val c: AppContainer, private val scope: CoroutineScope) {
-    val step = MutableStateFlow<PlexStep?>(null)
+/** Sign in → libraries → a media-server playlist (Movies + Series only), synced but not made the one in use. */
+abstract class ServerAddFlow(protected val c: AppContainer, private val scope: CoroutineScope, private val tag: String) {
+    val step = MutableStateFlow<ServerStep?>(null)
     private var job: Job? = null
 
-    private fun launchStep(block: suspend () -> Unit) {
+    abstract fun start()
+
+    protected fun launchStep(block: suspend () -> Unit) {
         job?.cancel()
         job = scope.launch {
             try { block() } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) {
-                android.util.Log.w("Plex", "Add Plex server failed", e)
-                step.value = PlexStep.Failed(e.uiText(c.appContext) ?: e.toString())
+                android.util.Log.w(tag, "Add $tag server failed", e)
+                step.value = ServerStep.Failed(e.uiText(c.appContext) ?: e.toString())
             }
         }
     }
 
-    fun start() = launchStep {
-        val auth = c.plexAuth
-        var token: String? = null
-        while (token == null) { // a new code when one expires (15 min)
-            val pin = auth.createPin()
-            step.value = PlexStep.Code(pin.code)
-            token = try {
-                var t: String? = null
-                while (t == null) { delay(2_000); t = auth.pollPin(pin.id) }
-                t
-            } catch (e: PlexException) { if (e.code == 404) null else throw e }
-        }
-        step.value = PlexStep.Working
-        val servers = auth.servers(token)
-        step.value = if (servers.isEmpty()) PlexStep.Failed(c.appContext.getString(R.string.set_b_plex_no_servers)) else PlexStep.Servers(servers)
-    }
-
-    fun pick(s: PlexServer) = launchStep {
-        step.value = PlexStep.Working
-        val uri = c.plexAuth.reachable(s) ?: return@launchStep run { step.value = PlexStep.Failed(c.appContext.getString(R.string.set_b_plex_unreachable, s.name)) }
-        val libs = c.plexAuth.libraries(uri, s.token)
-        step.value = PlexStep.Libraries(s, uri, libs, libs.filter { plexSkipByDefault(it.second) }.map { it.first }.toSet())
+    protected fun libraries(name: String, libs: List<Triple<String, String, Kind>>, type: ProviderType, url: String, user: String, token: String) {
+        step.value = ServerStep.Libraries(name, libs, libs.filter { plexSkipByDefault(it.second) }.map { it.first }.toSet(),
+            ProviderEntity(name = name, type = type, url = url, username = user, password = token, userAgent = null, streamFormat = StreamFormat.TS,
+                epgOverrideUrls = emptyList(), lastSync = null, contentOff = Kind.LIVE.name))
     }
 
     fun toggle(key: String) {
-        val l = step.value as? PlexStep.Libraries ?: return
+        val l = step.value as? ServerStep.Libraries ?: return
         step.value = l.copy(skip = if (key in l.skip) l.skip - key else l.skip + key)
     }
 
     fun add() {
-        val l = step.value as? PlexStep.Libraries ?: return
+        val l = step.value as? ServerStep.Libraries ?: return
         launchStep {
-            step.value = PlexStep.Adding("")
-            val p = ProviderEntity(name = l.server.name, type = ProviderType.PLEX, url = l.uri, username = l.server.clientId, password = l.server.token,
-                userAgent = null, streamFormat = StreamFormat.TS, epgOverrideUrls = emptyList(), lastSync = null,
-                contentOff = Kind.LIVE.name, skipLibraries = l.skip.joinToString(","))
-            val id = c.providerRepository.add(p)
+            step.value = ServerStep.Adding("")
+            val id = c.providerRepository.add(l.provider.copy(skipLibraries = l.skip.joinToString(",")))
             try {
-                val r = c.providerRepository.syncNow(id) { step.value = PlexStep.Adding(it) }
-                step.value = PlexStep.Done(r.summary())
+                val r = c.providerRepository.syncNow(id) { step.value = ServerStep.Adding(it) }
+                step.value = ServerStep.Done(r.summary())
             } catch (e: Exception) { c.providerRepository.remove(id); throw e } // no half-added server
         }
     }
@@ -105,35 +94,138 @@ class PlexAddFlow(private val c: AppContainer, private val scope: CoroutineScope
     fun cancel() { job?.cancel(); step.value = null }
 }
 
-/** Settings › Media servers: the Plex servers added, and Add Plex server. */
+/** Link code (plex.tv/link) → server → libraries. */
+class PlexAddFlow(c: AppContainer, scope: CoroutineScope) : ServerAddFlow(c, scope, "Plex") {
+    override fun start() = launchStep {
+        val auth = c.plexAuth
+        var token: String? = null
+        while (token == null) { // a new code when one expires (15 min)
+            val pin = auth.createPin()
+            step.value = ServerStep.Code(pin.code, R.string.set_b_plex_code_expl, "https://plex.tv/link")
+            token = try {
+                var t: String? = null
+                while (t == null) { delay(2_000); t = auth.pollPin(pin.id) }
+                t
+            } catch (e: PlexException) { if (e.code == 404) null else throw e }
+        }
+        step.value = ServerStep.Working(R.string.set_b_plex_working)
+        val servers = auth.servers(token)
+        step.value = if (servers.isEmpty()) ServerStep.Failed(c.appContext.getString(R.string.set_b_plex_no_servers)) else ServerStep.Servers(servers)
+    }
+
+    fun pick(s: PlexServer) = launchStep {
+        step.value = ServerStep.Working(R.string.set_b_plex_working)
+        val uri = c.plexAuth.reachable(s) ?: return@launchStep run { step.value = ServerStep.Failed(c.appContext.getString(R.string.set_b_plex_unreachable, s.name)) }
+        libraries(s.name, c.plexAuth.libraries(uri, s.token), ProviderType.PLEX, uri, s.clientId, s.token)
+    }
+}
+
+/** Address → Quick Connect code (or username + password when it's off) → libraries. */
+class JellyfinAddFlow(c: AppContainer, scope: CoroutineScope) : ServerAddFlow(c, scope, "Jellyfin") {
+    private var base = ""
+    private var name = ""
+    private val auth get() = c.jellyfinAuth
+
+    override fun start() { step.value = ServerStep.Address }
+
+    fun connect(typed: String) = launchStep {
+        step.value = ServerStep.Working(R.string.set_b_jf_connecting)
+        val typedBase = jellyfinBase(typed)
+        val (b, n) = try { auth.resolve(typedBase) } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) {
+            android.util.Log.w("Jellyfin", "No Jellyfin at $typedBase", e)
+            step.value = ServerStep.Failed(c.appContext.getString(R.string.set_b_plex_unreachable, typedBase)); return@launchStep
+        }
+        base = b; name = n
+        if (!auth.quickConnectEnabled(base)) { step.value = ServerStep.SignIn(name); return@launchStep }
+        var a: JfAuth? = null
+        while (a == null) { // a new code when one expires
+            val qc = auth.initiate(base)
+            step.value = ServerStep.Code(qc.code, R.string.set_b_jf_code_expl)
+            a = try {
+                while (!auth.approved(base, qc.secret)) delay(2_000)
+                auth.withQuickConnect(base, qc.secret)
+            } catch (e: JellyfinException) { if (e.code == 404) null else throw e }
+        }
+        signedIn(a)
+    }
+
+    fun usePassword() = launchStep { step.value = ServerStep.SignIn(name) } // also stops the Quick Connect polling
+    fun setUser(u: String) { (step.value as? ServerStep.SignIn)?.let { step.value = it.copy(user = u, error = null) } }
+    fun setPassword(p: String) { (step.value as? ServerStep.SignIn)?.let { step.value = it.copy(password = p, error = null) } }
+
+    fun signIn() {
+        val s = step.value as? ServerStep.SignIn ?: return
+        launchStep {
+            step.value = ServerStep.Working(R.string.set_b_jf_connecting)
+            val a = try { auth.withPassword(base, s.user, s.password) } catch (e: JellyfinException) {
+                if (e.code != 401) throw e
+                step.value = s.copy(error = c.appContext.getString(R.string.set_b_jf_wrong_login)); return@launchStep // try again, address kept
+            }
+            signedIn(a)
+        }
+    }
+
+    private suspend fun signedIn(a: JfAuth) {
+        step.value = ServerStep.Working(R.string.set_b_jf_connecting)
+        libraries(name, auth.libraries(base, a), ProviderType.JELLYFIN, base, a.user.id, a.token)
+    }
+}
+
+/** Settings › Media servers: Add Plex server, Add Jellyfin server, then the servers added. */
 @Composable
 fun MediaServerRows(vm: SettingsViewModel, rowsFocus: FocusRequester, openers: MutableMap<Long, FocusRequester>, onOpen: (Long) -> Unit) {
-    val flow = vm.plex
-    val step by flow.step.collectAsState()
     val providers by vm.providers.collectAsState()
-    DisposableEffect(Unit) { onDispose { if (flow.step.value !is PlexStep.Adding) flow.cancel() } } // stop polling on leaving
+    ServerFlowRows(vm.plex, rowsFocus, stringResource(R.string.set_b_plex_add), stringResource(R.string.set_b_plex_add_expl))
+    ServerFlowRows(vm.jellyfin, remember { FocusRequester() }, stringResource(R.string.set_b_jf_add), stringResource(R.string.set_b_jf_add_expl))
+    providers.filter { it.type.mediaServer }.forEach { p ->
+        SettingRow(p.name, updatedLabel(p.lastSync), "›", Modifier.focusRequester(openers.getOrPut(p.id) { FocusRequester() })) { onOpen(p.id) }
+    }
+}
+
+@Composable
+private fun ServerFlowRows(flow: ServerAddFlow, top: FocusRequester, addTitle: String, addExpl: String) {
+    val step by flow.step.collectAsState()
+    val scope = rememberCoroutineScope()
+    DisposableEffect(flow) { onDispose { if (flow.step.value !is ServerStep.Adding) flow.cancel() } } // stop polling on leaving
     // One top row for every step, so the focused row is never removed (focus would jump to the groups and leave).
-    fun stay(then: () -> Unit) { runCatching { rowsFocus.requestFocus() }; then() }
+    fun stay(then: () -> Unit) { runCatching { top.requestFocus() }; then() }
     val s = step
     val (title, expl) = when (s) {
-        null -> stringResource(R.string.set_b_plex_add) to stringResource(R.string.set_b_plex_add_expl)
-        is PlexStep.Code -> stringResource(R.string.set_b_plex_code, s.code) to stringResource(R.string.set_b_plex_code_expl)
-        PlexStep.Working -> stringResource(R.string.set_b_plex_working) to ""
-        is PlexStep.Servers -> stringResource(R.string.set_b_plex_pick_server) to ""
-        is PlexStep.Libraries -> stringResource(R.string.set_b_plex_pick_libraries, s.server.name) to ""
-        is PlexStep.Adding -> stringResource(R.string.set_b_plex_adding) to s.progress
-        is PlexStep.Done -> stringResource(R.string.set_b_plex_added) to s.text
-        is PlexStep.Failed -> stringResource(R.string.set_b_plex_failed_title) to s.text
+        null -> addTitle to addExpl
+        is ServerStep.Code -> stringResource(R.string.set_b_plex_code, s.code) to stringResource(s.expl)
+        is ServerStep.Working -> stringResource(s.text) to ""
+        is ServerStep.Servers -> stringResource(R.string.set_b_plex_pick_server) to ""
+        ServerStep.Address -> stringResource(R.string.set_b_jf_address) to stringResource(R.string.set_b_jf_address_expl)
+        is ServerStep.SignIn -> stringResource(R.string.set_b_jf_sign_in_title, s.name) to (s.error ?: stringResource(R.string.set_b_jf_sign_in_expl))
+        is ServerStep.Libraries -> stringResource(R.string.set_b_plex_pick_libraries, s.name) to ""
+        is ServerStep.Adding -> stringResource(R.string.set_b_plex_adding) to s.progress
+        is ServerStep.Done -> stringResource(R.string.set_b_plex_added) to s.text
+        is ServerStep.Failed -> stringResource(R.string.set_b_plex_failed_title) to s.text
     }
-    SettingRow(title, expl, null, Modifier.focusRequester(rowsFocus), busy = s == PlexStep.Working || s is PlexStep.Adding) {
-        when (s) { null -> flow.start(); is PlexStep.Code, is PlexStep.Done, is PlexStep.Failed -> flow.cancel(); else -> Unit }
+    SettingRow(title, expl, null, Modifier.focusRequester(top), busy = s is ServerStep.Working || s is ServerStep.Adding) {
+        when (s) {
+            null -> flow.start()
+            is ServerStep.Code, ServerStep.Address, is ServerStep.SignIn, is ServerStep.Done, is ServerStep.Failed -> flow.cancel()
+            else -> Unit
+        }
     }
-    if (s is PlexStep.Code) androidx.compose.foundation.Image(org.imdtv.iptvtv.ui.settings.qrImage("https://plex.tv/link"), contentDescription = "plex.tv/link",
+    if (s is ServerStep.Code && s.qr != null) androidx.compose.foundation.Image(qrImage(s.qr), contentDescription = s.qr,
         filterQuality = androidx.compose.ui.graphics.FilterQuality.None,
         modifier = Modifier.padding(start = 16.dp, top = 4.dp).clip(androidx.compose.foundation.shape.RoundedCornerShape(8.dp)).background(Color.White).padding(10.dp).size(150.dp))
     when (s) {
-        is PlexStep.Servers -> s.list.forEach { srv -> SettingRow(srv.name, "", null) { stay { flow.pick(srv) } } }
-        is PlexStep.Libraries -> {
+        is ServerStep.Servers -> s.list.forEach { srv -> SettingRow(srv.name, "", null) { stay { (flow as PlexAddFlow).pick(srv) } } }
+        // Save closes the box (focus back on its row) first; a frame later focus goes to the top row before the box's row goes.
+        ServerStep.Address -> EditRow(stringResource(R.string.set_b_jf_address_row), "", null, "http://", saveLabel = stringResource(R.string.set_b_jf_connect)) { typed ->
+            scope.launch { withFrameNanos { }; stay { (flow as JellyfinAddFlow).connect(typed) } }
+        }
+        is ServerStep.Code -> if (flow is JellyfinAddFlow) SettingRow(stringResource(R.string.set_b_jf_use_password), "", null) { stay { flow.usePassword() } }
+        is ServerStep.SignIn -> {
+            val jf = flow as JellyfinAddFlow
+            EditRow(stringResource(R.string.set_b_username), "", s.user.ifEmpty { null }, s.user) { jf.setUser(it) }
+            EditRow(stringResource(R.string.set_b_password), "", if (s.password.isEmpty()) null else "••••", "", secret = true) { jf.setPassword(it) }
+            SettingRow(stringResource(R.string.set_b_jf_sign_in), "", null) { stay { jf.signIn() } }
+        }
+        is ServerStep.Libraries -> {
             s.libs.forEach { (key, title, kind) ->
                 SwitchRow(title, stringResource(if (kind == Kind.MOVIE) R.string.set_a_kind_movies else R.string.set_a_kind_series), key !in s.skip) { flow.toggle(key) }
             }
@@ -141,9 +233,6 @@ fun MediaServerRows(vm: SettingsViewModel, rowsFocus: FocusRequester, openers: M
         }
         else -> Unit
     }
-    if (s != null && s !is PlexStep.Adding && s !is PlexStep.Done && s !is PlexStep.Failed)
+    if (s != null && s !is ServerStep.Adding && s !is ServerStep.Done && s !is ServerStep.Failed)
         SettingRow(stringResource(R.string.live_cancel), "", null, Modifier.padding(top = 4.dp)) { stay { flow.cancel() } }
-    providers.filter { it.type == ProviderType.PLEX }.forEach { p ->
-        SettingRow(p.name, updatedLabel(p.lastSync), "›", Modifier.focusRequester(openers.getOrPut(p.id) { FocusRequester() })) { onOpen(p.id) }
-    }
 }

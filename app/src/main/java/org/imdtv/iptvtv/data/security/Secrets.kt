@@ -79,7 +79,7 @@ fun withLogin(url: String, login: Login?): String {
         when {
             name == "username" && value == USER_TOKEN -> login.username
             name == "password" && value == PASS_TOKEN -> login.password
-            name == "X-Plex-Token" && value == PASS_TOKEN -> login.password
+            (name == "X-Plex-Token" || name == "api_key") && value == PASS_TOKEN -> login.password // Plex, Jellyfin
             else -> value
         }
     }

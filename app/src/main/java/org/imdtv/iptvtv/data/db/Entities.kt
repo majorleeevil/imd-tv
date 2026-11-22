@@ -8,7 +8,11 @@ import androidx.room.PrimaryKey
 import org.imdtv.iptvtv.data.model.Kind
 import org.imdtv.iptvtv.data.model.StreamFormat
 
-enum class ProviderType { XTREAM, M3U, STALKER, PLEX }
+enum class ProviderType {
+    XTREAM, M3U, STALKER, PLEX, JELLYFIN;
+    /** Added under Settings › Media servers: Movies + Series only, no form, not in file backups. */
+    val mediaServer get() = this == PLEX || this == JELLYFIN
+}
 
 /** Where a user category sits in the category list (Your categories › Options › Priority). */
 enum class GroupPlacement { TOP, NORMAL, BOTTOM }
@@ -46,7 +50,7 @@ data class ProviderEntity(
     @ColumnInfo(defaultValue = "1") val enabled: Boolean = true,
     /** Settings › Channels › Merge options › Playlists: this playlist merges when "Merge channels" is on. */
     @ColumnInfo(defaultValue = "1") val mergeOn: Boolean = true,
-    /** Plex: library keys (comma-separated) the user left unticked, never fetched. */
+    /** Plex, Jellyfin: library keys (comma-separated) the user left unticked, never fetched. */
     @ColumnInfo(defaultValue = "") val skipLibraries: String = "",
 ) {
     fun loads(kind: org.imdtv.iptvtv.data.model.Kind) = kind.name !in contentOff.split(',')
@@ -375,5 +379,5 @@ data class CustomGroupChannelEntity(
 /** The Xtream login, for filling the placeholders in saved links; null for M3U or a playlist without one. */
 fun ProviderEntity.login(): org.imdtv.iptvtv.data.security.Login? =
     if (type == ProviderType.XTREAM && username != null && password != null) org.imdtv.iptvtv.data.security.Login(username, password)
-    else if (type == ProviderType.PLEX && password != null) org.imdtv.iptvtv.data.security.Login(username.orEmpty(), password) // fills X-Plex-Token
+    else if (type.mediaServer && password != null) org.imdtv.iptvtv.data.security.Login(username.orEmpty(), password) // fills X-Plex-Token / api_key
     else null

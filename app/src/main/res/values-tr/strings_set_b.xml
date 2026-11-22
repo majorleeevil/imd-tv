@@ -306,4 +306,18 @@
     <string name="set_b_plex_failed">Plex isteği başarısız: HTTP %1$d</string>
     <string name="set_b_plex_no_servers">Bu Plex hesabında hiç sunucu yok</string>
     <string name="set_b_plex_unreachable">%1$s sunucusuna bu TV\'den ulaşılamıyor</string>
+    <string name="set_b_jf_add">Jellyfin sunucusu ekle</string>
+    <string name="set_b_jf_add_expl">Jellyfin film ve dizileriniz, oynatma listenizdekilerin yanında</string>
+    <string name="set_b_jf_address">Jellyfin sunucu adresi</string>
+    <string name="set_b_jf_address_expl">Jellyfin uygulamasındaki gibi aşağıya girin, örneğin http://192.168.1.10:8096. Tamam iptal eder</string>
+    <string name="set_b_jf_address_row">Sunucu adresi</string>
+    <string name="set_b_jf_connect">Bağlan</string>
+    <string name="set_b_jf_connecting">Bağlanıyor…</string>
+    <string name="set_b_jf_code_expl">Jellyfin\'de oturum açmış bir telefon veya bilgisayarda Ayarlar › Quick Connect\'i açıp bu kodu girin. Tamam iptal eder</string>
+    <string name="set_b_jf_use_password">Kullanıcı adı ve şifre kullan</string>
+    <string name="set_b_jf_sign_in_title">%1$s sunucusunda oturum aç</string>
+    <string name="set_b_jf_sign_in_expl">Jellyfin kullanıcı adınızı ve şifrenizi aşağıya girin. Tamam iptal eder</string>
+    <string name="set_b_jf_sign_in">Oturum aç</string>
+    <string name="set_b_jf_failed">Jellyfin isteği başarısız: HTTP %1$d</string>
+    <string name="set_b_jf_wrong_login">Kullanıcı adı veya şifre yanlış</string>
 </resources>

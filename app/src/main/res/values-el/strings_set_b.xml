@@ -306,4 +306,18 @@
     <string name="set_b_plex_failed">Το αίτημα Plex απέτυχε: HTTP %1$d</string>
     <string name="set_b_plex_no_servers">Αυτός ο λογαριασμός Plex δεν έχει διακομιστές</string>
     <string name="set_b_plex_unreachable">Δεν είναι δυνατή η πρόσβαση στον %1$s από αυτήν την τηλεόραση</string>
+    <string name="set_b_jf_add">Προσθήκη διακομιστή Jellyfin</string>
+    <string name="set_b_jf_add_expl">Οι ταινίες και οι σειρές σας από το Jellyfin, δίπλα σε αυτές της λίστας σας</string>
+    <string name="set_b_jf_address">Διεύθυνση διακομιστή Jellyfin</string>
+    <string name="set_b_jf_address_expl">Εισαγάγετέ την παρακάτω όπως στην εφαρμογή Jellyfin, για παράδειγμα http://192.168.1.10:8096. Το OK ακυρώνει</string>
+    <string name="set_b_jf_address_row">Διεύθυνση διακομιστή</string>
+    <string name="set_b_jf_connect">Σύνδεση</string>
+    <string name="set_b_jf_connecting">Σύνδεση…</string>
+    <string name="set_b_jf_code_expl">Σε ένα κινητό ή υπολογιστή συνδεδεμένο στο Jellyfin, ανοίξτε Ρυθμίσεις › Quick Connect και εισαγάγετε αυτόν τον κωδικό. Το OK ακυρώνει</string>
+    <string name="set_b_jf_use_password">Χρήση ονόματος χρήστη και κωδικού</string>
+    <string name="set_b_jf_sign_in_title">Σύνδεση στον %1$s</string>
+    <string name="set_b_jf_sign_in_expl">Εισαγάγετε παρακάτω το όνομα χρήστη και τον κωδικό σας στο Jellyfin. Το OK ακυρώνει</string>
+    <string name="set_b_jf_sign_in">Σύνδεση</string>
+    <string name="set_b_jf_failed">Το αίτημα Jellyfin απέτυχε: HTTP %1$d</string>
+    <string name="set_b_jf_wrong_login">Λάθος όνομα χρήστη ή κωδικός</string>
 </resources>

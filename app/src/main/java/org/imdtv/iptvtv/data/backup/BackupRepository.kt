@@ -33,8 +33,8 @@ class BackupRepository(
     private val providers: ProviderRepository,
 ) {
     suspend fun create(): Backup = Backup(
-        // shortcut: Plex servers aren't in file backups (a backup holds no logins, Plex has no form to ask for one); add them again after a restore.
-        playlists = db.providerDao().all().filter { it.type != ProviderType.PLEX }.map { export(it) },
+        // shortcut: media servers (Plex, Jellyfin) aren't in file backups (a backup holds no logins, they have no form to ask for one); add them again after a restore.
+        playlists = db.providerDao().all().filter { !it.type.mediaServer }.map { export(it) },
         settings = BSettings.of(settings.settings.first()),
     )
 

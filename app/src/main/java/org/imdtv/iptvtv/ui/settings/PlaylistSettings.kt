@@ -44,7 +44,7 @@ fun updatedLabel(lastSync: Long?): String {
     return stringResource(R.string.set_a_updated_at, (if (t.toLocalDate() == LocalDate.now()) (if (use24Hour) time24 else time) else (if (use24Hour) dayTime24 else dayTime)).format(t).lowercase(Locale.UK))
 }
 
-private fun ProviderEntity.typeLabel() = when (type) { ProviderType.XTREAM -> "Xtream"; ProviderType.M3U -> "M3U"; ProviderType.STALKER -> "Stalker"; ProviderType.PLEX -> "Plex" }
+private fun ProviderEntity.typeLabel() = when (type) { ProviderType.XTREAM -> "Xtream"; ProviderType.M3U -> "M3U"; ProviderType.STALKER -> "Stalker"; ProviderType.PLEX -> "Plex"; ProviderType.JELLYFIN -> "Jellyfin" }
 
 /** The Playlists group: Add playlist, then one row per playlist opening its page. */
 @Composable
@@ -75,7 +75,7 @@ fun PlaylistPage(
     if (p == null) return
     Column(modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(p.name, fontSize = 20.sp, color = Color.White, modifier = Modifier.padding(top = 6.dp, bottom = 18.dp))
-        val plex = p.type == ProviderType.PLEX // no form to edit (link code), no live
+        val plex = p.type.mediaServer // Plex, Jellyfin: no form to edit (signed in under Media servers), no live
         if (!plex) SettingRow(stringResource(R.string.set_a_edit), stringResource(R.string.set_a_edit_expl), null, Modifier.focusRequester(first)) { onEdit(id) }
         // Off leaves it out of the categories list's other playlists. The one in use hands over to another switched-on
         // playlist first; when it's the only one, it stays on.
