@@ -286,4 +286,9 @@
     <string name="set_b_vod_sort_playlist">Lista</string>
     <string name="set_b_vod_sort_az">Alfabetik</string>
     <string name="set_b_vod_sort_added">Shtuar së fundmi</string>
+    <string name="set_b_use_phone">Përdorni telefonin tuaj</string>
+    <string name="set_b_phone_scan">Skanoni me telefonin tuaj për ta plotësuar këtë formular aty. Telefoni duhet të jetë në të njëjtin rrjet me televizorin.\n%1$s</string>
+    <string name="set_b_phone_send">Dërgo te televizori</string>
+    <string name="set_b_phone_done">U dërgua. Në televizor, kontrolloni të dhënat dhe shtypni Ruaj.</string>
+    <string name="set_b_phone_blank_keeps">lëreni bosh për ta mbajtur</string>
 </resources>

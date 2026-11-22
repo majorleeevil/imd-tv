@@ -126,4 +126,7 @@
     <string name="live_parental_use_pin">Gebruik je pincode</string>
     <string name="live_menu_number_hint">Nieuw nummer</string>
     <string name="live_number_taken">Zender %1$d is toegewezen aan %2$s. Als je op Bevestigen drukt, gaat %2$s naar %3$d.</string>
+    <string name="live_parental_locked">%1$s is vergrendeld door ouderlijk toezicht.</string>
+    <string name="live_parental_locked_app">De app is gesloten sinds de pincode voor het laatst is ingevoerd.</string>
+    <string name="live_parental_locked_ok">Druk op OK om de pincode in te voeren.</string>
 </resources>

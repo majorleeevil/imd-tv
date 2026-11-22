@@ -286,4 +286,9 @@
     <string name="set_b_vod_sort_playlist">Λίστα</string>
     <string name="set_b_vod_sort_az">Αλφαβητικά</string>
     <string name="set_b_vod_sort_added">Προστέθηκαν πρόσφατα</string>
+    <string name="set_b_use_phone">Χρήση του τηλεφώνου σας</string>
+    <string name="set_b_phone_scan">Σαρώστε με το τηλέφωνό σας για να συμπληρώσετε εκεί αυτή τη φόρμα. Το τηλέφωνο πρέπει να είναι στο ίδιο δίκτυο με την τηλεόραση.\n%1$s</string>
+    <string name="set_b_phone_send">Αποστολή στην τηλεόραση</string>
+    <string name="set_b_phone_done">Εστάλη. Στην τηλεόραση, ελέγξτε τα στοιχεία και πατήστε Αποθήκευση.</string>
+    <string name="set_b_phone_blank_keeps">αφήστε κενό για να παραμείνει</string>
 </resources>

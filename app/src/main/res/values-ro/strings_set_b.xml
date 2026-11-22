@@ -286,4 +286,9 @@
     <string name="set_b_vod_sort_playlist">Playlist</string>
     <string name="set_b_vod_sort_az">Alfabetic</string>
     <string name="set_b_vod_sort_added">Adăugate recent</string>
+    <string name="set_b_use_phone">Folosește telefonul</string>
+    <string name="set_b_phone_scan">Scanează cu telefonul pentru a completa acest formular de acolo. Telefonul trebuie să fie în aceeași rețea cu televizorul.\n%1$s</string>
+    <string name="set_b_phone_send">Trimite la TV</string>
+    <string name="set_b_phone_done">Trimis. Pe TV, verifică datele și apasă Salvează.</string>
+    <string name="set_b_phone_blank_keeps">lasă gol pentru a nu modifica</string>
 </resources>

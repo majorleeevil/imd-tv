@@ -126,4 +126,7 @@
     <string name="live_parental_use_pin">Përdorni PIN-in tuaj</string>
     <string name="live_menu_number_hint">Numër i ri</string>
     <string name="live_number_taken">Kanali %1$d i është caktuar %2$s. Nëse shtypni Konfirmo, %2$s do të kalojë te %3$d.</string>
+    <string name="live_parental_locked">%1$s është i kyçur nga kontrolli prindëror.</string>
+    <string name="live_parental_locked_app">Aplikacioni është mbyllur që nga hyrja e fundit e PIN-it.</string>
+    <string name="live_parental_locked_ok">Shtypni OK për të shkruar PIN-in.</string>
 </resources>

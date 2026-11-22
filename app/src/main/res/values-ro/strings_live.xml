@@ -126,4 +126,7 @@
     <string name="live_parental_use_pin">Folosește PIN-ul</string>
     <string name="live_menu_number_hint">Număr nou</string>
     <string name="live_number_taken">Canalul %1$d este atribuit lui %2$s. Dacă apeși Confirmă, %2$s va trece la %3$d.</string>
+    <string name="live_parental_locked">%1$s este blocat prin controlul parental.</string>
+    <string name="live_parental_locked_app">Aplicația a fost închisă de la ultima introducere a PIN-ului.</string>
+    <string name="live_parental_locked_ok">Apasă OK pentru a introduce PIN-ul.</string>
 </resources>

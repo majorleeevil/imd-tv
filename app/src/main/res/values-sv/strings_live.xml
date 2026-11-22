@@ -126,4 +126,7 @@
     <string name="live_parental_use_pin">Använd din PIN-kod</string>
     <string name="live_menu_number_hint">Nytt nummer</string>
     <string name="live_number_taken">Kanal %1$d är tilldelad %2$s. Om du trycker på Bekräfta flyttas %2$s till %3$d.</string>
+    <string name="live_parental_locked">%1$s är barnlåst av föräldrakontrollen.</string>
+    <string name="live_parental_locked_app">Appen har stängts sedan PIN-koden senast angavs.</string>
+    <string name="live_parental_locked_ok">Tryck på OK för att ange PIN-koden.</string>
 </resources>

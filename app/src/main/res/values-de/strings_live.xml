@@ -126,4 +126,7 @@
     <string name="live_parental_use_pin">Deine PIN verwenden</string>
     <string name="live_menu_number_hint">Neue Nummer</string>
     <string name="live_number_taken">Sender %1$d ist %2$s zugewiesen. Wenn du auf Bestätigen drückst, wechselt %2$s zu %3$d.</string>
+    <string name="live_parental_locked">%1$s ist durch die Kindersicherung gesperrt.</string>
+    <string name="live_parental_locked_app">Die App wurde seit der letzten PIN-Eingabe geschlossen.</string>
+    <string name="live_parental_locked_ok">Drücke OK, um die PIN einzugeben.</string>
 </resources>

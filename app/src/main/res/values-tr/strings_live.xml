@@ -126,4 +126,7 @@
     <string name="live_parental_use_pin">PIN\'inizi kullanın</string>
     <string name="live_menu_number_hint">Yeni numara</string>
     <string name="live_number_taken">%1$d numaralı kanal %2$s kanalına atanmış. Onayla\'ya basarsanız %2$s kanalı %3$d numarasına taşınır.</string>
+    <string name="live_parental_locked">%1$s, ebeveyn denetimi tarafından kilitlendi.</string>
+    <string name="live_parental_locked_app">PIN en son girildiğinden beri uygulama kapatıldı.</string>
+    <string name="live_parental_locked_ok">PIN girmek için Tamam\'a basın.</string>
 </resources>

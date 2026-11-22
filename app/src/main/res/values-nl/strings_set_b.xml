@@ -286,4 +286,9 @@
     <string name="set_b_vod_sort_playlist">Playlist</string>
     <string name="set_b_vod_sort_az">Alfabetisch</string>
     <string name="set_b_vod_sort_added">Onlangs toegevoegd</string>
+    <string name="set_b_use_phone">Gebruik je telefoon</string>
+    <string name="set_b_phone_scan">Scan met je telefoon om dit formulier daar in te vullen. De telefoon moet op hetzelfde netwerk zitten als de tv.\n%1$s</string>
+    <string name="set_b_phone_send">Naar tv sturen</string>
+    <string name="set_b_phone_done">Verzonden. Controleer de gegevens op de tv en druk op Opslaan.</string>
+    <string name="set_b_phone_blank_keeps">laat leeg om te behouden</string>
 </resources>
