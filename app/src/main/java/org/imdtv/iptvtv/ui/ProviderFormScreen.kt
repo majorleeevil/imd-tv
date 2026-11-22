@@ -109,7 +109,7 @@ private fun ProviderForm(vm: AppViewModel, editing: ProviderEntity?) {
             f("agent", stringResource(R.string.set_b_user_agent), agent, false),
             f("name", stringResource(R.string.set_b_name_optional), name, false),
         )
-        org.imdtv.iptvtv.ui.settings.PhoneFormQr(
+        org.imdtv.iptvtv.ui.settings.PhoneFormQr(if (edit) "edit-a-playlist" else "add-a-playlist",
             if (editing == null) stringResource(R.string.set_b_add_playlist) else stringResource(R.string.set_b_edit_playlist, editing.name),
             if (edit) emptyList() else ProviderType.entries.map { it.name }, type.name, fields,
             onSubmit = { form ->
@@ -172,16 +172,14 @@ private fun ProviderForm(vm: AppViewModel, editing: ProviderEntity?) {
                         Text(stringResource(R.string.set_b_save), fontSize = 18.sp, textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp))
                     }
                     // Below Save, not above it: a line above pushed Save off the bottom of the Stalker form.
-                    if (!state.busy) state.error?.let { err ->
-                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                            Button(onClick = { sendLogs = true }) { Text(stringResource(R.string.set_b_send_logs)) }
-                            Text(err, color = Color(0xFFFF8A80), fontSize = 13.sp, maxLines = 3, modifier = Modifier.weight(1f))
-                        }
-                    }
+                    if (!state.busy) state.error?.let { Text(it, color = Color(0xFFFF8A80), fontSize = 13.sp, maxLines = 3) }
                 }
                 // Greyed out (not pressable) until the playlist has loaded; Back still leaves. "Finish", not "Done": beside Save, Done read as saving.
-                Button(onClick = { if (editing == null) vm.done() else vm.back() }, Modifier.fillMaxWidth().padding(top = 4.dp).focusRequester(next), enabled = ready) {
-                    Text(if (editing == null) stringResource(R.string.set_b_watch) else stringResource(R.string.set_b_finish), fontSize = 18.sp,
+                // A failed add / edit: the same button sends the logs instead (Watch / Finish would be greyed out anyway).
+                val failed = !ready && !state.busy && state.error != null
+                Button(onClick = { if (failed) sendLogs = true else if (editing == null) vm.done() else vm.back() },
+                    Modifier.fillMaxWidth().padding(top = 4.dp).focusRequester(next), enabled = ready || failed) {
+                    Text(when { failed -> stringResource(R.string.set_b_send_logs); editing == null -> stringResource(R.string.set_b_watch); else -> stringResource(R.string.set_b_finish) }, fontSize = 18.sp,
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp))
                 }
             }

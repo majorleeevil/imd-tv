@@ -208,7 +208,7 @@
     <string name="set_b_confirm">Confirm</string>
     <string name="set_b_group_vod">Movies &amp; Series</string>
     <string name="set_b_use_phone">Use your phone</string>
-    <string name="set_b_phone_scan">Scan with your phone to fill in this form there. The phone must be on the same network as the TV.\n%1$s</string>
+    <string name="set_b_phone_scan">Scan with your phone to fill in this form there.\nOr enter this address manually:\n%1$s\nThe phone must be on the same network as the TV.</string>
     <string name="set_b_phone_send">Send to TV</string>
     <string name="set_b_phone_done">Sent. On the TV, check the details and press Save.</string>
     <string name="set_b_phone_blank_keeps">leave blank to keep it</string>

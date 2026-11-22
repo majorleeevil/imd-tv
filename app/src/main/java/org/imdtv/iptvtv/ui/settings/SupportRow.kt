@@ -124,7 +124,7 @@ fun qrImage(text: String): ImageBitmap {
  * served while this is on screen. Each send goes to [onSubmit] and starts a fresh link, so the phone can send again.
  */
 @Composable
-fun PhoneFormQr(title: String, types: List<String>, type: String, fields: List<org.imdtv.iptvtv.data.support.PhoneField>,
+fun PhoneFormQr(path: String, title: String, types: List<String>, type: String, fields: List<org.imdtv.iptvtv.data.support.PhoneField>,
                 onSubmit: (Map<String, String>) -> Unit, modifier: Modifier = Modifier) {
     var server by remember { mutableStateOf<org.imdtv.iptvtv.data.support.PhoneFormServer?>(null) }
     var qr by remember { mutableStateOf<ImageBitmap?>(null) }
@@ -140,7 +140,7 @@ fun PhoneFormQr(title: String, types: List<String>, type: String, fields: List<o
             runCatching {
                 val addr = lanAddress() ?: return@runCatching null
                 // The server's thread calls back: hand the form to the main thread, then serve a new link (with the new values).
-                org.imdtv.iptvtv.data.support.PhoneFormServer(addr, title, types, now.second, now.first, send, done) { form -> scope.launch { now.third(form); gen++ } }
+                org.imdtv.iptvtv.data.support.PhoneFormServer(addr, path, title, types, now.second, now.first, send, done) { form -> scope.launch { now.third(form); gen++ } }
                     .also { qr = qrImage(it.url) }
             }.getOrNull()
         }
@@ -153,7 +153,7 @@ fun PhoneFormQr(title: String, types: List<String>, type: String, fields: List<o
         if (img != null) Image(img, contentDescription = stringResource(R.string.set_b_use_phone), filterQuality = FilterQuality.None,
             modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(Color.White).padding(10.dp).size(170.dp))
         Text(when {
-            img != null -> stringResource(R.string.set_b_phone_scan, server?.url ?: "")
+            img != null -> stringResource(R.string.set_b_phone_scan, server?.address ?: "")
             failed -> stringResource(R.string.set_b_log_no_net)
             else -> stringResource(R.string.set_b_log_preparing)
         }, fontSize = 12.sp, color = Color.White, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 8.dp))

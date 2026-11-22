@@ -5,24 +5,28 @@ import java.net.InetAddress
 import java.net.ServerSocket
 import java.net.Socket
 import java.net.URLDecoder
-import java.security.MessageDigest
-import java.security.SecureRandom
 
 /** One phone form field: [key] is sent back, [secret] fields are never filled in (blank = keep what the TV has). */
 data class PhoneField(val key: String, val label: String, val value: String = "", val secret: Boolean = false, val types: Set<String> = emptySet())
 
 /**
- * Add / edit playlist from a phone: serves a form at /<random token>/ on the local network and hands the first
- * submitted form to [onSubmit] (then stops). [types] non-empty = a type picker; each field shows only for its [PhoneField.types].
+ * Add / edit playlist from a phone: serves a form at /[path] on the local network (a short address people can type) and
+ * hands the first submitted form to [onSubmit] (then stops). No secret is ever in the page, and a sent form only fills the
+ * TV's fields (Save is still pressed on the TV), so the guessable address is acceptable. [types] non-empty = a type picker; each field shows only for its [PhoneField.types].
  */
 class PhoneFormServer(
-    addr: InetAddress, private val title: String, private val types: List<String>, private val type: String,
+    addr: InetAddress, private val path: String, private val title: String, private val types: List<String>, private val type: String,
     private val fields: List<PhoneField>, private val sendLabel: String, private val doneText: String,
     private val onSubmit: (Map<String, String>) -> Unit,
 ) {
-    val token = ByteArray(16).also { SecureRandom().nextBytes(it) }.joinToString("") { "%02x".format(it) }
-    private val socket = ServerSocket(0, 4, addr)
-    val url = "http://${addr.hostAddress}:${socket.localPort}/$token/"
+    // Port 80 needs root on Android: a fixed 8080 keeps the address short, any free port if it's taken.
+    private val socket = ServerSocket().apply {
+        reuseAddress = true // the next link binds 8080 again straight after a send
+        runCatching { bind(java.net.InetSocketAddress(addr, PORT), 4) }.getOrElse { bind(java.net.InetSocketAddress(addr, 0), 4) }
+    }
+    /** What to type: no scheme, so it's short. */
+    val address = "${addr.hostAddress}:${socket.localPort}/$path"
+    val url = "http://$address"
 
     init { Thread({ loop() }, "phone-form").apply { isDaemon = true }.start() }
 
@@ -45,7 +49,7 @@ class PhoneFormServer(
             out.write(("HTTP/1.1 $status\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: ${body.size}\r\n" +
                 "Cache-Control: no-store\r\nConnection: close\r\n\r\n").toByteArray()); out.write(body); out.flush()
         }
-        when (phoneRequest(head.lineSequence().first(), token)) {
+        when (phoneRequest(head.lineSequence().first(), path)) {
             "GET" -> reply("200 OK", page())
             "POST" -> {
                 val len = Regex("(?im)^content-length:\\s*(\\d+)").find(head)?.groupValues?.get(1)?.toIntOrNull()?.takeIf { it in 0..MAX_BODY }
@@ -81,14 +85,14 @@ class PhoneFormServer(
         "button{width:100%;margin-top:16px;padding:14px;font-size:17px;border:0;border-radius:8px;background:#e5a00d;color:#000;font-weight:600}</style>" +
         "<h1>${esc(title)}</h1>$content"
 
-    private companion object { const val MAX_BODY = 16 * 1024 }
+    private companion object { const val MAX_BODY = 16 * 1024; const val PORT = 8080 }
 }
 
-/** "GET" or "POST" for exactly `/<token>/` (no query string), else null. */
-fun phoneRequest(requestLine: String, token: String): String? {
+/** "GET" or "POST" for exactly `/<path>` (a trailing slash is fine; no query string), else null. */
+fun phoneRequest(requestLine: String, path: String): String? {
     val p = requestLine.trimEnd().split(' ')
     if (p.size != 3 || !p[2].startsWith("HTTP/1.") || p[0] !in setOf("GET", "POST")) return null
-    return p[0].takeIf { MessageDigest.isEqual(p[1].toByteArray(), "/$token/".toByteArray()) }
+    return p[0].takeIf { p[1].trimEnd('/').equals("/$path", ignoreCase = true) }
 }
 
 /** An application/x-www-form-urlencoded body; later duplicates win. */
