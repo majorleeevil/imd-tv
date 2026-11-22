@@ -161,10 +161,11 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
     val programmes: StateFlow<Map<Long, List<GuideProgramme>>> =
         combine(channels, windowStart, c.db.epgDao().observeGuideVersion(), guideBump, inPast) { ch, w, _, _, past -> Triple(ch, w, past) } // reload after an EPG import
         .mapLatest { (ch, w, past) ->
-            val p = provider.value ?: return@mapLatest emptyMap()
+            if (provider.value == null) return@mapLatest emptyMap()
             // In the past, Left needs the programme before the window too.
             val from = minOf(w, System.currentTimeMillis()) - if (past) 6 * 3_600_000L else 0
-            guide.programmes(p.id, ch, from, w + WINDOW)
+            // By playlist: Favourites hold other playlists' channels too, each with its own guide sources.
+            ch.groupBy { it.providerId }.map { (p, list) -> guide.programmes(p, list, from, w + WINDOW) }.fold(emptyMap<Long, List<GuideProgramme>>()) { a, b -> a + b }
         }
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyMap())
 
@@ -348,7 +349,9 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
         previewJob = viewModelScope.launch {
             // The playlist's login fills the link. At app start (last channel) it may not have loaded yet, and a link
             // without it is refused (401) on every retry. Loaded (every other time), this doesn't suspend.
-            val p = provider.first { it?.id == ch.providerId }!!
+            // Another playlist's channel (Favourites span playlists): its own login, from the database.
+            val p = if (ch.providerId == c.providerRepository.activeProviderId.first()) provider.first { it?.id == ch.providerId }!!
+                else c.db.providerDao().get(ch.providerId) ?: return@launch
             // Merged channels play their best source (Settings › Channels › Merge by); others play themselves at once.
             val src = if (ch.mergeHead) org.imdtv.iptvtv.data.repo.ChannelMerge.pick(c.db, c.http, ch,
                 settings.value.mergeBy, p.userAgent, p.login()) else ch
@@ -480,8 +483,7 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
 
     // --- Long-press menu actions (spec §4.3) ---
 
-    val favouriteIds: StateFlow<Set<Long>> = providerId
-        .flatMapLatest { p -> c.db.favouriteDao().observe(p, Kind.LIVE).map { f -> f.mapTo(HashSet()) { it.itemId } } }
+    val favouriteIds: StateFlow<Set<Long>> = c.db.favouriteDao().observeLiveIds().map { it.toHashSet() }
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptySet())
 
     val groups: StateFlow<List<CustomGroupEntity>> = providerId.flatMapLatest { c.db.customGroupDao().observe(it) }

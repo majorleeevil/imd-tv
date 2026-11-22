@@ -163,8 +163,11 @@ abstract class ChannelDao {
     @Query("SELECT count(DISTINCT packLogo) FROM channel WHERE providerId = :p AND packLogo IS NOT NULL")
     abstract fun observePackCount(p: Long): Flow<Int>
     @Query(
+        // One Favourites for every playlist in use with Live on (issue #12); [providerId] is the active one, always included.
         """SELECT ch.* FROM channel ch JOIN favourite f ON f.itemId = ch.id AND f.providerId = ch.providerId AND f.kind = 'LIVE'
-           WHERE ch.providerId = :providerId AND ch.hidden = 0 AND ch.mergedInto IS NULL ORDER BY f.sortOrder, f.addedAt DESC"""
+           JOIN provider p ON p.id = ch.providerId
+           WHERE (ch.providerId = :providerId OR p.enabled = 1 AND instr(',' || p.contentOff || ',', ',LIVE,') = 0)
+             AND ch.hidden = 0 AND ch.mergedInto IS NULL ORDER BY f.sortOrder, f.addedAt DESC"""
     )
     abstract fun observeFavourites(providerId: Long): Flow<List<ChannelEntity>>
 
@@ -421,6 +424,8 @@ abstract class FavouriteDao {
     abstract suspend fun list(providerId: Long, kind: Kind): List<FavouriteEntity>
     @Query("SELECT * FROM favourite WHERE providerId = :providerId AND kind = :kind ORDER BY sortOrder, addedAt DESC")
     abstract fun observe(providerId: Long, kind: Kind): Flow<List<FavouriteEntity>>
+    /** Favourite live channels of every playlist (channel ids are unique across playlists). */
+    @Query("SELECT itemId FROM favourite WHERE kind = 'LIVE'") abstract fun observeLiveIds(): Flow<List<Long>>
     @Query("UPDATE favourite SET sortOrder = :sortOrder WHERE providerId = :providerId AND kind = :kind AND itemId = :itemId")
     abstract suspend fun setSortOrder(providerId: Long, kind: Kind, itemId: Long, sortOrder: Int)
     @Query("DELETE FROM favourite WHERE providerId = :providerId AND kind = :kind AND itemId = :itemId")

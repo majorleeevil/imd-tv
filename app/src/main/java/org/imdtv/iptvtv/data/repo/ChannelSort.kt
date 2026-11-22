@@ -69,7 +69,7 @@ object ChannelSort {
     private suspend fun save(db: AppDatabase, providerId: Long, e: RailEntry, order: List<ChannelEntity>) = db.withTransaction {
         order.forEachIndexed { n, x ->
             when (e) {
-                RailEntry.Favourites -> db.favouriteDao().setSortOrder(providerId, Kind.LIVE, x.id, n)
+                RailEntry.Favourites -> db.favouriteDao().setSortOrder(x.providerId, Kind.LIVE, x.id, n) // Favourites span playlists
                 is RailEntry.Custom -> db.customGroupDao().setMemberOrder(e.group.id, x.id, n)
                 is RailEntry.Provider -> db.channelDao().setSortOrder(x.id, n)
                 RailEntry.Recent -> Unit
