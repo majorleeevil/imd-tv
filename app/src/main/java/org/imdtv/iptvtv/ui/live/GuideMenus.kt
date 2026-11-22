@@ -224,7 +224,9 @@ fun GuideMenus(vm: LiveViewModel, state: GuideState) {
                 stringResource(R.string.live_menu_move) to { state.railMove = RailMove(e, at); state.menu = null },
                 stringResource(R.string.live_menu_hide) to { vm.hideCategory(m.cat); state.menu = null; state.railOpen = false; state.refocus() },
                 stringResource(R.string.live_menu_sort_by) to { state.menu = GuideMenu.Sort(e) },
-            )) { state.menu = null; state.railFocusKey = key }
+            ) + listOfNotNull(if (!vm.settings.value.parentalOn) null else
+                stringResource(if (m.cat.parentalLock) R.string.live_menu_parental_off else R.string.live_menu_parental_on) to {
+                    vm.setParentalLock(m.cat, !m.cat.parentalLock); state.menu = null; state.railFocusKey = key })) { state.menu = null; state.railFocusKey = key }
         }
         is GuideMenu.Group -> {
             val e = RailEntry.Custom(m.g)

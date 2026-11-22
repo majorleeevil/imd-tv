@@ -16,6 +16,7 @@ data class XProgramme(
     val desc: String?,
     val episodeNum: String?,
     val icon: String?,
+    val ageRating: Int? = null,
 )
 
 object XmltvTime {
@@ -93,8 +94,10 @@ class XmltvParser {
         var episode: String? = null
         var onscreen: String? = null
         var icon: String? = null
+        var age: Int? = null
         children(p) { name ->
             when (name) {
+                "rating" -> children(p) { v -> if (v == "value") org.imdtv.iptvtv.data.parental.ageOf(p.nextText()).let { a -> if (age == null) age = a } else skip(p) }
                 "title" -> p.nextText().replace(SPACES, " ").trim().let { if (title == null) title = it } // a line break in a title hides the rest in a one-line cell
                 "desc" -> p.nextText().trim().let { if (desc == null && it.isNotEmpty()) desc = it }
                 "episode-num" -> {
@@ -107,7 +110,7 @@ class XmltvParser {
             }
         }
         if (start == null || stop == null || channel.isNullOrEmpty()) return null
-        return XProgramme(channel, start, stop, title.orEmpty(), desc, onscreen ?: episode, icon)
+        return XProgramme(channel, start, stop, title.orEmpty(), desc, onscreen ?: episode, icon, age)
     }
 
     /** Calls [onChild] for each direct child start tag; [onChild] must consume the child up to its end tag. */

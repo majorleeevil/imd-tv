@@ -61,7 +61,7 @@ class BackupRepository(
             // Never a login in a backup: an M3U address carrying one keeps placeholders, filled in on restore.
             name = p.name, type = p.type.name, url = if (p.type == ProviderType.M3U) m3uBackupUrl(p.url) else p.url, userAgent = p.userAgent, streamFormat = p.streamFormat.name,
             nameStrip = p.nameStrip, epgSources = sources,
-            categories = db.categoryDao().allKinds(p.id).map { BCategory(it.kind.name, it.remoteId, it.hidden, it.sortOrder, it.pinned, it.sortBy.name) },
+            categories = db.categoryDao().allKinds(p.id).map { BCategory(it.kind.name, it.remoteId, it.hidden, it.sortOrder, it.pinned, it.sortBy.name, it.parentalLock) },
             groups = db.customGroupDao().observe(p.id).first().map { BGroup(it.name, it.sortOrder, db.customGroupDao().memberRemoteIds(it.id), it.placement.name, it.sortBy.name) },
             favourites = favourites, categoryStrip = p.categoryStrip, channelOrder = channelOrder, contentOff = p.contentOff, enabled = p.enabled, channelNumbers = channelNumbers,
             progress = db.progressDao().all(p.id).let { rows ->
@@ -174,7 +174,7 @@ class BackupRepository(
         var skipped = 0
         val cats = db.categoryDao().allKinds(id).associateBy { it.kind.name to it.remoteId }
         db.categoryDao().update(b.categories.mapNotNull { bc ->
-            cats[bc.kind to bc.remoteId]?.copy(hidden = bc.hidden, sortOrder = bc.sortOrder, pinned = bc.pinned,
+            cats[bc.kind to bc.remoteId]?.copy(hidden = bc.hidden, sortOrder = bc.sortOrder, pinned = bc.pinned, parentalLock = bc.parentalLock,
                 // A backup from before Sort by: a category with a saved channel order was manual.
                 sortBy = org.imdtv.iptvtv.data.db.SortBy.entries.find { it.name == bc.sortBy }
                     ?: if (b.channelOrder.any { it.category == bc.remoteId } && bc.kind == Kind.LIVE.name) org.imdtv.iptvtv.data.db.SortBy.MANUAL else org.imdtv.iptvtv.data.db.SortBy.PLAYLIST)

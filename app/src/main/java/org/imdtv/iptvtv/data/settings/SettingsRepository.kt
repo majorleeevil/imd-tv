@@ -41,6 +41,11 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
     private val epgTextSize = stringPreferencesKey("epg_text_size")
     private val guideLogos = booleanPreferencesKey("guide_logos")
     private val vodSort = stringPreferencesKey("vod_sort")
+    private val parentalOn = booleanPreferencesKey("parental_on")
+    private val parentalPin = stringPreferencesKey("parental_pin")
+    private val parentalWord = stringPreferencesKey("parental_word")
+    private val ageLimit = stringPreferencesKey("age_limit")
+    private val unlockFor = stringPreferencesKey("unlock_for")
     private val catchUpOn = booleanPreferencesKey("catch_up_on")
     private val holdBackOther = booleanPreferencesKey("hold_back_other")
     private val guideTimeoutMin = intPreferencesKey("guide_timeout_min")
@@ -121,6 +126,10 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
             epgTextSize = EpgTextSize.entries.find { it.name == this[epgTextSize] } ?: d.epgTextSize,
             guideLogos = this[guideLogos] ?: d.guideLogos,
             vodSort = VodSort.entries.find { it.name == this[vodSort] } ?: d.vodSort,
+            parentalOn = this[parentalOn] ?: d.parentalOn,
+            parentalPin = this[parentalPin], parentalWord = this[parentalWord],
+            ageLimit = org.imdtv.iptvtv.data.parental.AgeLimit.entries.find { it.name == this[ageLimit] } ?: d.ageLimit,
+            unlockFor = org.imdtv.iptvtv.data.parental.UnlockFor.entries.find { it.name == this[unlockFor] } ?: d.unlockFor,
             catchUpOn = this[catchUpOn] ?: d.catchUpOn,
             holdBackOther = this[holdBackOther] ?: d.holdBackOther,
             guideTimeoutMin = this[guideTimeoutMin] ?: d.guideTimeoutMin,
@@ -191,6 +200,11 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
         this[epgTextSize] = s.epgTextSize.name
         this[guideLogos] = s.guideLogos
         this[vodSort] = s.vodSort.name
+        this[parentalOn] = s.parentalOn
+        if (s.parentalPin != null) this[parentalPin] = s.parentalPin else remove(parentalPin)
+        if (s.parentalWord != null) this[parentalWord] = s.parentalWord else remove(parentalWord)
+        this[ageLimit] = s.ageLimit.name
+        this[unlockFor] = s.unlockFor.name
         this[catchUpOn] = s.catchUpOn
         this[holdBackOther] = s.holdBackOther
         this[guideTimeoutMin] = s.guideTimeoutMin

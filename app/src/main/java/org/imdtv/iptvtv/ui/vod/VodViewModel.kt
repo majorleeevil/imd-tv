@@ -9,6 +9,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
+import org.imdtv.iptvtv.data.parental.parentalLocked
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -245,6 +246,21 @@ class VodViewModel(private val app: Application) : AndroidViewModel(app) {
      * the picture height once known, and where it's left (see WatchProgress).
      */
     fun play(url: String, item: VodItem? = null, episode: String = "", startMs: Long = 0) {
+        val cat = item?.categoryId ?: return startPlay(url, item, episode, startMs)
+        // Parental controls: a locked category's titles need the PIN. shortcut: no VOD age ratings (list APIs carry none), add them if a provider field proves reliable.
+        viewModelScope.launch {
+            val locked = c.settings.settings.first().let { s -> s.parentalOn && s.parentalLocked(c.db.categoryDao().get(cat)?.parentalLock == true, null) }
+            if (c.parental.allow(locked, "v${item.kind}${item.id}", Long.MAX_VALUE, ask = true)) startPlay(url, item, episode, startMs)
+        }
+    }
+
+    val parentalOn: StateFlow<Boolean> = c.settings.settings.map { it.parentalOn }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+    /** Hold OK on a category in the rail › Enable / Disable Parental Lock; unlocking takes the PIN. */
+    fun setParentalLock(cat: CategoryEntity, on: Boolean) {
+        viewModelScope.launch { if (on || c.parental.askPin()) c.db.categoryDao().setParentalLock(cat.id, on) }
+    }
+
+    private fun startPlay(url: String, item: VodItem?, episode: String, startMs: Long) {
         player.play(url, provider.value?.userAgent, provider.value?.login(), vod = true, startMs = startMs)
         learn?.cancel()
         if (item == null) return

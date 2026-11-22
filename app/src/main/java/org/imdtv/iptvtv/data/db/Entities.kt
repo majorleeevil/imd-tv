@@ -68,6 +68,8 @@ data class CategoryEntity(
     val country: String? = null,
     /** How its channels are listed; only MANUAL uses their saved places (channel.sortOrder). */
     @ColumnInfo(defaultValue = "PLAYLIST") val sortBy: SortBy = SortBy.PLAYLIST,
+    /** Parental controls: everything in it needs the PIN (hold OK on it › Enable Parental Lock). */
+    @ColumnInfo(defaultValue = "0") val parentalLock: Boolean = false,
 )
 
 @Entity(
@@ -240,6 +242,8 @@ data class ProgrammeEntity(
     val icon: String?,
     /** Import generation; only rows of the source's current [EpgSourceEntity.gen] are shown. */
     @ColumnInfo(defaultValue = "0") val gen: Int = 0,
+    /** Age from the XMLTV `<rating>` (parental controls); null = unrated. */
+    val ageRating: Int? = null,
 ) {
     companion object {
         fun key(sourceId: Long, xmltvId: String) = "$sourceId|$xmltvId"

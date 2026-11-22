@@ -61,7 +61,7 @@ data class BChannelNumber(val channel: String, val number: Int)
 data class BEpgSource(val url: String?, val name: String?, val priority: Int, val offsetMinutes: Int)
 
 @Serializable
-data class BCategory(val kind: String, val remoteId: String, val hidden: Boolean, val sortOrder: Int, val pinned: Boolean, val sortBy: String? = null)
+data class BCategory(val kind: String, val remoteId: String, val hidden: Boolean, val sortOrder: Int, val pinned: Boolean, val sortBy: String? = null, val parentalLock: Boolean = false)
 
 /** [channels] are channel remoteIds in group order. */
 @Serializable
@@ -132,6 +132,12 @@ data class BSettings(
     val epgTextSize: String? = null,
     val guideLogos: Boolean = false,
     val vodSort: String? = null,
+    /** Parental controls: the PIN and backup word as hashes only; sync passes them on to followers. */
+    val parentalOn: Boolean = false,
+    val parentalPin: String? = null,
+    val parentalWord: String? = null,
+    val ageLimit: String? = null,
+    val unlockFor: String? = null,
     val catchUpOn: Boolean = AppSettings().catchUpOn,
     val holdBackOther: Boolean = AppSettings().holdBackOther,
     val guideTimeoutMin: Int = AppSettings().guideTimeoutMin,
@@ -162,6 +168,9 @@ data class BSettings(
             epgTextSize = org.imdtv.iptvtv.data.settings.EpgTextSize.entries.find { it.name == epgTextSize } ?: org.imdtv.iptvtv.data.settings.EpgTextSize.MEDIUM,
             guideLogos = guideLogos,
             vodSort = org.imdtv.iptvtv.data.settings.VodSort.entries.find { it.name == vodSort } ?: org.imdtv.iptvtv.data.settings.VodSort.PLAYLIST,
+            parentalOn = parentalOn && parentalPin != null, parentalPin = parentalPin, parentalWord = parentalWord,
+            ageLimit = org.imdtv.iptvtv.data.parental.AgeLimit.entries.find { it.name == ageLimit } ?: org.imdtv.iptvtv.data.parental.AgeLimit.A12,
+            unlockFor = org.imdtv.iptvtv.data.parental.UnlockFor.entries.find { it.name == unlockFor } ?: org.imdtv.iptvtv.data.parental.UnlockFor.APP,
             catchUpOn = catchUpOn, holdBackOther = holdBackOther, guideTimeoutMin = guideTimeoutMin, favouritesSortBy = favouritesSortBy?.let { n -> org.imdtv.iptvtv.data.db.SortBy.entries.find { it.name == n } },
             headerSize = HeaderSize.entries.find { it.name == headerSize } ?: d.headerSize, previewFade = previewFade, themeDark = themeDark,
             startOnBoot = startOnBoot,
@@ -200,7 +209,7 @@ data class BSettings(
             s.borrowSiblingGuide, s.hideHeaderChannels, s.showDateTime, s.showPing, s.subtitlesOn, s.subtitleLanguage,
             guideRows = s.guideRows, multiLineGuide = s.multiLineGuide,
             zapLeftRight = s.zapLeftRight, backToFullScreen = s.backToFullScreen, showChannelNumbers = s.showChannelNumbers, clock24h = s.clock24h,
-            playerClockMode = s.playerClock.name, showDate = s.showDate, themeLooks = s.themeLooks, guidesOff = s.guidesOff.toList(), liveSubtitlesOn = s.liveSubtitlesOn, showRecent = s.showRecent, videoAspect = s.videoAspect.name, vodTwoRows = s.vodTwoRows, titleSize = s.titleSize.name, vodTitleSize = s.vodTitleSize.name, epgTextSize = s.epgTextSize.name, guideLogos = s.guideLogos, vodSort = s.vodSort.name, catchUpOn = s.catchUpOn, holdBackOther = s.holdBackOther, guideTimeoutMin = s.guideTimeoutMin, favouritesSortBy = s.favouritesSortBy?.name,
+            playerClockMode = s.playerClock.name, showDate = s.showDate, themeLooks = s.themeLooks, guidesOff = s.guidesOff.toList(), liveSubtitlesOn = s.liveSubtitlesOn, showRecent = s.showRecent, videoAspect = s.videoAspect.name, vodTwoRows = s.vodTwoRows, titleSize = s.titleSize.name, vodTitleSize = s.vodTitleSize.name, epgTextSize = s.epgTextSize.name, guideLogos = s.guideLogos, vodSort = s.vodSort.name, parentalOn = s.parentalOn, parentalPin = s.parentalPin, parentalWord = s.parentalWord, ageLimit = s.ageLimit.name, unlockFor = s.unlockFor.name, catchUpOn = s.catchUpOn, holdBackOther = s.holdBackOther, guideTimeoutMin = s.guideTimeoutMin, favouritesSortBy = s.favouritesSortBy?.name,
             headerSize = s.headerSize.name, previewFade = s.previewFade, themeDark = s.themeDark, guideKinds = s.guideOrder.map { it.name },
             recordingOn = s.recordingOn, recordTo = s.recordTo.name, startEarlyMin = s.startEarlyMin, endLateMin = s.endLateMin,
             keepAwake = s.keepAwake, smbServer = s.smbServer, smbShare = s.smbShare, smbFolder = s.smbFolder, smbUser = s.smbUser,

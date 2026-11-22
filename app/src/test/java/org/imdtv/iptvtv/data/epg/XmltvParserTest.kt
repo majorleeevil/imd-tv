@@ -36,6 +36,16 @@ class XmltvParserTest {
     }
 
     @Test
+    fun ratingBecomesAnAge() {
+        val xml = """<tv><programme start="20261108180000 +0000" stop="20261108190000 +0000" channel="c"><title>Film</title>
+            <rating system="BBFC"><value>15</value><icon src="x"/></rating></programme>
+            <programme start="20261108190000 +0000" stop="20261108200000 +0000" channel="c"><title>News</title></programme></tv>"""
+        val programmes = mutableListOf<XProgramme>()
+        XmltvParser().parse(xml.byteInputStream(), {}, programmes::add)
+        assertEquals(listOf(15, null), programmes.map { it.ageRating })
+    }
+
+    @Test
     fun timeOffsets() {
         assertEquals(ms("2026-10-25T00:30:00Z"), XmltvTime.parse("20261025013000 +0100"))
         assertEquals(ms("2026-10-25T01:30:00Z"), XmltvTime.parse("20261025013000 +0000"))

@@ -284,6 +284,7 @@ class MainActivity : ComponentActivity() {
                     }
                     org.imdtv.iptvtv.ui.live.NumberEntryBox(live)
                     org.imdtv.iptvtv.ui.settings.PairingPrompt((application as IptvApp).container.sync)
+                    org.imdtv.iptvtv.ui.ParentalPrompt((application as IptvApp).container.parental, settings)
                     org.imdtv.iptvtv.data.update.UpdatePrompt((application as IptvApp).container.updater, (application as IptvApp).container.background)
                     org.imdtv.iptvtv.data.update.WhatsNewPrompt((application as IptvApp).container.updater)
                     if (exitHint) org.imdtv.iptvtv.ui.InfoBar(
@@ -307,6 +308,7 @@ class MainActivity : ComponentActivity() {
         super.onStop()
         // Don't keep streaming (or holding the provider's connection) after the user leaves the app.
         app.player.toBackground()
+        (application as IptvApp).container.parental.relock() // "Until the app closes"
     }
 
     override fun onStart() {

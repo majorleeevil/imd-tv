@@ -30,6 +30,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import org.imdtv.iptvtv.data.parental.parentalLocked
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
@@ -304,6 +305,7 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
     /** [startMs] = position in the programme. A programme still on air keeps its full length: the stream ends at now. */
     fun playCatchUp(ch: ChannelEntity, p: org.imdtv.iptvtv.data.repo.GuideProgramme, startMs: Long = 0) {
         viewModelScope.launch {
+            if (!c.parental.allow(lockedNow(ch, p), "c${ch.id}@${p.start}", p.stop, ask = true)) return@launch
             val prov = c.db.providerDao().get(ch.providerId) ?: return@launch
             if (prov.type == org.imdtv.iptvtv.data.db.ProviderType.M3U) {
                 val url = org.imdtv.iptvtv.data.source.m3uCatchUpUrl(ch.streamUrl, ch.catchupSource, p.start, p.stop, System.currentTimeMillis())
@@ -343,10 +345,29 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
 
     private var previewJob: kotlinx.coroutines.Job? = null
 
-    fun preview(ch: ChannelEntity) {
+    /** Parental controls: whether [ch] showing [on] needs the PIN (its category is locked, or [on] is rated at the limit or above). */
+    private suspend fun lockedNow(ch: ChannelEntity, on: GuideProgramme?): Boolean {
+        val s = settings.value
+        if (!s.parentalOn) return false
+        return s.parentalLocked(ch.categoryId?.let { c.db.categoryDao().get(it) }?.parentalLock == true, on?.ageRating)
+    }
+    private suspend fun onNow(ch: ChannelEntity): GuideProgramme? = System.currentTimeMillis().let { now ->
+        guide.programmes(ch.providerId, listOf(ch), now, now + 1)[ch.id].orEmpty().firstOrNull { it.start <= now && now < it.stop }
+    }
+    /** The channel and programme start last let through: a new programme on the same channel is checked again. */
+    private var allowedOn: Pair<Long, Long?>? = null
+
+    /** [ask] false (autoplay while scrolling): a locked channel just doesn't play, the PIN is asked only on OK. */
+    fun preview(ch: ChannelEntity, ask: Boolean = true) {
         previewed.value = ch
         previewJob?.cancel() // a latency check for the channel scrolled past stops here
         previewJob = viewModelScope.launch {
+            val on = if (settings.value.parentalOn) onNow(ch) else null
+            if (!c.parental.allow(lockedNow(ch, on), "c${ch.id}", on?.stop ?: (System.currentTimeMillis() + 3_600_000L), ask)) {
+                if (previewed.value?.id == ch.id) { previewed.value = null; player.stop() }
+                return@launch
+            }
+            allowedOn = ch.id to on?.start
             // The playlist's login fills the link. At app start (last channel) it may not have loaded yet, and a link
             // without it is refused (401) on every retry. Loaded (every other time), this doesn't suspend.
             // Another playlist's channel (Favourites span playlists): its own login, from the database.
@@ -357,6 +378,19 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
                 settings.value.mergeBy, p.userAgent, p.login()) else ch
             if (previewed.value?.id == ch.id) { previewedUrl.value = src.streamUrl; player.play(src.streamUrl, p.userAgent, p.login(), drm = src.drm()) }
             c.settings.update { it.copy(lastLiveChannelId = ch.id) }
+        }
+    }
+
+    init {
+        // Parental controls: a rated programme starting on the channel being watched is checked like a new channel.
+        viewModelScope.launch {
+            now.collect {
+                val ch = previewed.value ?: return@collect
+                if (!settings.value.parentalOn || previewJob?.isActive == true) return@collect
+                val on = onNow(ch)
+                if (allowedOn == ch.id to on?.start) return@collect
+                if (lockedNow(ch, on)) preview(ch) else allowedOn = ch.id to on?.start
+            }
         }
     }
 
@@ -508,6 +542,11 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
     /** Blank resets to the provider's name. */
     fun rename(ch: ChannelEntity, name: String?) {
         viewModelScope.launch { c.db.channelDao().setCustomName(ch.id, name?.trim()?.takeIf { it.isNotEmpty() }) }
+    }
+
+    /** Hold OK on a category › Enable / Disable Parental Lock; unlocking takes the PIN. */
+    fun setParentalLock(cat: org.imdtv.iptvtv.data.db.CategoryEntity, on: Boolean) {
+        viewModelScope.launch { if (on || c.parental.askPin()) c.db.categoryDao().setParentalLock(cat.id, on) }
     }
 
     /** Gives [ch] number [n]; a number another channel shows first asks [onTaken] (unless [confirmed]), then swaps. */

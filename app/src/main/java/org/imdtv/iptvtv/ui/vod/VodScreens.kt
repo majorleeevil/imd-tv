@@ -183,7 +183,10 @@ fun VodHomeScreen(vm: VodViewModel, nav: @Composable () -> Unit, onOpen: (VodIte
                 } } }
             }
         }
-        if (railOpen) VodRail(cats, gridCat?.id, railFocus,
+        var lockMenu by remember { mutableStateOf<CategoryEntity?>(null) }
+        lockMenu?.let { cat -> org.imdtv.iptvtv.ui.ContextMenu(cat.name, listOf(
+            stringResource(if (cat.parentalLock) R.string.live_menu_parental_off else R.string.live_menu_parental_on) to { vm.setParentalLock(cat, !cat.parentalLock); lockMenu = null })) { lockMenu = null } }
+        if (railOpen) VodRail(cats, gridCat?.id, railFocus, onLongPress = { c -> if (vm.parentalOn.value) lockMenu = c },
             onPick = { vm.gridCategory.value = it; railOpen = false },
             onClose = { railOpen = false; refocus++ },
             others = vm.otherPlaylists.collectAsState().value, expanded = vm.expandedPlaylists.collectAsState().value,
@@ -296,7 +299,7 @@ private fun Hero(item: VodItem, d: VodDetail?, modifier: Modifier, extra: String
 }
 
 @Composable
-private fun VodRail(cats: List<RailCategory>, selectedId: Long?, focus: FocusRequester, onPick: (CategoryEntity?) -> Unit, onClose: () -> Unit,
+private fun VodRail(cats: List<RailCategory>, selectedId: Long?, focus: FocusRequester, onLongPress: (CategoryEntity) -> Unit, onPick: (CategoryEntity?) -> Unit, onClose: () -> Unit,
                     others: List<org.imdtv.iptvtv.data.repo.OtherPlaylist>, expanded: Set<Long>, onToggle: (Long) -> Unit, onPickOther: (CategoryEntity) -> Unit) {
     val start = (cats.indexOfFirst { it.category.id == selectedId } + 1).coerceAtLeast(0)
     val state = rememberLazyListState(start)
@@ -310,6 +313,7 @@ private fun VodRail(cats: List<RailCategory>, selectedId: Long?, focus: FocusReq
             itemsIndexed(all, key = { _, c -> c?.category?.id ?: -1L }) { i, rc ->
                 // Right picks, as on the Live rail; unhandled it moved focus behind the rail and left the rail open.
                 FocusBox(onClick = { onPick(rc?.category) }, modifier = (if (i == start) Modifier.focusRequester(focus) else Modifier)
+                    .then(rc?.category?.let { c -> Modifier.onLongOk { onLongPress(c) } } ?: Modifier)
                     .onPreviewKeyEvent { e -> if (e.type == KeyEventType.KeyDown && e.key == Key.DirectionRight) { onPick(rc?.category); true } else false }) { f ->
                     Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(5.dp)).background(if (f) Color.White else Color.Transparent).padding(horizontal = 11.dp, vertical = 8.dp)) {
                         val fg = if (f) Color.Black else Color.White

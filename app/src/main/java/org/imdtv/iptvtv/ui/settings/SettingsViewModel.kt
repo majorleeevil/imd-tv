@@ -87,6 +87,7 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
     }
     /** A short message at the foot of Settings, e.g. after Reset appearance. */
     val notice = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)
+    val parental get() = c.parental
 
     /** EPG sources › an open-source file On/Off; the refresh re-matches without (or with) it. */
     fun setGuideOn(url: String, on: Boolean) {

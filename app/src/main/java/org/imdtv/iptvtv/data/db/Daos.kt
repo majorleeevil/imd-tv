@@ -70,6 +70,7 @@ abstract class CategoryDao {
     abstract suspend fun byRemoteIds(providerId: Long, kind: Kind): List<CategoryEntity>
 
     @Query("SELECT * FROM category WHERE id = :id") abstract suspend fun get(id: Long): CategoryEntity?
+    @Query("UPDATE category SET parentalLock = :on WHERE id = :id") abstract suspend fun setParentalLock(id: Long, on: Boolean)
     @Upsert abstract suspend fun upsert(list: List<CategoryEntity>)
     @Update abstract suspend fun update(c: CategoryEntity)
     @Update abstract suspend fun update(list: List<CategoryEntity>)

@@ -98,7 +98,7 @@ fun rememberGuideState(vm: LiveViewModel, previews: Boolean = true): GuideState 
         if (!autoplay || !previews) return@LaunchedEffect
         val ch = focused ?: return@LaunchedEffect
         delay(700)
-        vm.preview(ch)
+        vm.preview(ch, ask = false)
         state.previewing = true
     }
     // A number typed on the remote: focus that channel's row (once its category's list is showing); the autoplay effect above previews it.

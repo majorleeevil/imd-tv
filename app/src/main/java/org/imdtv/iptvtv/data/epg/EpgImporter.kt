@@ -82,7 +82,7 @@ class EpgImporter(
                         batch += ProgrammeEntity(
                             sourceId = source.id, epgChannelKey = ProgrammeEntity.key(source.id, p.channelId),
                             start = p.start, stop = p.stop, title = p.title, desc = p.desc,
-                            episodeNum = p.episodeNum, icon = p.icon, gen = gen,
+                            episodeNum = p.episodeNum, icon = p.icon, gen = gen, ageRating = p.ageRating,
                         )
                         if (batch.size >= batchSize) { sink(ArrayList(batch)); stored += batch.size; batch.clear() }
                     }

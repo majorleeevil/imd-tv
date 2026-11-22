@@ -168,6 +168,12 @@ data class AppSettings(
     val epgTextSize: EpgTextSize = EpgTextSize.MEDIUM,
     val guideLogos: Boolean = false,
     val vodSort: VodSort = VodSort.PLAYLIST,
+    /** Parental controls (App behaviour); [parentalPin] and [parentalWord] are hashes (Pin.hash), never the PIN itself. */
+    val parentalOn: Boolean = false,
+    val parentalPin: String? = null,
+    val parentalWord: String? = null,
+    val ageLimit: org.imdtv.iptvtv.data.parental.AgeLimit = org.imdtv.iptvtv.data.parental.AgeLimit.A12,
+    val unlockFor: org.imdtv.iptvtv.data.parental.UnlockFor = org.imdtv.iptvtv.data.parental.UnlockFor.APP,
     /** Playback › Catch-up: off hides every catch-up control, even on channels that have it. */
     val catchUpOn: Boolean = true,
     val headerSize: HeaderSize = HeaderSize.LARGE,

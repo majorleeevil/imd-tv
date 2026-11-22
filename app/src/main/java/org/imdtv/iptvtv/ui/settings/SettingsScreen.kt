@@ -37,6 +37,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import kotlinx.coroutines.launch
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.focus.FocusDirection
@@ -263,6 +264,13 @@ fun SettingsScreen(vm: SettingsViewModel, onAddPlaylist: () -> Unit, onEditPlayl
                             remember(activity) { org.imdtv.iptvtv.ui.AppLanguage.get(activity).substringBefore('-').substringBefore(',') },
                             { if (it.isEmpty()) stringResource(R.string.set_b_system_default) else org.imdtv.iptvtv.ui.AppLanguage.nativeName(it) }, default = "") { tag ->
                             org.imdtv.iptvtv.ui.AppLanguage.set(activity, tag)
+                        }
+                        // Once on, the page itself takes the PIN (or backup word): it can turn the controls off.
+                        val parental = ChannelPage.PARENTAL
+                        val scope = androidx.compose.runtime.rememberCoroutineScope()
+                        SettingRow(stringResource(parental.titleRes), stringResource(parental.explanationRes),
+                            if (s.parentalOn) stringResource(R.string.set_b_on_arrow) else stringResource(R.string.set_b_off_arrow), Modifier.focusRequester(openers.getValue(parental))) {
+                            scope.launch { if (!s.parentalOn || vm.parental.askPin()) { park(); page = parental } }
                         }
                         SwitchRow(stringResource(R.string.set_b_confirm_exit), stringResource(R.string.set_b_confirm_exit_expl), s.confirmExit) { on ->
                             vm.update { it.copy(confirmExit = on) }

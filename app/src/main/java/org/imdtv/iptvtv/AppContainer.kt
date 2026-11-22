@@ -82,6 +82,7 @@ class AppContainer(context: Context) {
     val logos: LogoRepository by lazy { LogoRepository(db, http, logoDir) }
     val logoPack: LogoPackRepository by lazy { LogoPackRepository(db, logoDir) }
     val settings: SettingsRepository by lazy { SettingsRepository(prefs) }
+    val parental by lazy { org.imdtv.iptvtv.data.parental.ParentalGate(settings) }
     val epgImporter: EpgImporter by lazy { EpgImporter(db, http, XmltvParser()) }
     val epgMatcher: EpgMatcher by lazy { EpgMatcher(db, settings = { settings.settings.first() }, ownUrls = { providerRepository.playlistGuideUrls(it) }) }
     val epgShare: EpgShareSources by lazy {
