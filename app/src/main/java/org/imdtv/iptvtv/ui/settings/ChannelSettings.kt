@@ -320,7 +320,10 @@ private fun ManageChannelsPage(vm: SettingsViewModel, first: FocusRequester, onC
     /** Toggles pressed but not yet written back by the database: channel id → hidden (as the categories page). */
     val pending = remember(cat.id) { androidx.compose.runtime.mutableStateMapOf<Long, Boolean>() }
     // Back leaves select mode (dropping the ticks) before it leaves the category.
-    BackHandler(enabled = selecting) { selected.clear(); selecting = false }
+    val selectRow = remember { FocusRequester() }
+    var inAllRows by remember { mutableStateOf(false) }
+    // Select All / Unselect All vanish with select mode: move focus off them first (a removed focused row sends Settings to its root).
+    BackHandler(enabled = selecting) { if (inAllRows) runCatching { selectRow.requestFocus() }; selected.clear(); selecting = false }
     var noneTicked by remember { mutableStateOf(false) }
     var savedMessage by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(savedMessage) { if (savedMessage != null) { kotlinx.coroutines.delay(3_000); savedMessage = null } }
@@ -367,14 +370,21 @@ private fun ManageChannelsPage(vm: SettingsViewModel, first: FocusRequester, onC
         item { Text(cat.name.ifEmpty { stringResource(R.string.set_a_uncategorised) }, fontSize = 15.sp, color = muted, modifier = Modifier.padding(bottom = 6.dp)) }
         item { SortByRow(by, (if (list.firstVisibleItemIndex <= 1) Modifier.focusRequester(first) else Modifier).focusProperties { canFocus = moving == null }) { sortOpen = true } }
         // One row whose label changes: swapping two rows would drop focus (and Settings would jump to its root).
-        item {
+        // Select All / Unselect All live in this item too, not items of their own: the index maths for `first` and the moving row stays.
+        item { Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             SettingRow(if (selecting) stringResource(R.string.set_a_hide_or_show) else stringResource(R.string.set_a_select_channels),
                 if (!selecting) stringResource(R.string.set_a_select_channels_expl)
                 else if (n == 0) stringResource(R.string.set_a_tick_channels_hint) else pluralStringResource(R.plurals.set_a_hide_or_show_ticked, n, n),
-                null, (if (list.firstVisibleItemIndex == 2) Modifier.focusRequester(first) else Modifier).focusProperties { canFocus = moving == null }) {
+                null, (if (list.firstVisibleItemIndex == 2) Modifier.focusRequester(first) else Modifier).focusRequester(selectRow).focusProperties { canFocus = moving == null }) {
                 if (!selecting) selecting = true else if (n == 0) noneTicked = true else choose = true
             }
-        }
+            if (selecting) Column(Modifier.onFocusChanged { inAllRows = it.hasFocus }, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                SettingRow(stringResource(R.string.set_a_select_all), stringResource(R.string.set_a_select_all_expl), null) {
+                    selected.clear(); selected.addAll(channels.map { it.id }) // hidden ones too (user, 2026-11-22)
+                }
+                SettingRow(stringResource(R.string.set_a_unselect_all), stringResource(R.string.set_a_unselect_all_expl), null) { selected.clear() }
+            }
+        } }
         itemsIndexed(channels, key = { _, ch -> ch.id }) { i, ch ->
             val ticked = ch.id in selected
             val hidden = hiddenNow(ch)

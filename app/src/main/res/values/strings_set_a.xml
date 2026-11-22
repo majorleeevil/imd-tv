@@ -198,6 +198,10 @@
     <string name="set_a_hide_or_show">Hide or show channels</string>
     <string name="set_a_select_channels">Select channels</string>
     <string name="set_a_select_channels_expl">Tick many channels, then hide or show them all at once</string>
+    <string name="set_a_select_all">Select All</string>
+    <string name="set_a_select_all_expl">Tick every channel in this category</string>
+    <string name="set_a_unselect_all">Unselect All</string>
+    <string name="set_a_unselect_all_expl">Clear every tick</string>
     <string name="set_a_tick_channels_hint">Tick channels below with OK · Back to cancel</string>
     <string name="set_a_hidden">Hidden</string>
     <string name="set_a_shown">Shown</string>
