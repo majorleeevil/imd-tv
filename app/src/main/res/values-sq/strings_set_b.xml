@@ -290,4 +290,20 @@
     <string name="set_b_phone_send">Dërgo te televizori</string>
     <string name="set_b_phone_done">U dërgua. Në televizor, kontrolloni të dhënat dhe shtypni Ruaj.</string>
     <string name="set_b_phone_blank_keeps">lëreni bosh për ta mbajtur</string>
+    <string name="set_b_group_media_servers">Serverë mediash</string>
+    <string name="set_b_plex_add">Shto server Plex</string>
+    <string name="set_b_plex_add_expl">Filmat dhe serialet e tua Plex, pranë atyre të listës sate</string>
+    <string name="set_b_plex_code">Kodi: %1$s</string>
+    <string name="set_b_plex_code_expl">Në telefon ose kompjuter, hap plex.tv/link dhe shkruaj këtë kod. OK anulon</string>
+    <string name="set_b_plex_working">Po kontrollohet llogaria Plex…</string>
+    <string name="set_b_plex_pick_server">Zgjidh një server</string>
+    <string name="set_b_plex_pick_libraries">Bibliotekat për t\'u ngarkuar nga %1$s</string>
+    <string name="set_b_plex_add_server">Shto serverin</string>
+    <string name="set_b_plex_add_server_expl">Ngarkon bibliotekat e aktivizuara më sipër</string>
+    <string name="set_b_plex_adding">Po shtohet serveri…</string>
+    <string name="set_b_plex_added">Serveri u shtua</string>
+    <string name="set_b_plex_failed_title">Serveri nuk u shtua dot</string>
+    <string name="set_b_plex_failed">Kërkesa Plex dështoi: HTTP %1$d</string>
+    <string name="set_b_plex_no_servers">Kjo llogari Plex nuk ka serverë</string>
+    <string name="set_b_plex_unreachable">%1$s nuk arrihet nga ky televizor</string>
 </resources>

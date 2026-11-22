@@ -290,4 +290,20 @@
     <string name="set_b_phone_send">An Fernseher senden</string>
     <string name="set_b_phone_done">Gesendet. Prüfe die Angaben am Fernseher und drücke auf Speichern.</string>
     <string name="set_b_phone_blank_keeps">leer lassen, um es zu behalten</string>
+    <string name="set_b_group_media_servers">Medienserver</string>
+    <string name="set_b_plex_add">Plex-Server hinzufügen</string>
+    <string name="set_b_plex_add_expl">Deine Plex-Filme und -Serien neben denen deiner Playlist</string>
+    <string name="set_b_plex_code">Code: %1$s</string>
+    <string name="set_b_plex_code_expl">Öffne auf deinem Handy oder Computer plex.tv/link und gib diesen Code ein. OK bricht ab</string>
+    <string name="set_b_plex_working">Plex-Konto wird geprüft…</string>
+    <string name="set_b_plex_pick_server">Server auswählen</string>
+    <string name="set_b_plex_pick_libraries">Bibliotheken von %1$s laden</string>
+    <string name="set_b_plex_add_server">Server hinzufügen</string>
+    <string name="set_b_plex_add_server_expl">Lädt die oben aktivierten Bibliotheken</string>
+    <string name="set_b_plex_adding">Server wird hinzugefügt…</string>
+    <string name="set_b_plex_added">Server hinzugefügt</string>
+    <string name="set_b_plex_failed_title">Server konnte nicht hinzugefügt werden</string>
+    <string name="set_b_plex_failed">Plex-Anfrage fehlgeschlagen: HTTP %1$d</string>
+    <string name="set_b_plex_no_servers">Dieses Plex-Konto hat keine Server</string>
+    <string name="set_b_plex_unreachable">%1$s ist von diesem Fernseher aus nicht erreichbar</string>
 </resources>

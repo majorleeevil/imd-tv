@@ -53,7 +53,15 @@ class AppContainer(context: Context) {
         )
         ProviderType.M3U -> M3uSource(p.url, p.epgOverrideUrls, http, p.userAgent)
         ProviderType.STALKER -> org.imdtv.iptvtv.data.source.StalkerSource(p.id, stalkerLinks.client(p))
+        ProviderType.PLEX -> org.imdtv.iptvtv.data.source.PlexSource(p.url, p.password.orEmpty(), plexClientId,
+            p.skipLibraries.split(',').filter { it.isNotEmpty() }.toSet(), http, json)
     }
+
+    /** Plex's X-Plex-Client-Identifier: this install's Android id (stable, needs no storage). */
+    val plexClientId: String by lazy {
+        android.provider.Settings.Secure.getString(appContext.contentResolver, android.provider.Settings.Secure.ANDROID_ID) ?: "imd-tv"
+    }
+    val plexAuth by lazy { org.imdtv.iptvtv.data.source.PlexAuth(http, json, plexClientId, "IMD TV") }
 
     /** Portal sessions per playlist, shared by sync, playback and recording. */
     val stalkerLinks by lazy { org.imdtv.iptvtv.data.source.StalkerLinks(http) { db.providerDao().get(it) } }

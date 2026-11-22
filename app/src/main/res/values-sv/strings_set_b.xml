@@ -290,4 +290,20 @@
     <string name="set_b_phone_send">Skicka till TV</string>
     <string name="set_b_phone_done">Skickat. Kontrollera uppgifterna på TV:n och tryck på Spara.</string>
     <string name="set_b_phone_blank_keeps">lämna tomt för att behålla det</string>
+    <string name="set_b_group_media_servers">Medieservrar</string>
+    <string name="set_b_plex_add">Lägg till Plex-server</string>
+    <string name="set_b_plex_add_expl">Dina Plex-filmer och -serier, bredvid de i din spellista</string>
+    <string name="set_b_plex_code">Kod: %1$s</string>
+    <string name="set_b_plex_code_expl">Gå till plex.tv/link på mobilen eller datorn och ange den här koden. OK avbryter</string>
+    <string name="set_b_plex_working">Kontrollerar ditt Plex-konto…</string>
+    <string name="set_b_plex_pick_server">Välj en server</string>
+    <string name="set_b_plex_pick_libraries">Bibliotek att läsa in från %1$s</string>
+    <string name="set_b_plex_add_server">Lägg till server</string>
+    <string name="set_b_plex_add_server_expl">Läser in biblioteken som är aktiverade ovan</string>
+    <string name="set_b_plex_adding">Lägger till server…</string>
+    <string name="set_b_plex_added">Servern har lagts till</string>
+    <string name="set_b_plex_failed_title">Det gick inte att lägga till servern</string>
+    <string name="set_b_plex_failed">Plex-begäran misslyckades: HTTP %1$d</string>
+    <string name="set_b_plex_no_servers">Det här Plex-kontot har inga servrar</string>
+    <string name="set_b_plex_unreachable">Det går inte att nå %1$s från den här tv:n</string>
 </resources>

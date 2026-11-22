@@ -5,8 +5,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import org.imdtv.iptvtv.data.db.login
 
-class IptvApp : Application() {
+class IptvApp : Application(), coil.ImageLoaderFactory {
     lateinit var container: AppContainer
         private set
 
@@ -26,4 +28,21 @@ class IptvApp : Application() {
                 .onFailure { android.util.Log.e("IptvApp", "Setting recording alarms failed", it) }
         }
     }
+
+    /** Coil's loader with one change: Plex image links get their server's token back (saved with PASS_TOKEN, see PlexSource). */
+    override fun newImageLoader(): coil.ImageLoader = coil.ImageLoader.Builder(this).okHttpClient {
+        okhttp3.OkHttpClient.Builder().addInterceptor { chain ->
+            val r = chain.request()
+            if (r.url.queryParameter("X-Plex-Token") != org.imdtv.iptvtv.data.security.PASS_TOKEN) return@addInterceptor chain.proceed(r)
+            val login = plexLogins(r.url.host)
+            chain.proceed(r.newBuilder().url(org.imdtv.iptvtv.data.security.withLogin(r.url.toString(), login)).build())
+        }.build()
+    }.build()
+
+    @Volatile private var plexByHost: Map<String, org.imdtv.iptvtv.data.security.Login> = emptyMap()
+    /** On Coil's IO thread; re-reads the Plex playlists when a host is new (a server just added). */
+    private fun plexLogins(host: String) = plexByHost[host] ?: kotlinx.coroutines.runBlocking {
+        container.db.providerDao().all().filter { it.type == org.imdtv.iptvtv.data.db.ProviderType.PLEX }
+            .mapNotNull { p -> p.login()?.let { (p.url.toHttpUrlOrNull()?.host ?: return@mapNotNull null) to it } }.toMap()
+    }.also { plexByHost = it }[host]
 }

@@ -111,15 +111,16 @@ private fun ProviderForm(vm: AppViewModel, editing: ProviderEntity?) {
         )
         org.imdtv.iptvtv.ui.settings.PhoneFormQr(if (edit) "editplaylist" else "addplaylist",
             if (editing == null) stringResource(R.string.set_b_add_playlist) else stringResource(R.string.set_b_edit_playlist, editing.name),
-            if (edit) emptyList() else ProviderType.entries.map { it.name }, type.name, fields,
+            if (edit) emptyList() else FORM_TYPES.map { it.name }, type.name, fields,
             onSubmit = { form ->
                 if (state.busy) return@PhoneFormQr
                 fun get(k: String) = form[k]?.trim().orEmpty()
                 fun secret(k: String, old: String) = get(k).ifEmpty { if (edit) old else "" }
-                if (!edit) type = ProviderType.entries.find { it.name == form["type"] } ?: type
+                if (!edit) type = FORM_TYPES.find { it.name == form["type"] } ?: type
                 when (type) {
                     ProviderType.XTREAM -> { url = get("xurl"); user = get("user"); pass = secret("pass", pass) }
                     ProviderType.M3U -> { url = secret("murl", url); epg = get("epg") }
+                    ProviderType.PLEX -> Unit // added under Media servers, never by this form
                     ProviderType.STALKER -> { url = get("surl"); user = secret("mac", user); pass = secret("serial", pass)
                         deviceId = secret("deviceId", deviceId); deviceId2 = secret("deviceId2", deviceId2); model = get("model") }
                 }
@@ -138,11 +139,11 @@ private fun ProviderForm(vm: AppViewModel, editing: ProviderEntity?) {
                 state.busy && e.key in setOf(Key.DirectionCenter, Key.Enter, Key.NumPadEnter)
             }, verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (editing == null) Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    ProviderType.entries.forEach { t ->
+                    FORM_TYPES.forEach { t ->
                         Button(onClick = { type = t }) { Text((if (t == type) "● " else "○ ") + t.name) }
                     }
                 }
-                FormField(stringResource(when (type) { ProviderType.XTREAM -> R.string.set_b_server_url; ProviderType.M3U -> R.string.set_b_playlist_url; ProviderType.STALKER -> R.string.set_b_portal_url }),
+                FormField(stringResource(when (type) { ProviderType.XTREAM -> R.string.set_b_server_url; ProviderType.M3U -> R.string.set_b_playlist_url; ProviderType.PLEX -> R.string.set_b_server_url; ProviderType.STALKER -> R.string.set_b_portal_url }),
                     url, KeyboardType.Uri) { url = it }
                 if (type == ProviderType.STALKER) {
                     FormField(stringResource(R.string.set_b_mac_form), user, KeyboardType.Password) { user = it }
@@ -242,3 +243,6 @@ fun Field(
         )
     }
 }
+
+/** The types this form adds (Plex is added under Settings › Media servers). */
+private val FORM_TYPES = listOf(ProviderType.XTREAM, ProviderType.M3U, ProviderType.STALKER)

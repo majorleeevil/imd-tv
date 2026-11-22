@@ -290,4 +290,20 @@
     <string name="set_b_phone_send">Naar tv sturen</string>
     <string name="set_b_phone_done">Verzonden. Controleer de gegevens op de tv en druk op Opslaan.</string>
     <string name="set_b_phone_blank_keeps">laat leeg om te behouden</string>
+    <string name="set_b_group_media_servers">Mediaservers</string>
+    <string name="set_b_plex_add">Plex-server toevoegen</string>
+    <string name="set_b_plex_add_expl">Je Plex-films en -series, naast die van je afspeellijst</string>
+    <string name="set_b_plex_code">Code: %1$s</string>
+    <string name="set_b_plex_code_expl">Ga op je telefoon of computer naar plex.tv/link en voer deze code in. OK annuleert</string>
+    <string name="set_b_plex_working">Je Plex-account controleren…</string>
+    <string name="set_b_plex_pick_server">Kies een server</string>
+    <string name="set_b_plex_pick_libraries">Bibliotheken om te laden van %1$s</string>
+    <string name="set_b_plex_add_server">Server toevoegen</string>
+    <string name="set_b_plex_add_server_expl">Laadt de hierboven ingeschakelde bibliotheken</string>
+    <string name="set_b_plex_adding">Server toevoegen…</string>
+    <string name="set_b_plex_added">Server toegevoegd</string>
+    <string name="set_b_plex_failed_title">Server toevoegen mislukt</string>
+    <string name="set_b_plex_failed">Plex-verzoek mislukt: HTTP %1$d</string>
+    <string name="set_b_plex_no_servers">Dit Plex-account heeft geen servers</string>
+    <string name="set_b_plex_unreachable">%1$s is niet bereikbaar vanaf deze tv</string>
 </resources>

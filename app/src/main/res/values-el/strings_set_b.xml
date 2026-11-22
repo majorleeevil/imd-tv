@@ -290,4 +290,20 @@
     <string name="set_b_phone_send">Αποστολή στην τηλεόραση</string>
     <string name="set_b_phone_done">Εστάλη. Στην τηλεόραση, ελέγξτε τα στοιχεία και πατήστε Αποθήκευση.</string>
     <string name="set_b_phone_blank_keeps">αφήστε κενό για να παραμείνει</string>
+    <string name="set_b_group_media_servers">Διακομιστές πολυμέσων</string>
+    <string name="set_b_plex_add">Προσθήκη διακομιστή Plex</string>
+    <string name="set_b_plex_add_expl">Οι ταινίες και οι σειρές σας από το Plex, δίπλα σε αυτές της λίστας σας</string>
+    <string name="set_b_plex_code">Κωδικός: %1$s</string>
+    <string name="set_b_plex_code_expl">Στο κινητό ή τον υπολογιστή σας, μεταβείτε στο plex.tv/link και εισαγάγετε αυτόν τον κωδικό. Το OK ακυρώνει</string>
+    <string name="set_b_plex_working">Έλεγχος του λογαριασμού Plex…</string>
+    <string name="set_b_plex_pick_server">Επιλέξτε διακομιστή</string>
+    <string name="set_b_plex_pick_libraries">Βιβλιοθήκες για φόρτωση από τον %1$s</string>
+    <string name="set_b_plex_add_server">Προσθήκη διακομιστή</string>
+    <string name="set_b_plex_add_server_expl">Φορτώνει τις βιβλιοθήκες που είναι ενεργές παραπάνω</string>
+    <string name="set_b_plex_adding">Προσθήκη διακομιστή…</string>
+    <string name="set_b_plex_added">Ο διακομιστής προστέθηκε</string>
+    <string name="set_b_plex_failed_title">Δεν ήταν δυνατή η προσθήκη του διακομιστή</string>
+    <string name="set_b_plex_failed">Το αίτημα Plex απέτυχε: HTTP %1$d</string>
+    <string name="set_b_plex_no_servers">Αυτός ο λογαριασμός Plex δεν έχει διακομιστές</string>
+    <string name="set_b_plex_unreachable">Δεν είναι δυνατή η πρόσβαση στον %1$s από αυτήν την τηλεόραση</string>
 </resources>

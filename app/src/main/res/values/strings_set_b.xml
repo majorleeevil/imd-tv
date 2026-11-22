@@ -290,4 +290,20 @@
     <string name="set_b_m3u_request_failed">Playlist request failed: HTTP %1$d %2$s</string>
     <string name="set_b_catch_up">Catch-up</string>
     <string name="set_b_catch_up_expl">Watch past programmes on channels that offer it. Off hides the clock icons, Restart and past programmes</string>
+    <string name="set_b_group_media_servers">Media servers</string>
+    <string name="set_b_plex_add">Add Plex server</string>
+    <string name="set_b_plex_add_expl">Your Plex movies and TV shows, next to your playlist\'s</string>
+    <string name="set_b_plex_code">Code: %1$s</string>
+    <string name="set_b_plex_code_expl">On your phone or computer, go to plex.tv/link and enter this code. OK cancels</string>
+    <string name="set_b_plex_working">Checking your Plex account…</string>
+    <string name="set_b_plex_pick_server">Pick a server</string>
+    <string name="set_b_plex_pick_libraries">Libraries to load from %1$s</string>
+    <string name="set_b_plex_add_server">Add server</string>
+    <string name="set_b_plex_add_server_expl">Loads the libraries switched on above</string>
+    <string name="set_b_plex_adding">Adding server…</string>
+    <string name="set_b_plex_added">Server added</string>
+    <string name="set_b_plex_failed_title">Couldn\'t add the server</string>
+    <string name="set_b_plex_failed">Plex request failed: HTTP %1$d</string>
+    <string name="set_b_plex_no_servers">This Plex account has no servers</string>
+    <string name="set_b_plex_unreachable">Can\'t reach %1$s from this TV</string>
 </resources>

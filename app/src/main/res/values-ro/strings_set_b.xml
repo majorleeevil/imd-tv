@@ -290,4 +290,20 @@
     <string name="set_b_phone_send">Trimite la TV</string>
     <string name="set_b_phone_done">Trimis. Pe TV, verifică datele și apasă Salvează.</string>
     <string name="set_b_phone_blank_keeps">lasă gol pentru a nu modifica</string>
+    <string name="set_b_group_media_servers">Servere media</string>
+    <string name="set_b_plex_add">Adaugă server Plex</string>
+    <string name="set_b_plex_add_expl">Filmele și serialele tale Plex, alături de cele din playlist</string>
+    <string name="set_b_plex_code">Cod: %1$s</string>
+    <string name="set_b_plex_code_expl">Pe telefon sau computer, mergi la plex.tv/link și introdu acest cod. OK anulează</string>
+    <string name="set_b_plex_working">Se verifică contul Plex…</string>
+    <string name="set_b_plex_pick_server">Alege un server</string>
+    <string name="set_b_plex_pick_libraries">Biblioteci de încărcat de pe %1$s</string>
+    <string name="set_b_plex_add_server">Adaugă serverul</string>
+    <string name="set_b_plex_add_server_expl">Încarcă bibliotecile activate mai sus</string>
+    <string name="set_b_plex_adding">Se adaugă serverul…</string>
+    <string name="set_b_plex_added">Server adăugat</string>
+    <string name="set_b_plex_failed_title">Nu s-a putut adăuga serverul</string>
+    <string name="set_b_plex_failed">Cererea Plex a eșuat: HTTP %1$d</string>
+    <string name="set_b_plex_no_servers">Acest cont Plex nu are servere</string>
+    <string name="set_b_plex_unreachable">Nu se poate ajunge la %1$s de pe acest televizor</string>
 </resources>

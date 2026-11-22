@@ -44,7 +44,7 @@ fun updatedLabel(lastSync: Long?): String {
     return stringResource(R.string.set_a_updated_at, (if (t.toLocalDate() == LocalDate.now()) (if (use24Hour) time24 else time) else (if (use24Hour) dayTime24 else dayTime)).format(t).lowercase(Locale.UK))
 }
 
-private fun ProviderEntity.typeLabel() = when (type) { ProviderType.XTREAM -> "Xtream"; ProviderType.M3U -> "M3U"; ProviderType.STALKER -> "Stalker" }
+private fun ProviderEntity.typeLabel() = when (type) { ProviderType.XTREAM -> "Xtream"; ProviderType.M3U -> "M3U"; ProviderType.STALKER -> "Stalker"; ProviderType.PLEX -> "Plex" }
 
 /** The Playlists group: Add playlist, then one row per playlist opening its page. */
 @Composable
@@ -75,16 +75,17 @@ fun PlaylistPage(
     if (p == null) return
     Column(modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(p.name, fontSize = 20.sp, color = Color.White, modifier = Modifier.padding(top = 6.dp, bottom = 18.dp))
-        SettingRow(stringResource(R.string.set_a_edit), stringResource(R.string.set_a_edit_expl), null, Modifier.focusRequester(first)) { onEdit(id) }
+        val plex = p.type == ProviderType.PLEX // no form to edit (link code), no live
+        if (!plex) SettingRow(stringResource(R.string.set_a_edit), stringResource(R.string.set_a_edit_expl), null, Modifier.focusRequester(first)) { onEdit(id) }
         // Off leaves it out of the categories list's other playlists. The one in use hands over to another switched-on
         // playlist first; when it's the only one, it stays on.
         SwitchRow(stringResource(R.string.set_a_use_playlist), stringResource(when { !p.enabled -> R.string.set_a_use_playlist_off; activeId == id -> R.string.set_a_use_playlist_on; else -> R.string.set_a_use_playlist_listed }),
-            p.enabled) { on ->
+            p.enabled, if (plex) Modifier.focusRequester(first) else Modifier) { on ->
             if (on || activeId != id) vm.setEnabled(id, on)
             else providers.firstOrNull { it.id != id && it.enabled }?.let { vm.setEnabled(id, false); onUse(it.id) }
         }
         SettingRow(stringResource(R.string.set_a_update_playlist), update[id] ?: updatedLabel(p.lastSync), null) { vm.updatePlaylist(id) }
-        listOf(org.imdtv.iptvtv.data.model.Kind.LIVE to R.string.set_a_kind_live, org.imdtv.iptvtv.data.model.Kind.MOVIE to R.string.set_a_kind_movies, org.imdtv.iptvtv.data.model.Kind.SERIES to R.string.set_a_kind_series).forEach { (kind, labelRes) ->
+        listOf(org.imdtv.iptvtv.data.model.Kind.LIVE to R.string.set_a_kind_live, org.imdtv.iptvtv.data.model.Kind.MOVIE to R.string.set_a_kind_movies, org.imdtv.iptvtv.data.model.Kind.SERIES to R.string.set_a_kind_series).filter { !plex || it.first != org.imdtv.iptvtv.data.model.Kind.LIVE }.forEach { (kind, labelRes) ->
             val on = p.loads(kind)
             val label = stringResource(labelRes)
             // Greyed out and shown off while the playlist is switched off; the saved switches come back with it.

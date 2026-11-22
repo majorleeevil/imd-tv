@@ -290,4 +290,20 @@
     <string name="set_b_phone_send">Enviar al televisor</string>
     <string name="set_b_phone_done">Enviado. En el televisor, revisa los datos y pulsa Guardar.</string>
     <string name="set_b_phone_blank_keeps">déjalo vacío para no cambiar nada</string>
+    <string name="set_b_group_media_servers">Servidores multimedia</string>
+    <string name="set_b_plex_add">Añadir servidor Plex</string>
+    <string name="set_b_plex_add_expl">Tus películas y series de Plex, junto a las de tu lista</string>
+    <string name="set_b_plex_code">Código: %1$s</string>
+    <string name="set_b_plex_code_expl">En tu teléfono u ordenador, ve a plex.tv/link e introduce este código. OK cancela</string>
+    <string name="set_b_plex_working">Comprobando tu cuenta de Plex…</string>
+    <string name="set_b_plex_pick_server">Elige un servidor</string>
+    <string name="set_b_plex_pick_libraries">Bibliotecas que cargar desde %1$s</string>
+    <string name="set_b_plex_add_server">Añadir servidor</string>
+    <string name="set_b_plex_add_server_expl">Carga las bibliotecas activadas arriba</string>
+    <string name="set_b_plex_adding">Añadiendo servidor…</string>
+    <string name="set_b_plex_added">Servidor añadido</string>
+    <string name="set_b_plex_failed_title">No se pudo añadir el servidor</string>
+    <string name="set_b_plex_failed">Error en la solicitud de Plex: HTTP %1$d</string>
+    <string name="set_b_plex_no_servers">Esta cuenta de Plex no tiene servidores</string>
+    <string name="set_b_plex_unreachable">No se puede acceder a %1$s desde este televisor</string>
 </resources>

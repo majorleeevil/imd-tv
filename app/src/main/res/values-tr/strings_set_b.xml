@@ -290,4 +290,20 @@
     <string name="set_b_phone_send">TV\'ye gönder</string>
     <string name="set_b_phone_done">Gönderildi. TV\'de bilgileri kontrol edin ve Kaydet\'e basın.</string>
     <string name="set_b_phone_blank_keeps">korumak için boş bırakın</string>
+    <string name="set_b_group_media_servers">Medya sunucuları</string>
+    <string name="set_b_plex_add">Plex sunucusu ekle</string>
+    <string name="set_b_plex_add_expl">Plex film ve dizileriniz, oynatma listenizdekilerin yanında</string>
+    <string name="set_b_plex_code">Kod: %1$s</string>
+    <string name="set_b_plex_code_expl">Telefonunuzda veya bilgisayarınızda plex.tv/link adresine gidip bu kodu girin. Tamam iptal eder</string>
+    <string name="set_b_plex_working">Plex hesabınız kontrol ediliyor…</string>
+    <string name="set_b_plex_pick_server">Bir sunucu seçin</string>
+    <string name="set_b_plex_pick_libraries">%1$s sunucusundan yüklenecek kitaplıklar</string>
+    <string name="set_b_plex_add_server">Sunucu ekle</string>
+    <string name="set_b_plex_add_server_expl">Yukarıda açık olan kitaplıkları yükler</string>
+    <string name="set_b_plex_adding">Sunucu ekleniyor…</string>
+    <string name="set_b_plex_added">Sunucu eklendi</string>
+    <string name="set_b_plex_failed_title">Sunucu eklenemedi</string>
+    <string name="set_b_plex_failed">Plex isteği başarısız: HTTP %1$d</string>
+    <string name="set_b_plex_no_servers">Bu Plex hesabında hiç sunucu yok</string>
+    <string name="set_b_plex_unreachable">%1$s sunucusuna bu TV\'den ulaşılamıyor</string>
 </resources>

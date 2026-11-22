@@ -57,7 +57,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import org.imdtv.iptvtv.ui.FocusBox
 
 enum class SettingsGroup(val title: String, @StringRes val labelRes: Int) {
-    PLAYLISTS("Playlists", R.string.set_b_group_playlists), CHANNELS("Channels & categories", R.string.set_b_group_channels),
+    PLAYLISTS("Playlists", R.string.set_b_group_playlists), MEDIA_SERVERS("Media servers", R.string.set_b_group_media_servers), CHANNELS("Channels & categories", R.string.set_b_group_channels),
     EPG("TV guide (EPG)", R.string.set_b_group_epg), VOD("Movies & Series", R.string.set_b_group_vod), PLAYBACK("Playback", R.string.set_b_group_playback),
     APPEARANCE("Appearance", R.string.set_b_group_appearance), BEHAVIOUR("App behaviour", R.string.set_b_group_behaviour),
     BACKUP("Backup & sync", R.string.set_b_group_backup), ABOUT("About", R.string.set_b_group_about),
@@ -226,6 +226,7 @@ fun SettingsScreen(vm: SettingsViewModel, onAddPlaylist: () -> Unit, onEditPlayl
                 val first = Modifier.focusRequester(rowsFocus)
                 when (group) {
                     SettingsGroup.PLAYLISTS -> PlaylistGroupRows(vm, first, playlistOpeners, onAddPlaylist) { park(); playlist = it }
+                    SettingsGroup.MEDIA_SERVERS -> MediaServerRows(vm, first, playlistOpeners) { park(); playlist = it }
                     SettingsGroup.EPG -> EpgGroupRows(vm, first, Modifier.focusRequester(sourcesOpener)) { park(); sourcesOpen = true }
                     SettingsGroup.CHANNELS -> ChannelGroupRows(vm, first, openers) { park(); page = it }
                     SettingsGroup.VOD -> ChoiceRow(stringResource(R.string.set_b_vod_sort), stringResource(R.string.set_b_vod_sort_expl), org.imdtv.iptvtv.data.settings.VodSort.entries, s.vodSort,
