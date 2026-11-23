@@ -63,5 +63,6 @@ class LogoKeyTest {
         assertNull(n.find("skycinemapremieres1")) // two apart
         assertEquals(null, NearKeys(mapOf("sportsone" to 1, "sportsona" to 2)).find("sportsonx")) // two keys equally near: none
     }
-}
 
+    @Test fun ampersandIsAnd() = assertEquals(logoKey("Sky Cinema Sci-Fi and Horror"), logoKey("UK: Sky Cinema Sci-Fi & Horror"))
+}

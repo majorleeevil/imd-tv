@@ -51,7 +51,8 @@ fun logoKey(name: String, dropCountry: Boolean = true): LogoKey? {
     }
     dropTail()
     if (dropCountry) COUNTRY_TAIL.find(s)?.let { s = s.substring(0, it.range.first); dropTail() } // "… UK HD" and "… HD UK"
-    val key = digitsKey(Normalizer.normalize(s.replace(PLUS_ONE, " plus "), Normalizer.Form.NFD).replace(MARKS, "").lowercase()
+    // "&" as "and": tv-logos spells it out ("sky-cinema-sci-fi-and-horror"), playlists mostly don't (#24).
+    val key = digitsKey(Normalizer.normalize(s.replace(PLUS_ONE, " plus ").replace("&", " and "), Normalizer.Form.NFD).replace(MARKS, "").lowercase()
         .replace(NON_WORD, "-").trim('-'))
     return if (key.isEmpty()) null else LogoKey(key, quality)
 }
