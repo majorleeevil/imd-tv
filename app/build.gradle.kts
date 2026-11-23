@@ -15,7 +15,8 @@ android {
 
     defaultConfig {
         applicationId = "org.imdtv.iptvtv"
-        minSdk = 26
+        // 25: Fire Stick 4K 1st gen (Fire OS 6 = Android 7.1) said "problem parsing the package" at 26 (#30).
+        minSdk = 25
         targetSdk = 35
         versionCode = 11
         versionName = "0.7.0"
@@ -53,6 +54,7 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        isCoreLibraryDesugaringEnabled = true // java.time on Android 7.1
     }
     kotlinOptions {
         jvmTarget = "17"
@@ -72,6 +74,7 @@ ksp {
 }
 
 dependencies {
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.3")
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)
     implementation(libs.compose.foundation)

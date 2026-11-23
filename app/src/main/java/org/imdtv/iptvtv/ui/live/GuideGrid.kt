@@ -347,20 +347,23 @@ private fun GuideRow(
     } else Modifier)) {
         FocusBox(onClick = onClick, onFocused = onFocused, modifier = modifier.width(style.channelCol - 5.dp).fillMaxHeight()) { focusedBox ->
             val f = focusedBox && !moving
+            // No logo for this channel: the name, as with the setting off.
+            val logo = logos?.takeIf { org.imdtv.iptvtv.data.logos.shownLogos(ch, it).isNotEmpty() }
+            // A logo keeps the dark cell and gets a focus-coloured border: white logos vanished on the light fill (#23).
+            val fill = f && logo == null
             Row(
                 Modifier.fillMaxSize()
                     .graphicsLayer { val s = if (f && !style.boxed) 1.03f else 1f; scaleX = s; scaleY = s }
                     .then(if (f && !style.boxed) Modifier.shadow(14.dp, RoundedCornerShape(5.dp), ambientColor = Color(0xFFA0BEFF), spotColor = Color(0xFFA0BEFF)) else Modifier)
-                    .background(if (moving) Color(0xFFE5A00D) else if (f) colors.focus else colors.cell, if (style.boxed) BOX else PILL)
+                    .background(if (moving) Color(0xFFE5A00D) else if (fill) colors.focus else colors.cell, if (style.boxed) BOX else PILL)
+                    .then(if (f && !fill) Modifier.border(3.dp, colors.focus, if (style.boxed) BOX else PILL) else Modifier)
                     .padding(horizontal = 11.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                val fg = if (moving) Color.Black else if (f) colors.onFocus else Color.White
+                val fg = if (moving) Color.Black else if (fill) colors.onFocus else Color.White
                 // The focused row scrolls a name too long for its box (issue #5); multi-line names wrap instead.
                 val marquee = f && style.lines == 1
                 val number = (ch.customNumber ?: ch.number)?.takeIf { org.imdtv.iptvtv.ui.LocalShowNumbers.current }
-                // No logo for this channel: the name, as with the setting off.
-                val logo = logos?.takeIf { org.imdtv.iptvtv.data.logos.shownLogos(ch, it).isNotEmpty() }
                 val nameText = @Composable { Text(name, fontSize = style.sp(14f) * org.imdtv.iptvtv.ui.LocalTitleScale.current, fontWeight = style.font, color = fg, maxLines = 1, overflow = TextOverflow.Ellipsis) }
                 if (logo != null && display == org.imdtv.iptvtv.data.settings.GuideChannelDisplay.BOTH) {
                     // Logo in a fixed box, then the name (marquee when focused, as the plain name).
