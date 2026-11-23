@@ -195,7 +195,6 @@ fun GuideGrid(
     // Right: 1 = pressed (key-up steps the cursor), 2 = held (jumped to the top channel).
     val rightHold = remember { IntArray(1) }
     val scope = androidx.compose.runtime.rememberCoroutineScope()
-    val recordingOn by vm.recordingOn.collectAsState()
     val focused by vm.focused.collectAsState()
     val strip by vm.strip.collectAsState()
     val marks by vm.marks.collectAsState()
@@ -271,10 +270,10 @@ fun GuideGrid(
                         onClick = {
                             // A past programme highlighted (catch-up): OK plays it.
                             val aired = if (past) programmes[ch.id].orEmpty().firstOrNull { it.start <= at && at < it.stop && it.stop <= now } else null
-                            // A later programme highlighted: OK offers to record it (or cancel) instead of playing.
+                            // A later programme highlighted: OK offers a reminder and, with recording on, to record it, instead of playing.
                             val later = programmes[ch.id].orEmpty().firstOrNull { at > now && it.start <= at && at < it.stop }
                             if (aired != null) vm.playCatchUp(ch, aired)
-                            else if (later != null && recordingOn) { state.focusIndex = i; state.menu = GuideMenu.Programme(ch, later) } else state.onOk(ch, onFullScreen)
+                            else if (later != null) { state.focusIndex = i; state.menu = GuideMenu.Programme(ch, later) } else state.onOk(ch, onFullScreen)
                         },
                     )
                 }

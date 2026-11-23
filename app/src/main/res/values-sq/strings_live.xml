@@ -58,6 +58,11 @@
     <string name="live_menu_record">Regjistro</string>
     <string name="live_menu_record_later">Regjistro një emision të mëvonshëm</string>
     <string name="live_menu_record_now">Regjistro tani</string>
+    <string name="live_menu_remind">Më kujto</string>
+    <string name="live_menu_cancel_reminder">Anulo kujtesën</string>
+    <string name="live_reminder_title">Kujtesë</string>
+    <string name="live_reminder_body">%1$s fillon në %2$s në %3$s</string>
+    <string name="live_reminder_dismiss">Mbyll</string>
     <string name="live_menu_record_on">Regjistro më %1$s</string>
     <string name="live_menu_remove_from_group">Hiq nga %1$s</string>
     <string name="live_menu_rename">Riemërto</string>

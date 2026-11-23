@@ -58,6 +58,11 @@
     <string name="live_menu_record">Înregistrează</string>
     <string name="live_menu_record_later">Înregistrează o emisiune ulterioară</string>
     <string name="live_menu_record_now">Înregistrează acum</string>
+    <string name="live_menu_remind">Amintește-mi</string>
+    <string name="live_menu_cancel_reminder">Anulează mementoul</string>
+    <string name="live_reminder_title">Memento</string>
+    <string name="live_reminder_body">%1$s începe la %2$s pe %3$s</string>
+    <string name="live_reminder_dismiss">Închide</string>
     <string name="live_menu_record_on">Înregistrează pe %1$s</string>
     <string name="live_menu_remove_from_group">Elimină din %1$s</string>
     <string name="live_menu_rename">Redenumește</string>

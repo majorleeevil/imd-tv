@@ -58,6 +58,11 @@
     <string name="live_menu_record">Nagraj</string>
     <string name="live_menu_record_later">Nagraj późniejszą audycję</string>
     <string name="live_menu_record_now">Nagraj teraz</string>
+    <string name="live_menu_remind">Przypomnij mi</string>
+    <string name="live_menu_cancel_reminder">Anuluj przypomnienie</string>
+    <string name="live_reminder_title">Przypomnienie</string>
+    <string name="live_reminder_body">%1$s zaczyna się o %2$s na %3$s</string>
+    <string name="live_reminder_dismiss">Odrzuć</string>
     <string name="live_menu_record_on">Nagraj: %1$s</string>
     <string name="live_menu_remove_from_group">Usuń z kategorii %1$s</string>
     <string name="live_menu_rename">Zmień nazwę</string>

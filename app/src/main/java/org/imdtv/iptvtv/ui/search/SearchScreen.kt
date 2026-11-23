@@ -99,10 +99,9 @@ fun SearchScreen(
     val query by vm.query.collectAsState()
     val results by vm.results.collectAsState()
     val guide by vm.guide.collectAsState()
-    val recordingOn = live?.recordingOn?.collectAsState()?.value ?: false
-    // On now: watch it. Later: Record (or Cancel recording) when recording is on, else the channel.
+    // On now: watch it. Later: the programme menu (Remind me, and Record when recording is on).
     fun openHit(h: org.imdtv.iptvtv.data.search.GuideHit) {
-        if (h.p.start > System.currentTimeMillis() && recordingOn && menus != null) menus.menu = org.imdtv.iptvtv.ui.live.GuideMenu.Programme(h.ch, h.p)
+        if (h.p.start > System.currentTimeMillis() && menus != null) menus.menu = org.imdtv.iptvtv.ui.live.GuideMenu.Programme(h.ch, h.p)
         else onChannel(h.ch)
     }
     val logos by vm.logoSource.collectAsState()

@@ -284,6 +284,11 @@ class MainActivity : ComponentActivity() {
                         if ((app.stack.value.last() as? Screen.Player)?.live == true) app.back()
                     }
                     org.imdtv.iptvtv.ui.live.NumberEntryBox(live)
+                    // Watch from a reminder: leave any player (a recording keeps its place), then the channel as from search.
+                    org.imdtv.iptvtv.ui.live.ReminderPrompt(live) { ch ->
+                        while (app.stack.value.last() is Screen.Player && app.back()) Unit
+                        selectTab(Tab.LIVE); searchChannel(ch)
+                    }
                     org.imdtv.iptvtv.ui.settings.PairingPrompt((application as IptvApp).container.sync)
                     org.imdtv.iptvtv.ui.ParentalPrompt((application as IptvApp).container.parental, settings)
                     org.imdtv.iptvtv.data.update.UpdatePrompt((application as IptvApp).container.updater, (application as IptvApp).container.background)

@@ -58,6 +58,11 @@
     <string name="live_menu_record">Enregistrer</string>
     <string name="live_menu_record_later">Enregistrer un programme ultérieur</string>
     <string name="live_menu_record_now">Enregistrer maintenant</string>
+    <string name="live_menu_remind">Me le rappeler</string>
+    <string name="live_menu_cancel_reminder">Annuler le rappel</string>
+    <string name="live_reminder_title">Rappel</string>
+    <string name="live_reminder_body">%1$s commence à %2$s sur %3$s</string>
+    <string name="live_reminder_dismiss">Ignorer</string>
     <string name="live_menu_record_on">Enregistrer sur %1$s</string>
     <string name="live_menu_remove_from_group">Retirer de %1$s</string>
     <string name="live_menu_rename">Renommer</string>

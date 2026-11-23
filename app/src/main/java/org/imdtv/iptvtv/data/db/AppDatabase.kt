@@ -54,6 +54,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun progressDao(): ProgressDao
     abstract fun customGroupDao(): CustomGroupDao
     abstract fun recentDao(): RecentDao
+    abstract fun reminderDao(): ReminderDao
     abstract fun recordingDao(): org.imdtv.iptvtv.recording.RecordingDao
 
     companion object {

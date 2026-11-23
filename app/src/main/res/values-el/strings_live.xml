@@ -58,6 +58,11 @@
     <string name="live_menu_record">Εγγραφή</string>
     <string name="live_menu_record_later">Εγγραφή μεταγενέστερης εκπομπής</string>
     <string name="live_menu_record_now">Εγγραφή τώρα</string>
+    <string name="live_menu_remind">Υπενθύμιση</string>
+    <string name="live_menu_cancel_reminder">Ακύρωση υπενθύμισης</string>
+    <string name="live_reminder_title">Υπενθύμιση</string>
+    <string name="live_reminder_body">Το %1$s ξεκινά στις %2$s στο %3$s</string>
+    <string name="live_reminder_dismiss">Παράβλεψη</string>
     <string name="live_menu_record_on">Εγγραφή στο %1$s</string>
     <string name="live_menu_remove_from_group">Αφαίρεση από %1$s</string>
     <string name="live_menu_rename">Μετονομασία</string>

@@ -568,3 +568,12 @@ data class ChannelFromProvider(val id: Long, val name: String, val logo: String?
                                val drmType: String? = null, val drmKey: String? = null, val archiveDays: Int? = null, val catchupSource: String? = null)
 data class MovieFromProvider(val id: Long, val name: String, val poster: String?, val year: Int?, val rating: Double?, val streamUrl: String?, val categoryId: Long?, val addedAt: Long)
 data class SeriesFromProvider(val id: Long, val name: String, val poster: String?, val year: Int?, val rating: Double?, val categoryId: Long?, val addedAt: Long)
+
+/** Programme reminders (#18); a row goes when its popup is answered or its programme has gone (ui/live/Reminders.kt). */
+@Dao
+abstract class ReminderDao {
+    @Query("SELECT * FROM reminder") abstract fun observeAll(): Flow<List<ReminderEntity>>
+    @Insert abstract suspend fun insert(r: ReminderEntity)
+    @Query("DELETE FROM reminder WHERE channelId = :channelId AND programmeStart = :start") abstract suspend fun delete(channelId: Long, start: Long)
+    @Delete abstract suspend fun delete(rows: List<ReminderEntity>)
+}

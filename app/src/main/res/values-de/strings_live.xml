@@ -58,6 +58,11 @@
     <string name="live_menu_record">Aufnehmen</string>
     <string name="live_menu_record_later">Spätere Sendung aufnehmen</string>
     <string name="live_menu_record_now">Jetzt aufnehmen</string>
+    <string name="live_menu_remind">Erinnern</string>
+    <string name="live_menu_cancel_reminder">Erinnerung abbrechen</string>
+    <string name="live_reminder_title">Erinnerung</string>
+    <string name="live_reminder_body">%1$s beginnt um %2$s auf %3$s</string>
+    <string name="live_reminder_dismiss">Schließen</string>
     <string name="live_menu_record_on">Aufnehmen: %1$s</string>
     <string name="live_menu_remove_from_group">Aus %1$s entfernen</string>
     <string name="live_menu_rename">Umbenennen</string>

@@ -58,6 +58,11 @@
     <string name="live_menu_record">Registra</string>
     <string name="live_menu_record_later">Registra un programma successivo</string>
     <string name="live_menu_record_now">Registra ora</string>
+    <string name="live_menu_remind">Ricordamelo</string>
+    <string name="live_menu_cancel_reminder">Annulla promemoria</string>
+    <string name="live_reminder_title">Promemoria</string>
+    <string name="live_reminder_body">%1$s inizia alle %2$s su %3$s</string>
+    <string name="live_reminder_dismiss">Ignora</string>
     <string name="live_menu_record_on">Registra su %1$s</string>
     <string name="live_menu_remove_from_group">Rimuovi da %1$s</string>
     <string name="live_menu_rename">Rinomina</string>

@@ -58,6 +58,11 @@
     <string name="live_menu_record">Kaydet</string>
     <string name="live_menu_record_later">Sonraki bir programı kaydet</string>
     <string name="live_menu_record_now">Şimdi kaydet</string>
+    <string name="live_menu_remind">Hatırlat</string>
+    <string name="live_menu_cancel_reminder">Hatırlatıcıyı iptal et</string>
+    <string name="live_reminder_title">Hatırlatıcı</string>
+    <string name="live_reminder_body">%1$s, %3$s kanalında %2$s saatinde başlıyor</string>
+    <string name="live_reminder_dismiss">Kapat</string>
     <string name="live_menu_record_on">%1$s için kaydet</string>
     <string name="live_menu_remove_from_group">%1$s grubundan kaldır</string>
     <string name="live_menu_rename">Yeniden adlandır</string>

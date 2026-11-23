@@ -24,6 +24,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.distinctUntilChangedBy
@@ -662,6 +663,40 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
             c.recordings.recordNow(ch, ch.displayName(strip.value), upcoming(ch).firstOrNull { it.start <= t && t < it.stop })
         }
     }
+
+    // --- Reminders (#18): a popup with Watch / Dismiss shortly before the start, while the app is in front ---
+
+    private val reminderRows = c.db.reminderDao().observeAll().stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+    /** (channel id, programme start) of every reminder, as [marks]. */
+    val reminders: StateFlow<Set<Pair<Long, Long>>> = reminderRows.map { rs -> rs.mapTo(HashSet()) { it.channelId to it.programmeStart } }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptySet())
+    /** The reminder whose popup shows; answering it deletes the row, which brings up the next one. */
+    val dueReminder = MutableStateFlow<org.imdtv.iptvtv.data.db.ReminderEntity?>(null)
+
+    init {
+        viewModelScope.launch {
+            reminderRows.collectLatest { rows ->
+                while (true) {
+                    val now = System.currentTimeMillis()
+                    rows.filter { it.gone(now) && it != dueReminder.value }.takeIf { it.isNotEmpty() }?.let { c.db.reminderDao().delete(it); return@collectLatest }
+                    firstDue(rows, now)?.let { dueReminder.value = it; return@collectLatest }
+                    delay((nextDue(rows, now) ?: return@collectLatest) - now)
+                }
+            }
+        }
+    }
+
+    fun remind(ch: ChannelEntity, p: GuideProgramme) { viewModelScope.launch { c.db.reminderDao().insert(org.imdtv.iptvtv.data.db.ReminderEntity(channelId = ch.id, programmeStart = p.start, title = p.title)) } }
+    fun cancelReminder(ch: ChannelEntity, p: GuideProgramme) { viewModelScope.launch { c.db.reminderDao().delete(ch.id, p.start) } }
+
+    /** Closes the popup and drops its row. */
+    fun answerReminder(r: org.imdtv.iptvtv.data.db.ReminderEntity) {
+        if (dueReminder.value == r) dueReminder.value = null
+        viewModelScope.launch { c.db.reminderDao().delete(r.channelId, r.programmeStart) }
+    }
+
+    /** The reminder's channel, renamed as the guide shows it; null if it has gone from the playlist. */
+    suspend fun reminderChannel(r: org.imdtv.iptvtv.data.db.ReminderEntity) = channels.value.find { it.id == r.channelId } ?: c.db.channelDao().get(r.channelId)
 
     fun schedule(ch: ChannelEntity, p: GuideProgramme) { viewModelScope.launch { c.recordings.schedule(ch, ch.displayName(strip.value), p) } }
 

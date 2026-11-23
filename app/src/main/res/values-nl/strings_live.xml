@@ -58,6 +58,11 @@
     <string name="live_menu_record">Opnemen</string>
     <string name="live_menu_record_later">Later programma opnemen</string>
     <string name="live_menu_record_now">Nu opnemen</string>
+    <string name="live_menu_remind">Herinner me</string>
+    <string name="live_menu_cancel_reminder">Herinnering annuleren</string>
+    <string name="live_reminder_title">Herinnering</string>
+    <string name="live_reminder_body">%1$s begint om %2$s op %3$s</string>
+    <string name="live_reminder_dismiss">Sluiten</string>
     <string name="live_menu_record_on">Opnemen op %1$s</string>
     <string name="live_menu_remove_from_group">Verwijderen uit %1$s</string>
     <string name="live_menu_rename">Hernoemen</string>

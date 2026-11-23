@@ -79,6 +79,7 @@ fun GuideMenus(vm: LiveViewModel, state: GuideState) {
     val recordingOn by vm.recordingOn.collectAsState()
     val recordingOnChannel by vm.recordingOnChannel.collectAsState()
     val marks by vm.marks.collectAsState()
+    val reminders by vm.reminders.collectAsState()
     when (m) {
         is GuideMenu.Channel -> {
             // Items opening another menu (a ›): Add to category, Recording, Catch-up, Guide options, Merge options, Change logo.
@@ -210,9 +211,14 @@ fun GuideMenus(vm: LiveViewModel, state: GuideState) {
         is GuideMenu.Programme -> {
             val marked = (m.ch.id to m.p.start) in marks
             val day = org.imdtv.iptvtv.ui.dayDate(m.p.start).takeIf { it != org.imdtv.iptvtv.ui.dayDate(System.currentTimeMillis()) }?.let { "$it " }.orEmpty()
-            ContextMenu("$day${org.imdtv.iptvtv.ui.clockTime(m.p.start)}  ${m.p.title}", listOf(
-                if (marked) stringResource(R.string.live_menu_cancel_recording) to { vm.cancelRecording(m.ch, m.p); state.menu = null }
+            val reminded = (m.ch.id to m.p.start) in reminders
+            ContextMenu("$day${org.imdtv.iptvtv.ui.clockTime(m.p.start)}  ${m.p.title}", listOfNotNull(
+                if (!recordingOn) null
+                else if (marked) stringResource(R.string.live_menu_cancel_recording) to { vm.cancelRecording(m.ch, m.p); state.menu = null }
                 else stringResource(R.string.live_menu_record) to { vm.schedule(m.ch, m.p); state.menu = null },
+                // A popup shortly before the start, while the app is in front (#18).
+                if (reminded) stringResource(R.string.live_menu_cancel_reminder) to { vm.cancelReminder(m.ch, m.p); state.menu = null }
+                else stringResource(R.string.live_menu_remind) to { vm.remind(m.ch, m.p); state.menu = null },
             )) { state.menu = null }
         }
         is GuideMenu.CancelRecording -> ContextMenu(m.p.title, listOf(

@@ -58,6 +58,11 @@
     <string name="live_menu_record">Spela in</string>
     <string name="live_menu_record_later">Spela in ett senare program</string>
     <string name="live_menu_record_now">Spela in nu</string>
+    <string name="live_menu_remind">Påminn mig</string>
+    <string name="live_menu_cancel_reminder">Avbryt påminnelse</string>
+    <string name="live_reminder_title">Påminnelse</string>
+    <string name="live_reminder_body">%1$s börjar %2$s på %3$s</string>
+    <string name="live_reminder_dismiss">Stäng</string>
     <string name="live_menu_record_on">Spela in %1$s</string>
     <string name="live_menu_remove_from_group">Ta bort från %1$s</string>
     <string name="live_menu_rename">Byt namn</string>
