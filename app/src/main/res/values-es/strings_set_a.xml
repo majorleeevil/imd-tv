@@ -177,6 +177,8 @@
     <string name="set_a_channel_numbers_expl">Muestra el número junto al nombre del canal</string>
     <string name="set_a_recently_watched">Vistos recientemente</string>
     <string name="set_a_recently_watched_expl">Muestra la categoría Vistos recientemente en la guía de TV</string>
+    <string name="set_a_rail_hold_jump">Mantener para saltar</string>
+    <string name="set_a_rail_hold_jump_expl">Mantener pulsado arriba o abajo en la lista de categorías salta al principio, al final o a la siguiente lista de reproducción. Desactivado: se desplaza una fila a la vez</string>
     <string name="set_a_matching_logos">Asignando logos de código abierto a tus canales…</string>
     <string name="set_a_my_logo_pack">Mi paquete de logos</string>
     <string name="set_a_show_all">Mostrar todo</string>

@@ -68,6 +68,7 @@ fun Set<Long>.toggled(id: Long) = if (id in this) this - id else this + id
 class RailKeys internal constructor(private val state: androidx.compose.foundation.lazy.LazyListState) {
     internal var keys: List<String> = emptyList()
     internal var starts: List<Int> = emptyList()
+    internal var holdJump = true
     private var focused: String? = null
     private var holdFrom = -1
     internal var jumpKey by androidx.compose.runtime.mutableStateOf<String?>(null)
@@ -83,7 +84,7 @@ class RailKeys internal constructor(private val state: androidx.compose.foundati
             if (down && at >= 0) jumpKey = keys[(at + d * (state.layoutInfo.visibleItemsInfo.size - 1).coerceAtLeast(1)).coerceIn(0, keys.lastIndex)]
             return true
         }
-        if (e.key != Key.DirectionUp && e.key != Key.DirectionDown || !down) return false
+        if (e.key != Key.DirectionUp && e.key != Key.DirectionDown || !down || !holdJump) return false
         val r = e.nativeKeyEvent.repeatCount
         // Remember where the press started: its first step already moved focus a row before the hold shows.
         if (r == 0) { holdFrom = keys.indexOf(focused); return false }
@@ -96,7 +97,7 @@ class RailKeys internal constructor(private val state: androidx.compose.foundati
 @Composable
 fun rememberRailKeys(state: androidx.compose.foundation.lazy.LazyListState, keys: List<String>, starts: List<Int>): RailKeys {
     val k = androidx.compose.runtime.remember(state) { RailKeys(state) }
-    k.keys = keys; k.starts = starts
+    k.keys = keys; k.starts = starts; k.holdJump = org.imdtv.iptvtv.ui.LocalRailHoldJump.current
     androidx.compose.runtime.LaunchedEffect(k.jumpKey) {
         val target = k.jumpKey ?: return@LaunchedEffect
         state.scrollToItem((k.keys.indexOf(target) - 3).coerceAtLeast(0)); androidx.compose.runtime.withFrameNanos { }

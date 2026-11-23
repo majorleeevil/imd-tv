@@ -175,6 +175,10 @@ private fun ProviderForm(vm: AppViewModel, editing: ProviderEntity?) {
                     }
                     // Below Save, not above it: a line above pushed Save off the bottom of the Stalker form.
                     if (!state.busy) state.error?.let { Text(it, color = Color(0xFFFF8A80), fontSize = 13.sp, maxLines = 3) }
+                    // First run (#37): set up from a backup instead, e.g. copying another TV's config.
+                    if (editing == null && vm.stack.collectAsState().value.size == 1) Button(onClick = { if (!state.busy) vm.openSettings(org.imdtv.iptvtv.ui.settings.SettingsGroup.BACKUP) }, Modifier.fillMaxWidth()) {
+                        Text(stringResource(R.string.set_b_backup_restore_title), fontSize = 16.sp, textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp))
+                    }
                 }
                 // Greyed out (not pressable) until the playlist has loaded; Back still leaves. "Finish", not "Done": beside Save, Done read as saving.
                 // A failed add / edit: the same button sends the logs instead (Watch / Finish would be greyed out anyway).

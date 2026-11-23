@@ -177,6 +177,8 @@
     <string name="set_a_channel_numbers_expl">Arată numărul lângă numele canalului</string>
     <string name="set_a_recently_watched">Vizionate recent</string>
     <string name="set_a_recently_watched_expl">Arată categoria Vizionate recent în ghidul TV</string>
+    <string name="set_a_rail_hold_jump">Ține apăsat pentru a sări</string>
+    <string name="set_a_rail_hold_jump_expl">Ținerea apăsată în sus sau în jos în lista de categorii sare la început, la sfârșit sau la următorul playlist. Oprit: derulează câte un rând pe rând</string>
     <string name="set_a_matching_logos">Se potrivesc logourile open-source cu canalele tale…</string>
     <string name="set_a_my_logo_pack">Pachetul meu de logouri</string>
     <string name="set_a_show_all">Afișează tot</string>

@@ -151,6 +151,10 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         if (top is Screen.Player && stack.value.last() == Screen.Search) player.stop()
         // Catch-up opened from live full screen: back to the live stream.
         if (top is Screen.Player && !top.live && (stack.value.last() as? Screen.Player)?.live == true) resumeLive()
+        // Back from Settings on the first-run form: a restore there has added playlists, so go on to the guide (#37).
+        if (top is Screen.Settings && stack.value == listOf(Screen.Setup())) viewModelScope.launch {
+            if (c.providerRepository.activeProviderId.first() != null && stack.value == listOf(Screen.Setup())) done()
+        }
         return true
     }
 

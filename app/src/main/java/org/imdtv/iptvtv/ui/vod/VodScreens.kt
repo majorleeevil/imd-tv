@@ -6,6 +6,7 @@ import androidx.compose.ui.res.stringResource
 import org.imdtv.iptvtv.ui.theme.themeBackground
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -334,7 +335,7 @@ private fun VodRail(cats: List<RailCategory>, selectedId: Long?, focus: FocusReq
             .onPreviewKeyEvent { e -> if (railKeys.onKey(e)) true else if (e.type == KeyEventType.KeyDown && (e.key == Key.Back || e.key == Key.DirectionLeft && e.nativeKeyEvent.repeatCount == 0)) { onClose(); true } else false },
     ) {
         Text(stringResource(R.string.vod_categories_header), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = LocalTheme.current.colors.muted, letterSpacing = 2.sp, modifier = Modifier.padding(bottom = 12.dp))
-        if (others.isNotEmpty()) Text(stringResource(R.string.live_rail_jump_hint), fontSize = 11.sp, color = LocalTheme.current.colors.muted, modifier = Modifier.padding(bottom = 8.dp))
+        if (others.isNotEmpty() && org.imdtv.iptvtv.ui.LocalRailHoldJump.current) Text(stringResource(R.string.live_rail_jump_hint), fontSize = 11.sp, color = LocalTheme.current.colors.muted, modifier = Modifier.padding(bottom = 8.dp))
         @Composable
         fun CatRow(rc: RailCategory?, nested: Boolean) {
             // Right picks, as on the Live rail; unhandled it moved focus behind the rail and left the rail open.
@@ -345,7 +346,8 @@ private fun VodRail(cats: List<RailCategory>, selectedId: Long?, focus: FocusReq
                     .padding(start = if (nested) 25.dp else 11.dp, end = 11.dp, top = 8.dp, bottom = 8.dp)) {
                     val fg = if (f) Color.Black else Color.White
                     Text(rc?.category?.name?.ifEmpty { stringResource(R.string.vod_uncategorised) } ?: stringResource(R.string.vod_all), fontSize = 14.sp, color = fg, maxLines = 1,
-                        overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                        overflow = if (f) TextOverflow.Clip else TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f).then(if (f) Modifier.basicMarquee(3) else Modifier)) // bounded, as the Live rail (#36)
                     rc?.let { Text(it.count.toString(), fontSize = 11.sp, color = if (f) fg else LocalTheme.current.colors.muted) }
                 }
             }

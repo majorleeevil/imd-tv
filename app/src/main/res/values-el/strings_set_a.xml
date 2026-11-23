@@ -177,6 +177,8 @@
     <string name="set_a_channel_numbers_expl">Εμφάνιση του αριθμού δίπλα στα ονόματα καναλιών</string>
     <string name="set_a_recently_watched">Πρόσφατες προβολές</string>
     <string name="set_a_recently_watched_expl">Εμφάνιση της κατηγορίας Πρόσφατες προβολές στον οδηγό TV</string>
+    <string name="set_a_rail_hold_jump">Παρατεταμένο πάτημα για άλμα</string>
+    <string name="set_a_rail_hold_jump_expl">Το παρατεταμένο πάτημα πάνω ή κάτω στη λίστα κατηγοριών μεταφέρει στην αρχή, στο τέλος ή στην επόμενη λίστα. Ανενεργό: κύλιση μίας γραμμής τη φορά</string>
     <string name="set_a_matching_logos">Αντιστοίχιση λογοτύπων ανοιχτού κώδικα με τα κανάλια σας…</string>
     <string name="set_a_my_logo_pack">Το πακέτο λογοτύπων μου</string>
     <string name="set_a_show_all">Εμφάνιση όλων</string>

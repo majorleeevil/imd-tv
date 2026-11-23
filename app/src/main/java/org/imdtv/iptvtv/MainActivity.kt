@@ -120,6 +120,7 @@ class MainActivity : ComponentActivity() {
             CompositionLocalProvider(androidx.compose.ui.platform.LocalDensity provides androidx.compose.ui.unit.Density(fit, 1f),
                 LocalTheme provides remember(themeId, themeColour, themeDark) { themeOf(themeId, themeColour, themeDark) }, LocalGlassBackdrop provides backdrop,
                 org.imdtv.iptvtv.ui.LocalShowNumbers provides app.settings.collectAsState().value.showChannelNumbers,
+                org.imdtv.iptvtv.ui.LocalRailHoldJump provides app.settings.collectAsState().value.railHoldJump,
                 org.imdtv.iptvtv.ui.LocalTitleScale provides app.settings.collectAsState().value.titleSize.scale,
                 org.imdtv.iptvtv.ui.LocalVodTitleScale provides app.settings.collectAsState().value.vodTitleSize.scale) {
             val catchUp = app.settings.collectAsState().value.catchUpOn

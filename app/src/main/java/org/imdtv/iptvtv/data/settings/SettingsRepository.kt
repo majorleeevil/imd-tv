@@ -75,6 +75,7 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
     private val showDateTime = booleanPreferencesKey("show_date_time")
     private val showPing = booleanPreferencesKey("show_ping")
     private val showRecent = booleanPreferencesKey("show_recent")
+    private val railHoldJump = booleanPreferencesKey("rail_hold_jump")
     private val guideRows = intPreferencesKey("guide_rows")
     private val multiLineGuide = booleanPreferencesKey("multi_line_guide")
     private val subtitlesOn = booleanPreferencesKey("subtitles_on")
@@ -157,6 +158,7 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
             showDateTime = this[showDateTime] ?: d.showDateTime,
             showPing = this[showPing] ?: d.showPing,
             showRecent = this[showRecent] ?: d.showRecent,
+            railHoldJump = this[railHoldJump] ?: d.railHoldJump,
             guideRows = this[guideRows] ?: d.guideRows,
             multiLineGuide = this[multiLineGuide] ?: d.multiLineGuide,
             subtitlesOn = this[subtitlesOn] ?: d.subtitlesOn,
@@ -230,6 +232,7 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
         this[showDateTime] = s.showDateTime
         this[showPing] = s.showPing
         this[showRecent] = s.showRecent
+        this[railHoldJump] = s.railHoldJump
         this[subtitlesOn] = s.subtitlesOn
         this[guideRows] = s.guideRows
         this[multiLineGuide] = s.multiLineGuide

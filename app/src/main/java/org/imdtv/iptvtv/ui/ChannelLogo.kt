@@ -25,6 +25,8 @@ import org.imdtv.iptvtv.data.settings.LogoKind
 
 /** Appearance > Channel numbers, provided once at the root. */
 val LocalShowNumbers = androidx.compose.runtime.staticCompositionLocalOf { true }
+/** Settings › Channels & categories › Hold to jump (#35). */
+val LocalRailHoldJump = androidx.compose.runtime.staticCompositionLocalOf { true }
 
 /** Appearance › Title size: multiply a title's sp by this (font scale itself stays pinned to 1.0). */
 val LocalTitleScale = androidx.compose.runtime.staticCompositionLocalOf { 1f }

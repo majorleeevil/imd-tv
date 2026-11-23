@@ -122,6 +122,8 @@ data class AppSettings(
     val showPing: Boolean = false,
     /** The "Recently watched" category in the TV guide. */
     val showRecent: Boolean = true,
+    /** Holding Up/Down in a category rail jumps to the top/bottom or the next playlist (#35); off = it scrolls row by row. */
+    val railHoldJump: Boolean = true,
     /** Channel rows the Celestial/Liquid Glass guide shows: one of [guideRowChoices] for the header size. */
     val guideRows: Int = 5,
     /** Channel names and programme titles may wrap onto 2 lines in the guide grid. */

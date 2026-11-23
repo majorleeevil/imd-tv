@@ -157,6 +157,7 @@ fun ChannelPageView(
                 PageRows(listOf(ChannelPage.LANGUAGES, ChannelPage.YOUR_CATEGORIES, ChannelPage.PROVIDER_CATEGORIES, ChannelPage.CATEGORY_NAME_CLEANUP), vm, first, openers, onOpen)
                 val s by vm.settings.collectAsState()
                 SwitchRow(stringResource(R.string.set_a_recently_watched), stringResource(R.string.set_a_recently_watched_expl), s.showRecent) { on -> vm.update { it.copy(showRecent = on) } }
+                SwitchRow(stringResource(R.string.set_a_rail_hold_jump), stringResource(R.string.set_a_rail_hold_jump_expl), s.railHoldJump) { on -> vm.update { it.copy(railHoldJump = on) } }
             }
             ChannelPage.PROVIDER_CATEGORIES -> { BackHandler(onBack = onClose); PageRows(listOf(ChannelPage.LIVE_CATEGORIES, ChannelPage.MOVIE_CATEGORIES, ChannelPage.SERIES_CATEGORIES), vm, first, openers, onOpen) }
             ChannelPage.LIVE_CATEGORIES -> CategoryListPage(vm, Kind.LIVE, first, onClose)

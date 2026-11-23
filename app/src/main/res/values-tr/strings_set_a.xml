@@ -177,6 +177,8 @@
     <string name="set_a_channel_numbers_expl">Numarayı kanal adının yanında göster</string>
     <string name="set_a_recently_watched">Son izlenenler</string>
     <string name="set_a_recently_watched_expl">Son izlenenler kategorisini TV rehberinde göster</string>
+    <string name="set_a_rail_hold_jump">Atlamak için basılı tutun</string>
+    <string name="set_a_rail_hold_jump_expl">Kategori listesinde yukarı veya aşağı basılı tutulduğunda başa, sona ya da sonraki oynatma listesine atlanır. Kapalı: her seferinde bir satır kaydırılır</string>
     <string name="set_a_matching_logos">Açık kaynak logolar kanallarınızla eşleştiriliyor…</string>
     <string name="set_a_my_logo_pack">Logo paketim</string>
     <string name="set_a_show_all">Tümünü göster</string>

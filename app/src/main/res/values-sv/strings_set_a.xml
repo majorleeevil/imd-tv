@@ -177,6 +177,8 @@
     <string name="set_a_channel_numbers_expl">Visa numret bredvid kanalnamnen</string>
     <string name="set_a_recently_watched">Nyligen sedda</string>
     <string name="set_a_recently_watched_expl">Visa kategorin Nyligen sedda i tv-guiden</string>
+    <string name="set_a_rail_hold_jump">Håll in för att hoppa</string>
+    <string name="set_a_rail_hold_jump_expl">Om du håller in upp eller ner i kategorilistan hoppar du till början, slutet eller nästa spellista. Av: rullar en rad i taget</string>
     <string name="set_a_matching_logos">Matchar öppen källkod-logotyper mot dina kanaler…</string>
     <string name="set_a_my_logo_pack">Mitt logotypspaket</string>
     <string name="set_a_show_all">Visa alla</string>

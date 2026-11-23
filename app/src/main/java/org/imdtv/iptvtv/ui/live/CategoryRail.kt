@@ -10,6 +10,7 @@ import androidx.compose.runtime.getValue
 import org.imdtv.iptvtv.ui.theme.LocalTheme
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -52,6 +53,9 @@ import org.imdtv.iptvtv.ui.onLongOk
 import org.imdtv.iptvtv.data.repo.RailEntry
 import org.imdtv.iptvtv.data.repo.RailItem
 import org.imdtv.iptvtv.ui.FocusBox
+
+// Bounded, like the guide's names: an endless marquee kept the Thomson redrawing ~40 fps while idle.
+private const val RAIL_MARQUEE_TIMES = 3
 
 /** Rail move mode (spec §4.3): Up/Down moves, OK drops, Back puts it back. [entry] is a provider or your category. */
 internal class RailMove(val entry: RailEntry, val from: Int)
@@ -112,7 +116,7 @@ internal fun Rail(
                 modifier = Modifier.weight(1f))
             AppLogo(Modifier.size(60.dp))
         }
-        if (move == null) Text(stringResource(R.string.live_rail_jump_hint), fontSize = 11.sp, color = LocalTheme.current.colors.muted,
+        if (move == null && org.imdtv.iptvtv.ui.LocalRailHoldJump.current) Text(stringResource(R.string.live_rail_jump_hint), fontSize = 11.sp, color = LocalTheme.current.colors.muted,
             modifier = Modifier.padding(bottom = 8.dp))
         if (move != null) Text(stringResource(R.string.live_rail_move_hint), fontSize = 11.sp, color = LocalTheme.current.colors.muted,
             modifier = Modifier.padding(bottom = 8.dp))
@@ -136,7 +140,8 @@ internal fun Rail(
                     ) {
                         val fg = if (f || isMoving) LocalTheme.current.colors.onFocus else Color.White
                         Text((if (isMoving) "↕ " else "") + rc.entry.titleText(), fontSize = 14.sp, color = fg, maxLines = 1,
-                            overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                            overflow = if (f) TextOverflow.Clip else TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f).then(if (f) Modifier.basicMarquee(RAIL_MARQUEE_TIMES) else Modifier))
                         Text(rc.count.toString(), fontSize = 11.sp, color = if (f || isMoving) fg else LocalTheme.current.colors.muted)
                     }
                 }
@@ -199,7 +204,8 @@ internal fun SectionRowBox(title: String, trailing: String, header: Boolean, nes
         ) {
             val fg = if (f) focusFg else Color.White
             Text(title, fontSize = 14.sp, fontWeight = if (header) FontWeight.SemiBold else FontWeight.Normal, color = fg, maxLines = 1,
-                overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                overflow = if (f) TextOverflow.Clip else TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f).then(if (f) Modifier.basicMarquee(RAIL_MARQUEE_TIMES) else Modifier))
             Text(trailing, fontSize = if (header) 14.sp else 11.sp, color = if (f) fg else LocalTheme.current.colors.muted)
         }
     }
