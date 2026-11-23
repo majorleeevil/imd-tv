@@ -321,6 +321,12 @@
     <string name="set_b_jf_sign_in">Oturum aç</string>
     <string name="set_b_jf_failed">Jellyfin isteği başarısız: HTTP %1$d</string>
     <string name="set_b_jf_wrong_login">Kullanıcı adı veya şifre yanlış</string>
+    <string name="set_b_emby_add">Emby sunucusu ekle</string>
+    <string name="set_b_emby_add_expl">Emby film ve dizileriniz, oynatma listenizdekilerin yanında</string>
+    <string name="set_b_emby_address">Emby sunucu adresi</string>
+    <string name="set_b_emby_address_expl">Emby uygulamasındaki gibi aşağıya girin, örneğin http://192.168.1.10:8096.</string>
+    <string name="set_b_emby_sign_in_expl">Emby kullanıcı adınızı ve şifrenizi aşağıya girin.</string>
+    <string name="set_b_emby_failed">Emby isteği başarısız: HTTP %1$d</string>
     <string name="set_b_plex_all_added">Bu Plex hesabındaki tüm sunucular zaten eklendi</string>
     <string name="set_b_stremio_add">Stremio hesabı ekle</string>
     <string name="set_b_stremio_add_expl">Stremio hesabınızdaki eklentilerden filmler ve diziler</string>

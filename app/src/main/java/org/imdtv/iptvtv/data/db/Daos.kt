@@ -41,8 +41,8 @@ abstract class ProviderDao {
     fun observeAll(): Flow<List<ProviderEntity>> = observeAllRaw().map { l -> l.map { it.opened() } }
     suspend fun all(): List<ProviderEntity> = allRaw().map { it.opened() }
     @Query("SELECT id FROM provider ORDER BY name") abstract suspend fun ids(): List<Long>
-    /** Playlists that can have live TV (not Plex, Jellyfin or Stremio), by name. */
-    @Query("SELECT id FROM provider WHERE type NOT IN ('PLEX', 'JELLYFIN', 'STREMIO') ORDER BY name") abstract suspend fun liveIds(): List<Long>
+    /** Playlists that can have live TV (not Plex, Jellyfin, Emby or Stremio), by name. */
+    @Query("SELECT id FROM provider WHERE type NOT IN ('PLEX', 'JELLYFIN', 'STREMIO', 'EMBY') ORDER BY name") abstract suspend fun liveIds(): List<Long>
     /** Rows whose login is still plain text (saved before encryption), as stored. */
     suspend fun unsealed(): List<ProviderEntity> = allRaw().filter { !Secrets.isEncrypted(it.url) }
     @Query("UPDATE provider SET nameStrip = :s WHERE id = :id") abstract suspend fun setNameStrip(id: Long, s: String)

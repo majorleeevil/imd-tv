@@ -55,8 +55,8 @@ class AppContainer(context: Context) {
         ProviderType.STALKER -> org.imdtv.iptvtv.data.source.StalkerSource(p.id, stalkerLinks.client(p))
         ProviderType.PLEX -> org.imdtv.iptvtv.data.source.PlexSource(p.url, p.password.orEmpty(), plexClientId,
             p.skipLibraries.split(',').filter { it.isNotEmpty() }.toSet(), http, json)
-        ProviderType.JELLYFIN -> org.imdtv.iptvtv.data.source.JellyfinSource(p.url, p.password.orEmpty(), p.username.orEmpty(), jellyfinHeader,
-            p.skipLibraries.split(',').filter { it.isNotEmpty() }.toSet(), http, json)
+        ProviderType.JELLYFIN, ProviderType.EMBY -> org.imdtv.iptvtv.data.source.JellyfinSource(p.url, p.password.orEmpty(), p.username.orEmpty(), jellyfinHeader,
+            p.skipLibraries.split(',').filter { it.isNotEmpty() }.toSet(), http, json, emby = p.type == ProviderType.EMBY)
         ProviderType.STREMIO -> org.imdtv.iptvtv.data.source.StremioSource(p.password.orEmpty(), p.skipLibraries.split(',').filter { it.isNotEmpty() }.toSet(), stremioAuth, http, json)
     }
 
@@ -69,6 +69,7 @@ class AppContainer(context: Context) {
     val jellyfinHeader by lazy { org.imdtv.iptvtv.data.source.jellyfinAuthHeader(android.os.Build.MODEL ?: "Android TV", plexClientId, org.imdtv.iptvtv.BuildConfig.VERSION_NAME) }
     val stremioAuth by lazy { org.imdtv.iptvtv.data.source.StremioAuth(http, json) }
     val jellyfinAuth by lazy { org.imdtv.iptvtv.data.source.JellyfinAuth(http, json, jellyfinHeader) }
+    val embyAuth by lazy { org.imdtv.iptvtv.data.source.JellyfinAuth(http, json, jellyfinHeader, emby = true) }
 
     /** Portal sessions per playlist, shared by sync, playback and recording. */
     val stalkerLinks by lazy { org.imdtv.iptvtv.data.source.StalkerLinks(http) { db.providerDao().get(it) } }

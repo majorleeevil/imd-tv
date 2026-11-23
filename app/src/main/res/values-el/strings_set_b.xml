@@ -321,6 +321,12 @@
     <string name="set_b_jf_sign_in">Σύνδεση</string>
     <string name="set_b_jf_failed">Το αίτημα Jellyfin απέτυχε: HTTP %1$d</string>
     <string name="set_b_jf_wrong_login">Λάθος όνομα χρήστη ή κωδικός</string>
+    <string name="set_b_emby_add">Προσθήκη διακομιστή Emby</string>
+    <string name="set_b_emby_add_expl">Οι ταινίες και οι σειρές σας από το Emby, δίπλα σε αυτές της λίστας σας</string>
+    <string name="set_b_emby_address">Διεύθυνση διακομιστή Emby</string>
+    <string name="set_b_emby_address_expl">Εισαγάγετέ την παρακάτω όπως στην εφαρμογή Emby, για παράδειγμα http://192.168.1.10:8096.</string>
+    <string name="set_b_emby_sign_in_expl">Εισαγάγετε παρακάτω το όνομα χρήστη και τον κωδικό σας στο Emby.</string>
+    <string name="set_b_emby_failed">Το αίτημα Emby απέτυχε: HTTP %1$d</string>
     <string name="set_b_plex_all_added">Όλοι οι διακομιστές αυτού του λογαριασμού Plex έχουν ήδη προστεθεί</string>
     <string name="set_b_stremio_add">Προσθήκη λογαριασμού Stremio</string>
     <string name="set_b_stremio_add_expl">Ταινίες και σειρές από τα πρόσθετα του λογαριασμού σας Stremio</string>

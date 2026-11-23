@@ -321,6 +321,12 @@
     <string name="set_b_jf_sign_in">Aanmelden</string>
     <string name="set_b_jf_failed">Jellyfin-verzoek mislukt: HTTP %1$d</string>
     <string name="set_b_jf_wrong_login">Onjuiste gebruikersnaam of wachtwoord</string>
+    <string name="set_b_emby_add">Emby-server toevoegen</string>
+    <string name="set_b_emby_add_expl">Je Emby-films en -series, naast die van je afspeellijst</string>
+    <string name="set_b_emby_address">Adres van de Emby-server</string>
+    <string name="set_b_emby_address_expl">Voer het hieronder in zoals in de Emby-app, bijvoorbeeld http://192.168.1.10:8096.</string>
+    <string name="set_b_emby_sign_in_expl">Voer hieronder je Emby-gebruikersnaam en -wachtwoord in.</string>
+    <string name="set_b_emby_failed">Emby-verzoek mislukt: HTTP %1$d</string>
     <string name="set_b_plex_all_added">Alle servers van dit Plex-account zijn al toegevoegd</string>
     <string name="set_b_stremio_add">Stremio-account toevoegen</string>
     <string name="set_b_stremio_add_expl">Films en series van de add-ons op je Stremio-account</string>

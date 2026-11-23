@@ -322,6 +322,12 @@
     <string name="set_b_jf_sign_in">Sign in</string>
     <string name="set_b_jf_failed">Jellyfin request failed: HTTP %1$d</string>
     <string name="set_b_jf_wrong_login">Wrong username or password</string>
+    <string name="set_b_emby_add">Add Emby server</string>
+    <string name="set_b_emby_add_expl">Your Emby movies and TV shows, next to your playlist\'s</string>
+    <string name="set_b_emby_address">Emby server address</string>
+    <string name="set_b_emby_address_expl">Enter it below as you would in the Emby app, for example http://192.168.1.10:8096.</string>
+    <string name="set_b_emby_sign_in_expl">Enter your Emby username and password below.</string>
+    <string name="set_b_emby_failed">Emby request failed: HTTP %1$d</string>
     <string name="set_b_stremio_add">Add Stremio account</string>
     <string name="set_b_stremio_add_expl">Movies and series from the add-ons on your Stremio account</string>
     <string name="set_b_stremio_code_expl">Scan the QR code, or go to link.stremio.com on your phone or computer, sign in and enter this code.</string>

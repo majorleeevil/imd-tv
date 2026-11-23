@@ -52,27 +52,35 @@ fun jellyfinBase(typed: String): String {
     return if ("://" in t) t else "http://$t"
 }
 
-/** The Authorization header Jellyfin wants on every call; [token] once signed in. */
+/** Emby (#25): the same API under /emby, which Jellyfin was forked from; "nas:8096/emby" and "nas:8096" both work. */
+fun embyBase(typed: String) = jellyfinBase(typed).removeSuffix("/emby") + "/emby"
+
+/** Jellyfin: the token inside Authorization; Emby: X-Emby-Authorization and X-Emby-Token. */
+internal fun Request.Builder.mbAuth(header: String, token: String?, emby: Boolean) =
+    if (emby) header("X-Emby-Authorization", header).apply { if (token != null) header("X-Emby-Token", token) }
+    else header("Authorization", if (token == null) header else "$header, Token=\"$token\"")
+
+/** The Authorization header Jellyfin (and Emby) wants on every call; [token] once signed in. */
 fun jellyfinAuthHeader(device: String, deviceId: String, version: String) =
     "MediaBrowser Client=\"IMD TV\", Device=\"${device.replace("\"", "")}\", DeviceId=\"$deviceId\", Version=\"$version\""
 
-class JellyfinException(val code: Int, path: String = "") : java.io.IOException("Jellyfin request failed: HTTP $code $path"), UiMessage {
-    override val resId: Int? get() = if (code == 401) R.string.set_b_jf_wrong_login else R.string.set_b_jf_failed
+class JellyfinException(val code: Int, path: String = "", private val emby: Boolean = false) : java.io.IOException("${if (emby) "Emby" else "Jellyfin"} request failed: HTTP $code $path"), UiMessage {
+    override val resId: Int? get() = if (code == 401) R.string.set_b_jf_wrong_login else if (emby) R.string.set_b_emby_failed else R.string.set_b_jf_failed
     override val args: List<Any> get() = if (code == 401) emptyList() else listOf(code)
 }
 
-private suspend fun <T> OkHttpClient.jf(json: Json, r: Request, s: DeserializationStrategy<T>): T = withContext(Dispatchers.IO) {
+private suspend fun <T> OkHttpClient.jf(json: Json, r: Request, s: DeserializationStrategy<T>, emby: Boolean): T = withContext(Dispatchers.IO) {
     newCall(r).execute().use { resp ->
-        if (!resp.isSuccessful) throw JellyfinException(resp.code, r.url.encodedPath)
+        if (!resp.isSuccessful) throw JellyfinException(resp.code, r.url.encodedPath, emby)
         @OptIn(kotlinx.serialization.ExperimentalSerializationApi::class)
         resp.body!!.byteStream().use { json.decodeFromStream(s, it) }
     }
 }
 
-/** Sign-in: Quick Connect (a code approved in another signed-in Jellyfin app) or username + password. */
-class JellyfinAuth(private val http: OkHttpClient, private val json: Json, private val header: String) {
-    private fun req(url: String, token: String? = null) = Request.Builder().url(url).header("Accept", "application/json")
-        .header("Authorization", if (token == null) header else "$header, Token=\"$token\"")
+/** Sign-in: Quick Connect (a code approved in another signed-in Jellyfin app) or username + password; Emby has no Quick Connect. */
+class JellyfinAuth(private val http: OkHttpClient, private val json: Json, private val header: String, val emby: Boolean = false) {
+    private fun req(url: String, token: String? = null) = Request.Builder().url(url).header("Accept", "application/json").mbAuth(header, token, emby)
+    private suspend fun <T> OkHttpClient.jf(json: Json, r: Request, s: DeserializationStrategy<T>) = jf(json, r, s, emby)
     private fun body(vararg kv: Pair<String, String>) =
         kotlinx.serialization.json.JsonObject(kv.associate { (k, v) -> k to kotlinx.serialization.json.JsonPrimitive(v) }).toString()
             .toRequestBody("application/json".toMediaType())
@@ -83,12 +91,12 @@ class JellyfinAuth(private val http: OkHttpClient, private val json: Json, priva
      */
     suspend fun resolve(base: String): Pair<String, String> = withContext(Dispatchers.IO) {
         http.newCall(req("$base/System/Info/Public").build()).execute().use { resp ->
-            if (!resp.isSuccessful) throw JellyfinException(resp.code, resp.request.url.encodedPath)
+            if (!resp.isSuccessful) throw JellyfinException(resp.code, resp.request.url.encodedPath, emby)
             val name = json.decodeFromString(JfInfo.serializer(), resp.body!!.string()).name
             resp.request.url.toString().substringBefore("/System/Info/Public") to name
         }
     }
-    suspend fun quickConnectEnabled(base: String): Boolean =
+    suspend fun quickConnectEnabled(base: String): Boolean = !emby &&
         runCatching { http.jf(json, req("$base/QuickConnect/Enabled").build(), Boolean.serializer()) }.getOrDefault(false)
     suspend fun initiate(base: String): JfQuickConnect = http.jf(json, req("$base/QuickConnect/Initiate").post(ByteArray(0).toRequestBody()).build(), JfQuickConnect.serializer())
     /** True once the code was approved; throws [JellyfinException] 404 when it expired. */
@@ -107,20 +115,19 @@ class JellyfinAuth(private val http: OkHttpClient, private val json: Json, priva
 }
 
 /**
- * A Jellyfin server's Movies and TV Shows libraries as a playlist's VOD (no live). Saved stream links carry
+ * A Jellyfin (or, with [emby], Emby) server's Movies and TV Shows libraries as a playlist's VOD (no live). Saved stream links carry
  * `api_key=PASS_TOKEN` and the player puts the token back (withLogin); images need no token.
  */
 class JellyfinSource(
-    baseUrl: String, private val token: String, private val userId: String, header: String, private val skip: Set<String>,
-    private val http: OkHttpClient, private val json: Json,
+    baseUrl: String, private val token: String, private val userId: String, private val header: String, private val skip: Set<String>,
+    private val http: OkHttpClient, private val json: Json, private val emby: Boolean = false,
 ) : PlaylistSource {
     private val base = baseUrl.trim().trimEnd('/')
-    private val auth = "$header, Token=\"$token\""
 
     private fun url(path: String, vararg q: Pair<String, String>): HttpUrl =
         "$base$path".toHttpUrl().newBuilder().apply { q.forEach { (k, v) -> addQueryParameter(k, v) } }.build()
     private suspend fun <T> get(u: HttpUrl, s: DeserializationStrategy<T>): T =
-        http.jf(json, Request.Builder().url(u).header("Accept", "application/json").header("Authorization", auth).build(), s)
+        http.jf(json, Request.Builder().url(u).header("Accept", "application/json").mbAuth(header, token, emby).build(), s, emby)
 
     private var viewCache: List<JfItem>? = null
     private suspend fun views(type: String) = (viewCache ?: get(url("/Users/$userId/Views"), JfItems.serializer()).items.also { viewCache = it })
@@ -180,7 +187,7 @@ class JellyfinSource(
     /** Played / unplayed, or a position saved as a stopped playback (what Jellyfin clients send when you stop). */
     override suspend fun reportProgress(p: ProgressReport) {
         val id = p.episode.ifEmpty { p.remoteId }
-        val r = Request.Builder().header("Authorization", auth).let { b ->
+        val r = Request.Builder().mbAuth(header, token, emby).let { b ->
             when {
                 p.watched -> b.url(url("/Users/$userId/PlayedItems/$id")).post(ByteArray(0).toRequestBody())
                 p.positionMs > 0 -> b.url(url("/Sessions/Playing/Stopped"))
@@ -188,7 +195,7 @@ class JellyfinSource(
                 else -> b.url(url("/Users/$userId/PlayedItems/$id")).delete()
             }
         }.build()
-        withContext(Dispatchers.IO) { http.newCall(r).execute().use { if (!it.isSuccessful) throw JellyfinException(it.code, r.url.encodedPath) } }
+        withContext(Dispatchers.IO) { http.newCall(r).execute().use { if (!it.isSuccessful) throw JellyfinException(it.code, r.url.encodedPath, emby) } }
     }
 
     override suspend fun movieDetail(id: String): MovieDetail {

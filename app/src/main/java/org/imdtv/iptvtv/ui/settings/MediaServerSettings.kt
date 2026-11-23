@@ -140,22 +140,24 @@ interface PasswordSignIn {
     fun signIn()
 }
 
-/** Address → Quick Connect code (or username + password when it's off) → libraries. */
-class JellyfinAddFlow(c: AppContainer, scope: CoroutineScope) : ServerAddFlow(c, scope, "Jellyfin"), PasswordSignIn {
+/** Address → Quick Connect code (or username + password when it's off) → libraries. [emby]: Emby's variant, password only (#25). */
+class JellyfinAddFlow(c: AppContainer, scope: CoroutineScope, private val emby: Boolean = false) : ServerAddFlow(c, scope, if (emby) "Emby" else "Jellyfin"), PasswordSignIn {
     override val usePasswordRes = R.string.set_b_jf_use_password
     override val userRes = R.string.set_b_username
-    override val signInExplRes = R.string.set_b_jf_sign_in_expl
+    override val signInExplRes = if (emby) R.string.set_b_emby_sign_in_expl else R.string.set_b_jf_sign_in_expl
+    @StringRes val addressRes = if (emby) R.string.set_b_emby_address else R.string.set_b_jf_address
+    @StringRes val addressExplRes = if (emby) R.string.set_b_emby_address_expl else R.string.set_b_jf_address_expl
     private var base = ""
     private var name = ""
-    private val auth get() = c.jellyfinAuth
+    private val auth get() = if (emby) c.embyAuth else c.jellyfinAuth
 
     override fun start() { step.value = ServerStep.Address }
 
     fun connect(typed: String) = launchStep {
         step.value = ServerStep.Working(R.string.set_b_jf_connecting)
-        val typedBase = jellyfinBase(typed)
+        val typedBase = if (emby) org.imdtv.iptvtv.data.source.embyBase(typed) else jellyfinBase(typed)
         val (b, n) = try { auth.resolve(typedBase) } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) {
-            android.util.Log.w("Jellyfin", "No Jellyfin at $typedBase", e)
+            android.util.Log.w("Jellyfin", "No ${if (emby) "Emby" else "Jellyfin"} at $typedBase", e)
             step.value = ServerStep.Failed(c.appContext.getString(R.string.set_b_plex_unreachable, typedBase)); return@launchStep
         }
         base = b; name = n
@@ -190,7 +192,7 @@ class JellyfinAddFlow(c: AppContainer, scope: CoroutineScope) : ServerAddFlow(c,
 
     private suspend fun signedIn(a: JfAuth) {
         step.value = ServerStep.Working(R.string.set_b_jf_connecting)
-        libraries(name, auth.libraries(base, a), ProviderType.JELLYFIN, base, a.user.id, a.token)
+        libraries(name, auth.libraries(base, a), if (emby) ProviderType.EMBY else ProviderType.JELLYFIN, base, a.user.id, a.token)
     }
 }
 
@@ -235,10 +237,10 @@ class StremioAddFlow(c: AppContainer, scope: CoroutineScope) : ServerAddFlow(c, 
 }
 
 /** The media server kinds, each a page of Settings › Media servers. */
-val SERVER_TYPES = listOf(ProviderType.PLEX, ProviderType.JELLYFIN, ProviderType.STREMIO)
-private fun ProviderType.serverName() = when (this) { ProviderType.PLEX -> "Plex"; ProviderType.JELLYFIN -> "Jellyfin"; else -> "Stremio" }
-@StringRes private fun ProviderType.addRes() = when (this) { ProviderType.PLEX -> R.string.set_b_plex_add; ProviderType.JELLYFIN -> R.string.set_b_jf_add; else -> R.string.set_b_stremio_add }
-@StringRes private fun ProviderType.addExplRes() = when (this) { ProviderType.PLEX -> R.string.set_b_plex_add_expl; ProviderType.JELLYFIN -> R.string.set_b_jf_add_expl; else -> R.string.set_b_stremio_add_expl }
+val SERVER_TYPES = listOf(ProviderType.PLEX, ProviderType.JELLYFIN, ProviderType.EMBY, ProviderType.STREMIO)
+private fun ProviderType.serverName() = when (this) { ProviderType.PLEX -> "Plex"; ProviderType.JELLYFIN -> "Jellyfin"; ProviderType.EMBY -> "Emby"; else -> "Stremio" }
+@StringRes private fun ProviderType.addRes() = when (this) { ProviderType.PLEX -> R.string.set_b_plex_add; ProviderType.JELLYFIN -> R.string.set_b_jf_add; ProviderType.EMBY -> R.string.set_b_emby_add; else -> R.string.set_b_stremio_add }
+@StringRes private fun ProviderType.addExplRes() = when (this) { ProviderType.PLEX -> R.string.set_b_plex_add_expl; ProviderType.JELLYFIN -> R.string.set_b_jf_add_expl; ProviderType.EMBY -> R.string.set_b_emby_add_expl; else -> R.string.set_b_stremio_add_expl }
 
 /** Settings › Media servers: Plex ›, Jellyfin › (the servers added, or what adding one gives), then the update interval. */
 @Composable
@@ -258,7 +260,7 @@ fun MediaServerPage(vm: SettingsViewModel, type: ProviderType, modifier: Modifie
                     openers: MutableMap<Long, FocusRequester>, onOpen: (Long) -> Unit, onClose: () -> Unit) {
     androidx.activity.compose.BackHandler(onBack = onClose)
     val providers by vm.providers.collectAsState()
-    val flow = when (type) { ProviderType.PLEX -> vm.plex; ProviderType.JELLYFIN -> vm.jellyfin; else -> vm.stremio }
+    val flow = when (type) { ProviderType.PLEX -> vm.plex; ProviderType.JELLYFIN -> vm.jellyfin; ProviderType.EMBY -> vm.emby; else -> vm.stremio }
     val step by flow.step.collectAsState()
     androidx.compose.runtime.LaunchedEffect(type) { if (focusFirst) { withFrameNanos { }; runCatching { first.requestFocus() } } }
     androidx.compose.foundation.layout.Column(modifier.verticalScroll(androidx.compose.foundation.rememberScrollState()), verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(6.dp)) {
@@ -285,7 +287,7 @@ private fun ServerFlowRows(flow: ServerAddFlow, top: FocusRequester, addTitle: S
         is ServerStep.Code -> stringResource(R.string.set_b_plex_code, s.code) to stringResource(s.expl)
         is ServerStep.Working -> stringResource(s.text) to ""
         is ServerStep.Servers -> stringResource(R.string.set_b_plex_pick_server) to ""
-        ServerStep.Address -> stringResource(R.string.set_b_jf_address) to stringResource(R.string.set_b_jf_address_expl)
+        ServerStep.Address -> (flow as JellyfinAddFlow).let { stringResource(it.addressRes) to stringResource(it.addressExplRes) }
         is ServerStep.SignIn -> stringResource(R.string.set_b_jf_sign_in_title, s.name) to (s.error ?: stringResource((flow as PasswordSignIn).signInExplRes))
         is ServerStep.Libraries -> stringResource(R.string.set_b_plex_pick_libraries, s.name) to ""
         is ServerStep.Adding -> stringResource(R.string.set_b_plex_adding) to s.progress

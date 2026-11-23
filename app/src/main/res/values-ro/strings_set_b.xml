@@ -321,6 +321,12 @@
     <string name="set_b_jf_sign_in">Conectare</string>
     <string name="set_b_jf_failed">Cererea Jellyfin a eșuat: HTTP %1$d</string>
     <string name="set_b_jf_wrong_login">Nume de utilizator sau parolă greșite</string>
+    <string name="set_b_emby_add">Adaugă server Emby</string>
+    <string name="set_b_emby_add_expl">Filmele și serialele tale Emby, alături de cele din playlist</string>
+    <string name="set_b_emby_address">Adresa serverului Emby</string>
+    <string name="set_b_emby_address_expl">Introdu-o mai jos ca în aplicația Emby, de exemplu http://192.168.1.10:8096.</string>
+    <string name="set_b_emby_sign_in_expl">Introdu mai jos numele de utilizator și parola Emby.</string>
+    <string name="set_b_emby_failed">Cererea Emby a eșuat: HTTP %1$d</string>
     <string name="set_b_plex_all_added">Toate serverele din acest cont Plex sunt deja adăugate</string>
     <string name="set_b_stremio_add">Adaugă un cont Stremio</string>
     <string name="set_b_stremio_add_expl">Filme și seriale din add-on-urile contului tău Stremio</string>

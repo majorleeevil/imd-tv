@@ -41,6 +41,7 @@ fun LazyListScope.otherPlaylistItems(
 fun org.imdtv.iptvtv.data.db.ProviderEntity.railTitle() = when (type) {
     org.imdtv.iptvtv.data.db.ProviderType.PLEX -> "Plex ($name)"
     org.imdtv.iptvtv.data.db.ProviderType.JELLYFIN -> "Jellyfin ($name)"
+    org.imdtv.iptvtv.data.db.ProviderType.EMBY -> "Emby ($name)"
     org.imdtv.iptvtv.data.db.ProviderType.STREMIO -> "Stremio ($name)"
     else -> name
 }

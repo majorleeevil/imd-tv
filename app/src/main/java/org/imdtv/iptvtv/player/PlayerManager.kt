@@ -219,7 +219,7 @@ class PlayerManager(private val context: Context) {
     /** [login] fills the Xtream placeholders in [url] (saved links hold no login); [url] itself stays the key for comparisons. */
     /** [startMs]: a movie/episode starts there (resume), applied when the stream loads, also after the guard or a portal link. */
     /** [fallbackUrl]: played instead when [url] fails (catch-up's second link form), without the usual retries first. */
-    /** [parallel]: a Plex/Jellyfin file, fetched over several connections (ParallelDataSource); never an IPTV provider. */
+    /** [parallel]: a Plex/Jellyfin/Emby file, fetched over several connections (ParallelDataSource); never an IPTV provider. */
     fun play(url: String, userAgent: String?, login: Login? = null, vod: Boolean = false, drm: Drm? = null, startMs: Long = 0,
              fallbackUrl: String? = null, parallel: Boolean = false) {
         fallback = fallbackUrl

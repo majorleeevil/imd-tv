@@ -300,7 +300,7 @@ class VodViewModel(private val app: Application) : AndroidViewModel(app) {
 
     private fun startPlay(p: ProviderEntity?, url: String, item: VodItem?, episode: String, startMs: Long) {
         player.play(url, p?.userAgent, p?.login(), vod = true, startMs = startMs,
-            parallel = p?.type == org.imdtv.iptvtv.data.db.ProviderType.PLEX || p?.type == org.imdtv.iptvtv.data.db.ProviderType.JELLYFIN)
+            parallel = p?.type == org.imdtv.iptvtv.data.db.ProviderType.PLEX || p?.type == org.imdtv.iptvtv.data.db.ProviderType.JELLYFIN || p?.type == org.imdtv.iptvtv.data.db.ProviderType.EMBY)
         learn?.cancel()
         if (item == null) return
         p?.let { c.watchProgress.start(it.id, item.kind, item.id, episode, url) }

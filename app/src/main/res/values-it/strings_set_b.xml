@@ -321,6 +321,12 @@
     <string name="set_b_jf_sign_in">Accedi</string>
     <string name="set_b_jf_failed">Richiesta Jellyfin non riuscita: HTTP %1$d</string>
     <string name="set_b_jf_wrong_login">Nome utente o password errati</string>
+    <string name="set_b_emby_add">Aggiungi server Emby</string>
+    <string name="set_b_emby_add_expl">I tuoi film e serie Emby, accanto a quelli della tua playlist</string>
+    <string name="set_b_emby_address">Indirizzo del server Emby</string>
+    <string name="set_b_emby_address_expl">Inseriscilo qui sotto come nell\'app Emby, ad esempio http://192.168.1.10:8096.</string>
+    <string name="set_b_emby_sign_in_expl">Inserisci qui sotto nome utente e password di Emby.</string>
+    <string name="set_b_emby_failed">Richiesta Emby non riuscita: HTTP %1$d</string>
     <string name="set_b_plex_all_added">Tutti i server di questo account Plex sono già stati aggiunti</string>
     <string name="set_b_stremio_add">Aggiungi account Stremio</string>
     <string name="set_b_stremio_add_expl">Film e serie dai componenti aggiuntivi del tuo account Stremio</string>
