@@ -353,10 +353,11 @@ private fun GuideRow(
             val fill = f && logo == null
             Row(
                 Modifier.fillMaxSize()
-                    .graphicsLayer { val s = if (f && !style.boxed) 1.03f else 1f; scaleX = s; scaleY = s }
-                    .then(if (f && !style.boxed) Modifier.shadow(14.dp, RoundedCornerShape(5.dp), ambientColor = Color(0xFFA0BEFF), spotColor = Color(0xFFA0BEFF)) else Modifier)
+                    // A bordered logo row stays its size: grown, its border's left edge was clipped by the column.
+                    .graphicsLayer { val s = if (fill && !style.boxed) 1.03f else 1f; scaleX = s; scaleY = s }
+                    .then(if (fill && !style.boxed) Modifier.shadow(14.dp, RoundedCornerShape(5.dp), ambientColor = Color(0xFFA0BEFF), spotColor = Color(0xFFA0BEFF)) else Modifier)
                     .background(if (moving) Color(0xFFE5A00D) else if (fill) colors.focus else colors.cell, if (style.boxed) BOX else PILL)
-                    .then(if (f && !fill) Modifier.border(3.dp, colors.focus, if (style.boxed) BOX else PILL) else Modifier)
+                    .then(if (f && !fill) Modifier.border(1.5.dp, colors.focus, if (style.boxed) BOX else PILL) else Modifier)
                     .padding(horizontal = 11.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
