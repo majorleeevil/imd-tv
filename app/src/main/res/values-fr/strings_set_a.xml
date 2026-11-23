@@ -96,6 +96,8 @@
     <string name="set_a_title_size">Taille du texte</string>
     <string name="set_a_multi_line">Noms sur plusieurs lignes</string>
     <string name="set_a_multi_line_expl">Permet aux noms de chaînes et aux titres de programmes de passer sur 2 lignes dans le guide. Dans Celestial Glass et Liquid Glass, cela demande des lignes plus hautes : 5 chaînes dans le guide (ou 6 dans Celestial Glass)</string>
+    <string name="set_a_wide_names">Noms de chaînes larges</string>
+    <string name="set_a_wide_names_expl">Deux fois plus de place pour les noms de chaînes dans le guide, moins pour les programmes. Celestial Glass et Liquid Glass affichent aussi le nom de la chaîne à côté de son logo en haut</string>
     <string name="set_a_reset_appearance">Réinitialiser l\'apparence</string>
     <string name="set_a_reset_appearance_confirm">Appuyez de nouveau sur OK pour remettre tous les réglages d\'apparence par défaut</string>
     <string name="set_a_reset_appearance_expl">Thème, couleurs, disposition du guide et horloge par défaut</string>

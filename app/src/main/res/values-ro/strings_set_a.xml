@@ -96,6 +96,8 @@
     <string name="set_a_title_size">Dimensiunea textului</string>
     <string name="set_a_multi_line">Nume pe mai multe rânduri</string>
     <string name="set_a_multi_line_expl">Permite ca numele canalelor și titlurile emisiunilor să treacă pe 2 rânduri în ghid. În Celestial Glass și Liquid Glass sunt necesare rânduri mai înalte: 5 canale în ghid (sau 6 în Celestial Glass)</string>
+    <string name="set_a_wide_names">Nume late de canale</string>
+    <string name="set_a_wide_names_expl">De două ori mai mult loc pentru numele canalelor în ghid, mai puțin pentru emisiuni. Celestial Glass și Liquid Glass afișează și numele canalului lângă logo, sus</string>
     <string name="set_a_reset_appearance">Resetează aspectul</string>
     <string name="set_a_reset_appearance_confirm">Apasă OK din nou pentru a readuce toate setările de aspect la valorile implicite</string>
     <string name="set_a_reset_appearance_expl">Tema, culorile, aranjarea ghidului și ceasul revin la valorile implicite</string>

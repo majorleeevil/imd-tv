@@ -123,5 +123,6 @@ private fun GuideHero(vm: LiveViewModel, modifier: Modifier, size: HeaderSize, s
     val cursor by vm.cursor.collectAsState()
     val hero = channels.find { it.id == focused?.id } ?: focused // the list has the renamed copy
     Hero(hero, hero?.displayName(strip).orEmpty(), programmes[focused?.id].orEmpty(), now, logoSource, heroBadges(focused?.id, previewingId, formats), modifier, size,
-        at = Timeline.cursorAt(cursor, now, vm.inPast.collectAsState().value), sky = sky)
+        at = Timeline.cursorAt(cursor, now, vm.inPast.collectAsState().value), sky = sky,
+        showName = vm.settings.collectAsState().value.wideGuideNames)
 }

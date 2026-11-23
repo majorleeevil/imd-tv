@@ -96,6 +96,8 @@
     <string name="set_a_title_size">Tamanho do texto</string>
     <string name="set_a_multi_line">Nomes em várias linhas</string>
     <string name="set_a_multi_line_expl">Permite que nomes de canais e títulos de programas ocupem 2 linhas no guia. No Celestial Glass e no Liquid Glass requer linhas mais altas: 5 canais no guia (ou 6 no Celestial Glass)</string>
+    <string name="set_a_wide_names">Nomes de canais largos</string>
+    <string name="set_a_wide_names_expl">O dobro do espaço para os nomes dos canais no guia, menos para os programas. O Celestial Glass e o Liquid Glass também mostram o nome do canal ao lado do logótipo no topo</string>
     <string name="set_a_reset_appearance">Repor aspeto</string>
     <string name="set_a_reset_appearance_confirm">Prima OK novamente para repor todas as definições de Aspeto para os valores predefinidos</string>
     <string name="set_a_reset_appearance_expl">Tema, cores, disposição do guia e relógio repostos para os valores predefinidos</string>

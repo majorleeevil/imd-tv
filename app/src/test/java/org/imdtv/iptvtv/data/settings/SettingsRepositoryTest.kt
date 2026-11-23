@@ -31,7 +31,7 @@ class SettingsRepositoryTest {
     @Test fun updateRoundTripsEveryField() = runTest {
         val s = AppSettings(ThemeId.CELESTIAL_GLASS, true, AudioDecoder.HARDWARE, false, false, true, 24, true, false, 14, 0, 42L, true)
             .copy(subtitlesOn = true, subtitleLanguage = "fr", zapLeftRight = true, backToFullScreen = true, showChannelNumbers = false, themeDark = true, clock24h = false, playerClock = PlayerClock.LIVE, liveSubtitlesOn = true, headerSize = HeaderSize.SMALL, previewFade = false, vodTwoRows = true,
-                showDate = false, themeLooks = mapOf("CELESTIAL_GLASS" to "TEAL;true;7;MEDIUM;false"), guidesOff = setOf("https://g/ie1.xml.gz"))
+                showDate = false, themeLooks = mapOf("CELESTIAL_GLASS" to "TEAL;true;7;MEDIUM;false"), guidesOff = setOf("https://g/ie1.xml.gz"), overlayButtons = false, wideGuideNames = true)
         repo.update { s }
         assertEquals(s, repo.settings.first())
     }
@@ -50,7 +50,7 @@ class SettingsRepositoryTest {
         assertEquals(ThemeColour.TEAL, back.themeColour)
         assertEquals(5, back.guideRows)
         assertEquals(8, back.withTheme(ThemeId.LIQUID_GLASS).guideRows)
-        assertEquals(AppSettings().copy(confirmExit = false), back.copy(confirmExit = false).resetAppearance())
+        assertEquals(AppSettings().copy(confirmExit = false), back.copy(confirmExit = false, overlayButtons = false, wideGuideNames = true).resetAppearance())
     }
 
     @Test fun channelsInGuideFollowsHeaderSize() {

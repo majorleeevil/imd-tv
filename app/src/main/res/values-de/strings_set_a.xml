@@ -96,6 +96,8 @@
     <string name="set_a_title_size">Textgröße</string>
     <string name="set_a_multi_line">Mehrzeilige Namen</string>
     <string name="set_a_multi_line_expl">Sendernamen und Sendungstitel im Programm auf 2 Zeilen umbrechen. In Celestial Glass und Liquid Glass braucht das höhere Zeilen: 5 Sender im Programm (oder 6 in Celestial Glass)</string>
+    <string name="set_a_wide_names">Breite Sendernamen</string>
+    <string name="set_a_wide_names_expl">Doppelt so viel Platz für Sendernamen im Programm, weniger für die Sendungen. Celestial Glass und Liquid Glass zeigen den Sendernamen oben auch neben dem Logo</string>
     <string name="set_a_reset_appearance">Darstellung zurücksetzen</string>
     <string name="set_a_reset_appearance_confirm">OK erneut drücken, um alle Darstellungseinstellungen zurückzusetzen</string>
     <string name="set_a_reset_appearance_expl">Design, Farben, Programmlayout und Uhr auf Standard</string>

@@ -96,6 +96,8 @@
     <string name="set_a_title_size">Tekstgrootte</string>
     <string name="set_a_multi_line">Namen over meerdere regels</string>
     <string name="set_a_multi_line_expl">Laat zendernamen en programmatitels in de gids over 2 regels lopen. In Celestial Glass en Liquid Glass vraagt dit hogere rijen: 5 zenders in de gids (of 6 in Celestial Glass)</string>
+    <string name="set_a_wide_names">Brede zendernamen</string>
+    <string name="set_a_wide_names_expl">Twee keer zoveel ruimte voor zendernamen in de gids, minder voor de programma\'s. Celestial Glass en Liquid Glass tonen de zendernaam bovenaan ook naast het logo</string>
     <string name="set_a_reset_appearance">Weergave resetten</string>
     <string name="set_a_reset_appearance_confirm">Druk nogmaals op OK om alle weergave-instellingen terug te zetten naar standaard</string>
     <string name="set_a_reset_appearance_expl">Thema, kleuren, gidsindeling en klok terug naar standaard</string>

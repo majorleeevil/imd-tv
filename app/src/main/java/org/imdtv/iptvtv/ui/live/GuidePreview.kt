@@ -138,7 +138,8 @@ fun Preview(vm: LiveViewModel, visible: Boolean, screen: Size, modifier: Modifie
 @Composable
 fun Hero(ch: ChannelEntity?, name: String, progs: List<GuideProgramme>, now: Long, logoSource: List<LogoKind>, badges: List<String>, modifier: Modifier,
          size: HeaderSize = HeaderSize.LARGE, /** The highlighted programme's time (a later one after Right). */ at: Long = now,
-         /** Celestial Glass: title, meta line and description stacked across the hero's width (Sky Glass style). */ sky: Boolean = false) {
+         /** Celestial Glass: title, meta line and description stacked across the hero's width (Sky Glass style). */ sky: Boolean = false,
+         /** The channel name beside a logo that stands alone (#20); small headers already have the title there. */ showName: Boolean = false) {
     if (ch == null) return
     val cur = progs.firstOrNull { it.start <= at && at < it.stop }
     val later = cur != null && cur.start > now
@@ -162,7 +163,10 @@ fun Hero(ch: ChannelEntity?, name: String, progs: List<GuideProgramme>, now: Lon
             Text(cur?.title ?: name, fontSize = 31.sp * ts, color = Color.White, maxLines = 1,
                 overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(start = 12.dp))
         } else {
-            logo()
+            if (showName) Row(verticalAlignment = Alignment.CenterVertically) {
+                logo()
+                Text(name, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(start = 12.dp))
+            } else logo()
             Text(cur?.title ?: name, fontSize = 31.sp * ts, color = Color.White, maxLines = 1,
                 overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 9.dp, bottom = 5.dp))
         }

@@ -110,6 +110,9 @@ fun GridStyle.forGuide(multiLine: Boolean, epgScale: Float = 1f): GridStyle {
     return copy(textScale = if (two) minOf(shrink, fit) else shrink, lines = if (two) 2 else 1)
 }
 
+/** Wide channel names (#20): twice the channel column; the programmes give up that width, so the grid's width stays the same. */
+fun GridStyle.wideChannels() = copy(channelCol = channelCol * 2, dpPerMin = (dpPerMin * windowMin - channelCol) / windowMin)
+
 /** Celestial Glass: mockup 01, 420px per half hour (1dp = 2px on a 1080p TV). */
 // 150 min (195 + 5 + 150 × 5.9 = 1085dp) runs off the right edge of the screen on purpose (user, 2026-11-16).
 val GLASS_GRID = GridStyle(32.dp, 195.dp, 5.9.dp, 150, 4.dp, FontWeight.Medium, focusedProgramme = Color(0x8C7891AA), roundedCells = true) // frosted glass
@@ -151,7 +154,9 @@ fun GuideGrid(
     val logoSource by vm.logoSource.collectAsState()
     val display = vm.settings.collectAsState().value.guideDisplay
     val logos = logoSource.takeIf { display != org.imdtv.iptvtv.data.settings.GuideChannelDisplay.NAME }
-    val style = remember(base, multiLine, epg) { base.forGuide(multiLine, epg) }
+    val wide = vm.settings.collectAsState().value.wideGuideNames
+    val grid = remember(base, wide) { if (wide) base.wideChannels() else base }
+    val style = remember(grid, multiLine, epg) { grid.forGuide(multiLine, epg) }
     val listed by vm.channels.collectAsState()
     val move = state.rowMove
     val channels = move?.order ?: listed
@@ -214,7 +219,7 @@ fun GuideGrid(
                 if (rows <= 0) Triple(style, null, null) else with(density) {
                     val gap = style.gap.roundToPx()
                     val row = guideRowPx(area, rows, gap)
-                    Triple(base.copy(rowHeight = row.toDp()).forGuide(multiLine, epg), (row * rows + gap * (rows - 1)).toDp(), wholeRowScroll(row + gap))
+                    Triple(grid.copy(rowHeight = row.toDp()).forGuide(multiLine, epg), (row * rows + gap * (rows - 1)).toDp(), wholeRowScroll(row + gap))
                 }
             }
             CompositionLocalProvider(LocalBringIntoViewSpec provides (scrollSpec ?: LocalBringIntoViewSpec.current)) {

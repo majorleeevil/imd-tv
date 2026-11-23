@@ -96,6 +96,8 @@
     <string name="set_a_title_size">Metin boyutu</string>
     <string name="set_a_multi_line">Çok satırlı adlar</string>
     <string name="set_a_multi_line_expl">Rehberde kanal adları ve program başlıklarının 2 satıra sarmasına izin verir. Celestial Glass ve Liquid Glass temalarında daha yüksek satırlar gerekir: rehberde 5 kanal (Celestial Glass için 6)</string>
+    <string name="set_a_wide_names">Geniş kanal adları</string>
+    <string name="set_a_wide_names_expl">Rehberde kanal adları için iki kat yer, programlar için daha az. Celestial Glass ve Liquid Glass ayrıca kanal adını üstte logosunun yanında gösterir</string>
     <string name="set_a_reset_appearance">Görünümü sıfırla</string>
     <string name="set_a_reset_appearance_confirm">Tüm Görünüm ayarlarını varsayılana döndürmek için tekrar Tamam\'a basın</string>
     <string name="set_a_reset_appearance_expl">Tema, renkler, rehber düzeni ve saat varsayılana döner</string>

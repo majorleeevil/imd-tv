@@ -96,6 +96,8 @@
     <string name="set_a_title_size">Textstorlek</string>
     <string name="set_a_multi_line">Flerradiga namn</string>
     <string name="set_a_multi_line_expl">Låt kanalnamn och programtitlar brytas över 2 rader i guiden. I Celestial Glass och Liquid Glass krävs högre rader: 5 kanaler i guiden (eller 6 i Celestial Glass)</string>
+    <string name="set_a_wide_names">Breda kanalnamn</string>
+    <string name="set_a_wide_names_expl">Dubbelt så mycket plats för kanalnamn i guiden, mindre för programmen. Celestial Glass och Liquid Glass visar även kanalnamnet bredvid logotypen högst upp</string>
     <string name="set_a_reset_appearance">Återställ utseende</string>
     <string name="set_a_reset_appearance_confirm">Tryck på OK igen för att återställa alla utseendeinställningar till standard</string>
     <string name="set_a_reset_appearance_expl">Tema, färger, guidens layout och klocka tillbaka till standard</string>

@@ -97,6 +97,8 @@
     <string name="set_a_vod_rows_1">1 row</string>
     <string name="set_a_title_size">Text sizing</string>
     <string name="set_a_multi_line">Multi-line names</string>
+    <string name="set_a_wide_names">Wide channel names</string>
+    <string name="set_a_wide_names_expl">Twice as much room for channel names in the guide, with less for the programmes. Celestial Glass and Liquid Glass also show the channel name beside its logo at the top</string>
     <string name="set_a_multi_line_expl">Let channel names and programme titles wrap onto 2 lines in the guide. In Celestial Glass and Liquid Glass this needs taller rows: 5 channels in the guide (or 6 in Celestial Glass)</string>
     <string name="set_a_reset_appearance">Reset appearance</string>
     <string name="set_a_reset_appearance_confirm">Press OK again to put every Appearance setting back to its default</string>

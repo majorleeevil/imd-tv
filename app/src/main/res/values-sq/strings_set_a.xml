@@ -97,6 +97,8 @@
     <string name="set_a_title_size">Madhësia e tekstit</string>
     <string name="set_a_multi_line">Emra në disa rreshta</string>
     <string name="set_a_multi_line_expl">Lejon që emrat e kanaleve dhe titujt e emisioneve të shkojnë në 2 rreshta në program. Në Celestial Glass dhe Liquid Glass kjo kërkon rreshta më të gjatë: 5 kanale në program (ose 6 në Celestial Glass)</string>
+    <string name="set_a_wide_names">Emra të gjerë kanalesh</string>
+    <string name="set_a_wide_names_expl">Dyfishi i hapësirës për emrat e kanaleve në program, më pak për emisionet. Celestial Glass dhe Liquid Glass shfaqin gjithashtu emrin e kanalit pranë logos lart</string>
     <string name="set_a_reset_appearance">Rivendos pamjen</string>
     <string name="set_a_reset_appearance_confirm">Shtypni OK përsëri për të kthyer çdo cilësim të Pamjes në parazgjedhje</string>
     <string name="set_a_reset_appearance_expl">Tema, ngjyrat, paraqitja e programit dhe ora kthehen në parazgjedhje</string>

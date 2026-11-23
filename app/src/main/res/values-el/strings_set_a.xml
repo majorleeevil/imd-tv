@@ -96,6 +96,8 @@
     <string name="set_a_title_size">Μέγεθος κειμένου</string>
     <string name="set_a_multi_line">Ονόματα σε πολλές γραμμές</string>
     <string name="set_a_multi_line_expl">Τα ονόματα καναλιών και οι τίτλοι εκπομπών μπορούν να χωρίζονται σε 2 γραμμές στον οδηγό. Στα Celestial Glass και Liquid Glass χρειάζονται ψηλότερες γραμμές: 5 κανάλια στον οδηγό (ή 6 στο Celestial Glass)</string>
+    <string name="set_a_wide_names">Φαρδιά ονόματα καναλιών</string>
+    <string name="set_a_wide_names_expl">Διπλάσιος χώρος για τα ονόματα καναλιών στον οδηγό, λιγότερος για τις εκπομπές. Στα Celestial Glass και Liquid Glass το όνομα του καναλιού εμφανίζεται και δίπλα στο λογότυπο επάνω</string>
     <string name="set_a_reset_appearance">Επαναφορά εμφάνισης</string>
     <string name="set_a_reset_appearance_confirm">Πατήστε ξανά OK για να επανέλθουν όλες οι ρυθμίσεις εμφάνισης στις προεπιλογές</string>
     <string name="set_a_reset_appearance_expl">Θέμα, χρώματα, διάταξη οδηγού και ρολόι στις προεπιλογές</string>

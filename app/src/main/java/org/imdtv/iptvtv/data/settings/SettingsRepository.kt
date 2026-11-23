@@ -78,6 +78,7 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
     private val showRecent = booleanPreferencesKey("show_recent")
     private val railHoldJump = booleanPreferencesKey("rail_hold_jump")
     private val overlayButtons = booleanPreferencesKey("overlay_buttons")
+    private val wideGuideNames = booleanPreferencesKey("wide_guide_names")
     private val guideRows = intPreferencesKey("guide_rows")
     private val multiLineGuide = booleanPreferencesKey("multi_line_guide")
     private val subtitlesOn = booleanPreferencesKey("subtitles_on")
@@ -163,6 +164,7 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
             showRecent = this[showRecent] ?: d.showRecent,
             railHoldJump = this[railHoldJump] ?: d.railHoldJump,
             overlayButtons = this[overlayButtons] ?: d.overlayButtons,
+            wideGuideNames = this[wideGuideNames] ?: d.wideGuideNames,
             guideRows = this[guideRows] ?: d.guideRows,
             multiLineGuide = this[multiLineGuide] ?: d.multiLineGuide,
             subtitlesOn = this[subtitlesOn] ?: d.subtitlesOn,
@@ -239,6 +241,7 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
         this[showRecent] = s.showRecent
         this[railHoldJump] = s.railHoldJump
         this[overlayButtons] = s.overlayButtons
+        this[wideGuideNames] = s.wideGuideNames
         this[subtitlesOn] = s.subtitlesOn
         this[guideRows] = s.guideRows
         this[multiLineGuide] = s.multiLineGuide

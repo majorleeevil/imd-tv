@@ -96,6 +96,8 @@
     <string name="set_a_title_size">Dimensione del testo</string>
     <string name="set_a_multi_line">Nomi su più righe</string>
     <string name="set_a_multi_line_expl">Permette ai nomi dei canali e ai titoli dei programmi di andare su 2 righe nella guida. In Celestial Glass e Liquid Glass servono righe più alte: 5 canali nella guida (o 6 in Celestial Glass)</string>
+    <string name="set_a_wide_names">Nomi dei canali larghi</string>
+    <string name="set_a_wide_names_expl">Il doppio dello spazio per i nomi dei canali nella guida, meno per i programmi. Celestial Glass e Liquid Glass mostrano anche il nome del canale accanto al logo in alto</string>
     <string name="set_a_reset_appearance">Ripristina aspetto</string>
     <string name="set_a_reset_appearance_confirm">Premi di nuovo OK per riportare ogni impostazione dell\'aspetto al valore predefinito</string>
     <string name="set_a_reset_appearance_expl">Tema, colori, layout della guida e orologio ai valori predefiniti</string>
