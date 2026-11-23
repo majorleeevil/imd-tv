@@ -47,6 +47,7 @@
     <string name="set_b_back_guide_expl">Çfarë bën Prapa në programin TV live kur luan një kanal</string>
     <string name="set_b_go_fullscreen">Shko në ekran të plotë</string>
     <string name="set_b_go_menu">Shko te menyja</string>
+    <string name="set_b_go_categories">Shko te kategoritë</string>
     <string name="set_b_hold_back">Mbaj Prapa në programin TV</string>
     <string name="set_b_hold_back_expl">Mbajtja e Prapa bën tjetrën: ekran të plotë ose menynë</string>
     <string name="set_b_guide_timeout">Ekran i plotë pas</string>

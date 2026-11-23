@@ -47,6 +47,7 @@
     <string name="set_b_back_guide_expl">Bir kanal oynatılırken canlı TV rehberinde Geri tuşunun yaptığı işlem</string>
     <string name="set_b_go_fullscreen">Tam ekrana git</string>
     <string name="set_b_go_menu">Menüye git</string>
+    <string name="set_b_go_categories">Kategorilere git</string>
     <string name="set_b_hold_back">TV rehberinde Geri tuşunu basılı tut</string>
     <string name="set_b_hold_back_expl">Geri tuşunu basılı tutmak diğerini yapar: tam ekran veya menü</string>
     <string name="set_b_guide_timeout">Tam ekrana geçiş süresi</string>

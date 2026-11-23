@@ -22,6 +22,7 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
     private val confirmExit = booleanPreferencesKey("confirm_exit")
     private val zapLeftRight = booleanPreferencesKey("zap_left_right")
     private val backToFullScreen = booleanPreferencesKey("back_to_full_screen")
+    private val backToCategories = booleanPreferencesKey("back_to_categories")
     private val showChannelNumbers = booleanPreferencesKey("show_channel_numbers")
     private val themeDark = booleanPreferencesKey("theme_dark")
     private val clock24h = booleanPreferencesKey("clock_24h")
@@ -110,6 +111,7 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
             confirmExit = this[confirmExit] ?: d.confirmExit,
             zapLeftRight = this[zapLeftRight] ?: d.zapLeftRight,
             backToFullScreen = this[backToFullScreen] ?: d.backToFullScreen,
+            backToCategories = this[backToCategories] ?: d.backToCategories,
             showChannelNumbers = this[showChannelNumbers] ?: d.showChannelNumbers,
             themeDark = this[themeDark] ?: d.themeDark,
             clock24h = this[clock24h] ?: d.clock24h,
@@ -187,6 +189,7 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
         this[confirmExit] = s.confirmExit
         this[zapLeftRight] = s.zapLeftRight
         this[backToFullScreen] = s.backToFullScreen
+        this[backToCategories] = s.backToCategories
         this[showChannelNumbers] = s.showChannelNumbers
         this[themeDark] = s.themeDark
         this[clock24h] = s.clock24h

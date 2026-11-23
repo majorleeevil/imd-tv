@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.ui.Alignment
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -38,6 +39,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupProperties
 import androidx.tv.material3.Text
 
 /** A small D-pad menu in a dialog; Back dismisses it. Picking an item does not dismiss by itself. */
@@ -58,15 +61,21 @@ fun ContextMenu(title: String, items: List<Pair<String, () -> Unit>>, focusIndex
     }
 }
 
+/**
+ * Where menus open: null = a centred dialog; else a popup whose bottom-left corner is this far from the screen's
+ * (the live overlay's settings button, #28). Prompts stay dialogs: a text field's keyboard belongs to a dialog window.
+ */
+val LocalMenuAnchor = androidx.compose.runtime.staticCompositionLocalOf<androidx.compose.ui.unit.IntOffset?> { null }
+
 /** A one-field prompt (rename, new category). Save passes the trimmed text, which may be empty. */
 @Composable
 fun TextPrompt(title: String, initial: String, hint: String, onSave: (String) -> Unit, keyboard: androidx.compose.ui.text.input.KeyboardType = androidx.compose.ui.text.input.KeyboardType.Text, secret: Boolean = false, onDismiss: () -> Unit) {
     var text by remember { mutableStateOf(initial) }
-    MenuFrame(title, onDismiss) { first ->
+    androidx.compose.runtime.CompositionLocalProvider(LocalMenuAnchor provides null) { MenuFrame(title, onDismiss) { first ->
         Field(hint, text, keyboard, secret, modifier = Modifier.focusRequester(first)) { text = it }
         MenuItem(stringResource(R.string.live_save), Modifier) { onSave(text.trim()) }
         MenuItem(stringResource(R.string.live_cancel), Modifier, onClick = onDismiss)
-    }
+    } }
 }
 
 private val OK_KEYS = setOf(Key.DirectionCenter, Key.Enter, Key.NumPadEnter)
@@ -78,12 +87,16 @@ internal fun MenuFrame(title: String, onDismiss: () -> Unit, content: @Composabl
     // A long OK opens this menu while the button is still down: its repeats and release must not pick an item.
     // OK counts only from the first fresh press after opening.
     var armed by remember { mutableStateOf(false) }
-    Dialog(onDismissRequest = onDismiss) {
+    val anchor = LocalMenuAnchor.current
+    val body = @Composable {
         Column(
             Modifier.onPreviewKeyEvent { e ->
                 if (armed || e.key !in OK_KEYS) return@onPreviewKeyEvent false
                 if (e.type == KeyEventType.KeyDown && e.nativeKeyEvent.repeatCount == 0) { armed = true; false } else true
-            }.width(420.dp).clip(RoundedCornerShape(12.dp)).background(Color(0xF2101A3A)).padding(20.dp)
+            }.width(420.dp)
+                // A popup isn't kept on screen as a dialog is: a long list (catch-up) scrolls below the screen's top.
+                .then(if (anchor != null) Modifier.heightIn(max = 540.dp - with(androidx.compose.ui.platform.LocalDensity.current) { (-anchor.y).toDp() } - 24.dp) else Modifier)
+                .clip(RoundedCornerShape(12.dp)).background(Color(0xF2101A3A)).padding(20.dp)
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(2.dp), // compact: the channel menu's 13 items fit a 1080p screen unscrolled
         ) {
@@ -92,6 +105,8 @@ internal fun MenuFrame(title: String, onDismiss: () -> Unit, content: @Composabl
             content(first)
         }
     }
+    if (anchor == null) Dialog(onDismissRequest = onDismiss) { body() }
+    else Popup(Alignment.BottomStart, anchor, onDismissRequest = onDismiss, properties = PopupProperties(focusable = true)) { body() }
 }
 
 @Composable

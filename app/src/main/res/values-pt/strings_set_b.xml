@@ -47,6 +47,7 @@
     <string name="set_b_back_guide_expl">O que Voltar faz no guia de TV enquanto um canal está a ser reproduzido</string>
     <string name="set_b_go_fullscreen">Ir para ecrã inteiro</string>
     <string name="set_b_go_menu">Ir para o menu</string>
+    <string name="set_b_go_categories">Ir para as categorias</string>
     <string name="set_b_hold_back">Manter Voltar no guia de TV</string>
     <string name="set_b_hold_back_expl">Manter Voltar faz a outra ação: ecrã inteiro ou menu</string>
     <string name="set_b_guide_timeout">Ecrã inteiro após</string>

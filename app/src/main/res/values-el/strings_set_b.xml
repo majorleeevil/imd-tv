@@ -47,6 +47,7 @@
     <string name="set_b_back_guide_expl">Τι κάνει το Πίσω στον οδηγό live TV ενώ παίζει ένα κανάλι</string>
     <string name="set_b_go_fullscreen">Μετάβαση σε πλήρη οθόνη</string>
     <string name="set_b_go_menu">Μετάβαση στο μενού</string>
+    <string name="set_b_go_categories">Μετάβαση στις κατηγορίες</string>
     <string name="set_b_hold_back">Παρατεταμένο Πίσω στον οδηγό TV</string>
     <string name="set_b_hold_back_expl">Το παρατεταμένο Πίσω κάνει την άλλη ενέργεια: πλήρη οθόνη ή μενού</string>
     <string name="set_b_guide_timeout">Πλήρης οθόνη μετά από</string>

@@ -248,7 +248,7 @@ class MainActivity : ComponentActivity() {
                         } else if (top == Screen.Live) when (themeId) {
                             ThemeId.CELESTIAL_PLUS -> PlusGuideScreen(live, nav, full, pingMs)
                             ThemeId.CELESTIAL_RETRO -> if (live.retroGuideOpen) RetroGuideScreen(live, full) else retroMenu(Tab.LIVE)
-                            else -> if (card != null) XcubeLive(live, card, full) else LiveGuideScreen(live, nav, full)
+                            else -> if (card != null) XcubeLive(live, card, full) else LiveGuideScreen(live, nav, full, menuFocus)
                         }
                         else when {
                             card != null -> XcubeVod(vod, card, app::open, onUsePlaylist = { live.usePlaylistAt(it.providerId, null) })

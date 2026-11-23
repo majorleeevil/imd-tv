@@ -47,6 +47,7 @@
     <string name="set_b_back_guide_expl">Vad Tillbaka gör i live-tv-guiden medan en kanal spelas</string>
     <string name="set_b_go_fullscreen">Gå till helskärm</string>
     <string name="set_b_go_menu">Gå till menyn</string>
+    <string name="set_b_go_categories">Gå till kategorierna</string>
     <string name="set_b_hold_back">Håll Tillbaka i tv-guiden</string>
     <string name="set_b_hold_back_expl">Att hålla Tillbaka gör det andra: helskärm eller menyn</string>
     <string name="set_b_guide_timeout">Helskärm efter</string>

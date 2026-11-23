@@ -43,7 +43,7 @@ import androidx.compose.foundation.border
 import androidx.compose.ui.platform.LocalDensity
 
 @Composable
-fun LiveGuideScreen(vm: LiveViewModel, nav: @Composable () -> Unit, onFullScreen: (ChannelEntity) -> Unit) {
+fun LiveGuideScreen(vm: LiveViewModel, nav: @Composable () -> Unit, onFullScreen: (ChannelEntity) -> Unit, menuFocus: androidx.compose.ui.focus.FocusRequester) {
     val state = rememberGuideState(vm)
     val rail by vm.rail.collectAsState()
     val entry by vm.entry.collectAsState()
@@ -103,8 +103,8 @@ fun LiveGuideScreen(vm: LiveViewModel, nav: @Composable () -> Unit, onFullScreen
         // Glass and Liquid: the grid runs off the right edge and stops 12dp above the bottom, so the last row's border shows; GuideGrid splits it into 5–9 whole rows.
         val grid = (if (backdrop != null) LIQUID_GRID else GLASS_GRID).copy(gap = if (rows > 5) 2.dp else 4.dp)
         GuideGrid(vm, state, grid, onFullScreen, onLeftAtStart = { state.railOpen = true }, rows = rows,
-            modifier = Modifier.padding(start = 24.dp, top = gridTop, bottom = 12.dp).fillMaxSize().glass(blur = false).padding(inset)) // no backdrop patch on the grid: the performance gate (ledger)
-        if (state.railOpen) CategoryRail(vm, state)
+            modifier = Modifier.backOpensRail(vm, state).padding(start = 24.dp, top = gridTop, bottom = 12.dp).fillMaxSize().glass(blur = false).padding(inset)) // no backdrop patch on the grid: the performance gate (ledger)
+        if (state.railOpen) CategoryRail(vm, state, menuFocus)
         GuideMenus(vm, state)
     }
 }

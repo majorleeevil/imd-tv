@@ -151,6 +151,8 @@ data class AppSettings(
     val zapLeftRight: Boolean = false,
     /** Back in the live TV guide opens the playing channel full screen instead of going to the menu. */
     val backToFullScreen: Boolean = false,
+    /** Back in a guide with a category rail opens the rail; Back there goes on to the menu (#31). Only while [backToFullScreen] is off. */
+    val backToCategories: Boolean = false,
     /** Holding Back in the live TV guide does what a tap doesn't (full screen or the menu). */
     val holdBackOther: Boolean = true,
     /** Minutes without a key press in the live TV guide before the playing channel goes full screen; 0 = never. */

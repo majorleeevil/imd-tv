@@ -47,6 +47,7 @@
     <string name="set_b_back_guide_expl">Was Zurück im Live-TV-Programm tut, während ein Sender läuft</string>
     <string name="set_b_go_fullscreen">Zum Vollbild</string>
     <string name="set_b_go_menu">Zum Menü</string>
+    <string name="set_b_go_categories">Zu den Kategorien</string>
     <string name="set_b_hold_back">Zurück halten im TV-Programm</string>
     <string name="set_b_hold_back_expl">Zurück gedrückt halten tut das andere: Vollbild oder Menü</string>
     <string name="set_b_guide_timeout">Vollbild nach</string>

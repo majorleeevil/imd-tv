@@ -49,6 +49,7 @@ import org.imdtv.iptvtv.ui.live.LiveViewModel
 import org.imdtv.iptvtv.ui.live.Preview
 import org.imdtv.iptvtv.ui.live.PreviewEdge
 import org.imdtv.iptvtv.ui.live.XCUBE_GRID
+import org.imdtv.iptvtv.ui.live.backOpensRail
 import org.imdtv.iptvtv.ui.live.heroBadges
 import org.imdtv.iptvtv.ui.live.rememberGuideState
 
@@ -88,9 +89,9 @@ fun XcubeLive(vm: LiveViewModel, card: XcubeCard, onFullScreen: (ChannelEntity) 
             }
             GuideGrid(vm, state, XCUBE_GRID, onFullScreen, onLeftAtStart = { state.railOpen = true },
                 onUpAtTop = { runCatching { card.focus.requestFocus() } },
-                modifier = Modifier.padding(top = 6.dp).fillMaxSize().onFocusChanged { if (it.hasFocus) state.heldFocus = null })
+                modifier = Modifier.backOpensRail(vm, state).padding(top = 6.dp).fillMaxSize().onFocusChanged { if (it.hasFocus) state.heldFocus = null })
         }
-        if (state.railOpen) CategoryRail(vm, state)
+        if (state.railOpen) CategoryRail(vm, state, card.focus)
         GuideMenus(vm, state)
     }
 }

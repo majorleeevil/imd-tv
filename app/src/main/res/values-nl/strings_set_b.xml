@@ -47,6 +47,7 @@
     <string name="set_b_back_guide_expl">Wat Terug doet in de live TV-gids terwijl een zender speelt</string>
     <string name="set_b_go_fullscreen">Naar volledig scherm</string>
     <string name="set_b_go_menu">Naar het menu</string>
+    <string name="set_b_go_categories">Naar de categorieën</string>
     <string name="set_b_hold_back">Terug ingedrukt houden in TV-gids</string>
     <string name="set_b_hold_back_expl">Terug ingedrukt houden doet het andere: volledig scherm of menu</string>
     <string name="set_b_guide_timeout">Volledig scherm na</string>

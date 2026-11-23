@@ -47,6 +47,7 @@
     <string name="set_b_back_guide_expl">What Back does in the live TV guide while a channel is playing</string>
     <string name="set_b_go_fullscreen">Go to full screen</string>
     <string name="set_b_go_menu">Go to the menu</string>
+    <string name="set_b_go_categories">Go to the categories</string>
     <string name="set_b_hold_back">Hold Back in TV guide</string>
     <string name="set_b_hold_back_expl">Holding Back does the other one: full screen or the menu</string>
     <string name="set_b_guide_timeout">Full screen after</string>

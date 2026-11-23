@@ -67,6 +67,8 @@ internal fun Rail(
     keepKey: String?, focusKey: String?, onFocusKeyDone: () -> Unit,
     onPick: (RailEntry) -> Unit, onLongPress: (RailEntry) -> Unit, onMove: (Int) -> Unit, onMoveEnd: (cancel: Boolean) -> Unit,
     onClose: () -> Unit,
+    /** Back; by default it closes the rail as Left does. */
+    onBack: () -> Unit = onClose,
     others: List<org.imdtv.iptvtv.data.repo.OtherPlaylist> = emptyList(), expanded: Set<Long> = emptySet(),
     onToggle: (Long) -> Unit = {}, onPickOther: (org.imdtv.iptvtv.data.db.CategoryEntity) -> Unit = {},
 ) {
@@ -108,7 +110,8 @@ internal fun Rail(
                 }
                 if (railKeys.onKey(e)) return@onPreviewKeyEvent true
                 // Left only on a fresh press: the repeats of the hold that opened the rail would close it again at once.
-                if (down && (e.key == Key.Back || e.key == Key.DirectionLeft && e.nativeKeyEvent.repeatCount == 0)) { onClose(); true } else false
+                if (down && e.key == Key.Back) { onBack(); true }
+                else if (down && e.key == Key.DirectionLeft && e.nativeKeyEvent.repeatCount == 0) { onClose(); true } else false
             },
     ) {
         Row(Modifier.fillMaxWidth().padding(bottom = 12.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -172,7 +175,7 @@ internal fun railMenu(e: RailEntry, horizontal: Boolean = false): GuideMenu? = w
 
 /** The category rail wired to the guide: pick, long-press Move up/down/Hide, move mode, close (spec §4.3). */
 @Composable
-fun CategoryRail(vm: LiveViewModel, state: GuideState, modifier: Modifier = Modifier) {
+fun CategoryRail(vm: LiveViewModel, state: GuideState, menu: androidx.compose.ui.focus.FocusRequester, modifier: Modifier = Modifier) {
     val rail by vm.rail.collectAsState()
     val entry by vm.entry.collectAsState()
     val others by vm.otherPlaylists.collectAsState()
@@ -187,9 +190,26 @@ fun CategoryRail(vm: LiveViewModel, state: GuideState, modifier: Modifier = Modi
             onMove = { d -> state.railMove?.let { vm.moveRail(it.entry, d) } },
             onMoveEnd = { cancel -> endRailMove(vm, state, rail.orEmpty(), cancel) },
             onClose = { state.railOpen = false; state.refocus() },
+            // Back in TV guide › Go to the categories: Back here goes on to the menu, so it never loops with the grid's Back.
+            onBack = if (backOpensRail(vm)) { { state.heldFocus = menu; state.railOpen = false } } else { { state.railOpen = false; state.refocus() } },
             others = others, expanded = expanded, onToggle = { id -> vm.expandedPlaylists.value = vm.expandedPlaylists.value.toggled(id) },
             onPickOther = { cat -> vm.usePlaylistAt(cat.providerId, cat.id); state.railOpen = false })
     }
+}
+
+/** Back in TV guide › Go to the categories (#31), which applies, as the other choices do, while a channel is playing. */
+@Composable
+private fun backOpensRail(vm: LiveViewModel) = vm.settings.collectAsState().value.backToCategories && vm.previewingId.collectAsState().value != null
+
+/**
+ * For the guide grid of a layout with a [CategoryRail]: Back there opens the rail when the setting says so (Back in the
+ * rail then focuses the menu through [GuideState.heldFocus], which focus coming back to the grid clears).
+ */
+@Composable
+internal fun Modifier.backOpensRail(vm: LiveViewModel, state: GuideState): Modifier {
+    var focused by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+    androidx.activity.compose.BackHandler(enabled = focused && !state.railOpen && backOpensRail(vm)) { state.railOpen = true }
+    return onFocusChanged { focused = it.hasFocus; if (focused) state.heldFocus = null }
 }
 
 /** A playlist header or nested category row in a rail's playlist sections; Right acts like OK, as on the other rows. */

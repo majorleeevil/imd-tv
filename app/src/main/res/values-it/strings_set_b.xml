@@ -47,6 +47,7 @@
     <string name="set_b_back_guide_expl">Cosa fa Indietro nella guida TV live mentre un canale è in riproduzione</string>
     <string name="set_b_go_fullscreen">Vai a schermo intero</string>
     <string name="set_b_go_menu">Vai al menu</string>
+    <string name="set_b_go_categories">Vai alle categorie</string>
     <string name="set_b_hold_back">Tieni premuto Indietro nella guida TV</string>
     <string name="set_b_hold_back_expl">Tenere premuto Indietro fa l\'altra azione: schermo intero o menu</string>
     <string name="set_b_guide_timeout">Schermo intero dopo</string>

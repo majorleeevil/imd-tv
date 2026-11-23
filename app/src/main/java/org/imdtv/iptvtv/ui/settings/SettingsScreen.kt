@@ -271,7 +271,9 @@ fun SettingsScreen(vm: SettingsViewModel, onAddPlaylist: () -> Unit, onEditPlayl
                             vm.update { it.copy(lastChannelOnStart = on) }
                         }
                         ChoiceRow(stringResource(R.string.set_b_back_guide), stringResource(R.string.set_b_back_guide_expl),
-                            listOf(false, true), s.backToFullScreen, { if (it) stringResource(R.string.set_b_go_fullscreen) else stringResource(R.string.set_b_go_menu) }, default = AppSettings().backToFullScreen) { v -> vm.update { it.copy(backToFullScreen = v) } }
+                            listOf(0, 1, 2), if (s.backToFullScreen) 2 else if (s.backToCategories) 1 else 0,
+                            { stringResource(when (it) { 2 -> R.string.set_b_go_fullscreen; 1 -> R.string.set_b_go_categories; else -> R.string.set_b_go_menu }) }, default = 0) { v ->
+                            vm.update { it.copy(backToFullScreen = v == 2, backToCategories = v == 1) } }
                         SwitchRow(stringResource(R.string.set_b_hold_back), stringResource(R.string.set_b_hold_back_expl), s.holdBackOther) { on -> vm.update { it.copy(holdBackOther = on) } }
                         ChoiceRow(stringResource(R.string.set_b_guide_timeout), stringResource(R.string.set_b_guide_timeout_expl), listOf(0, 1, 2, 5, 10, 30), s.guideTimeoutMin,
                             { if (it == 0) stringResource(R.string.set_b_off) else stringResource(R.string.set_b_minutes, it) }, default = 0) { v -> vm.update { it.copy(guideTimeoutMin = v) } }

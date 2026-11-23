@@ -47,6 +47,7 @@
     <string name="set_b_back_guide_expl">Co robi Wstecz w przewodniku TV, gdy odtwarzany jest kanał</string>
     <string name="set_b_go_fullscreen">Przejdź na pełny ekran</string>
     <string name="set_b_go_menu">Przejdź do menu</string>
+    <string name="set_b_go_categories">Przejdź do kategorii</string>
     <string name="set_b_hold_back">Przytrzymaj Wstecz w przewodniku TV</string>
     <string name="set_b_hold_back_expl">Przytrzymanie Wstecz robi drugą rzecz: pełny ekran lub menu</string>
     <string name="set_b_guide_timeout">Pełny ekran po</string>

@@ -47,6 +47,7 @@
     <string name="set_b_back_guide_expl">Ce face Înapoi în ghidul TV live cât timp rulează un canal</string>
     <string name="set_b_go_fullscreen">Mergi la ecran complet</string>
     <string name="set_b_go_menu">Mergi la meniu</string>
+    <string name="set_b_go_categories">Mergi la categorii</string>
     <string name="set_b_hold_back">Ține apăsat Înapoi în ghidul TV</string>
     <string name="set_b_hold_back_expl">Apăsarea lungă pe Înapoi face opusul: ecran complet sau meniu</string>
     <string name="set_b_guide_timeout">Ecran complet după</string>
