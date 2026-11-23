@@ -191,6 +191,8 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
     var guidePos: GuidePos? = null
     /** Celestial Retro: the guide is open (else its category menu shows). Kept here so full screen and back returns to it. */
     var retroGuideOpen by androidx.compose.runtime.mutableStateOf(false)
+    /** An arrow set to Categories (#21) left full screen: the rail themes' guide opens its category rail once. */
+    var openRail by androidx.compose.runtime.mutableStateOf(false)
     /** Gamestation: where the XMB is (column, item, open folder). Kept here so full screen, detail and Settings return to it. */
     var xmb by androidx.compose.runtime.mutableStateOf(org.imdtv.iptvtv.ui.xmb.XmbState())
     /** Gamestation has opened at the playing channel once (or the user moved first). */

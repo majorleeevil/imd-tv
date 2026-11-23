@@ -89,6 +89,32 @@ enum class EpgTextSize(@StringRes val labelRes: Int, val scale: Float) {
 /** Settings › Channels › Channel display: what the TV guide's channel column shows. */
 enum class GuideChannelDisplay(@StringRes val labelRes: Int) { NAME(R.string.set_a_guide_display_name), LOGO(R.string.set_a_guide_display_logo), BOTH(R.string.set_a_guide_display_both) }
 
+/** An arrow key while live TV plays full screen (#21). */
+enum class Dpad { UP, DOWN, LEFT, RIGHT }
+
+/** What an arrow does full screen; DEFAULT = what Change channel with / View Previous Channel With set. */
+enum class DpadAction(@StringRes val labelRes: Int) {
+    DEFAULT(R.string.set_b_dpad_default), CHANNEL(R.string.set_b_dpad_channel), PREVIOUS(R.string.set_b_dpad_previous),
+    GUIDE(R.string.live_tv_guide), CATEGORIES(R.string.set_a_page_categories), INFO(R.string.set_b_dpad_info),
+    SETTINGS(R.string.set_b_settings), NOTHING(R.string.set_b_dpad_nothing),
+}
+
+/** "LEFT=GUIDE,UP=INFO" → the arrows set; unknown names are skipped, so an old or hand-edited value can't break the keys. */
+fun parseDpadKeys(s: String): Map<Dpad, DpadAction> = s.split(',').mapNotNull { kv ->
+    val k = Dpad.entries.find { it.name == kv.substringBefore('=') } ?: return@mapNotNull null
+    val a = DpadAction.entries.find { it.name == kv.substringAfter('=', "") } ?: return@mapNotNull null
+    k to a
+}.toMap()
+
+fun Map<Dpad, DpadAction>.encodeDpadKeys() = filterValues { it != DpadAction.DEFAULT }.entries.joinToString(",") { "${it.key.name}=${it.value.name}" }
+
+/** [key]'s action; DEFAULT becomes CHANNEL on the change-channel pair and PREVIOUS on the other, as before #21. */
+fun dpadAction(key: Dpad, zapLeftRight: Boolean, custom: Map<Dpad, DpadAction>): DpadAction =
+    custom[key]?.takeIf { it != DpadAction.DEFAULT } ?: if ((key == Dpad.LEFT || key == Dpad.RIGHT) == zapLeftRight) DpadAction.CHANNEL else DpadAction.PREVIOUS
+
+/** -1 for Up and Left, 1 for Down and Right (the zap and previous-channel step). */
+val Dpad.delta get() = if (this == Dpad.UP || this == Dpad.LEFT) -1 else 1
+
 /** Settings › Movies & Series › Sort by: one order for every movie and series list (issue #11). */
 enum class VodSort(@StringRes val labelRes: Int) { PLAYLIST(R.string.set_b_vod_sort_playlist), AZ(R.string.set_b_vod_sort_az), ADDED(R.string.set_b_vod_sort_added) }
 
@@ -153,6 +179,8 @@ data class AppSettings(
     val smbPassword: String = "",
     /** Live full screen: Left/Right zaps (Left = previous) instead of Up/Down. */
     val zapLeftRight: Boolean = false,
+    /** Arrow actions full screen (#21), as [encodeDpadKeys] writes them; "" = every arrow DEFAULT. */
+    val dpadKeys: String = "",
     /** Back in the live TV guide opens the playing channel full screen instead of going to the menu. */
     val backToFullScreen: Boolean = false,
     /** Back in a guide with a category rail opens the rail; Back there goes on to the menu (#31). Only while [backToFullScreen] is off. */

@@ -36,6 +36,16 @@
     <string name="set_b_up_down">Πάνω / Κάτω</string>
     <string name="set_b_prev_channel">Προηγούμενο κανάλι με</string>
     <string name="set_b_prev_channel_expl">Live TV πλήρους οθόνης: Δεξιά ή Κάτω γυρίζει πίσω στα κανάλια που είδατε, Αριστερά ή Πάνω προχωρά ξανά</string>
+    <string name="set_b_dpad_up">Πάνω κατά την προβολή</string>
+    <string name="set_b_dpad_down">Κάτω κατά την προβολή</string>
+    <string name="set_b_dpad_left">Αριστερά κατά την προβολή</string>
+    <string name="set_b_dpad_right">Δεξιά κατά την προβολή</string>
+    <string name="set_b_dpad_expl">Ζωντανή TV σε πλήρη οθόνη: τι κάνει αυτό το βέλος. Προεπιλογή: όπως ορίζουν οι ρυθμίσεις αλλαγής καναλιού και προηγούμενου καναλιού</string>
+    <string name="set_b_dpad_default">Προεπιλογή</string>
+    <string name="set_b_dpad_channel">Αλλαγή καναλιού</string>
+    <string name="set_b_dpad_previous">Προηγούμενα κανάλια</string>
+    <string name="set_b_dpad_info">Επικάλυψη πληροφοριών</string>
+    <string name="set_b_dpad_nothing">Τίποτα</string>
     <string name="set_b_recording">Εγγραφή</string>
     <string name="set_b_recording_expl">Εγγραφή live TV στη συσκευή, σε μονάδα USB ή σε κοινόχρηστο δίκτυο</string>
     <string name="set_b_on_arrow">Ενεργό ›</string>

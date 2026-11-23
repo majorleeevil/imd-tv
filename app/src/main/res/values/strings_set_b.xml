@@ -36,6 +36,16 @@
     <string name="set_b_up_down">Up / Down</string>
     <string name="set_b_prev_channel">View Previous Channel With</string>
     <string name="set_b_prev_channel_expl">Full screen live TV: Right or Down steps back through the channels you watched, Left or Up comes forward again</string>
+    <string name="set_b_dpad_up">Up while watching</string>
+    <string name="set_b_dpad_down">Down while watching</string>
+    <string name="set_b_dpad_left">Left while watching</string>
+    <string name="set_b_dpad_right">Right while watching</string>
+    <string name="set_b_dpad_expl">Full screen live TV: what this arrow does. Default: as Change channel with and View Previous Channel With set it</string>
+    <string name="set_b_dpad_default">Default</string>
+    <string name="set_b_dpad_channel">Change channel</string>
+    <string name="set_b_dpad_previous">Previous channels</string>
+    <string name="set_b_dpad_info">Info overlay</string>
+    <string name="set_b_dpad_nothing">Nothing</string>
     <string name="set_b_recording">Recording</string>
     <string name="set_b_recording_expl">Record live TV to the box, a USB drive or a network share</string>
     <string name="set_b_on_arrow">On ›</string>

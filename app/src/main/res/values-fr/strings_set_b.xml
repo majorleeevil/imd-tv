@@ -36,6 +36,16 @@
     <string name="set_b_up_down">Haut / Bas</string>
     <string name="set_b_prev_channel">Revenir à la chaîne précédente avec</string>
     <string name="set_b_prev_channel_expl">TV en direct plein écran : Droite ou Bas remonte dans les chaînes regardées, Gauche ou Haut redescend</string>
+    <string name="set_b_dpad_up">Haut pendant le visionnage</string>
+    <string name="set_b_dpad_down">Bas pendant le visionnage</string>
+    <string name="set_b_dpad_left">Gauche pendant le visionnage</string>
+    <string name="set_b_dpad_right">Droite pendant le visionnage</string>
+    <string name="set_b_dpad_expl">TV en direct en plein écran : ce que fait cette flèche. Par défaut : selon les réglages de changement de chaîne et de chaîne précédente</string>
+    <string name="set_b_dpad_default">Par défaut</string>
+    <string name="set_b_dpad_channel">Changer de chaîne</string>
+    <string name="set_b_dpad_previous">Chaînes précédentes</string>
+    <string name="set_b_dpad_info">Incrustation d\'infos</string>
+    <string name="set_b_dpad_nothing">Rien</string>
     <string name="set_b_recording">Enregistrement</string>
     <string name="set_b_recording_expl">Enregistrer la TV en direct sur le boîtier, un disque USB ou un partage réseau</string>
     <string name="set_b_on_arrow">Activé ›</string>

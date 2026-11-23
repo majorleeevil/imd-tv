@@ -36,6 +36,16 @@
     <string name="set_b_up_down">Auf / Ab</string>
     <string name="set_b_prev_channel">Vorherigen Sender aufrufen mit</string>
     <string name="set_b_prev_channel_expl">Live-TV im Vollbild: Rechts oder Ab geht durch die zuletzt gesehenen Sender zurück, Links oder Auf wieder vor</string>
+    <string name="set_b_dpad_up">Hoch beim Fernsehen</string>
+    <string name="set_b_dpad_down">Runter beim Fernsehen</string>
+    <string name="set_b_dpad_left">Links beim Fernsehen</string>
+    <string name="set_b_dpad_right">Rechts beim Fernsehen</string>
+    <string name="set_b_dpad_expl">Live-TV im Vollbild: was diese Pfeiltaste tut. Standard: wie unter Sender wechseln mit und Vorherigen Sender anzeigen mit eingestellt</string>
+    <string name="set_b_dpad_default">Standard</string>
+    <string name="set_b_dpad_channel">Sender wechseln</string>
+    <string name="set_b_dpad_previous">Vorherige Sender</string>
+    <string name="set_b_dpad_info">Info-Overlay</string>
+    <string name="set_b_dpad_nothing">Nichts</string>
     <string name="set_b_recording">Aufnahme</string>
     <string name="set_b_recording_expl">Live-TV auf der Box, einem USB-Laufwerk oder einer Netzwerkfreigabe aufnehmen</string>
     <string name="set_b_on_arrow">An ›</string>

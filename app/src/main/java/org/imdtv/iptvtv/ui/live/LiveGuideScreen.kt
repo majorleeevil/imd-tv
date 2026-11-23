@@ -45,6 +45,7 @@ import androidx.compose.ui.platform.LocalDensity
 @Composable
 fun LiveGuideScreen(vm: LiveViewModel, nav: @Composable () -> Unit, onFullScreen: (ChannelEntity) -> Unit, menuFocus: androidx.compose.ui.focus.FocusRequester) {
     val state = rememberGuideState(vm)
+    androidx.compose.runtime.LaunchedEffect(vm.openRail) { if (vm.openRail) { vm.openRail = false; state.railOpen = true } }
     val rail by vm.rail.collectAsState()
     val entry by vm.entry.collectAsState()
     val updating by vm.guideUpdating.collectAsState()

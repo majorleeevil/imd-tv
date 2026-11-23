@@ -36,6 +36,16 @@
     <string name="set_b_up_down">Yukarı / Aşağı</string>
     <string name="set_b_prev_channel">Önceki kanala dönme tuşları</string>
     <string name="set_b_prev_channel_expl">Tam ekran canlı TV: Sağ veya Aşağı izlediğiniz kanallarda geri gider, Sol veya Yukarı yeniden ileri götürür</string>
+    <string name="set_b_dpad_up">İzlerken yukarı</string>
+    <string name="set_b_dpad_down">İzlerken aşağı</string>
+    <string name="set_b_dpad_left">İzlerken sol</string>
+    <string name="set_b_dpad_right">İzlerken sağ</string>
+    <string name="set_b_dpad_expl">Tam ekran canlı TV: bu okun yaptığı iş. Varsayılan: kanal değiştirme ve önceki kanal ayarlarına göre</string>
+    <string name="set_b_dpad_default">Varsayılan</string>
+    <string name="set_b_dpad_channel">Kanal değiştir</string>
+    <string name="set_b_dpad_previous">Önceki kanallar</string>
+    <string name="set_b_dpad_info">Bilgi katmanı</string>
+    <string name="set_b_dpad_nothing">Hiçbir şey</string>
     <string name="set_b_recording">Kayıt</string>
     <string name="set_b_recording_expl">Canlı TV\'yi kutuya, USB belleğe veya ağ paylaşımına kaydedin</string>
     <string name="set_b_on_arrow">Açık ›</string>

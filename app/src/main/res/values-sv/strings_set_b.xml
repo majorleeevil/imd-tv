@@ -36,6 +36,16 @@
     <string name="set_b_up_down">Upp / Ned</string>
     <string name="set_b_prev_channel">Visa föregående kanal med</string>
     <string name="set_b_prev_channel_expl">Live-tv i helskärm: Höger eller Ned går bakåt bland kanalerna du tittat på, Vänster eller Upp går framåt igen</string>
+    <string name="set_b_dpad_up">Upp när du tittar</string>
+    <string name="set_b_dpad_down">Ned när du tittar</string>
+    <string name="set_b_dpad_left">Vänster när du tittar</string>
+    <string name="set_b_dpad_right">Höger när du tittar</string>
+    <string name="set_b_dpad_expl">Live-tv i helskärm: vad den här pilen gör. Standard: som inställningarna för kanalbyte och föregående kanal</string>
+    <string name="set_b_dpad_default">Standard</string>
+    <string name="set_b_dpad_channel">Byt kanal</string>
+    <string name="set_b_dpad_previous">Föregående kanaler</string>
+    <string name="set_b_dpad_info">Informationsöverlägg</string>
+    <string name="set_b_dpad_nothing">Ingenting</string>
     <string name="set_b_recording">Inspelning</string>
     <string name="set_b_recording_expl">Spela in live-tv till boxen, en USB-enhet eller en nätverksresurs</string>
     <string name="set_b_on_arrow">På ›</string>

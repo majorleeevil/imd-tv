@@ -36,6 +36,16 @@
     <string name="set_b_up_down">Cima / Baixo</string>
     <string name="set_b_prev_channel">Ver canal anterior com</string>
     <string name="set_b_prev_channel_expl">TV em direto em ecrã inteiro: Direita ou Baixo recua pelos canais vistos, Esquerda ou Cima avança de novo</string>
+    <string name="set_b_dpad_up">Cima ao ver</string>
+    <string name="set_b_dpad_down">Baixo ao ver</string>
+    <string name="set_b_dpad_left">Esquerda ao ver</string>
+    <string name="set_b_dpad_right">Direita ao ver</string>
+    <string name="set_b_dpad_expl">TV em direto em ecrã inteiro: o que esta seta faz. Predefinição: como definido em mudar de canal e canal anterior</string>
+    <string name="set_b_dpad_default">Predefinição</string>
+    <string name="set_b_dpad_channel">Mudar de canal</string>
+    <string name="set_b_dpad_previous">Canais anteriores</string>
+    <string name="set_b_dpad_info">Sobreposição de informação</string>
+    <string name="set_b_dpad_nothing">Nada</string>
     <string name="set_b_recording">Gravação</string>
     <string name="set_b_recording_expl">Gravar TV em direto no equipamento, numa unidade USB ou numa partilha de rede</string>
     <string name="set_b_on_arrow">Ligado ›</string>

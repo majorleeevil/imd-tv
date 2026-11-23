@@ -21,6 +21,7 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
     private val lastChannelOnStart = booleanPreferencesKey("last_channel_on_start")
     private val confirmExit = booleanPreferencesKey("confirm_exit")
     private val zapLeftRight = booleanPreferencesKey("zap_left_right")
+    private val dpadKeys = stringPreferencesKey("dpad_keys")
     private val backToFullScreen = booleanPreferencesKey("back_to_full_screen")
     private val backToCategories = booleanPreferencesKey("back_to_categories")
     private val showChannelNumbers = booleanPreferencesKey("show_channel_numbers")
@@ -112,6 +113,7 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
             lastChannelOnStart = this[lastChannelOnStart] ?: d.lastChannelOnStart,
             confirmExit = this[confirmExit] ?: d.confirmExit,
             zapLeftRight = this[zapLeftRight] ?: d.zapLeftRight,
+            dpadKeys = this[dpadKeys] ?: d.dpadKeys,
             backToFullScreen = this[backToFullScreen] ?: d.backToFullScreen,
             backToCategories = this[backToCategories] ?: d.backToCategories,
             showChannelNumbers = this[showChannelNumbers] ?: d.showChannelNumbers,
@@ -192,6 +194,7 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
         this[lastChannelOnStart] = s.lastChannelOnStart
         this[confirmExit] = s.confirmExit
         this[zapLeftRight] = s.zapLeftRight
+        this[dpadKeys] = s.dpadKeys
         this[backToFullScreen] = s.backToFullScreen
         this[backToCategories] = s.backToCategories
         this[showChannelNumbers] = s.showChannelNumbers

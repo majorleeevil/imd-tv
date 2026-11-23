@@ -1,5 +1,6 @@
 package org.imdtv.iptvtv.ui.settings
 
+import org.imdtv.iptvtv.data.settings.encodeDpadKeys
 import androidx.compose.ui.draw.alpha
 import org.imdtv.iptvtv.R
 import androidx.annotation.StringRes
@@ -259,6 +260,15 @@ fun SettingsScreen(vm: SettingsViewModel, onAddPlaylist: () -> Unit, onEditPlayl
                         // Always the other pair of arrows: picking one here flips Change channel with.
                         ChoiceRow(stringResource(R.string.set_b_prev_channel), stringResource(R.string.set_b_prev_channel_expl),
                             listOf(true, false), !s.zapLeftRight, { if (it) stringResource(R.string.set_b_left_right) else stringResource(R.string.set_b_up_down) }, default = !AppSettings().zapLeftRight) { v -> vm.update { it.copy(zapLeftRight = !v) } }
+                        // Each arrow's own action (#21); Default keeps the two rows above in charge.
+                        val dpad = org.imdtv.iptvtv.data.settings.parseDpadKeys(s.dpadKeys)
+                        listOf(org.imdtv.iptvtv.data.settings.Dpad.UP to R.string.set_b_dpad_up, org.imdtv.iptvtv.data.settings.Dpad.DOWN to R.string.set_b_dpad_down,
+                            org.imdtv.iptvtv.data.settings.Dpad.LEFT to R.string.set_b_dpad_left, org.imdtv.iptvtv.data.settings.Dpad.RIGHT to R.string.set_b_dpad_right).forEach { (k, title) ->
+                            ChoiceRow(stringResource(title), stringResource(R.string.set_b_dpad_expl), org.imdtv.iptvtv.data.settings.DpadAction.entries,
+                                dpad[k] ?: org.imdtv.iptvtv.data.settings.DpadAction.DEFAULT, { stringResource(it.labelRes) }, default = org.imdtv.iptvtv.data.settings.DpadAction.DEFAULT) { a ->
+                                vm.update { it.copy(dpadKeys = (org.imdtv.iptvtv.data.settings.parseDpadKeys(it.dpadKeys) + (k to a)).encodeDpadKeys()) }
+                            }
+                        }
                         SettingRow(stringResource(R.string.set_b_recording), stringResource(R.string.set_b_recording_expl),
                             if (s.recordingOn) stringResource(R.string.set_b_on_arrow) else stringResource(R.string.set_b_off_arrow), Modifier.focusRequester(recordingOpener)) { park(); recordingOpen = true }
                         SwitchRow(stringResource(R.string.set_b_catch_up), stringResource(R.string.set_b_catch_up_expl), s.catchUpOn) { on -> vm.update { it.copy(catchUpOn = on) } }

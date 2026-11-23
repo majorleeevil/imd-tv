@@ -36,6 +36,16 @@
     <string name="set_b_up_down">Su / Giù</string>
     <string name="set_b_prev_channel">Torna al canale precedente con</string>
     <string name="set_b_prev_channel_expl">TV live a schermo intero: Destra o Giù torna indietro tra i canali visti, Sinistra o Su va di nuovo avanti</string>
+    <string name="set_b_dpad_up">Su durante la visione</string>
+    <string name="set_b_dpad_down">Giù durante la visione</string>
+    <string name="set_b_dpad_left">Sinistra durante la visione</string>
+    <string name="set_b_dpad_right">Destra durante la visione</string>
+    <string name="set_b_dpad_expl">TV in diretta a schermo intero: cosa fa questa freccia. Predefinito: come impostato per cambio canale e canale precedente</string>
+    <string name="set_b_dpad_default">Predefinito</string>
+    <string name="set_b_dpad_channel">Cambia canale</string>
+    <string name="set_b_dpad_previous">Canali precedenti</string>
+    <string name="set_b_dpad_info">Sovrimpressione informazioni</string>
+    <string name="set_b_dpad_nothing">Niente</string>
     <string name="set_b_recording">Registrazione</string>
     <string name="set_b_recording_expl">Registra la TV live sul box, su un\'unità USB o su una condivisione di rete</string>
     <string name="set_b_on_arrow">Sì ›</string>

@@ -59,6 +59,7 @@ private val CARD_TEXT = Color(0xFF1A3A0E)
 @Composable
 fun XcubeLive(vm: LiveViewModel, card: XcubeCard, onFullScreen: (ChannelEntity) -> Unit) {
     val state = rememberGuideState(vm)
+    androidx.compose.runtime.LaunchedEffect(vm.openRail) { if (vm.openRail) { vm.openRail = false; state.railOpen = true } }
     // Switched to: the guide's own refocus would take focus from the card a frame later (Left then opened the rail).
     remember { if (card.arrivedBySwitch) state.heldFocus = card.focus }
     val channels by vm.channels.collectAsState()

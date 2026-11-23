@@ -36,6 +36,16 @@
     <string name="set_b_up_down">Góra / Dół</string>
     <string name="set_b_prev_channel">Poprzedni kanał przyciskami</string>
     <string name="set_b_prev_channel_expl">Telewizja na żywo na pełnym ekranie: Prawo lub Dół cofa przez oglądane kanały, Lewo lub Góra idzie z powrotem do przodu</string>
+    <string name="set_b_dpad_up">W górę podczas oglądania</string>
+    <string name="set_b_dpad_down">W dół podczas oglądania</string>
+    <string name="set_b_dpad_left">W lewo podczas oglądania</string>
+    <string name="set_b_dpad_right">W prawo podczas oglądania</string>
+    <string name="set_b_dpad_expl">Telewizja na żywo na pełnym ekranie: co robi ta strzałka. Domyślnie: jak w ustawieniach zmiany kanału i poprzedniego kanału</string>
+    <string name="set_b_dpad_default">Domyślnie</string>
+    <string name="set_b_dpad_channel">Zmiana kanału</string>
+    <string name="set_b_dpad_previous">Poprzednie kanały</string>
+    <string name="set_b_dpad_info">Nakładka informacyjna</string>
+    <string name="set_b_dpad_nothing">Nic</string>
     <string name="set_b_recording">Nagrywanie</string>
     <string name="set_b_recording_expl">Nagrywaj telewizję na żywo na dekoder, dysk USB lub udział sieciowy</string>
     <string name="set_b_on_arrow">Wł. ›</string>

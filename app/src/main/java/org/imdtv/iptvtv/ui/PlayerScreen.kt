@@ -1,5 +1,6 @@
 package org.imdtv.iptvtv.ui
 
+import org.imdtv.iptvtv.data.settings.delta
 import org.imdtv.iptvtv.ui.hasCatchUp
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
@@ -51,10 +52,12 @@ private val OK = setOf(Key.DirectionCenter, Key.Enter, Key.NumPadEnter)
 /** Full-screen playback. Live ([liveVm] set) adds the info overlay (OK opens, Back closes, 5s auto-hide) and Up/Down (or Left/Right) zapping. */
 @Composable
 fun PlayerScreen(player: PlayerManager, title: String, liveVm: LiveViewModel? = null, onGuide: () -> Unit = {}, showClock: Boolean = false,
-                 aspect: VideoAspect = VideoAspect.AUTO) {
+                 aspect: VideoAspect = VideoAspect.AUTO, onCategories: () -> Unit = onGuide, onSettings: () -> Unit = {}) {
     val live = liveVm != null
     val context = androidx.compose.ui.platform.LocalContext.current
     val zapLeftRight = liveVm?.settings?.collectAsState()?.value?.zapLeftRight == true
+    val dpadKeys = liveVm?.settings?.collectAsState()?.value?.dpadKeys.orEmpty()
+    val dpad = remember(dpadKeys) { org.imdtv.iptvtv.data.settings.parseDpadKeys(dpadKeys) }
     val focused = liveVm?.focused?.collectAsState()?.value
     val name = focused?.displayName(liveVm.strip.collectAsState().value) ?: title
     // Kept with the channel it is for: a stream that fails inside play() reports before a zap's effects run.
@@ -98,8 +101,25 @@ fun PlayerScreen(player: PlayerManager, title: String, liveVm: LiveViewModel? = 
         )
         if (liveVm != null) {
             // Key target while the overlay is closed. OK opens on key-up, so the same press can't also click the TV guide card.
+            // An arrow's action (#21): zaps repeat while held; the others act once, on the first press.
+            fun arrow(k: org.imdtv.iptvtv.data.settings.Dpad, first: Boolean) {
+                when (org.imdtv.iptvtv.data.settings.dpadAction(k, zapLeftRight, dpad)) {
+                    org.imdtv.iptvtv.data.settings.DpadAction.CHANNEL -> liveVm.zapBy(k.delta)
+                    org.imdtv.iptvtv.data.settings.DpadAction.PREVIOUS -> liveVm.toPreviousChannel(k.delta)
+                    org.imdtv.iptvtv.data.settings.DpadAction.GUIDE -> if (first) onGuide()
+                    org.imdtv.iptvtv.data.settings.DpadAction.CATEGORIES -> if (first) onCategories()
+                    org.imdtv.iptvtv.data.settings.DpadAction.INFO -> if (first) overlay = true
+                    org.imdtv.iptvtv.data.settings.DpadAction.SETTINGS -> if (first) onSettings()
+                    else -> Unit
+                }
+            }
             Box(Modifier.fillMaxSize().focusRequester(keys).focusable().onKeyEvent { e ->
                 if (overlay) return@onKeyEvent false
+                val k = when (e.key) {
+                    Key.DirectionUp -> org.imdtv.iptvtv.data.settings.Dpad.UP; Key.DirectionDown -> org.imdtv.iptvtv.data.settings.Dpad.DOWN
+                    Key.DirectionLeft -> org.imdtv.iptvtv.data.settings.Dpad.LEFT; Key.DirectionRight -> org.imdtv.iptvtv.data.settings.Dpad.RIGHT
+                    else -> null
+                }
                 when {
                     // A parental-locked channel: OK asks for the PIN again instead of opening the overlay.
                     e.key in OK -> { if (e.type == KeyEventType.KeyUp) liveVm.lockedChannel.value?.let { liveVm.preview(it) } ?: run { overlay = true }; true }
@@ -107,14 +127,13 @@ fun PlayerScreen(player: PlayerManager, title: String, liveVm: LiveViewModel? = 
                     e.key == Key.DirectionLeft && focused?.hasCatchUp == true -> {
                         if (e.type == KeyEventType.KeyDown && e.nativeKeyEvent.repeatCount > 0) { if (!leftHeld[0]) { leftHeld[0] = true; liveVm.jumpBack(focused) } }
                         else if (e.type == KeyEventType.KeyUp) {
-                            if (!leftHeld[0]) zapDelta(e.key, zapLeftRight)?.let(liveVm::zapBy) ?: zapDelta(e.key, !zapLeftRight)?.let(liveVm::toPreviousChannel)
+                            if (!leftHeld[0]) arrow(org.imdtv.iptvtv.data.settings.Dpad.LEFT, first = true)
                             leftHeld[0] = false
                         }
                         true
                     }
-                    // The other pair of arrows steps through the channels watched before (Playback › View Previous Channel With).
-                    zapDelta(e.key, !zapLeftRight) != null -> { if (e.type == KeyEventType.KeyDown) zapDelta(e.key, !zapLeftRight)?.let(liveVm::toPreviousChannel); true }
-                    zapDelta(e.key, zapLeftRight) != null -> { if (e.type == KeyEventType.KeyDown) zapDelta(e.key, zapLeftRight)?.let(liveVm::zapBy); true }
+                    // By default one pair zaps and the other steps through the channels watched before (Playback › View Previous Channel With).
+                    k != null -> { if (e.type == KeyEventType.KeyDown) arrow(k, e.nativeKeyEvent.repeatCount == 0); true }
                     // The remote's Channel Up/Down zap whatever the arrow setting (Up = next channel).
                     e.key == Key.ChannelUp || e.key == Key.ChannelDown -> { if (e.type == KeyEventType.KeyDown) liveVm.zapBy(if (e.key == Key.ChannelUp) 1 else -1); true }
                     else -> false
@@ -168,8 +187,4 @@ fun keepFocusWhenControlsHide(view: PlayerView) {
     })
 }
 
-/** Full screen zap keys: Up/Down, or Left/Right (Left = previous) by the setting; null for any other key. */
-fun zapDelta(key: Key, leftRight: Boolean): Int? = when {
-    leftRight -> when (key) { Key.DirectionLeft -> -1; Key.DirectionRight -> 1; else -> null }
-    else -> when (key) { Key.DirectionUp -> -1; Key.DirectionDown -> 1; else -> null }
-}
+

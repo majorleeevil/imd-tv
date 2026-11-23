@@ -36,6 +36,16 @@
     <string name="set_b_up_down">Lart / Poshtë</string>
     <string name="set_b_prev_channel">Shih kanalin e mëparshëm me</string>
     <string name="set_b_prev_channel_expl">TV live në ekran të plotë: Djathtas ose Poshtë kthehet pas nëpër kanalet që keni parë, Majtas ose Lart shkon përsëri përpara</string>
+    <string name="set_b_dpad_up">Lart gjatë shikimit</string>
+    <string name="set_b_dpad_down">Poshtë gjatë shikimit</string>
+    <string name="set_b_dpad_left">Majtas gjatë shikimit</string>
+    <string name="set_b_dpad_right">Djathtas gjatë shikimit</string>
+    <string name="set_b_dpad_expl">TV live në ekran të plotë: çfarë bën kjo shigjetë. Parazgjedhje: si në cilësimet e ndërrimit të kanalit dhe kanalit të mëparshëm</string>
+    <string name="set_b_dpad_default">Parazgjedhje</string>
+    <string name="set_b_dpad_channel">Ndërro kanalin</string>
+    <string name="set_b_dpad_previous">Kanalet e mëparshme</string>
+    <string name="set_b_dpad_info">Mbivendosja e informacionit</string>
+    <string name="set_b_dpad_nothing">Asgjë</string>
     <string name="set_b_recording">Regjistrimi</string>
     <string name="set_b_recording_expl">Regjistroni TV live në pajisje, në një disk USB ose në një ndarje rrjeti</string>
     <string name="set_b_on_arrow">Aktiv ›</string>
