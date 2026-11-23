@@ -54,9 +54,10 @@ import org.imdtv.iptvtv.ui.FocusBox
 import org.imdtv.iptvtv.ui.clockTime
 
 /**
- * Info overlay over live full screen (spec §4.2; #2, #28, #31): a now/next bar, then one row of small buttons at the
- * bottom left (Settings, TV guide, Restart) and the channels watched before. Focus starts on TV guide, so OK, OK still
- * opens the guide. No play/pause: a paused live stream outlives the player's buffer (~50 s), then the provider drops it.
+ * Info overlay over live full screen (spec §4.2): now/next, then a row of TV guide, Settings and Restart cards and the
+ * channels watched before. Focus starts on TV guide, so OK, OK still opens the guide. Celestial Plus (#2) has a smaller
+ * bar and small icon buttons (Settings, TV guide, Restart) set apart by a line. Overlay buttons off (#28, #31): only a
+ * small Settings button. No play/pause: a paused live stream outlives the player's buffer (~50 s), then the provider drops it.
  */
 @Composable
 fun LiveOverlay(vm: LiveViewModel, onGuide: () -> Unit, onPick: (ChannelEntity) -> Unit, onMenuOpen: (Boolean) -> Unit = {}) {
@@ -76,10 +77,14 @@ fun LiveOverlay(vm: LiveViewModel, onGuide: () -> Unit, onPick: (ChannelEntity) 
     val next = progs.firstOrNull { it.start >= (cur?.stop ?: now) }
     val progress = cur?.let { ((now - it.start).toFloat() / (it.stop - it.start)).coerceIn(0f, 1f) }
 
+    val plus = LocalTheme.current.id == ThemeId.CELESTIAL_PLUS
+    val buttons = vm.settings.collectAsState().value.overlayButtons
+    val small = plus || !buttons
     val guideFocus = remember { FocusRequester() }
     val menus = remember(vm) { GuideState(vm, 0, androidx.compose.foundation.lazy.LazyListState(), false, previews = false) }
-    // The player menu opens above the Settings button, not mid-screen (#28): its bottom-left 48 dp in, above the row.
-    val anchor = with(androidx.compose.ui.platform.LocalDensity.current) { androidx.compose.ui.unit.IntOffset(48.dp.roundToPx(), -(ROW_BOTTOM + ROW_HEIGHT + 8.dp).roundToPx()) }
+    // The player menu opens above the Settings button, not mid-screen (#28): small buttons put it first, cards second.
+    val anchorX = if (small) 48.dp else 48.dp + 190.dp + 10.dp
+    val anchor = with(androidx.compose.ui.platform.LocalDensity.current) { androidx.compose.ui.unit.IntOffset(anchorX.roundToPx(), -(ROW_BOTTOM + ROW_HEIGHT + 8.dp).roundToPx()) }
     androidx.compose.runtime.CompositionLocalProvider(org.imdtv.iptvtv.ui.LocalMenuAnchor provides anchor) { GuideMenus(vm, menus) }
     // Keys in a menu (a dialog) don't reach the full-screen timer: hold the overlay open while one shows.
     val menuOpen = menus.menu != null
@@ -110,8 +115,8 @@ fun LiveOverlay(vm: LiveViewModel, onGuide: () -> Unit, onPick: (ChannelEntity) 
                     Row(Modifier.padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         if (cur != null && progress != null) {
                             Text("${clockTime(cur.start)} – ${clockTime(cur.stop)}", fontSize = 13.sp, color = Color.White)
-                            Box(Modifier.size(200.dp, 4.dp).clip(RoundedCornerShape(2.dp)).background(Color(0x33FFFFFF))) {
-                                Box(Modifier.fillMaxHeight().fillMaxWidth(progress).background(LocalTheme.current.colors.focus))
+                            Box(Modifier.size(if (plus) 200.dp else 120.dp, if (plus) 4.dp else 3.dp).clip(RoundedCornerShape(2.dp)).background(Color(0x33FFFFFF))) {
+                                Box(Modifier.fillMaxHeight().fillMaxWidth(progress).background(if (plus) LocalTheme.current.colors.focus else Color.White))
                             }
                             Text(stringResource(R.string.live_overlay_min_left, ((cur.stop - now + 59_999) / 60_000).toInt()), fontSize = 13.sp, color = LocalTheme.current.colors.muted)
                         }
@@ -126,7 +131,7 @@ fun LiveOverlay(vm: LiveViewModel, onGuide: () -> Unit, onPick: (ChannelEntity) 
                         }
                     }
                     cur?.desc?.let {
-                        Text(it, fontSize = 13.sp, lineHeight = 18.sp, color = Color(0xFFDDE3F0), maxLines = 2, overflow = TextOverflow.Ellipsis,
+                        Text(it, fontSize = 13.sp, lineHeight = 18.sp, color = Color(0xFFDDE3F0), maxLines = if (plus) 2 else 3, overflow = TextOverflow.Ellipsis,
                             modifier = Modifier.padding(top = 6.dp).fillMaxWidth(.75f))
                     }
                     next?.let {
@@ -135,18 +140,31 @@ fun LiveOverlay(vm: LiveViewModel, onGuide: () -> Unit, onPick: (ChannelEntity) 
                     }
                 }
             }
+            if (!plus) Box(Modifier.padding(top = 14.dp).fillMaxWidth().height(2.dp).background(Color(0x33FFFFFF))) {
+                if (progress != null) Box(Modifier.fillMaxHeight().fillMaxWidth(progress).background(Color.White))
+            }
             LazyRow(
-                Modifier.padding(top = 16.dp, bottom = ROW_BOTTOM).height(ROW_HEIGHT),
+                Modifier.padding(top = if (plus) 16.dp else 14.dp, bottom = ROW_BOTTOM).height(ROW_HEIGHT),
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                 contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 48.dp),
             ) {
-                // Subtitles, aspect, record, favourite and add to category, at hand while watching.
-                item(key = "settings") { OverlayButton(R.drawable.ic_tab_settings, stringResource(R.string.live_overlay_settings)) { menus.menu = GuideMenu.Player(ch) } }
-                item(key = "guide") { OverlayButton(R.drawable.ic_tab_live, stringResource(R.string.live_tv_guide), Modifier.focusRequester(guideFocus), onGuide) }
-                // Catch-up: the programme on now from its start.
-                if (ch.hasCatchUp && cur != null) item(key = "restart") { OverlayButton(R.drawable.ic_restart, stringResource(R.string.live_overlay_restart)) { vm.playCatchUp(ch, cur) } }
-                // The buttons aren't channels: a line sets them apart from the history (#31).
-                if (recents.isNotEmpty()) item(key = "line") { Box(Modifier.padding(horizontal = 4.dp, vertical = 12.dp).width(1.dp).fillMaxHeight().background(Color(0x4DFFFFFF))) }
+                val settingsMenu = { menus.menu = GuideMenu.Player(ch) }
+                if (!buttons) {
+                    // Only Settings: the player menu must stay reachable (#28, #31).
+                    item(key = "settings") { OverlayButton(R.drawable.ic_tab_settings, stringResource(R.string.live_overlay_settings), Modifier.focusRequester(guideFocus), settingsMenu) }
+                } else if (plus) {
+                    // Subtitles, aspect, record, favourite and add to category, at hand while watching.
+                    item(key = "settings") { OverlayButton(R.drawable.ic_tab_settings, stringResource(R.string.live_overlay_settings), onClick = settingsMenu) }
+                    item(key = "guide") { OverlayButton(R.drawable.ic_tab_live, stringResource(R.string.live_tv_guide), Modifier.focusRequester(guideFocus), onGuide) }
+                    // Catch-up: the programme on now from its start.
+                    if (ch.hasCatchUp && cur != null) item(key = "restart") { OverlayButton(R.drawable.ic_restart, stringResource(R.string.live_overlay_restart)) { vm.playCatchUp(ch, cur) } }
+                } else {
+                    item(key = "guide") { OverlayTextCard(stringResource(R.string.live_tv_guide), Modifier.focusRequester(guideFocus), onGuide) }
+                    item(key = "settings") { OverlayTextCard(stringResource(R.string.live_overlay_settings), onClick = settingsMenu) }
+                    if (ch.hasCatchUp && cur != null) item(key = "restart") { OverlayTextCard(stringResource(R.string.live_overlay_restart)) { vm.playCatchUp(ch, cur) } }
+                }
+                // Small buttons aren't channels: a line sets them apart from the history (#31).
+                if (small && recents.isNotEmpty()) item(key = "line") { Box(Modifier.padding(horizontal = 4.dp, vertical = 12.dp).width(1.dp).fillMaxHeight().background(Color(0x4DFFFFFF))) }
                 items(recents, key = { it.id }) { r ->
                     val rp = recentProgs[r.id].orEmpty().firstOrNull { it.start <= now && now < it.stop }
                     OverlayCard(onClick = { onPick(r) }) { f -> RecentCard(r, r.displayName(strip), rp, f, logoSource) }
@@ -168,6 +186,16 @@ private fun OverlayButton(icon: Int, label: String, modifier: Modifier = Modifie
             androidx.tv.material3.Icon(androidx.compose.ui.res.painterResource(icon), null, tint = fg, modifier = Modifier.size(28.dp))
             Text(label, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = fg, maxLines = 2, lineHeight = 13.sp,
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 4.dp))
+        }
+    }
+}
+
+/** A channel-sized card with a name, as the overlay had before #2. */
+@Composable
+private fun OverlayTextCard(label: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    OverlayCard(onClick, modifier) { f ->
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text(label, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = if (f) LocalTheme.current.colors.onFocus else Color.White)
         }
     }
 }

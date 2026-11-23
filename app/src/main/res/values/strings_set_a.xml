@@ -181,6 +181,8 @@
     <string name="set_a_recently_watched_expl">Show the Recently watched category in the TV guide</string>
     <string name="set_a_rail_hold_jump">Hold to jump</string>
     <string name="set_a_rail_hold_jump_expl">Holding up or down in the categories list jumps to the top, bottom or next playlist. Off: it scrolls one row at a time</string>
+    <string name="set_a_overlay_buttons">Overlay buttons</string>
+    <string name="set_a_overlay_buttons_expl">Show TV guide and Restart in the info overlay while watching. Off: only a small Settings button</string>
     <string name="set_a_matching_logos">Matching open-source logos to your channels…</string>
     <string name="set_a_my_logo_pack">My logo pack</string>
     <string name="set_a_show_all">Show all</string>

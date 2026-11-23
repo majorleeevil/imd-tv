@@ -124,6 +124,8 @@ data class AppSettings(
     val showRecent: Boolean = true,
     /** Holding Up/Down in a category rail jumps to the top/bottom or the next playlist (#35); off = it scrolls row by row. */
     val railHoldJump: Boolean = true,
+    /** TV guide and Restart in the live info overlay (#28, #31); off = only a small Settings button. */
+    val overlayButtons: Boolean = true,
     /** Channel rows the Celestial/Liquid Glass guide shows: one of [guideRowChoices] for the header size. */
     val guideRows: Int = 5,
     /** Channel names and programme titles may wrap onto 2 lines in the guide grid. */

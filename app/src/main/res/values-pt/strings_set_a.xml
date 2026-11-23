@@ -179,6 +179,8 @@
     <string name="set_a_recently_watched_expl">Mostrar a categoria Vistos recentemente no guia de TV</string>
     <string name="set_a_rail_hold_jump">Manter premido para saltar</string>
     <string name="set_a_rail_hold_jump_expl">Manter premido para cima ou para baixo na lista de categorias salta para o início, para o fim ou para a lista de reprodução seguinte. Desligado: desloca uma linha de cada vez</string>
+    <string name="set_a_overlay_buttons">Botões da sobreposição</string>
+    <string name="set_a_overlay_buttons_expl">Mostra Guia de TV e Reiniciar na sobreposição de informação enquanto vê. Desligado: só um pequeno botão Definições</string>
     <string name="set_a_matching_logos">A associar logótipos de código aberto aos seus canais…</string>
     <string name="set_a_my_logo_pack">O meu pacote de logótipos</string>
     <string name="set_a_show_all">Mostrar tudo</string>

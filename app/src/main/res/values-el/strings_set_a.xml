@@ -179,6 +179,8 @@
     <string name="set_a_recently_watched_expl">Εμφάνιση της κατηγορίας Πρόσφατες προβολές στον οδηγό TV</string>
     <string name="set_a_rail_hold_jump">Παρατεταμένο πάτημα για άλμα</string>
     <string name="set_a_rail_hold_jump_expl">Το παρατεταμένο πάτημα πάνω ή κάτω στη λίστα κατηγοριών μεταφέρει στην αρχή, στο τέλος ή στην επόμενη λίστα. Ανενεργό: κύλιση μίας γραμμής τη φορά</string>
+    <string name="set_a_overlay_buttons">Κουμπιά επικάλυψης</string>
+    <string name="set_a_overlay_buttons_expl">Εμφάνιση των Οδηγός TV και Από την αρχή στην επικάλυψη πληροφοριών κατά την προβολή. Όχι: μόνο ένα μικρό κουμπί Ρυθμίσεις</string>
     <string name="set_a_matching_logos">Αντιστοίχιση λογοτύπων ανοιχτού κώδικα με τα κανάλια σας…</string>
     <string name="set_a_my_logo_pack">Το πακέτο λογοτύπων μου</string>
     <string name="set_a_show_all">Εμφάνιση όλων</string>

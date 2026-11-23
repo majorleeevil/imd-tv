@@ -179,6 +179,8 @@
     <string name="set_a_recently_watched_expl">Pokazuj kategorię Ostatnio oglądane w przewodniku TV</string>
     <string name="set_a_rail_hold_jump">Przytrzymaj, by przeskoczyć</string>
     <string name="set_a_rail_hold_jump_expl">Przytrzymanie strzałki w górę lub w dół na liście kategorii przeskakuje na początek, na koniec lub do następnej playlisty. Wył.: przewijanie po jednym wierszu</string>
+    <string name="set_a_overlay_buttons">Przyciski nakładki</string>
+    <string name="set_a_overlay_buttons_expl">Pokazuj Przewodnik TV i Od początku w nakładce informacyjnej podczas oglądania. Wył.: tylko mały przycisk Ustawienia</string>
     <string name="set_a_matching_logos">Dopasowywanie logo open source do Twoich kanałów…</string>
     <string name="set_a_my_logo_pack">Mój pakiet logo</string>
     <string name="set_a_show_all">Pokaż wszystkie</string>
