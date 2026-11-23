@@ -337,6 +337,13 @@
     <string name="set_b_emby_address_expl">Saisissez-la ci-dessous comme dans l\'app Emby, par exemple http://192.168.1.10:8096.</string>
     <string name="set_b_emby_sign_in_expl">Saisissez ci-dessous votre nom d\'utilisateur et votre mot de passe Emby.</string>
     <string name="set_b_emby_failed">Échec de la requête Emby : HTTP %1$d</string>
+    <string name="set_b_smb_add">Ajouter un partage réseau</string>
+    <string name="set_b_smb_add_expl">Films et séries d\'un NAS ou du dossier partagé d\'un ordinateur</string>
+    <string name="set_b_smb_address">Adresse du partage réseau</string>
+    <string name="set_b_smb_address_expl">Saisissez-la ci-dessous, par exemple \\\\192.168.1.10\\Media ou 192.168.1.10/Media/Films (SMB 2 ou 3). Ses dossiers deviennent les catégories.</string>
+    <string name="set_b_smb_sign_in_expl">Saisissez ci-dessous l\'identifiant et le mot de passe du partage. Laissez-les vides pour un partage invité.</string>
+    <string name="set_b_smb_bad_address">Saisissez l\'adresse sous la forme \\\\serveur\\partage</string>
+    <string name="set_b_smb_empty">Aucune vidéo trouvée sur le partage</string>
     <string name="set_b_plex_all_added">Tous les serveurs de ce compte Plex sont déjà ajoutés</string>
     <string name="set_b_stremio_add">Ajouter un compte Stremio</string>
     <string name="set_b_stremio_add_expl">Films et séries des modules complémentaires de votre compte Stremio</string>

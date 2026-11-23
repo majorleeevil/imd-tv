@@ -338,6 +338,13 @@
     <string name="set_b_emby_address_expl">Enter it below as you would in the Emby app, for example http://192.168.1.10:8096.</string>
     <string name="set_b_emby_sign_in_expl">Enter your Emby username and password below.</string>
     <string name="set_b_emby_failed">Emby request failed: HTTP %1$d</string>
+    <string name="set_b_smb_add">Add network share</string>
+    <string name="set_b_smb_add_expl">Movies and TV shows from a NAS or a computer\'s shared folder</string>
+    <string name="set_b_smb_address">Network share address</string>
+    <string name="set_b_smb_address_expl">Enter it below, for example \\\\192.168.1.10\\Media or 192.168.1.10/Media/Films (SMB 2 or 3). Its folders become the categories.</string>
+    <string name="set_b_smb_sign_in_expl">Enter the share\'s username and password below. Leave both empty for a guest share.</string>
+    <string name="set_b_smb_bad_address">Enter the address as \\\\server\\share</string>
+    <string name="set_b_smb_empty">No video files found on the share</string>
     <string name="set_b_stremio_add">Add Stremio account</string>
     <string name="set_b_stremio_add_expl">Movies and series from the add-ons on your Stremio account</string>
     <string name="set_b_stremio_code_expl">Scan the QR code, or go to link.stremio.com on your phone or computer, sign in and enter this code.</string>

@@ -337,6 +337,13 @@
     <string name="set_b_emby_address_expl">Voer het hieronder in zoals in de Emby-app, bijvoorbeeld http://192.168.1.10:8096.</string>
     <string name="set_b_emby_sign_in_expl">Voer hieronder je Emby-gebruikersnaam en -wachtwoord in.</string>
     <string name="set_b_emby_failed">Emby-verzoek mislukt: HTTP %1$d</string>
+    <string name="set_b_smb_add">Netwerkshare toevoegen</string>
+    <string name="set_b_smb_add_expl">Films en series van een NAS of de gedeelde map van een computer</string>
+    <string name="set_b_smb_address">Adres van de netwerkshare</string>
+    <string name="set_b_smb_address_expl">Vul het hieronder in, bijvoorbeeld \\\\192.168.1.10\\Media of 192.168.1.10/Media/Films (SMB 2 of 3). De mappen worden de categorieën.</string>
+    <string name="set_b_smb_sign_in_expl">Vul hieronder de gebruikersnaam en het wachtwoord van de share in. Laat beide leeg voor een gastshare.</string>
+    <string name="set_b_smb_bad_address">Vul het adres in als \\\\server\\share</string>
+    <string name="set_b_smb_empty">Geen videobestanden gevonden op de share</string>
     <string name="set_b_plex_all_added">Alle servers van dit Plex-account zijn al toegevoegd</string>
     <string name="set_b_stremio_add">Stremio-account toevoegen</string>
     <string name="set_b_stremio_add_expl">Films en series van de add-ons op je Stremio-account</string>

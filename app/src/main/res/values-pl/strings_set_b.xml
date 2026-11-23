@@ -337,6 +337,13 @@
     <string name="set_b_emby_address_expl">Wpisz go poniżej tak jak w aplikacji Emby, na przykład http://192.168.1.10:8096.</string>
     <string name="set_b_emby_sign_in_expl">Wpisz poniżej nazwę użytkownika i hasło Emby.</string>
     <string name="set_b_emby_failed">Żądanie Emby nie powiodło się: HTTP %1$d</string>
+    <string name="set_b_smb_add">Dodaj udział sieciowy</string>
+    <string name="set_b_smb_add_expl">Filmy i seriale z NAS-a lub udostępnionego folderu komputera</string>
+    <string name="set_b_smb_address">Adres udziału sieciowego</string>
+    <string name="set_b_smb_address_expl">Wpisz go poniżej, na przykład \\\\192.168.1.10\\Media lub 192.168.1.10/Media/Filmy (SMB 2 lub 3). Jego foldery staną się kategoriami.</string>
+    <string name="set_b_smb_sign_in_expl">Wpisz poniżej nazwę użytkownika i hasło udziału. Zostaw oba puste dla udziału gościa.</string>
+    <string name="set_b_smb_bad_address">Wpisz adres jako \\\\serwer\\udział</string>
+    <string name="set_b_smb_empty">Nie znaleziono plików wideo w udziale</string>
     <string name="set_b_plex_all_added">Wszystkie serwery z tego konta Plex zostały już dodane</string>
     <string name="set_b_stremio_add">Dodaj konto Stremio</string>
     <string name="set_b_stremio_add_expl">Filmy i seriale z dodatków na Twoim koncie Stremio</string>

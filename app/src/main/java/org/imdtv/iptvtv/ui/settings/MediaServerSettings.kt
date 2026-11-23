@@ -1,5 +1,6 @@
 package org.imdtv.iptvtv.ui.settings
 
+import org.imdtv.iptvtv.data.source.categories
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.padding
@@ -140,20 +141,30 @@ interface PasswordSignIn {
     fun signIn()
 }
 
+/** A flow that starts with a typed address (Jellyfin, Emby, a network share). */
+interface AddressFirst {
+    @get:StringRes val addressRes: Int
+    @get:StringRes val addressExplRes: Int
+    /** What the address box starts with. */
+    val addressStart: String
+    fun connect(typed: String)
+}
+
 /** Address → Quick Connect code (or username + password when it's off) → libraries. [emby]: Emby's variant, password only (#25). */
-class JellyfinAddFlow(c: AppContainer, scope: CoroutineScope, private val emby: Boolean = false) : ServerAddFlow(c, scope, if (emby) "Emby" else "Jellyfin"), PasswordSignIn {
+class JellyfinAddFlow(c: AppContainer, scope: CoroutineScope, private val emby: Boolean = false) : ServerAddFlow(c, scope, if (emby) "Emby" else "Jellyfin"), PasswordSignIn, AddressFirst {
     override val usePasswordRes = R.string.set_b_jf_use_password
     override val userRes = R.string.set_b_username
     override val signInExplRes = if (emby) R.string.set_b_emby_sign_in_expl else R.string.set_b_jf_sign_in_expl
-    @StringRes val addressRes = if (emby) R.string.set_b_emby_address else R.string.set_b_jf_address
-    @StringRes val addressExplRes = if (emby) R.string.set_b_emby_address_expl else R.string.set_b_jf_address_expl
+    override val addressRes = if (emby) R.string.set_b_emby_address else R.string.set_b_jf_address
+    override val addressExplRes = if (emby) R.string.set_b_emby_address_expl else R.string.set_b_jf_address_expl
+    override val addressStart = "http://"
     private var base = ""
     private var name = ""
     private val auth get() = if (emby) c.embyAuth else c.jellyfinAuth
 
     override fun start() { step.value = ServerStep.Address }
 
-    fun connect(typed: String) = launchStep {
+    override fun connect(typed: String) = launchStep {
         step.value = ServerStep.Working(R.string.set_b_jf_connecting)
         val typedBase = if (emby) org.imdtv.iptvtv.data.source.embyBase(typed) else jellyfinBase(typed)
         val (b, n) = try { auth.resolve(typedBase) } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) {
@@ -193,6 +204,47 @@ class JellyfinAddFlow(c: AppContainer, scope: CoroutineScope, private val emby: 
     private suspend fun signedIn(a: JfAuth) {
         step.value = ServerStep.Working(R.string.set_b_jf_connecting)
         libraries(name, auth.libraries(base, a), if (emby) ProviderType.EMBY else ProviderType.JELLYFIN, base, a.user.id, a.token)
+    }
+}
+
+/** Network share (#27): address → username + password (empty = guest) → its top folders as libraries. */
+class SmbAddFlow(c: AppContainer, scope: CoroutineScope) : ServerAddFlow(c, scope, "SMB"), PasswordSignIn, AddressFirst {
+    override val usePasswordRes = R.string.set_b_jf_use_password
+    override val userRes = R.string.set_b_username
+    override val signInExplRes = R.string.set_b_smb_sign_in_expl
+    override val addressRes = R.string.set_b_smb_address
+    override val addressExplRes = R.string.set_b_smb_address_expl
+    override val addressStart = ""
+    private var at: Triple<String, String, String>? = null
+
+    override fun start() { step.value = ServerStep.Address }
+
+    override fun connect(typed: String) {
+        val a = org.imdtv.iptvtv.data.source.parseShareAddress(typed)
+            ?: run { step.value = ServerStep.Failed(c.appContext.getString(R.string.set_b_smb_bad_address)); return }
+        at = a
+        step.value = ServerStep.SignIn("\\\\${a.first}\\${a.second}")
+    }
+
+    override fun usePassword() = Unit // there is no code step
+    override fun setUser(u: String) { (step.value as? ServerStep.SignIn)?.let { step.value = it.copy(user = u, error = null) } }
+    override fun setPassword(p: String) { (step.value as? ServerStep.SignIn)?.let { step.value = it.copy(password = p, error = null) } }
+
+    override fun signIn() {
+        val s = step.value as? ServerStep.SignIn ?: return
+        val (server, share, folder) = at ?: return
+        launchStep {
+            step.value = ServerStep.Working(R.string.set_b_jf_connecting)
+            val login = org.imdtv.iptvtv.recording.SmbSettings(server, share, folder, s.user.trim(), s.password)
+            val files = try { kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { org.imdtv.iptvtv.data.source.walkShare(login) } }
+                catch (e: com.hierynomus.mssmb2.SMBApiException) {
+                    if (e.status != com.hierynomus.mserref.NtStatus.STATUS_LOGON_FAILURE && e.status != com.hierynomus.mserref.NtStatus.STATUS_ACCESS_DENIED) throw e
+                    step.value = s.copy(error = c.appContext.getString(R.string.set_b_jf_wrong_login)); return@launchStep // try again, address kept
+                }
+            val libs = org.imdtv.iptvtv.data.source.classifyShare(files).categories(share)
+            if (libs.isEmpty()) { step.value = ServerStep.Failed(c.appContext.getString(R.string.set_b_smb_empty)); return@launchStep }
+            libraries(share, libs, ProviderType.SMB, "smb://$server/$share/$folder".trimEnd('/'), s.user.trim(), s.password)
+        }
     }
 }
 
@@ -237,10 +289,10 @@ class StremioAddFlow(c: AppContainer, scope: CoroutineScope) : ServerAddFlow(c, 
 }
 
 /** The media server kinds, each a page of Settings › Media servers. */
-val SERVER_TYPES = listOf(ProviderType.PLEX, ProviderType.JELLYFIN, ProviderType.EMBY, ProviderType.STREMIO)
-private fun ProviderType.serverName() = when (this) { ProviderType.PLEX -> "Plex"; ProviderType.JELLYFIN -> "Jellyfin"; ProviderType.EMBY -> "Emby"; else -> "Stremio" }
-@StringRes private fun ProviderType.addRes() = when (this) { ProviderType.PLEX -> R.string.set_b_plex_add; ProviderType.JELLYFIN -> R.string.set_b_jf_add; ProviderType.EMBY -> R.string.set_b_emby_add; else -> R.string.set_b_stremio_add }
-@StringRes private fun ProviderType.addExplRes() = when (this) { ProviderType.PLEX -> R.string.set_b_plex_add_expl; ProviderType.JELLYFIN -> R.string.set_b_jf_add_expl; ProviderType.EMBY -> R.string.set_b_emby_add_expl; else -> R.string.set_b_stremio_add_expl }
+val SERVER_TYPES = listOf(ProviderType.PLEX, ProviderType.JELLYFIN, ProviderType.EMBY, ProviderType.STREMIO, ProviderType.SMB)
+private fun ProviderType.serverName() = when (this) { ProviderType.PLEX -> "Plex"; ProviderType.JELLYFIN -> "Jellyfin"; ProviderType.EMBY -> "Emby"; ProviderType.SMB -> "SMB / NAS"; else -> "Stremio" }
+@StringRes private fun ProviderType.addRes() = when (this) { ProviderType.PLEX -> R.string.set_b_plex_add; ProviderType.JELLYFIN -> R.string.set_b_jf_add; ProviderType.EMBY -> R.string.set_b_emby_add; ProviderType.SMB -> R.string.set_b_smb_add; else -> R.string.set_b_stremio_add }
+@StringRes private fun ProviderType.addExplRes() = when (this) { ProviderType.PLEX -> R.string.set_b_plex_add_expl; ProviderType.JELLYFIN -> R.string.set_b_jf_add_expl; ProviderType.EMBY -> R.string.set_b_emby_add_expl; ProviderType.SMB -> R.string.set_b_smb_add_expl; else -> R.string.set_b_stremio_add_expl }
 
 /** Settings › Media servers: Plex ›, Jellyfin › (the servers added, or what adding one gives), then the update interval. */
 @Composable
@@ -260,7 +312,7 @@ fun MediaServerPage(vm: SettingsViewModel, type: ProviderType, modifier: Modifie
                     openers: MutableMap<Long, FocusRequester>, onOpen: (Long) -> Unit, onClose: () -> Unit) {
     androidx.activity.compose.BackHandler(onBack = onClose)
     val providers by vm.providers.collectAsState()
-    val flow = when (type) { ProviderType.PLEX -> vm.plex; ProviderType.JELLYFIN -> vm.jellyfin; ProviderType.EMBY -> vm.emby; else -> vm.stremio }
+    val flow = when (type) { ProviderType.PLEX -> vm.plex; ProviderType.JELLYFIN -> vm.jellyfin; ProviderType.EMBY -> vm.emby; ProviderType.SMB -> vm.smb; else -> vm.stremio }
     val step by flow.step.collectAsState()
     androidx.compose.runtime.LaunchedEffect(type) { if (focusFirst) { withFrameNanos { }; runCatching { first.requestFocus() } } }
     androidx.compose.foundation.layout.Column(modifier.verticalScroll(androidx.compose.foundation.rememberScrollState()), verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(6.dp)) {
@@ -287,7 +339,7 @@ private fun ServerFlowRows(flow: ServerAddFlow, top: FocusRequester, addTitle: S
         is ServerStep.Code -> stringResource(R.string.set_b_plex_code, s.code) to stringResource(s.expl)
         is ServerStep.Working -> stringResource(s.text) to ""
         is ServerStep.Servers -> stringResource(R.string.set_b_plex_pick_server) to ""
-        ServerStep.Address -> (flow as JellyfinAddFlow).let { stringResource(it.addressRes) to stringResource(it.addressExplRes) }
+        ServerStep.Address -> (flow as AddressFirst).let { stringResource(it.addressRes) to stringResource(it.addressExplRes) }
         is ServerStep.SignIn -> stringResource(R.string.set_b_jf_sign_in_title, s.name) to (s.error ?: stringResource((flow as PasswordSignIn).signInExplRes))
         is ServerStep.Libraries -> stringResource(R.string.set_b_plex_pick_libraries, s.name) to ""
         is ServerStep.Adding -> stringResource(R.string.set_b_plex_adding) to s.progress
@@ -307,8 +359,8 @@ private fun ServerFlowRows(flow: ServerAddFlow, top: FocusRequester, addTitle: S
     when (s) {
         is ServerStep.Servers -> s.list.forEach { srv -> SettingRow(srv.name, "", null) { stay { (flow as PlexAddFlow).pick(srv) } } }
         // Save closes the box (focus back on its row) first; a frame later focus goes to the top row before the box's row goes.
-        ServerStep.Address -> EditRow(stringResource(R.string.set_b_jf_address_row), "", null, "http://", saveLabel = stringResource(R.string.set_b_jf_connect)) { typed ->
-            scope.launch { withFrameNanos { }; stay { (flow as JellyfinAddFlow).connect(typed) } }
+        ServerStep.Address -> EditRow(stringResource(R.string.set_b_jf_address_row), "", null, (flow as AddressFirst).addressStart, saveLabel = stringResource(R.string.set_b_jf_connect)) { typed ->
+            scope.launch { withFrameNanos { }; stay { (flow as AddressFirst).connect(typed) } }
         }
         is ServerStep.Code -> if (flow is PasswordSignIn) SettingRow(stringResource(flow.usePasswordRes), "", null) { stay { flow.usePassword() } }
         is ServerStep.SignIn -> {

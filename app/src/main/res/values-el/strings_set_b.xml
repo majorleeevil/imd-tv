@@ -337,6 +337,13 @@
     <string name="set_b_emby_address_expl">Εισαγάγετέ την παρακάτω όπως στην εφαρμογή Emby, για παράδειγμα http://192.168.1.10:8096.</string>
     <string name="set_b_emby_sign_in_expl">Εισαγάγετε παρακάτω το όνομα χρήστη και τον κωδικό σας στο Emby.</string>
     <string name="set_b_emby_failed">Το αίτημα Emby απέτυχε: HTTP %1$d</string>
+    <string name="set_b_smb_add">Προσθήκη κοινόχρηστου φακέλου δικτύου</string>
+    <string name="set_b_smb_add_expl">Ταινίες και σειρές από NAS ή κοινόχρηστο φάκελο υπολογιστή</string>
+    <string name="set_b_smb_address">Διεύθυνση κοινόχρηστου φακέλου</string>
+    <string name="set_b_smb_address_expl">Πληκτρολογήστε την παρακάτω, για παράδειγμα \\\\192.168.1.10\\Media ή 192.168.1.10/Media/Films (SMB 2 ή 3). Οι φάκελοί του γίνονται κατηγορίες.</string>
+    <string name="set_b_smb_sign_in_expl">Εισαγάγετε παρακάτω το όνομα χρήστη και τον κωδικό του κοινόχρηστου φακέλου. Αφήστε τα κενά για πρόσβαση επισκέπτη.</string>
+    <string name="set_b_smb_bad_address">Εισαγάγετε τη διεύθυνση ως \\\\διακομιστής\\φάκελος</string>
+    <string name="set_b_smb_empty">Δεν βρέθηκαν αρχεία βίντεο στον κοινόχρηστο φάκελο</string>
     <string name="set_b_plex_all_added">Όλοι οι διακομιστές αυτού του λογαριασμού Plex έχουν ήδη προστεθεί</string>
     <string name="set_b_stremio_add">Προσθήκη λογαριασμού Stremio</string>
     <string name="set_b_stremio_add_expl">Ταινίες και σειρές από τα πρόσθετα του λογαριασμού σας Stremio</string>

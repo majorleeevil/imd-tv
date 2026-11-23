@@ -9,9 +9,9 @@ import org.imdtv.iptvtv.data.model.Kind
 import org.imdtv.iptvtv.data.model.StreamFormat
 
 enum class ProviderType {
-    XTREAM, M3U, STALKER, PLEX, JELLYFIN, STREMIO, EMBY;
+    XTREAM, M3U, STALKER, PLEX, JELLYFIN, STREMIO, EMBY, SMB;
     /** Added under Settings › Media servers: Movies + Series only, no form, not in file backups. */
-    val mediaServer get() = this == PLEX || this == JELLYFIN || this == STREMIO || this == EMBY
+    val mediaServer get() = this == PLEX || this == JELLYFIN || this == STREMIO || this == EMBY || this == SMB
 }
 
 /** Where a user category sits in the category list (Your categories › Options › Priority). */

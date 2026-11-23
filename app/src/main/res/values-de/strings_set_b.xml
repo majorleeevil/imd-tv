@@ -337,6 +337,13 @@
     <string name="set_b_emby_address_expl">Gib sie unten so ein wie in der Emby-App, zum Beispiel http://192.168.1.10:8096.</string>
     <string name="set_b_emby_sign_in_expl">Gib unten deinen Emby-Benutzernamen und dein Passwort ein.</string>
     <string name="set_b_emby_failed">Emby-Anfrage fehlgeschlagen: HTTP %1$d</string>
+    <string name="set_b_smb_add">Netzwerkfreigabe hinzufügen</string>
+    <string name="set_b_smb_add_expl">Filme und Serien von einem NAS oder dem freigegebenen Ordner eines Computers</string>
+    <string name="set_b_smb_address">Adresse der Netzwerkfreigabe</string>
+    <string name="set_b_smb_address_expl">Gib sie unten ein, zum Beispiel \\\\192.168.1.10\\Media oder 192.168.1.10/Media/Filme (SMB 2 oder 3). Ihre Ordner werden zu Kategorien.</string>
+    <string name="set_b_smb_sign_in_expl">Gib unten Benutzername und Passwort der Freigabe ein. Lass beides leer für eine Gastfreigabe.</string>
+    <string name="set_b_smb_bad_address">Gib die Adresse als \\\\Server\\Freigabe ein</string>
+    <string name="set_b_smb_empty">Keine Videodateien auf der Freigabe gefunden</string>
     <string name="set_b_plex_all_added">Alle Server dieses Plex-Kontos wurden bereits hinzugefügt</string>
     <string name="set_b_stremio_add">Stremio-Konto hinzufügen</string>
     <string name="set_b_stremio_add_expl">Filme und Serien aus den Add-ons deines Stremio-Kontos</string>

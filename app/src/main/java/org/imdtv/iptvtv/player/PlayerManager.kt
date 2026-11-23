@@ -311,6 +311,9 @@ class PlayerManager(private val context: Context) {
         val liveTs = !vod && spec == null && android.net.Uri.parse(req.url).lastPathSegment?.endsWith(".ts", ignoreCase = true) == true
         val upstream = when {
             liveTs -> androidx.media3.datasource.DataSource.Factory { LiveTsDataSource(http.createDataSource()) }
+            // A file on a network share playlist (#27), read with that playlist's login.
+            req.url.startsWith("smb://") -> { val l = login
+                androidx.media3.datasource.DataSource.Factory { org.imdtv.iptvtv.recording.SmbDataSource { org.imdtv.iptvtv.recording.SmbSettings("", "", "", l?.username.orEmpty(), l?.password.orEmpty()) } } }
             parallel && vod && spec == null && req.url.startsWith("http") -> androidx.media3.datasource.DataSource.Factory { ParallelDataSource(http, aheadBytes = readAheadBytes) }
             else -> http
         }

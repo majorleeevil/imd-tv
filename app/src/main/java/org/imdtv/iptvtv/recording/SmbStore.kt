@@ -36,11 +36,12 @@ fun parseSmbLocation(location: String): Triple<String, String, String>? {
 }
 
 /** An open share; closing it closes the session, connection and client. */
-private class Connected(val share: DiskShare, private val closers: List<AutoCloseable>) : Closeable {
+internal class Connected(val share: DiskShare, private val closers: List<AutoCloseable>) : Closeable {
     override fun close() = closers.asReversed().forEach { runCatching { it.close() } }
 }
 
-private fun connect(s: SmbSettings, server: String = s.server, shareName: String = s.share): Connected {
+/** Also used by the share as a playlist (data/source/SmbSource.kt). */
+internal fun connectShare(s: SmbSettings, server: String = s.server, shareName: String = s.share): Connected {
     val client = SMBClient(com.hierynomus.smbj.SmbConfig.builder().withTimeout(30, TimeUnit.SECONDS).withSoTimeout(60, TimeUnit.SECONDS).build())
     try {
         val conn = client.connect(server)
@@ -76,7 +77,7 @@ class SmbStore(private val s: SmbSettings) : RecordingStore {
     override val kind = RecStorage.SMB
 
     override fun create(fileName: String): Pair<String, OutputStream> {
-        val c = connect(s)
+        val c = connectShare(s)
         try {
             c.share.makeFolders(s.folder)
             val name = uniqueName(fileName) { c.share.fileExists(pathIn(s.folder, it)) }
@@ -95,15 +96,15 @@ class SmbStore(private val s: SmbSettings) : RecordingStore {
 
     override fun delete(location: String) {
         val (server, share, path) = parseSmbLocation(location) ?: return
-        connect(s, server, share).use { it.share.rm(path.replace('/', '\\')) }
+        connectShare(s, server, share).use { it.share.rm(path.replace('/', '\\')) }
     }
 
-    override fun freeBytes(): Long? = runCatching { connect(s).use { it.share.shareInformation.freeSpace } }.getOrNull()
+    override fun freeBytes(): Long? = runCatching { connectShare(s).use { it.share.shareInformation.freeSpace } }.getOrNull()
 }
 
 /** Settings › Test: writes and removes a small file. Null = it worked; else what went wrong. */
 fun testShare(s: SmbSettings): String? = try {
-    connect(s).use { c ->
+    connectShare(s).use { c ->
         c.share.makeFolders(s.folder)
         val path = pathIn(s.folder, ".imdtv-test")
         c.share.openFile(path, setOf(AccessMask.GENERIC_WRITE), null, SMB2ShareAccess.ALL, SMB2CreateDisposition.FILE_OVERWRITE_IF, null)
@@ -127,7 +128,7 @@ class SmbDataSource(private val settings: () -> SmbSettings) : BaseDataSource(tr
     override fun open(dataSpec: DataSpec): Long {
         val (server, share, path) = parseSmbLocation(dataSpec.uri.toString()) ?: throw IOException("Not a network share address")
         transferInitializing(dataSpec)
-        val conn = connect(settings(), server, share).also { c = it }
+        val conn = connectShare(settings(), server, share).also { c = it }
         val f = conn.share.openFile(path.replace('/', '\\'), setOf(AccessMask.GENERIC_READ), null, SMB2ShareAccess.ALL,
             SMB2CreateDisposition.FILE_OPEN, null).also { file = it }
         uri = dataSpec.uri

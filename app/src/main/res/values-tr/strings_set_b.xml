@@ -337,6 +337,13 @@
     <string name="set_b_emby_address_expl">Emby uygulamasındaki gibi aşağıya girin, örneğin http://192.168.1.10:8096.</string>
     <string name="set_b_emby_sign_in_expl">Emby kullanıcı adınızı ve şifrenizi aşağıya girin.</string>
     <string name="set_b_emby_failed">Emby isteği başarısız: HTTP %1$d</string>
+    <string name="set_b_smb_add">Ağ paylaşımı ekle</string>
+    <string name="set_b_smb_add_expl">Bir NAS\'tan ya da bir bilgisayarın paylaşılan klasöründen filmler ve diziler</string>
+    <string name="set_b_smb_address">Ağ paylaşımı adresi</string>
+    <string name="set_b_smb_address_expl">Aşağıya girin, örneğin \\\\192.168.1.10\\Media veya 192.168.1.10/Media/Filmler (SMB 2 veya 3). Klasörleri kategori olur.</string>
+    <string name="set_b_smb_sign_in_expl">Paylaşımın kullanıcı adını ve parolasını aşağıya girin. Misafir paylaşımı için ikisini de boş bırakın.</string>
+    <string name="set_b_smb_bad_address">Adresi \\\\sunucu\\paylaşım biçiminde girin</string>
+    <string name="set_b_smb_empty">Paylaşımda video dosyası bulunamadı</string>
     <string name="set_b_plex_all_added">Bu Plex hesabındaki tüm sunucular zaten eklendi</string>
     <string name="set_b_stremio_add">Stremio hesabı ekle</string>
     <string name="set_b_stremio_add_expl">Stremio hesabınızdaki eklentilerden filmler ve diziler</string>

@@ -337,6 +337,13 @@
     <string name="set_b_emby_address_expl">Ange den nedan som i Emby-appen, till exempel http://192.168.1.10:8096.</string>
     <string name="set_b_emby_sign_in_expl">Ange ditt användarnamn och lösenord för Emby nedan.</string>
     <string name="set_b_emby_failed">Emby-förfrågan misslyckades: HTTP %1$d</string>
+    <string name="set_b_smb_add">Lägg till nätverksresurs</string>
+    <string name="set_b_smb_add_expl">Filmer och serier från en NAS eller en dators delade mapp</string>
+    <string name="set_b_smb_address">Nätverksresursens adress</string>
+    <string name="set_b_smb_address_expl">Ange den nedan, till exempel \\\\192.168.1.10\\Media eller 192.168.1.10/Media/Filmer (SMB 2 eller 3). Dess mappar blir kategorierna.</string>
+    <string name="set_b_smb_sign_in_expl">Ange resursens användarnamn och lösenord nedan. Lämna båda tomma för en gästresurs.</string>
+    <string name="set_b_smb_bad_address">Ange adressen som \\\\server\\resurs</string>
+    <string name="set_b_smb_empty">Inga videofiler hittades på resursen</string>
     <string name="set_b_plex_all_added">Alla servrar på det här Plex-kontot har redan lagts till</string>
     <string name="set_b_stremio_add">Lägg till Stremio-konto</string>
     <string name="set_b_stremio_add_expl">Filmer och serier från tilläggen på ditt Stremio-konto</string>

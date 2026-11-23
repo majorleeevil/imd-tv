@@ -57,6 +57,10 @@ class AppContainer(context: Context) {
             p.skipLibraries.split(',').filter { it.isNotEmpty() }.toSet(), http, json)
         ProviderType.JELLYFIN, ProviderType.EMBY -> org.imdtv.iptvtv.data.source.JellyfinSource(p.url, p.password.orEmpty(), p.username.orEmpty(), jellyfinHeader,
             p.skipLibraries.split(',').filter { it.isNotEmpty() }.toSet(), http, json, emby = p.type == ProviderType.EMBY)
+        ProviderType.SMB -> org.imdtv.iptvtv.data.source.parseShareAddress(p.url).let { a ->
+            org.imdtv.iptvtv.data.source.SmbSource(org.imdtv.iptvtv.recording.SmbSettings(a?.first.orEmpty(), a?.second.orEmpty(), a?.third.orEmpty(), p.username.orEmpty(), p.password.orEmpty()),
+                p.name, p.skipLibraries.split(',').filter { it.isNotEmpty() }.toSet())
+        }
         ProviderType.STREMIO -> org.imdtv.iptvtv.data.source.StremioSource(p.password.orEmpty(), p.skipLibraries.split(',').filter { it.isNotEmpty() }.toSet(), stremioAuth, http, json)
     }
 

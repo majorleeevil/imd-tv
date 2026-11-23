@@ -337,6 +337,13 @@
     <string name="set_b_emby_address_expl">Shkruaje më poshtë si në aplikacionin Emby, për shembull http://192.168.1.10:8096.</string>
     <string name="set_b_emby_sign_in_expl">Shkruaj më poshtë emrin e përdoruesit dhe fjalëkalimin e Emby.</string>
     <string name="set_b_emby_failed">Kërkesa Emby dështoi: HTTP %1$d</string>
+    <string name="set_b_smb_add">Shto dosje të ndarë në rrjet</string>
+    <string name="set_b_smb_add_expl">Filma dhe seriale nga një NAS ose nga dosja e ndarë e një kompjuteri</string>
+    <string name="set_b_smb_address">Adresa e dosjes së ndarë</string>
+    <string name="set_b_smb_address_expl">Shkruaje më poshtë, për shembull \\\\192.168.1.10\\Media ose 192.168.1.10/Media/Filma (SMB 2 ose 3). Dosjet e saj bëhen kategoritë.</string>
+    <string name="set_b_smb_sign_in_expl">Shkruaj më poshtë emrin e përdoruesit dhe fjalëkalimin e dosjes. Lëri të dyja bosh për qasje si mysafir.</string>
+    <string name="set_b_smb_bad_address">Shkruaj adresën si \\\\server\\dosje</string>
+    <string name="set_b_smb_empty">Nuk u gjetën skedarë video në dosjen e ndarë</string>
     <string name="set_b_plex_all_added">Çdo server i kësaj llogarie Plex është shtuar tashmë</string>
     <string name="set_b_stremio_add">Shto llogari Stremio</string>
     <string name="set_b_stremio_add_expl">Filma dhe seriale nga shtesat e llogarisë tënde Stremio</string>

@@ -337,6 +337,13 @@
     <string name="set_b_emby_address_expl">Introdu-o mai jos ca în aplicația Emby, de exemplu http://192.168.1.10:8096.</string>
     <string name="set_b_emby_sign_in_expl">Introdu mai jos numele de utilizator și parola Emby.</string>
     <string name="set_b_emby_failed">Cererea Emby a eșuat: HTTP %1$d</string>
+    <string name="set_b_smb_add">Adaugă un folder partajat în rețea</string>
+    <string name="set_b_smb_add_expl">Filme și seriale de pe un NAS sau din folderul partajat al unui computer</string>
+    <string name="set_b_smb_address">Adresa folderului partajat</string>
+    <string name="set_b_smb_address_expl">Introdu-o mai jos, de exemplu \\\\192.168.1.10\\Media sau 192.168.1.10/Media/Filme (SMB 2 sau 3). Folderele lui devin categoriile.</string>
+    <string name="set_b_smb_sign_in_expl">Introdu mai jos numele de utilizator și parola folderului partajat. Lasă-le goale pentru acces de oaspete.</string>
+    <string name="set_b_smb_bad_address">Introdu adresa ca \\\\server\\folder</string>
+    <string name="set_b_smb_empty">Nu s-au găsit fișiere video în folderul partajat</string>
     <string name="set_b_plex_all_added">Toate serverele din acest cont Plex sunt deja adăugate</string>
     <string name="set_b_stremio_add">Adaugă un cont Stremio</string>
     <string name="set_b_stremio_add_expl">Filme și seriale din add-on-urile contului tău Stremio</string>
