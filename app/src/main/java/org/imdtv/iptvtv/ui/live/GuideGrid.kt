@@ -131,6 +131,9 @@ val RETRO_GRID = GridStyle(27.dp, 180.dp, 7.5.dp, 90, 3.dp, FontWeight.Bold, foc
     focusedProgrammeText = Color(0xFF15257A), boxed = true, numberFirst = true, overflowArrows = true, headerColor = Color(0xFF15257A))
 
 private val PILL = RoundedCornerShape(5.dp)
+/** A long channel name scrolls this many times, then stops: scrolling forever redrew the whole screen ~40 times a second
+ *  while the guide sat still, which on a 4K stream made the Thomson 140G's UI crawl (25-50 ms a frame). */
+private const val MARQUEE_TIMES = 3
 private val BOX = RoundedCornerShape(2.dp)
 private val CELL = RoundedCornerShape(4.dp)
 private val SEPARATOR = Color(0x40FFFFFF)
@@ -374,7 +377,7 @@ private fun GuideRow(
                     }
                     Text(name, fontSize = style.sp(14f) * org.imdtv.iptvtv.ui.LocalTitleScale.current, fontWeight = style.font, color = fg, maxLines = style.lines,
                         overflow = if (marquee) TextOverflow.Clip else TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f).padding(start = 6.dp).then(if (marquee) Modifier.basicMarquee(Int.MAX_VALUE) else Modifier))
+                        modifier = Modifier.weight(1f).padding(start = 6.dp).then(if (marquee) Modifier.basicMarquee(MARQUEE_TIMES) else Modifier))
                     if (ch.hasCatchUp) CatchUpClock(fg, Modifier.padding(start = 6.dp))
                     if (!style.numberFirst) number?.let { Text("  $it", fontSize = style.sp(12f), color = fg.copy(alpha = .85f)) }
                 } else if (logo != null) {
@@ -386,13 +389,13 @@ private fun GuideRow(
                     if (!style.numberFirst) number?.let { Text("  $it", fontSize = style.sp(12f), color = fg.copy(alpha = .85f)) }
                 } else if (style.numberFirst) {
                     Text(listOfNotNull(number, name).joinToString("  "), fontSize = style.sp(14f) * org.imdtv.iptvtv.ui.LocalTitleScale.current, fontWeight = style.font, color = fg, maxLines = style.lines,
-                        overflow = if (marquee) TextOverflow.Clip else TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false).then(if (marquee) Modifier.basicMarquee(Int.MAX_VALUE) else Modifier))
+                        overflow = if (marquee) TextOverflow.Clip else TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false).then(if (marquee) Modifier.basicMarquee(MARQUEE_TIMES) else Modifier))
                     if (ch.hasCatchUp) CatchUpClock(fg, Modifier.padding(start = 6.dp))
                 } else {
                     // Name and clock fill the box up to the number; a weighted spacer beside the name capped it at half the box.
                     Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
                         Text(name, fontSize = style.sp(14f) * org.imdtv.iptvtv.ui.LocalTitleScale.current, fontWeight = style.font, color = fg, maxLines = style.lines,
-                            overflow = if (marquee) TextOverflow.Clip else TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false).then(if (marquee) Modifier.basicMarquee(Int.MAX_VALUE) else Modifier))
+                            overflow = if (marquee) TextOverflow.Clip else TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false).then(if (marquee) Modifier.basicMarquee(MARQUEE_TIMES) else Modifier))
                         if (ch.hasCatchUp) CatchUpClock(fg, Modifier.padding(start = 6.dp))
                     }
                     number?.let { Text("  $it", fontSize = style.sp(12f), color = fg.copy(alpha = .85f)) }
