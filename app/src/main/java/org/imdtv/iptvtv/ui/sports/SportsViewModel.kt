@@ -134,6 +134,10 @@ class SportsViewModel(app: Application) : AndroidViewModel(app) {
      */
     suspend fun onTv(g: Game, strip: List<String>): OnTv? = whereToWatch(g, strip).firstOrNull()
 
+    /** A failed search counts as no hits, but a cancelled one stops the lookup: caching it as "no channel" hid games for 5 min. */
+    private inline fun <T> searchOrEmpty(block: () -> List<T>): List<T> =
+        try { block() } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { emptyList() }
+
     /** Every channel showing [g], best first (the match page's Where to watch row). */
     suspend fun whereToWatch(g: Game, strip: List<String>): List<OnTv> {
         val now = System.currentTimeMillis()
@@ -145,10 +149,11 @@ class SportsViewModel(app: Application) : AndroidViewModel(app) {
         for (q in teamNames(g.home)) {
             // shortcut: diagnostics for the 2026-11-24 TV test (all of today's mentions, any time, and any error); remove once matching is signed off.
             runCatching { c.search.guide(pid, strip, q, now - 12 * 3_600_000L, cap = 300, inDesc = true) }
+                .onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
                 .onFailure { android.util.Log.w("SportsHub", "\"$q\" search failed", it) }
                 .onSuccess { all -> android.util.Log.i("SportsHub", "\"$q\" today: ${all.size}; " + all.take(10).joinToString(" / ") { "${it.ch.name} ${org.imdtv.iptvtv.ui.clockTime(it.p.start)}-${org.imdtv.iptvtv.ui.clockTime(it.p.stop)}: ${it.p.title} — ${it.p.desc.orEmpty().take(60)}" }) }
             // From kick-off (not now), so earlier mentions of a common word ("Villa") can't use up the cap before the game.
-            runCatching { c.search.guide(pid, strip, q, at, cap = 300, inDesc = true) }.getOrDefault(emptyList())
+            searchOrEmpty { c.search.guide(pid, strip, q, at, cap = 300, inDesc = true) }
                 .filter { it.p.start <= at + 10 * 60_000 && it.p.stop > at }
                 // For Send logs: what the guide has for this team at kick-off, so a miss can be explained from the user's own guide.
                 .also { on -> android.util.Log.i("SportsHub", "${g.home.name} v ${g.away.name} \"$q\": ${on.size} on at kick-off; " + on.take(8).joinToString(" / ") { "${it.ch.name}: ${it.p.title} — ${it.p.desc.orEmpty().take(80)}" }) }
@@ -159,7 +164,7 @@ class SportsViewModel(app: Application) : AndroidViewModel(app) {
         }
         // Event channels with no guide, named for the game ("EPL 03: Wolves v Leeds"): on from kick-off for 3 hours.
         for (q in teamNames(g.home)) {
-            runCatching { c.search.universal(pid, strip, q, cap = 100, vod = { emptyList() }).channels.items }.getOrDefault(emptyList())
+            searchOrEmpty { c.search.universal(pid, strip, q, cap = 100, vod = { emptyList() }).channels.items }
                 .filter { titleNamesGame(it.name, g.home, g.away) && !hits.containsKey(it.id) }
                 .forEach { ch -> hits[ch.id] = org.imdtv.iptvtv.data.search.GuideHit(ch, GuideProgramme(ch.name, null, null, g.start, g.start + 3 * 3_600_000L)) to (gameMatch(ch.name, g.home, g.away) ?: 1) }
         }
