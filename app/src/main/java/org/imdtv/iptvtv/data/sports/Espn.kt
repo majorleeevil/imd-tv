@@ -250,9 +250,24 @@ fun normTeam(s: String): String = Normalizer.normalize(s.lowercase(), Normalizer
 fun teamNames(side: Side): Set<String> = (listOf(side.name, side.short) + ALIASES[side.name.lowercase()].orEmpty()).map(::normTeam).filter { it.length >= 3 }.toSet()
 
 /** A programme title names both teams (whole words). */
-fun titleNamesGame(title: String, home: Side, away: Side): Boolean {
-    val t = " ${normTeam(title)} "
-    return teamNames(home).any { t.contains(" $it ") } && teamNames(away).any { t.contains(" $it ") }
+fun titleNamesGame(title: String, home: Side, away: Side): Boolean = gameMatch(title, home, away) != null
+
+// After normTeam ("-", "@", ":" are spaces by then): what may stand between two team names in a fixture.
+private val VERSUS = setOf("", "v", "vs", "versus", "x", "at", "gegen", "contra", "contre")
+
+/**
+ * How well [text] names the game: null = not both teams; 0 = as a fixture ("Arsenal v Dortmund", either order) and the
+ * only fixture named; 1 = both teams loosely, or among several fixtures (a goals show listing the night's games).
+ */
+fun gameMatch(text: String, home: Side, away: Side): Int? {
+    val t = " ${normTeam(text)} "
+    val h = teamNames(home).filter { t.contains(" $it ") }
+    val a = teamNames(away).filter { t.contains(" $it ") }
+    if (h.isEmpty() || a.isEmpty()) return null
+    fun pair(x: String, y: String) = Regex(" ${Regex.escape(x)} (\\S* )?${Regex.escape(y)} ").findAll(t).any { (it.groupValues[1].trim()) in VERSUS }
+    val fixture = h.any { x -> a.any { y -> pair(x, y) || pair(y, x) } }
+    val fixtures = Regex(" (v|vs|versus) ").findAll(t).count()
+    return if (fixture && fixtures <= 1) 0 else 1
 }
 
 // --- Network + cache. ---

@@ -26,6 +26,7 @@ import org.imdtv.iptvtv.data.sports.Sport
 import org.imdtv.iptvtv.data.sports.Table
 import org.imdtv.iptvtv.data.sports.favouritesFirst
 import org.imdtv.iptvtv.data.sports.teamNames
+import org.imdtv.iptvtv.data.sports.gameMatch
 import org.imdtv.iptvtv.data.sports.titleNamesGame
 import java.time.LocalDate
 
@@ -139,31 +140,35 @@ class SportsViewModel(app: Application) : AndroidViewModel(app) {
         tvCache[g.id]?.takeIf { now - it.first < 5 * 60_000 }?.let { return it.second }
         val pid = c.providerRepository.activeProviderId.first() ?: return emptyList()
         val at = maxOf(now, g.start)
-        val hits = LinkedHashMap<Long, Pair<org.imdtv.iptvtv.data.search.GuideHit, Boolean>>()
+        // Per channel: the best programme and its match strength (0 = the game as the only fixture named).
+        val hits = LinkedHashMap<Long, Pair<org.imdtv.iptvtv.data.search.GuideHit, Int>>()
         for (q in teamNames(g.home)) {
             // From kick-off (not now), so earlier mentions of a common word ("Villa") can't use up the cap before the game.
             runCatching { c.search.guide(pid, strip, q, at, cap = 300, inDesc = true) }.getOrDefault(emptyList())
                 .filter { it.p.start <= at + 10 * 60_000 && it.p.stop > at }
                 .forEach { h ->
-                    val inTitle = titleNamesGame(h.p.title, g.home, g.away)
-                    if (inTitle || titleNamesGame(h.p.title + " " + h.p.desc.orEmpty(), g.home, g.away)) hits.putIfAbsent(h.ch.id, h to inTitle)
+                    val m = gameMatch(h.p.title + " " + h.p.desc.orEmpty(), g.home, g.away) ?: return@forEach
+                    if (hits[h.ch.id].let { it == null || m < it.second }) hits[h.ch.id] = h to m
                 }
         }
         // Event channels with no guide, named for the game ("EPL 03: Wolves v Leeds"): on from kick-off for 3 hours.
         for (q in teamNames(g.home)) {
             runCatching { c.search.universal(pid, strip, q, cap = 100, vod = { emptyList() }).channels.items }.getOrDefault(emptyList())
                 .filter { titleNamesGame(it.name, g.home, g.away) && !hits.containsKey(it.id) }
-                .forEach { ch -> hits[ch.id] = org.imdtv.iptvtv.data.search.GuideHit(ch, GuideProgramme(ch.name, null, null, g.start, g.start + 3 * 3_600_000L)) to true }
+                .forEach { ch -> hits[ch.id] = org.imdtv.iptvtv.data.search.GuideHit(ch, GuideProgramme(ch.name, null, null, g.start, g.start + 3 * 3_600_000L)) to (gameMatch(ch.name, g.home, g.away) ?: 1) }
         }
         val lang = org.imdtv.iptvtv.data.catalogue.tvLanguage()
-        suspend fun speaks(ch: ChannelEntity): Boolean {
+        val home = java.util.Locale.getDefault().country // "GB": a UK channel beats an Australian one, though both are English
+        /** 0 = the TV's country, 1 = its language, 2 = elsewhere. */
+        suspend fun place(ch: ChannelEntity): Int {
             val cat = ch.categoryId?.let { id -> categoryNames.getOrPut(id) { c.db.categoryDao().get(id)?.name } }
             val country = org.imdtv.iptvtv.data.catalogue.detectCountry(ch.name) ?: cat?.let { org.imdtv.iptvtv.data.catalogue.detectCountry(it) }
-            return org.imdtv.iptvtv.data.catalogue.languageOf(country) == lang
+            return when { country != null && country == home -> 0; org.imdtv.iptvtv.data.catalogue.languageOf(country) == lang -> 1; else -> 2 }
         }
-        val ranked = hits.values.map { (h, inTitle) -> Triple(h, inTitle, speaks(h.ch)) }
-            .sortedWith(compareBy({ !it.second }, { !it.third }, { it.first.p.start }))
-        val found = ranked.map { OnTv(it.first.ch, it.first.p) }
+        // The game as the only fixture named; then on now (not a show starting in 10 min); then the TV's country, language; then start.
+        val found = hits.values.map { (h, m) -> Triple(h, m, place(h.ch)) }
+            .sortedWith(compareBy({ it.second }, { it.first.p.start > now }, { it.third }, { it.first.p.start }))
+            .map { OnTv(it.first.ch, it.first.p) }
         tvCache[g.id] = now to found
         return found
     }

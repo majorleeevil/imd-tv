@@ -117,6 +117,12 @@ class EspnTest {
         assertFalse(titleNamesGame("Live UEFA Champions League", gala, villa))
         assertTrue(titleNamesGame("Live UEFA Champions League Galatasaray v Aston Villa (Kick-off 5.45pm). Coverage of the league phase match from Rams Park.", gala, villa))
         assertTrue(titleNamesGame("UEFA Champions League - Galatasaray vs Aston Villa FC", gala, villa))
+        assertEquals(0, gameMatch("Live UEFA Champions League Galatasaray v Aston Villa (Kick-off 5.45pm). Coverage of the league phase match from Rams Park.", gala, villa))
+        assertEquals(0, gameMatch("UEFA Champions League - Galatasaray vs Aston Villa FC", gala, villa))
+        assertEquals(0, gameMatch("UCL: Aston Villa @ Galatasaray", gala, villa))
+        // Real UK goals show (2026-11-24): names the game among others, so it ranks below the match itself.
+        assertEquals(1, gameMatch("Live: UEFA Champions League Goals Show Xtra Coverage of all the goals from Tuesday's fixtures, including Manchester City v Napoli, Arsenal v Borussia Dortmund, and Galatasaray v Aston Villa.", gala, villa))
+        assertEquals(1, gameMatch("Galatasaray host Aston Villa in Istanbul", gala, villa))
         assertFalse(titleNamesGame("Aston Villa: Season Review", gala, villa))
         val utd = Side("360", "Manchester United", "Man United", "MUN", null, null)
         val spurs = Side("367", "Tottenham Hotspur", "Tottenham", "TOT", null, null)
