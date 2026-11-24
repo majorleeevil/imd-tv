@@ -5,3 +5,6 @@
 -dontwarn org.ietf.jgss.**
 # smbj's event bus finds its @Handler methods by reflection.
 -keepclassmembers class * { @net.engio.mbassy.listener.Handler *; }
+# mbassador creates its handler invocations (ReflectiveHandlerInvocation etc.) by reflection on their (SubscriptionContext) constructors;
+# R8 stripped them in release builds, so every SMB connection failed ("did not specify the necessary constructor").
+-keep class net.engio.mbassy.** { *; }
