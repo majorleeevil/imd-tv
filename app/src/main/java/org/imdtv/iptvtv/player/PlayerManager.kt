@@ -391,6 +391,7 @@ class PlayerManager(private val context: Context) {
 
     /** Moves the player to [view] without re-preparing, so playback continues uninterrupted. */
     fun attach(view: PlayerView) {
+        Log.i(TAG, "attach ${view.hashCode()} (was ${this.view?.hashCode()}, window ${view.isAttachedToWindow})")
         if (this.view === view) return
         attachedAt = android.os.SystemClock.elapsedRealtime()
         PlayerView.switchTargetView(player, this.view, view)
@@ -400,6 +401,7 @@ class PlayerManager(private val context: Context) {
     }
 
     fun detach(view: PlayerView) {
+        Log.i(TAG, "detach ${view.hashCode()} (current ${this.view?.hashCode()})")
         if (this.view !== view) return
         view.player = null
         view.keepScreenOn = false
