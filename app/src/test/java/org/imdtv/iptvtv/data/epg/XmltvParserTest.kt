@@ -46,6 +46,16 @@ class XmltvParserTest {
     }
 
     @Test
+    fun subTitleStandsInForAMissingDesc() {
+        val xml = """<tv><programme start="20261124170000 +0000" stop="20261124200000 +0000" channel="TNT.Sports.2.HD.uk"><title>Live UEFA Champions League</title>
+            <sub-title>Galatasaray v Aston Villa (Kick-off 5.45pm)</sub-title></programme>
+            <programme start="20261124200000 +0000" stop="20261124210000 +0000" channel="c"><title>Quiz</title><sub-title>Round 1</sub-title><desc>Questions.</desc></programme></tv>"""
+        val programmes = mutableListOf<XProgramme>()
+        XmltvParser().parse(xml.byteInputStream(), {}, programmes::add)
+        assertEquals(listOf("Galatasaray v Aston Villa (Kick-off 5.45pm)", "Questions."), programmes.map { it.desc })
+    }
+
+    @Test
     fun timeOffsets() {
         assertEquals(ms("2026-10-25T00:30:00Z"), XmltvTime.parse("20261025013000 +0100"))
         assertEquals(ms("2026-10-25T01:30:00Z"), XmltvTime.parse("20261025013000 +0000"))

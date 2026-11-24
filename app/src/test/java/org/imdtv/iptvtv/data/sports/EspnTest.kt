@@ -113,6 +113,9 @@ class EspnTest {
         val gala = Side("1", "Galatasaray", "Galatasaray", "GAL", null, null)
         val villa = Side("362", "Aston Villa", "Aston Villa", "AVL", null, null)
         assertTrue(titleNamesGame("Live: Galatasaray v Aston Villa", gala, villa))
+        // TNT Sports 2 in a real UK guide (2026-11-24): the title names only the competition, the description the teams.
+        assertFalse(titleNamesGame("Live UEFA Champions League", gala, villa))
+        assertTrue(titleNamesGame("Live UEFA Champions League Galatasaray v Aston Villa (Kick-off 5.45pm). Coverage of the league phase match from Rams Park.", gala, villa))
         assertTrue(titleNamesGame("UEFA Champions League - Galatasaray vs Aston Villa FC", gala, villa))
         assertFalse(titleNamesGame("Aston Villa: Season Review", gala, villa))
         val utd = Side("360", "Manchester United", "Man United", "MUN", null, null)

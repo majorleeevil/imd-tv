@@ -91,6 +91,7 @@ class XmltvParser {
         val channel = p.getAttributeValue(null, "channel")?.trim()
         var title: String? = null
         var desc: String? = null
+        var subTitle: String? = null
         var episode: String? = null
         var onscreen: String? = null
         var icon: String? = null
@@ -100,6 +101,7 @@ class XmltvParser {
                 "rating" -> children(p) { v -> if (v == "value") org.imdtv.iptvtv.data.parental.ageOf(p.nextText()).let { a -> if (age == null) age = a } else skip(p) }
                 "title" -> p.nextText().replace(SPACES, " ").trim().let { if (title == null) title = it } // a line break in a title hides the rest in a one-line cell
                 "desc" -> p.nextText().trim().let { if (desc == null && it.isNotEmpty()) desc = it }
+                "sub-title" -> p.nextText().trim().let { if (subTitle == null && it.isNotEmpty()) subTitle = it }
                 "episode-num" -> {
                     val system = p.getAttributeValue(null, "system")
                     val text = p.nextText().trim().takeIf { it.isNotEmpty() }
@@ -110,7 +112,8 @@ class XmltvParser {
             }
         }
         if (start == null || stop == null || channel.isNullOrEmpty()) return null
-        return XProgramme(channel, start, stop, title.orEmpty(), desc, onscreen ?: episode, icon, age)
+        // No desc: the sub-title stands in (some guides name a game's teams only there, e.g. "Galatasaray v Aston Villa").
+        return XProgramme(channel, start, stop, title.orEmpty(), desc ?: subTitle, onscreen ?: episode, icon, age)
     }
 
     /** Calls [onChild] for each direct child start tag; [onChild] must consume the child up to its end tag. */
