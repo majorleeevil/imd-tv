@@ -143,6 +143,10 @@ class SportsViewModel(app: Application) : AndroidViewModel(app) {
         // Per channel: the best programme and its match strength (0 = the game as the only fixture named).
         val hits = LinkedHashMap<Long, Pair<org.imdtv.iptvtv.data.search.GuideHit, Int>>()
         for (q in teamNames(g.home)) {
+            // shortcut: diagnostics for the 2026-11-24 TV test (all of today's mentions, any time, and any error); remove once matching is signed off.
+            runCatching { c.search.guide(pid, strip, q, now - 12 * 3_600_000L, cap = 300, inDesc = true) }
+                .onFailure { android.util.Log.w("SportsHub", "\"$q\" search failed", it) }
+                .onSuccess { all -> android.util.Log.i("SportsHub", "\"$q\" today: ${all.size}; " + all.take(10).joinToString(" / ") { "${it.ch.name} ${org.imdtv.iptvtv.ui.clockTime(it.p.start)}-${org.imdtv.iptvtv.ui.clockTime(it.p.stop)}: ${it.p.title} — ${it.p.desc.orEmpty().take(60)}" }) }
             // From kick-off (not now), so earlier mentions of a common word ("Villa") can't use up the cap before the game.
             runCatching { c.search.guide(pid, strip, q, at, cap = 300, inDesc = true) }.getOrDefault(emptyList())
                 .filter { it.p.start <= at + 10 * 60_000 && it.p.stop > at }
