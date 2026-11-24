@@ -165,6 +165,7 @@
     <string name="set_a_past_days_keep_expl">Antal dagar tidigare program som sparas vid varje uppdatering</string>
     <string name="set_a_add_source">Lägg till källa</string>
     <string name="set_a_add_source_expl">Klistra in eller skriv en XMLTV-guide-URL</string>
+    <string name="set_a_phone_epg_done">Skickat. Guidekällan har lagts till på tv:n.</string>
     <string name="set_a_use_source">Använd %1$s</string>
     <string name="set_a_use_source_expl">Av behåller den i listan men laddar aldrig ner eller använder den</string>
     <string name="set_a_rename">Byt namn</string>

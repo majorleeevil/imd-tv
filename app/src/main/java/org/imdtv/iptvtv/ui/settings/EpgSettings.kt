@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -109,6 +111,7 @@ fun EpgGroupRows(vm: SettingsViewModel, first: Modifier, sourcesOpener: Modifier
 
 /** EPG sources: one row per playlist, each opening its sources (add, rename, time offset, remove, open-source on/off). */
 @Composable
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 fun EpgSourcesPage(vm: SettingsViewModel, modifier: Modifier, first: FocusRequester, park: () -> Unit, onClose: () -> Unit) {
     val providers by vm.providers.collectAsState()
     val settings by vm.settings.collectAsState()
@@ -136,6 +139,17 @@ fun EpgSourcesPage(vm: SettingsViewModel, modifier: Modifier, first: FocusReques
             EditRow(stringResource(R.string.set_a_add_source), stringResource(R.string.set_a_add_source_expl), null, "", Modifier.focusRequester(first), KeyboardType.Uri) { url ->
                 if (Uri.parse(url).host != null) vm.addSource(p.id, url)
             }
+            // #40: the same phone form as Add playlist; each address sent (several: spaces or commas between) is added as if typed.
+            var phone by remember { mutableStateOf(false) }
+            val qrSpot = remember { androidx.compose.foundation.relocation.BringIntoViewRequester() }
+            LaunchedEffect(phone) { if (phone) { kotlinx.coroutines.delay(150); qrSpot.bringIntoView() } } // the address under the QR starts off screen
+            SettingRow(stringResource(R.string.set_b_use_phone), stringResource(R.string.set_a_add_source_expl), null) { phone = !phone }
+            if (phone) PhoneFormQr("addepg", stringResource(R.string.set_a_add_source), emptyList(), "",
+                listOf(org.imdtv.iptvtv.data.support.PhoneField("url", stringResource(R.string.set_b_epg_urls))),
+                onSubmit = { form ->
+                    form["url"].orEmpty().split(Regex("""[\s,]+""")).filter { Uri.parse(it).host != null }.forEach { vm.addSource(p.id, it) }
+                }, Modifier.fillMaxWidth().padding(top = 6.dp).bringIntoViewRequester(qrSpot),
+                done = stringResource(R.string.set_a_phone_epg_done))
             sources.forEach { s ->
                 key(s.id) {
                     var confirmRemove by remember { mutableStateOf(false) }

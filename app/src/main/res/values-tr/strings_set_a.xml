@@ -165,6 +165,7 @@
     <string name="set_a_past_days_keep_expl">Her güncellemede saklanan geçmiş program günü sayısı</string>
     <string name="set_a_add_source">Kaynak ekle</string>
     <string name="set_a_add_source_expl">Bir XMLTV rehber URL\'si yapıştırın veya yazın</string>
+    <string name="set_a_phone_epg_done">Gönderildi. Rehber kaynağı TV\'ye eklendi.</string>
     <string name="set_a_use_source">%1$s kullan</string>
     <string name="set_a_use_source_expl">Kapalıyken listede kalır ancak hiç indirilmez ve kullanılmaz</string>
     <string name="set_a_rename">Yeniden adlandır</string>

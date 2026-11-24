@@ -167,6 +167,7 @@
     <string name="set_a_past_days_keep_expl">Days of past programmes stored at each update</string>
     <string name="set_a_add_source">Add source</string>
     <string name="set_a_add_source_expl">Paste or type an XMLTV guide URL</string>
+    <string name="set_a_phone_epg_done">Sent. The guide source is now added on the TV.</string>
     <string name="set_a_use_source">Use %1$s</string>
     <string name="set_a_use_source_expl">Off keeps it in the list but never downloads or uses it</string>
     <string name="set_a_rename">Rename</string>

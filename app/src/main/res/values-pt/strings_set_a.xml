@@ -165,6 +165,7 @@
     <string name="set_a_past_days_keep_expl">Dias de programas anteriores guardados em cada atualização</string>
     <string name="set_a_add_source">Adicionar fonte</string>
     <string name="set_a_add_source_expl">Cole ou escreva o URL de um guia XMLTV</string>
+    <string name="set_a_phone_epg_done">Enviado. A fonte do guia já foi adicionada na TV.</string>
     <string name="set_a_use_source">Usar %1$s</string>
     <string name="set_a_use_source_expl">Desligado mantém-na na lista, mas nunca a transfere nem usa</string>
     <string name="set_a_rename">Mudar o nome</string>

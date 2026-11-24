@@ -165,6 +165,7 @@
     <string name="set_a_past_days_keep_expl">Ημέρες παλαιότερων εκπομπών που αποθηκεύονται σε κάθε ενημέρωση</string>
     <string name="set_a_add_source">Προσθήκη πηγής</string>
     <string name="set_a_add_source_expl">Επικολλήστε ή πληκτρολογήστε ένα URL οδηγού XMLTV</string>
+    <string name="set_a_phone_epg_done">Εστάλη. Η πηγή οδηγού προστέθηκε στην τηλεόραση.</string>
     <string name="set_a_use_source">Χρήση του %1$s</string>
     <string name="set_a_use_source_expl">Αν είναι ανενεργό, μένει στη λίστα αλλά δεν λαμβάνεται ούτε χρησιμοποιείται</string>
     <string name="set_a_rename">Μετονομασία</string>

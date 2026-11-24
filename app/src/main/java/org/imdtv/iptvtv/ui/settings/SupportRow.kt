@@ -125,13 +125,12 @@ fun qrImage(text: String): ImageBitmap {
  */
 @Composable
 fun PhoneFormQr(path: String, title: String, types: List<String>, type: String, fields: List<org.imdtv.iptvtv.data.support.PhoneField>,
-                onSubmit: (Map<String, String>) -> Unit, modifier: Modifier = Modifier) {
+                onSubmit: (Map<String, String>) -> Unit, modifier: Modifier = Modifier, done: String = stringResource(R.string.set_b_phone_done)) {
     var server by remember { mutableStateOf<org.imdtv.iptvtv.data.support.PhoneFormServer?>(null) }
     var qr by remember { mutableStateOf<ImageBitmap?>(null) }
     var failed by remember { mutableStateOf(false) }
     var gen by remember { mutableStateOf(0) }
     val send = stringResource(R.string.set_b_phone_send)
-    val done = stringResource(R.string.set_b_phone_done)
     val now by androidx.compose.runtime.rememberUpdatedState(Triple(fields, type, onSubmit))
     val scope = rememberCoroutineScope()
     LaunchedEffect(gen) {

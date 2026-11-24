@@ -165,6 +165,7 @@
     <string name="set_a_past_days_keep_expl">Aantal dagen afgelopen programma\'s dat bij elke update wordt opgeslagen</string>
     <string name="set_a_add_source">Bron toevoegen</string>
     <string name="set_a_add_source_expl">Plak of typ een XMLTV-gids-URL</string>
+    <string name="set_a_phone_epg_done">Verzonden. De gidsbron is nu toegevoegd op de tv.</string>
     <string name="set_a_use_source">%1$s gebruiken</string>
     <string name="set_a_use_source_expl">Uit houdt de bron in de lijst, maar downloadt of gebruikt hem nooit</string>
     <string name="set_a_rename">Hernoemen</string>

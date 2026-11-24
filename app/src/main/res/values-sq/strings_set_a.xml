@@ -166,6 +166,7 @@
     <string name="set_a_past_days_keep_expl">Ditët e emisioneve të kaluara që ruhen në çdo përditësim</string>
     <string name="set_a_add_source">Shto burim</string>
     <string name="set_a_add_source_expl">Ngjitni ose shkruani një URL programi XMLTV</string>
+    <string name="set_a_phone_epg_done">U dërgua. Burimi i programit u shtua në televizor.</string>
     <string name="set_a_use_source">Përdor %1$s</string>
     <string name="set_a_use_source_expl">Joaktiv e mban në listë, por nuk e shkarkon dhe nuk e përdor kurrë</string>
     <string name="set_a_rename">Riemërto</string>

@@ -165,6 +165,7 @@
     <string name="set_a_past_days_keep_expl">Liczba dni minionych audycji zapisywanych przy każdej aktualizacji</string>
     <string name="set_a_add_source">Dodaj źródło</string>
     <string name="set_a_add_source_expl">Wklej lub wpisz adres URL przewodnika XMLTV</string>
+    <string name="set_a_phone_epg_done">Wysłano. Źródło przewodnika zostało dodane na telewizorze.</string>
     <string name="set_a_use_source">Użyj: %1$s</string>
     <string name="set_a_use_source_expl">Wyłączone zostaje na liście, ale nigdy nie jest pobierane ani używane</string>
     <string name="set_a_rename">Zmień nazwę</string>

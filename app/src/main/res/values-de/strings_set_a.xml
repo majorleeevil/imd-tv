@@ -165,6 +165,7 @@
     <string name="set_a_past_days_keep_expl">Tage vergangener Sendungen, die bei jeder Aktualisierung gespeichert werden</string>
     <string name="set_a_add_source">Quelle hinzufügen</string>
     <string name="set_a_add_source_expl">XMLTV-Programm-URL einfügen oder eingeben</string>
+    <string name="set_a_phone_epg_done">Gesendet. Die Programmquelle ist jetzt auf dem Fernseher hinzugefügt.</string>
     <string name="set_a_use_source">%1$s verwenden</string>
     <string name="set_a_use_source_expl">Aus behält sie in der Liste, lädt oder nutzt sie aber nie</string>
     <string name="set_a_rename">Umbenennen</string>
