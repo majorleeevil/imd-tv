@@ -40,6 +40,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -388,6 +389,15 @@ fun VodDetailScreen(vm: VodViewModel, item: VodItem, onPlay: (url: String, title
     fun episodeTitle(ep: Episode) = context.getString(R.string.vod_episode_title, item.name, ep.season, ep.number)
     val play = remember { FocusRequester() }
     LaunchedEffect(item.id) { vm.loadDetail(item); withFrameNanos { }; runCatching { play.requestFocus() } }
+    // #41 Stremio: Choose source lists every link the add-ons give (Play keeps taking the first); (title, episode, start, links).
+    var sources by remember { mutableStateOf<SourcePick?>(null) }
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    fun chooseSource(url: String, title: String, episode: String, startMs: Long) = scope.launch {
+        val links = vm.sourceChoices(url, item)
+        if (links.isEmpty()) android.widget.Toast.makeText(context, R.string.vod_stremio_no_stream, android.widget.Toast.LENGTH_LONG).show()
+        else sources = SourcePick(title, episode, startMs, links)
+    }
+    val stremio = item.streamUrl?.startsWith(org.imdtv.iptvtv.data.source.STREMIO_PLAY) == true || item.kind == Kind.SERIES && d?.episodes?.firstOrNull()?.streamUrl?.startsWith(org.imdtv.iptvtv.data.source.STREMIO_PLAY) == true
     val fav = favs.any { it.id == item.id }
     vm.learnedHeights.collectAsState().value // recompose when a height is learned
     val resolution = (d?.height ?: vm.learnedHeight(item))?.let { org.imdtv.iptvtv.player.resolutionLabel(it) }
@@ -407,6 +417,7 @@ fun VodDetailScreen(vm: VodViewModel, item: VodItem, onPlay: (url: String, title
                         Btn(stringResource(R.string.vod_btn_resume_from, duration(at)), Modifier.focusRequester(play)) { item.streamUrl?.let { onPlay(it, item.name, "", at) } }
                         Btn(stringResource(R.string.vod_btn_from_start)) { item.streamUrl?.let { onPlay(it, item.name, "", 0) } }
                     } else Btn(stringResource(R.string.vod_btn_play), Modifier.focusRequester(play)) { item.streamUrl?.let { onPlay(it, item.name, "", 0) } }
+                    if (stremio) Btn(stringResource(R.string.vod_btn_choose_source)) { item.streamUrl?.let { chooseSource(it, item.name, "", at) } }
                     Btn(stringResource(if (fav) R.string.vod_btn_favourited else R.string.vod_btn_favourite)) { vm.toggleFavourite(item) }
                     Btn(stringResource(if (row?.completed == true) R.string.vod_btn_watched else R.string.vod_btn_mark_watched)) { vm.setWatched(item, row?.completed != true) }
                 }
@@ -488,14 +499,20 @@ fun VodDetailScreen(vm: VodViewModel, item: VodItem, onPlay: (url: String, title
                 val r = seriesRows.find { it.episode == ep.remoteId }
                 val items = listOfNotNull<Pair<String, () -> Unit>>(
                     if (r != null && !r.completed && r.positionMs > 0) stringResource(R.string.vod_menu_play_from_start) to { menuFor = null; onPlay(ep.streamUrl, episodeTitle(ep), ep.remoteId, 0) } else null,
+                    if (stremio) stringResource(R.string.vod_btn_choose_source) to { menuFor = null; chooseSource(ep.streamUrl, episodeTitle(ep), ep.remoteId, resumeAt(r)) } else null,
                     if (r?.completed == true) stringResource(R.string.vod_menu_mark_unwatched) to { menuFor = null; vm.setWatched(item, false, ep.remoteId) }
                     else stringResource(R.string.vod_btn_mark_watched) to { menuFor = null; vm.setWatched(item, true, ep.remoteId) },
                 )
                 ContextMenu(stringResource(R.string.vod_season_episode, ep.season, ep.number), items) { menuFor = null }
             }
         }
+        sources?.let { pick ->
+            ContextMenu(stringResource(R.string.vod_btn_choose_source), pick.links.map { (label, url) -> label to { sources = null; onPlay(url, pick.title, pick.episode, pick.startMs) } }) { sources = null }
+        }
     }
 }
+
+private class SourcePick(val title: String, val episode: String, val startMs: Long, val links: List<Pair<String, String>>)
 
 @Composable
 private fun Chip(text: String, modifier: Modifier) {

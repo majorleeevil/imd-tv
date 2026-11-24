@@ -70,6 +70,7 @@
     <string name="vod_btn_resume_from">"▶  Reia de la %1$s"</string>
     <string name="vod_btn_from_start">"↺  De la început"</string>
     <string name="vod_btn_play">"▶  Redă"</string>
+    <string name="vod_btn_choose_source">Alege sursa</string>
     <string name="vod_btn_favourited">"★  La favorite"</string>
     <string name="vod_btn_favourite">"☆  Favorit"</string>
     <string name="vod_btn_watched">"✓  Vizionat"</string>

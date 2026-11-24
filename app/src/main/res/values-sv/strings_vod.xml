@@ -75,6 +75,7 @@
     <string name="vod_btn_resume_from">"▶  Fortsätt från %1$s"</string>
     <string name="vod_btn_from_start">"↺  Från början"</string>
     <string name="vod_btn_play">"▶  Spela upp"</string>
+    <string name="vod_btn_choose_source">Välj källa</string>
     <string name="vod_btn_favourited">"★  Favorit"</string>
     <string name="vod_btn_favourite">"☆  Favorit"</string>
     <string name="vod_btn_watched">"✓  Sedd"</string>

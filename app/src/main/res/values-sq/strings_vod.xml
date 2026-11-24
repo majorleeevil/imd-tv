@@ -81,6 +81,7 @@
     <string name="vod_btn_resume_from">"▶  Vazhdo nga %1$s"</string>
     <string name="vod_btn_from_start">"↺  Nga fillimi"</string>
     <string name="vod_btn_play">"▶  Luaj"</string>
+    <string name="vod_btn_choose_source">Zgjidh burimin</string>
     <string name="vod_btn_favourited">"★  Në të preferuarat"</string>
     <string name="vod_btn_favourite">"☆  Shto te të preferuarat"</string>
     <string name="vod_btn_watched">"✓  Parë"</string>

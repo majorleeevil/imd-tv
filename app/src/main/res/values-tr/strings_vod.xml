@@ -75,6 +75,7 @@
     <string name="vod_btn_resume_from">"▶  %1$s konumundan devam et"</string>
     <string name="vod_btn_from_start">"↺  Baştan"</string>
     <string name="vod_btn_play">"▶  Oynat"</string>
+    <string name="vod_btn_choose_source">Kaynak seç</string>
     <string name="vod_btn_favourited">"★  Favorilerde"</string>
     <string name="vod_btn_favourite">"☆  Favori"</string>
     <string name="vod_btn_watched">"✓  İzlendi"</string>

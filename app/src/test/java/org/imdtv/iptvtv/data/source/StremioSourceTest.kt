@@ -67,7 +67,7 @@ class StremioSourceTest {
                     p == "/cm/meta/series/tt9.json" -> """{"meta":{"id":"tt9","name":"Show","runtime":"57 min","genres":["Drama"],"background":"https://b","videos":[
                         {"id":"tt9:1:2","name":"Two","season":1,"episode":2},{"id":"tt9:0:1","name":"Preview","season":0,"episode":1},{"id":"tt9:1:1","name":"One","season":1,"episode":1}]}}"""
                     p == "/tor/stream/movie/tt1.json" -> """{"streams":[{"name":"1080p","infoHash":"abc","fileIdx":0}]}"""
-                    p == "/dir/stream/movie/tt1.json" -> """{"streams":[{"ytId":"x"},{"name":"HD","url":"https://cdn/film.mp4"}]}"""
+                    p == "/dir/stream/movie/tt1.json" -> """{"streams":[{"ytId":"x"},{"name":"HD","url":"https://cdn/film.mp4"},{"name":"Dir\n4K","title":"Film.2160p\n20 GB","url":"https://cdn/film-4k.mp4"}]}"""
                     p == "/dir/stream/series/tt9:1:1.json" -> """{"streams":[{"infoHash":"def"}]}"""
                     else -> return MockResponse().setResponseCode(404)
                 }
@@ -124,6 +124,9 @@ class StremioSourceTest {
         // The torrent add-on comes first but only the direct link plays; a torrent-only title has nothing.
         assertEquals("https://cdn/film.mp4", src.stream("${STREMIO_PLAY}movie/tt1"))
         assertNull(src.stream("${STREMIO_PLAY}series/tt9:1:1"))
+        // #41 Choose source: every direct link, in add-on order, labelled by the add-on's name and title lines.
+        assertEquals(listOf("HD" to "https://cdn/film.mp4", "Dir 4K · Film.2160p 20 GB" to "https://cdn/film-4k.mp4"), src.streams("${STREMIO_PLAY}movie/tt1"))
+        assertTrue(src.streams("${STREMIO_PLAY}series/tt9:1:1").isEmpty())
         // Unticked catalogs aren't fetched.
         paths.clear()
         assertTrue(StremioSource("KEY", setOf("cinemeta/movie/top"), auth(), http, json).movies().isEmpty())

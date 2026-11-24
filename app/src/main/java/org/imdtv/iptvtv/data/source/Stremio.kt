@@ -259,6 +259,20 @@ class StremioSource(private val authKey: String, private val skip: Set<String>, 
         return null
     }
 
+    /** #41: every direct link for [play] across the stream add-ons, as (label, url) in add-on order; the label is the add-on's own name and title lines. */
+    suspend fun streams(play: String): List<Pair<String, String>> {
+        val (type, id) = play.removePrefix(STREMIO_PLAY).split('/', limit = 2).takeIf { it.size == 2 } ?: return emptyList()
+        return addons().filter { it.serves("stream", type, id) }.flatMap { a ->
+            val streams = runCatching { get("${a.base}/stream/$type/$id.json").arr("streams") }
+                .onFailure { android.util.Log.w("Stremio", "${a.name} streams failed: $it") }.getOrNull().orEmpty()
+            streams.mapNotNull { s ->
+                val url = s.str("url")?.takeIf { it.startsWith("http") } ?: return@mapNotNull null
+                val label = listOfNotNull(s.str("name"), s.str("title") ?: s.str("description")).joinToString(" · ").replace(Regex("""\s*\n\s*"""), " ").trim()
+                label.ifEmpty { a.name }.take(140) to url
+            }
+        }
+    }
+
     // shortcut: only titles in the chosen catalogs can show (the rest have no row here); add them to a category if people ask.
     override suspend fun resumePoints() = auth.continueWatching(authKey)
     override suspend fun reportProgress(p: ProgressReport) = auth.saveProgress(authKey, p)

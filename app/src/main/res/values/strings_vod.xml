@@ -81,6 +81,7 @@
     <string name="vod_btn_resume_from">"▶  Resume from %1$s"</string>
     <string name="vod_btn_from_start">"↺  From start"</string>
     <string name="vod_btn_play">"▶  Play"</string>
+    <string name="vod_btn_choose_source">Choose source</string>
     <string name="vod_btn_favourited">"★  Favourited"</string>
     <string name="vod_btn_favourite">"☆  Favourite"</string>
     <string name="vod_btn_watched">"✓  Watched"</string>

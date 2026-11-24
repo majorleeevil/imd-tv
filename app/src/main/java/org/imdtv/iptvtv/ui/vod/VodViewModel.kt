@@ -292,6 +292,13 @@ class VodViewModel(private val app: Application) : AndroidViewModel(app) {
         }
     }
 
+    /** #41: (label, direct link) for each source the Stremio add-ons have for [url]; empty for other playlists or none. */
+    suspend fun sourceChoices(url: String, item: VodItem): List<Pair<String, String>> {
+        if (!url.startsWith(org.imdtv.iptvtv.data.source.STREMIO_PLAY)) return emptyList()
+        val p = providerOf(item) ?: provider.value ?: return emptyList()
+        return runCatching { (source(p) as? org.imdtv.iptvtv.data.source.StremioSource)?.streams(url) }.getOrNull().orEmpty()
+    }
+
     val parentalOn: StateFlow<Boolean> = c.settings.settings.map { it.parentalOn }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
     /** Hold OK on a category in the rail › Enable / Disable Parental Lock; unlocking takes the PIN. */
     fun setParentalLock(cat: CategoryEntity, on: Boolean) {

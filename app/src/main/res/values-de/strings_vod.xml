@@ -75,6 +75,7 @@
     <string name="vod_btn_resume_from">"▶  Fortsetzen ab %1$s"</string>
     <string name="vod_btn_from_start">"↺  Von vorn"</string>
     <string name="vod_btn_play">"▶  Abspielen"</string>
+    <string name="vod_btn_choose_source">Quelle wählen</string>
     <string name="vod_btn_favourited">"★  Favorit"</string>
     <string name="vod_btn_favourite">"☆  Favorit"</string>
     <string name="vod_btn_watched">"✓  Gesehen"</string>

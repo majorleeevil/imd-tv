@@ -70,6 +70,7 @@
     <string name="vod_btn_resume_from">"▶  Συνέχεια από %1$s"</string>
     <string name="vod_btn_from_start">"↺  Από την αρχή"</string>
     <string name="vod_btn_play">"▶  Αναπαραγωγή"</string>
+    <string name="vod_btn_choose_source">Επιλογή πηγής</string>
     <string name="vod_btn_favourited">"★  Στα αγαπημένα"</string>
     <string name="vod_btn_favourite">"☆  Αγαπημένο"</string>
     <string name="vod_btn_watched">"✓  Προβλήθηκε"</string>

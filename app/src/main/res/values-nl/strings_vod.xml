@@ -70,6 +70,7 @@
     <string name="vod_btn_resume_from">"▶  Hervatten vanaf %1$s"</string>
     <string name="vod_btn_from_start">"↺  Van het begin"</string>
     <string name="vod_btn_play">"▶  Afspelen"</string>
+    <string name="vod_btn_choose_source">Bron kiezen</string>
     <string name="vod_btn_favourited">"★  Favoriet"</string>
     <string name="vod_btn_favourite">"☆  Favoriet maken"</string>
     <string name="vod_btn_watched">"✓  Bekeken"</string>
