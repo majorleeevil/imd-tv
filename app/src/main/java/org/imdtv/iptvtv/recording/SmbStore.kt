@@ -122,8 +122,12 @@ class SmbDataSource(private val settings: () -> SmbSettings) : BaseDataSource(tr
     private var c: Connected? = null
     private var file: SmbFile? = null
     private var uri: Uri? = null
-    private var position = 0L
+    private var position = 0L // file offset of the next fetch
     private var remaining = 0L
+    // One SMB round trip per extractor read (often a few KB) starved playback: fetch big chunks and serve reads from them.
+    private val chunk = ByteArray(512 * 1024)
+    private var chunkPos = 0
+    private var chunkLen = 0
 
     override fun open(dataSpec: DataSpec): Long {
         val (server, share, path) = parseSmbLocation(dataSpec.uri.toString()) ?: throw IOException("Not a network share address")
@@ -134,6 +138,7 @@ class SmbDataSource(private val settings: () -> SmbSettings) : BaseDataSource(tr
         uri = dataSpec.uri
         val size = f.fileInformation.standardInformation.endOfFile
         position = dataSpec.position
+        chunkPos = 0; chunkLen = 0
         remaining = if (dataSpec.length != C.LENGTH_UNSET.toLong()) dataSpec.length else size - position
         transferStarted(dataSpec)
         return remaining
@@ -142,9 +147,14 @@ class SmbDataSource(private val settings: () -> SmbSettings) : BaseDataSource(tr
     override fun read(buffer: ByteArray, offset: Int, length: Int): Int {
         if (length == 0) return 0
         if (remaining == 0L) return C.RESULT_END_OF_INPUT
-        val n = file!!.read(buffer, position, offset, minOf(length.toLong(), remaining).toInt())
-        if (n <= 0) return C.RESULT_END_OF_INPUT
-        position += n; remaining -= n
+        if (chunkPos == chunkLen) {
+            val got = file!!.read(chunk, position, 0, minOf(chunk.size.toLong(), remaining).toInt())
+            if (got <= 0) return C.RESULT_END_OF_INPUT
+            position += got; chunkPos = 0; chunkLen = got
+        }
+        val n = minOf(length, chunkLen - chunkPos)
+        System.arraycopy(chunk, chunkPos, buffer, offset, n)
+        chunkPos += n; remaining -= n
         bytesTransferred(n)
         return n
     }
