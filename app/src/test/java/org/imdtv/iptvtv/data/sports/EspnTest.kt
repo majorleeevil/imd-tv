@@ -93,6 +93,22 @@ class EspnTest {
         assertFalse(rest.any { it.id == "401915300" })
     }
 
+    @Test fun finishedTeamGameLeavesFavouritesWhenResultsOff() {
+        val games = parseScoreboard(fx("scoreboard-soccer-eng2-20261124.json"), eng2) + parseScoreboard(fx("scoreboard-soccer-ucl-20261124.json"), ucl)
+        val villa = setOf(favouriteKey(Sport.FOOTBALL, "362", "Aston Villa"))
+        val ended = games.single { it.id == "401915300" }.copy(state = GameState.POST)
+        val list = games.map { if (it.id == ended.id) ended else it }
+        assertTrue(favouritesFirst(list, villa, emptySet(), teamResults = true).first.any { it.id == ended.id })
+        assertTrue(favouritesFirst(list, villa, emptySet(), teamResults = false).second.any { it.id == ended.id })
+    }
+
+    @Test fun eventChannelNamesNameBothTeams() {
+        val wolves = Side("380", "Wolverhampton Wanderers", "Wolves", "WOL", null, null)
+        val leeds = Side("357", "Leeds United", "Leeds", "LEE", null, null)
+        assertTrue(titleNamesGame("UK| EPL 03: Wolves v Leeds 20:00", wolves, leeds))
+        assertFalse(titleNamesGame("UK| Championship PPV 03", wolves, leeds))
+    }
+
     @Test fun programmeTitlesNameBothTeams() {
         val gala = Side("1", "Galatasaray", "Galatasaray", "GAL", null, null)
         val villa = Side("362", "Aston Villa", "Aston Villa", "AVL", null, null)

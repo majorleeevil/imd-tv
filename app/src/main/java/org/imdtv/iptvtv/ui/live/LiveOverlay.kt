@@ -56,8 +56,7 @@ import org.imdtv.iptvtv.ui.clockTime
 /**
  * Info overlay over live full screen (spec §4.2): now/next, then a row of TV guide, Settings and Restart cards and the
  * channels watched before. Focus starts on TV guide, so OK, OK still opens the guide. Celestial Plus (#2) has a smaller
- * bar and small icon buttons (Settings, TV guide, Restart) set apart by a line. Overlay buttons off (#28, #31): only a
- * small Settings button. No play/pause: a paused live stream outlives the player's buffer (~50 s), then the provider drops it.
+ * bar and small icon buttons (Settings, TV guide, Restart) set apart by a line. No play/pause: a paused live stream outlives the player's buffer (~50 s), then the provider drops it.
  */
 @Composable
 fun LiveOverlay(vm: LiveViewModel, onGuide: () -> Unit, onPick: (ChannelEntity) -> Unit, onMenuOpen: (Boolean) -> Unit = {}) {
@@ -78,8 +77,7 @@ fun LiveOverlay(vm: LiveViewModel, onGuide: () -> Unit, onPick: (ChannelEntity) 
     val progress = cur?.let { ((now - it.start).toFloat() / (it.stop - it.start)).coerceIn(0f, 1f) }
 
     val plus = LocalTheme.current.id == ThemeId.CELESTIAL_PLUS
-    val buttons = vm.settings.collectAsState().value.overlayButtons
-    val small = plus || !buttons
+    val small = plus
     val guideFocus = remember { FocusRequester() }
     val menus = remember(vm) { GuideState(vm, 0, androidx.compose.foundation.lazy.LazyListState(), false, previews = false) }
     // The player menu opens above the Settings button, not mid-screen (#28): small buttons put it first, cards second.
@@ -149,10 +147,7 @@ fun LiveOverlay(vm: LiveViewModel, onGuide: () -> Unit, onPick: (ChannelEntity) 
                 contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 48.dp),
             ) {
                 val settingsMenu = { menus.menu = GuideMenu.Player(ch) }
-                if (!buttons) {
-                    // Only Settings: the player menu must stay reachable (#28, #31).
-                    item(key = "settings") { OverlayButton(R.drawable.ic_tab_settings, stringResource(R.string.live_overlay_settings), Modifier.focusRequester(guideFocus), settingsMenu) }
-                } else if (plus) {
+                if (plus) {
                     // Subtitles, aspect, record, favourite and add to category, at hand while watching.
                     item(key = "settings") { OverlayButton(R.drawable.ic_tab_settings, stringResource(R.string.live_overlay_settings), onClick = settingsMenu) }
                     item(key = "guide") { OverlayButton(R.drawable.ic_tab_live, stringResource(R.string.live_tv_guide), Modifier.focusRequester(guideFocus), onGuide) }

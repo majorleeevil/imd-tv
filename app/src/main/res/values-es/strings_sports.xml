@@ -57,4 +57,6 @@
     <string name="sports_more_from_leagues">Más de tus ligas</string>
     <string name="sports_live_now">En directo</string>
     <string name="sports_ok_watch">OK para ver</string>
+    <string name="sports_team_results">Resultados de hoy</string>
+    <string name="sports_team_results_expl">El partido de un equipo favorito sigue en favoritos tras el final. Desactivado: baja a su liga.</string>
 </resources>

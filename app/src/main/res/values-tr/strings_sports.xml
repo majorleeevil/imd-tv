@@ -57,4 +57,6 @@
     <string name="sports_more_from_leagues">Liglerinden daha fazlası</string>
     <string name="sports_live_now">Şimdi canlı</string>
     <string name="sports_ok_watch">İzlemek için OK</string>
+    <string name="sports_team_results">Bugünün sonuçları</string>
+    <string name="sports_team_results_expl">Favori takımın maçı bitiş düdüğünden sonra favorilerde kalır. Kapalı: kendi ligine taşınır.</string>
 </resources>

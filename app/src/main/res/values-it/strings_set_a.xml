@@ -182,8 +182,6 @@
     <string name="set_a_recently_watched_expl">Mostra la categoria Visti di recente nella guida TV</string>
     <string name="set_a_rail_hold_jump">Tieni premuto per saltare</string>
     <string name="set_a_rail_hold_jump_expl">Tenendo premuto su o giù nell\'elenco delle categorie si salta all\'inizio, alla fine o alla playlist successiva. Se disattivata: scorre una riga alla volta</string>
-    <string name="set_a_overlay_buttons">Pulsanti della sovrimpressione</string>
-    <string name="set_a_overlay_buttons_expl">Mostra Guida TV e Riavvia nella sovrimpressione informazioni durante la visione. No: solo un piccolo pulsante Impostazioni</string>
     <string name="set_a_matching_logos">Abbinamento dei loghi open source ai tuoi canali…</string>
     <string name="set_a_my_logo_pack">Il mio pacchetto loghi</string>
     <string name="set_a_show_all">Mostra tutto</string>

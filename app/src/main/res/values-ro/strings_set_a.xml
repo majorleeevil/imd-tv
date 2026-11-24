@@ -182,8 +182,6 @@
     <string name="set_a_recently_watched_expl">Arată categoria Vizionate recent în ghidul TV</string>
     <string name="set_a_rail_hold_jump">Ține apăsat pentru a sări</string>
     <string name="set_a_rail_hold_jump_expl">Ținerea apăsată în sus sau în jos în lista de categorii sare la început, la sfârșit sau la următorul playlist. Oprit: derulează câte un rând pe rând</string>
-    <string name="set_a_overlay_buttons">Butoanele suprapunerii</string>
-    <string name="set_a_overlay_buttons_expl">Afișează Ghid TV și De la început în suprapunerea cu informații în timpul vizionării. Oprit: doar un buton mic Setări</string>
     <string name="set_a_matching_logos">Se potrivesc logourile open-source cu canalele tale…</string>
     <string name="set_a_my_logo_pack">Pachetul meu de logouri</string>
     <string name="set_a_show_all">Afișează tot</string>

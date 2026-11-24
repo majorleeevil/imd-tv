@@ -57,4 +57,6 @@
     <string name="sports_more_from_leagues">Mehr aus deinen Ligen</string>
     <string name="sports_live_now">Jetzt live</string>
     <string name="sports_ok_watch">OK zum Ansehen</string>
+    <string name="sports_team_results">Heutige Ergebnisse</string>
+    <string name="sports_team_results_expl">Das Spiel eines Lieblingsteams bleibt nach Abpfiff im Favoritenbereich. Aus: Es rückt zu seiner Liga.</string>
 </resources>

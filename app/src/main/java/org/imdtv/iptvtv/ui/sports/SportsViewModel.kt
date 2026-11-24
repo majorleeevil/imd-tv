@@ -94,13 +94,13 @@ class SportsViewModel(app: Application) : AndroidViewModel(app) {
     /** Favourite teams' games: each gets the big card at the top of the favourites box. */
     fun heroes(list: List<Game>, s: AppSettings = settings.value): List<Game> {
         val keys = s.sportsTeams.map { org.imdtv.iptvtv.data.sports.favouriteTeamKey(it) }
-        return favouritesFirst(list, s.sportsTeams, emptySet()).first.filter { g -> keys.any(g::has) }
+        return favouritesFirst(list, s.sportsTeams, emptySet(), s.sportsTeamResults).first.filter { g -> keys.any(g::has) && (s.sportsTeamResults || g.state != GameState.POST) }
     }
 
     /** Favourite team's game first; the first favourite whose programme is on now plays, else the first favourite's score card. */
     private suspend fun autoPane(strip: List<String>) {
         val s = settings.value
-        val favs = favouritesFirst(games.value?.value.orEmpty(), s.sportsTeams, s.sportsLeagues).first
+        val favs = favouritesFirst(games.value?.value.orEmpty(), s.sportsTeams, s.sportsLeagues, s.sportsTeamResults).first
         val shown = pane.value
         if (paneManual && shown != null) {
             // Keep the picked game, with its fresh score.
@@ -141,12 +141,19 @@ class SportsViewModel(app: Application) : AndroidViewModel(app) {
         val at = maxOf(now, g.start)
         val hits = LinkedHashMap<Long, Pair<org.imdtv.iptvtv.data.search.GuideHit, Boolean>>()
         for (q in teamNames(g.home)) {
-            runCatching { c.search.guide(pid, strip, q, now, cap = 100, inDesc = true) }.getOrDefault(emptyList())
+            // From kick-off (not now), so earlier mentions of a common word ("Villa") can't use up the cap before the game.
+            runCatching { c.search.guide(pid, strip, q, at, cap = 300, inDesc = true) }.getOrDefault(emptyList())
                 .filter { it.p.start <= at + 10 * 60_000 && it.p.stop > at }
                 .forEach { h ->
                     val inTitle = titleNamesGame(h.p.title, g.home, g.away)
                     if (inTitle || titleNamesGame(h.p.title + " " + h.p.desc.orEmpty(), g.home, g.away)) hits.putIfAbsent(h.ch.id, h to inTitle)
                 }
+        }
+        // Event channels with no guide, named for the game ("EPL 03: Wolves v Leeds"): on from kick-off for 3 hours.
+        for (q in teamNames(g.home)) {
+            runCatching { c.search.universal(pid, strip, q, cap = 100, vod = { emptyList() }).channels.items }.getOrDefault(emptyList())
+                .filter { titleNamesGame(it.name, g.home, g.away) && !hits.containsKey(it.id) }
+                .forEach { ch -> hits[ch.id] = org.imdtv.iptvtv.data.search.GuideHit(ch, GuideProgramme(ch.name, null, null, g.start, g.start + 3 * 3_600_000L)) to true }
         }
         val lang = org.imdtv.iptvtv.data.catalogue.tvLanguage()
         suspend fun speaks(ch: ChannelEntity): Boolean {

@@ -150,8 +150,6 @@ data class AppSettings(
     val showRecent: Boolean = true,
     /** Holding Up/Down in a category rail jumps to the top/bottom or the next playlist (#35); off = it scrolls row by row. */
     val railHoldJump: Boolean = true,
-    /** TV guide and Restart in the live info overlay (#28, #31); off = only a small Settings button. */
-    val overlayButtons: Boolean = true,
     /** Channel rows the Celestial/Liquid Glass guide shows: one of [guideRowChoices] for the header size. */
     val guideRows: Int = 5,
     /** Channel names and programme titles may wrap onto 2 lines in the guide grid. */
@@ -233,6 +231,8 @@ data class AppSettings(
     val sportsLeagues: Set<String> = emptySet(),
     val sportsTeams: Set<String> = emptySet(),
     val sportsPreviewFade: Boolean = true,
+    /** A favourite team's finished game stays in the favourites box (off: it moves to the league list). */
+    val sportsTeamResults: Boolean = false,
 ) {
     /** The per-theme appearance: colour, mode, guide rows, header size, preview fade. */
     fun look() = listOf(themeColour.name, themeDark, guideRows, headerSize.name, previewFade).joinToString(";")
@@ -263,7 +263,7 @@ data class AppSettings(
     /** Appearance › Reset: every Appearance setting (all themes' looks too) back to its default. */
     fun resetAppearance() = AppSettings().let { d ->
         copy(theme = d.theme, themeColour = d.themeColour, themeDark = d.themeDark, guideRows = d.guideRows, headerSize = d.headerSize,
-            previewFade = d.previewFade, themeLooks = emptyMap(), multiLineGuide = d.multiLineGuide, wideGuideNames = d.wideGuideNames, overlayButtons = d.overlayButtons, showDateTime = d.showDateTime,
+            previewFade = d.previewFade, themeLooks = emptyMap(), multiLineGuide = d.multiLineGuide, wideGuideNames = d.wideGuideNames, showDateTime = d.showDateTime,
             showDate = d.showDate, clock24h = d.clock24h, playerClock = d.playerClock, epgTextSize = d.epgTextSize)
     }
 

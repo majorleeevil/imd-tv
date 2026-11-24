@@ -176,9 +176,10 @@ fun parseTeams(root: JsonElement): List<Side> = root.first("sports").first("leag
 // --- Order and matching (pure, unit-tested). ---
 
 /** Favourites panel: games of a favourite team first, then the followed leagues'; live before upcoming before finished, then by kick-off. */
-fun favouritesFirst(games: List<Game>, teams: Set<String>, leagues: Set<String>): Pair<List<Game>, List<Game>> {
+/** [teamResults] false: a favourite team's finished game is not a favourite (only its followed league can keep it up top). */
+fun favouritesFirst(games: List<Game>, teams: Set<String>, leagues: Set<String>, teamResults: Boolean = true): Pair<List<Game>, List<Game>> {
     val teamKeys = teams.map(::favouriteTeamKey).toSet()
-    val fav = games.filter { g -> teamKeys.any(g::has) || g.league.id in leagues }
+    val fav = games.filter { g -> (teamKeys.any(g::has) && (teamResults || g.state != GameState.POST)) || g.league.id in leagues }
         .sortedWith(compareBy<Game>({ g -> if (teamKeys.any(g::has)) 0 else 1 }, { when (it.state) { GameState.IN -> 0; GameState.PRE -> 1; GameState.POST -> 2 } }, { it.start }))
     val ids = fav.map { it.id }.toSet()
     return fav to games.filter { it.id !in ids }.sortedBy { it.start }

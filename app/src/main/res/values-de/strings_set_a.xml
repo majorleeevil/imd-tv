@@ -182,8 +182,6 @@
     <string name="set_a_recently_watched_expl">Kategorie „Zuletzt gesehen“ im TV-Programm anzeigen</string>
     <string name="set_a_rail_hold_jump">Zum Springen halten</string>
     <string name="set_a_rail_hold_jump_expl">Halten von Hoch oder Runter in der Kategorienliste springt zum Anfang, zum Ende oder zur nächsten Playlist. Aus: Es wird eine Zeile nach der anderen gescrollt</string>
-    <string name="set_a_overlay_buttons">Overlay-Schaltflächen</string>
-    <string name="set_a_overlay_buttons_expl">TV-Programm und Neustart beim Fernsehen im Info-Overlay anzeigen. Aus: nur eine kleine Schaltfläche Einstellungen</string>
     <string name="set_a_matching_logos">Open-Source-Logos werden deinen Sendern zugeordnet…</string>
     <string name="set_a_my_logo_pack">Mein Logopaket</string>
     <string name="set_a_show_all">Alle einblenden</string>

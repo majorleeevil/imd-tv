@@ -227,6 +227,7 @@ fun SportsScreen(vm: SportsViewModel, live: LiveViewModel, nav: @Composable () -
 fun SportsSettingsRows(s: AppSettings, update: ((AppSettings) -> AppSettings) -> Unit, first: Modifier = Modifier) {
     SwitchRow(stringResource(R.string.sports_show_tab), stringResource(R.string.sports_show_tab_expl), s.sportsTab, first) { on -> update { it.copy(sportsTab = on) } }
     SwitchRow(stringResource(R.string.sports_preview_fade), stringResource(R.string.sports_preview_fade_expl), s.sportsPreviewFade) { on -> update { it.copy(sportsPreviewFade = on) } }
+    SwitchRow(stringResource(R.string.sports_team_results), stringResource(R.string.sports_team_results_expl), s.sportsTeamResults) { on -> update { it.copy(sportsTeamResults = on) } }
     Text(stringResource(R.string.sports_sports_title), fontSize = 14.sp, color = LocalTheme.current.colors.muted, modifier = Modifier.padding(top = 10.dp, start = 4.dp))
     for (sp in Sport.entries) {
         val on = sp.key in s.sports
@@ -263,8 +264,8 @@ private fun androidx.compose.foundation.layout.BoxScope.GamesPage(vm: SportsView
         }
     }
     val all = fetched?.value.orEmpty()
-    val (favs, rest) = remember(all, s.sportsTeams, s.sportsLeagues) { favouritesFirst(all, s.sportsTeams, s.sportsLeagues) }
-    val heroes = remember(all, s.sportsTeams) { vm.heroes(all, s) }
+    val (favs, rest) = remember(all, s.sportsTeams, s.sportsLeagues, s.sportsTeamResults) { favouritesFirst(all, s.sportsTeams, s.sportsLeagues, s.sportsTeamResults) }
+    val heroes = remember(all, s.sportsTeams, s.sportsTeamResults) { vm.heroes(all, s) }
     val others = remember(favs, heroes) { favs.filter { it !in heroes } }
     val favTeams = remember(s.sportsTeams) { s.sportsTeams.map(::favouriteTeamKey).toSet() }
     val back = remember { FocusRequester() }

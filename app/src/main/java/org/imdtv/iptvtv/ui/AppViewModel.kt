@@ -196,7 +196,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
                 c.providerRepository.setActive(id)
                 hasProvider = true
                 EpgRefreshWorker.runNow(getApplication())
-                form.value = FormState(result = r.summary() + str(R.string.set_b_guide_loading))
+                form.value = FormState(result = r.summary() + " " + str(R.string.set_b_guide_loading).trim())
             } catch (e: Exception) {
                 // Don't leave a half-added provider behind; the user will retry with corrected details.
                 id?.let { c.providerRepository.remove(it) }

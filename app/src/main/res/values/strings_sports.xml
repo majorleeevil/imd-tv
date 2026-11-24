@@ -59,4 +59,6 @@
     <string name="sports_more_from_leagues">More from your leagues</string>
     <string name="sports_live_now">Live now</string>
     <string name="sports_ok_watch">OK to watch</string>
+    <string name="sports_team_results">Today\'s results</string>
+    <string name="sports_team_results_expl">Keep a favourite team\'s game in the favourites box after full time. Off: it moves down to its league.</string>
 </resources>

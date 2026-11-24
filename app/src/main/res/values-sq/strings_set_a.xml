@@ -183,8 +183,6 @@
     <string name="set_a_recently_watched_expl">Shfaq kategorinë Shikuar së fundmi në programin TV</string>
     <string name="set_a_rail_hold_jump">Mbaje shtypur për të kaluar</string>
     <string name="set_a_rail_hold_jump_expl">Mbajtja e shigjetës lart ose poshtë në listën e kategorive kalon te fillimi, fundi ose lista tjetër. Joaktiv: lëviz një rresht në të njëjtën kohë</string>
-    <string name="set_a_overlay_buttons">Butonat e mbivendosjes</string>
-    <string name="set_a_overlay_buttons_expl">Shfaq Programi TV dhe Nga fillimi në mbivendosjen e informacionit gjatë shikimit. Joaktiv: vetëm një buton i vogël Cilësimet</string>
     <string name="set_a_matching_logos">Po përputhen logot me burim të hapur me kanalet tuaja…</string>
     <string name="set_a_my_logo_pack">Paketa ime e logove</string>
     <string name="set_a_show_all">Shfaq të gjitha</string>

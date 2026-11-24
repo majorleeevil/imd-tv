@@ -136,6 +136,7 @@ data class BSettings(
     val sportsLeagues: List<String> = emptyList(),
     val sportsTeams: List<String> = emptyList(),
     val sportsPreviewFade: Boolean = AppSettings().sportsPreviewFade,
+    val sportsTeamResults: Boolean = AppSettings().sportsTeamResults,
     val guideRows: Int = AppSettings().guideRows,
     val multiLineGuide: Boolean = AppSettings().multiLineGuide,
     val zapLeftRight: Boolean = AppSettings().zapLeftRight,
@@ -171,7 +172,6 @@ data class BSettings(
     val favouritesSortBy: String? = null,
     val showRecent: Boolean = AppSettings().showRecent,
     val railHoldJump: Boolean = AppSettings().railHoldJump,
-    val overlayButtons: Boolean = AppSettings().overlayButtons,
     val wideGuideNames: Boolean = AppSettings().wideGuideNames,
     val headerSize: String = AppSettings().headerSize.name,
     val previewFade: Boolean = AppSettings().previewFade,
@@ -195,7 +195,7 @@ data class BSettings(
             confirmExit = confirmExit,
             zapLeftRight = zapLeftRight, dpadKeys = dpadKeys, backToFullScreen = backToFullScreen, backToCategories = backToCategories, showChannelNumbers = showChannelNumbers, clock24h = clock24h,
             playerClock = PlayerClock.entries.find { it.name == playerClockMode } ?: if (playerClock) PlayerClock.ALL else PlayerClock.OFF,
-            showDate = showDate, themeLooks = themeLooks, guidesOff = guidesOff.toSet(), liveSubtitlesOn = liveSubtitlesOn, showRecent = showRecent, railHoldJump = railHoldJump, overlayButtons = overlayButtons, wideGuideNames = wideGuideNames,
+            showDate = showDate, themeLooks = themeLooks, guidesOff = guidesOff.toSet(), liveSubtitlesOn = liveSubtitlesOn, showRecent = showRecent, railHoldJump = railHoldJump, wideGuideNames = wideGuideNames,
             videoAspect = org.imdtv.iptvtv.data.settings.VideoAspect.entries.find { it.name == videoAspect } ?: org.imdtv.iptvtv.data.settings.VideoAspect.AUTO,
             vodTwoRows = vodTwoRows,
             titleSize = org.imdtv.iptvtv.data.settings.TitleSize.entries.find { it.name == titleSize } ?: org.imdtv.iptvtv.data.settings.TitleSize.LARGE,
@@ -237,7 +237,7 @@ data class BSettings(
             smbServer = smbServer, smbShare = smbShare, smbFolder = smbFolder, smbUser = smbUser,
             playlistUpdateHours = playlistUpdateHours,
             sportsTab = sportsTab, sports = sports.toSet(), sportsSport = sportsSport, sportsLeagues = sportsLeagues.toSet(),
-            sportsTeams = sportsTeams.toSet(), sportsPreviewFade = sportsPreviewFade,
+            sportsTeams = sportsTeams.toSet(), sportsPreviewFade = sportsPreviewFade, sportsTeamResults = sportsTeamResults,
         ).clamped()
     }
 
@@ -249,13 +249,13 @@ data class BSettings(
             s.borrowSiblingGuide, s.hideHeaderChannels, s.showDateTime, s.showPing, s.subtitlesOn, s.subtitleLanguage,
             guideRows = s.guideRows, multiLineGuide = s.multiLineGuide,
             zapLeftRight = s.zapLeftRight, dpadKeys = s.dpadKeys, backToFullScreen = s.backToFullScreen, backToCategories = s.backToCategories, showChannelNumbers = s.showChannelNumbers, clock24h = s.clock24h,
-            playerClockMode = s.playerClock.name, showDate = s.showDate, themeLooks = s.themeLooks, guidesOff = s.guidesOff.toList(), liveSubtitlesOn = s.liveSubtitlesOn, showRecent = s.showRecent, railHoldJump = s.railHoldJump, overlayButtons = s.overlayButtons, wideGuideNames = s.wideGuideNames, videoAspect = s.videoAspect.name, vodTwoRows = s.vodTwoRows, titleSize = s.titleSize.name, vodTitleSize = s.vodTitleSize.name, epgTextSize = s.epgTextSize.name, guideDisplay = s.guideDisplay.name, vodSort = s.vodSort.name, parentalOn = s.parentalOn, parentalPin = s.parentalPin, parentalWord = s.parentalWord, ageLimit = s.ageLimit.name, unlockFor = s.unlockFor.name, catchUpOn = s.catchUpOn, holdBackOther = s.holdBackOther, guideTimeoutMin = s.guideTimeoutMin, favouritesSortBy = s.favouritesSortBy?.name,
+            playerClockMode = s.playerClock.name, showDate = s.showDate, themeLooks = s.themeLooks, guidesOff = s.guidesOff.toList(), liveSubtitlesOn = s.liveSubtitlesOn, showRecent = s.showRecent, railHoldJump = s.railHoldJump, wideGuideNames = s.wideGuideNames, videoAspect = s.videoAspect.name, vodTwoRows = s.vodTwoRows, titleSize = s.titleSize.name, vodTitleSize = s.vodTitleSize.name, epgTextSize = s.epgTextSize.name, guideDisplay = s.guideDisplay.name, vodSort = s.vodSort.name, parentalOn = s.parentalOn, parentalPin = s.parentalPin, parentalWord = s.parentalWord, ageLimit = s.ageLimit.name, unlockFor = s.unlockFor.name, catchUpOn = s.catchUpOn, holdBackOther = s.holdBackOther, guideTimeoutMin = s.guideTimeoutMin, favouritesSortBy = s.favouritesSortBy?.name,
             headerSize = s.headerSize.name, previewFade = s.previewFade, themeDark = s.themeDark, guideKinds = s.guideOrder.map { it.name },
             removeNameSymbols = s.removeNameSymbols, mergeChannels = s.mergeChannels, mergeAcross = s.mergeAcross, mergeBy = s.mergeBy.name,
             recordingOn = s.recordingOn, recordTo = s.recordTo.name, startEarlyMin = s.startEarlyMin, endLateMin = s.endLateMin,
             keepAwake = s.keepAwake, smbServer = s.smbServer, smbShare = s.smbShare, smbFolder = s.smbFolder, smbUser = s.smbUser, playlistUpdateHours = s.playlistUpdateHours,
             sportsTab = s.sportsTab, sports = s.sports.toList(), sportsSport = s.sportsSport, sportsLeagues = s.sportsLeagues.toList(),
-            sportsTeams = s.sportsTeams.toList(), sportsPreviewFade = s.sportsPreviewFade,
+            sportsTeams = s.sportsTeams.toList(), sportsPreviewFade = s.sportsPreviewFade, sportsTeamResults = s.sportsTeamResults,
         )
     }
 }

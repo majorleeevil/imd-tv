@@ -38,6 +38,7 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
     private val sportsLeagues = androidx.datastore.preferences.core.stringSetPreferencesKey("sports_leagues")
     private val sportsTeams = androidx.datastore.preferences.core.stringSetPreferencesKey("sports_teams")
     private val sportsPreviewFade = booleanPreferencesKey("sports_preview_fade")
+    private val sportsTeamResults = booleanPreferencesKey("sports_team_results")
     private val liveSubtitlesOn = booleanPreferencesKey("live_subtitles_on")
     private val videoAspect = stringPreferencesKey("video_aspect")
     private val mergeChannels = booleanPreferencesKey("merge_channels")
@@ -84,7 +85,6 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
     private val showPing = booleanPreferencesKey("show_ping")
     private val showRecent = booleanPreferencesKey("show_recent")
     private val railHoldJump = booleanPreferencesKey("rail_hold_jump")
-    private val overlayButtons = booleanPreferencesKey("overlay_buttons")
     private val wideGuideNames = booleanPreferencesKey("wide_guide_names")
     private val guideRows = intPreferencesKey("guide_rows")
     private val multiLineGuide = booleanPreferencesKey("multi_line_guide")
@@ -131,7 +131,7 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
             guidesOff = this[guidesOff].orEmpty(),
             sportsTab = this[sportsTab] ?: d.sportsTab, sports = this[sports] ?: d.sports, sportsSport = this[sportsSport] ?: d.sportsSport,
             sportsLeagues = this[sportsLeagues] ?: d.sportsLeagues, sportsTeams = this[sportsTeams] ?: d.sportsTeams,
-            sportsPreviewFade = this[sportsPreviewFade] ?: d.sportsPreviewFade,
+            sportsPreviewFade = this[sportsPreviewFade] ?: d.sportsPreviewFade, sportsTeamResults = this[sportsTeamResults] ?: d.sportsTeamResults,
             themeLooks = this[themeLooks]?.split('|')?.mapNotNull { e -> e.split('=', limit = 2).takeIf { it.size == 2 }?.let { it[0] to it[1] } }?.toMap().orEmpty(),
             liveSubtitlesOn = this[liveSubtitlesOn] ?: d.liveSubtitlesOn,
             videoAspect = VideoAspect.entries.find { it.name == this[videoAspect] } ?: d.videoAspect,
@@ -174,7 +174,6 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
             showPing = this[showPing] ?: d.showPing,
             showRecent = this[showRecent] ?: d.showRecent,
             railHoldJump = this[railHoldJump] ?: d.railHoldJump,
-            overlayButtons = this[overlayButtons] ?: d.overlayButtons,
             wideGuideNames = this[wideGuideNames] ?: d.wideGuideNames,
             guideRows = this[guideRows] ?: d.guideRows,
             multiLineGuide = this[multiLineGuide] ?: d.multiLineGuide,
@@ -213,7 +212,7 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
         this[showDate] = s.showDate
         this[guidesOff] = s.guidesOff
         this[sportsTab] = s.sportsTab; this[sports] = s.sports; this[sportsSport] = s.sportsSport
-        this[sportsLeagues] = s.sportsLeagues; this[sportsTeams] = s.sportsTeams; this[sportsPreviewFade] = s.sportsPreviewFade
+        this[sportsLeagues] = s.sportsLeagues; this[sportsTeams] = s.sportsTeams; this[sportsPreviewFade] = s.sportsPreviewFade; this[sportsTeamResults] = s.sportsTeamResults
         this[themeLooks] = s.themeLooks.entries.joinToString("|") { "${it.key}=${it.value}" }
         this[liveSubtitlesOn] = s.liveSubtitlesOn
         this[videoAspect] = s.videoAspect.name
@@ -254,7 +253,6 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
         this[showPing] = s.showPing
         this[showRecent] = s.showRecent
         this[railHoldJump] = s.railHoldJump
-        this[overlayButtons] = s.overlayButtons
         this[wideGuideNames] = s.wideGuideNames
         this[subtitlesOn] = s.subtitlesOn
         this[guideRows] = s.guideRows

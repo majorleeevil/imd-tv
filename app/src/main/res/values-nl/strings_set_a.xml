@@ -182,8 +182,6 @@
     <string name="set_a_recently_watched_expl">Toon de categorie Onlangs bekeken in de TV-gids</string>
     <string name="set_a_rail_hold_jump">Ingedrukt houden om te springen</string>
     <string name="set_a_rail_hold_jump_expl">Omhoog of omlaag ingedrukt houden in de categorielijst springt naar boven, naar onder of naar de volgende playlist. Uit: scrolt één rij per keer</string>
-    <string name="set_a_overlay_buttons">Overlayknoppen</string>
-    <string name="set_a_overlay_buttons_expl">Toon TV-gids en Opnieuw starten in de info-overlay tijdens het kijken. Uit: alleen een kleine knop Instellingen</string>
     <string name="set_a_matching_logos">Open-sourcelogo\'s koppelen aan je zenders…</string>
     <string name="set_a_my_logo_pack">Mijn logopakket</string>
     <string name="set_a_show_all">Alles tonen</string>
