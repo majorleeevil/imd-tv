@@ -146,6 +146,8 @@ class SportsViewModel(app: Application) : AndroidViewModel(app) {
             // From kick-off (not now), so earlier mentions of a common word ("Villa") can't use up the cap before the game.
             runCatching { c.search.guide(pid, strip, q, at, cap = 300, inDesc = true) }.getOrDefault(emptyList())
                 .filter { it.p.start <= at + 10 * 60_000 && it.p.stop > at }
+                // For Send logs: what the guide has for this team at kick-off, so a miss can be explained from the user's own guide.
+                .also { on -> android.util.Log.i("SportsHub", "${g.home.name} v ${g.away.name} \"$q\": ${on.size} on at kick-off; " + on.take(8).joinToString(" / ") { "${it.ch.name}: ${it.p.title} — ${it.p.desc.orEmpty().take(80)}" }) }
                 .forEach { h ->
                     val m = gameMatch(h.p.title + " " + h.p.desc.orEmpty(), g.home, g.away) ?: return@forEach
                     if (hits[h.ch.id].let { it == null || m < it.second }) hits[h.ch.id] = h to m
@@ -168,6 +170,7 @@ class SportsViewModel(app: Application) : AndroidViewModel(app) {
         // The game as the only fixture named; then on now (not a show starting in 10 min); then the TV's country, language; then start.
         val found = hits.values.map { (h, m) -> Triple(h, m, place(h.ch)) }
             .sortedWith(compareBy({ it.second }, { it.first.p.start > now }, { it.third }, { it.first.p.start }))
+            .also { r -> android.util.Log.i("SportsHub", "${g.home.name} v ${g.away.name}: " + r.joinToString { "${it.first.ch.name} (match ${it.second}, place ${it.third})" }.ifEmpty { "no channel" }) }
             .map { OnTv(it.first.ch, it.first.p) }
         tvCache[g.id] = now to found
         return found
