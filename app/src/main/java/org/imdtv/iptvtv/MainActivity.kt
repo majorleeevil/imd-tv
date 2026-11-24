@@ -270,11 +270,12 @@ class MainActivity : ComponentActivity() {
                             vod.play(url, top.item, episode, startMs)
                             app.playFullScreen(title, live = false)
                         }, onOpen = app::open)
-                        is Screen.Player -> PlayerScreen(app.player, top.title, live.takeIf { top.live }, onGuide = { app.back() }, showClock = settings.playerClock == org.imdtv.iptvtv.data.settings.PlayerClock.ALL ||
+                        // keyed: live → catch-up (Restart) swaps one Player for another here, and PlayerScreen's live-only state calls must not be reused
+                        is Screen.Player -> androidx.compose.runtime.key(top) { PlayerScreen(app.player, top.title, live.takeIf { top.live }, onGuide = { app.back() }, showClock = settings.playerClock == org.imdtv.iptvtv.data.settings.PlayerClock.ALL ||
                             settings.playerClock == org.imdtv.iptvtv.data.settings.PlayerClock.LIVE && top.live, aspect = settings.videoAspect,
                             // Plus, Retro and Gamestation show their categories with the guide already.
                             onCategories = { if (themeId == ThemeId.CELESTIAL_GLASS || themeId == ThemeId.LIQUID_GLASS || themeId == ThemeId.XCUBE_180) live.openRail = true; app.back() },
-                            onSettings = { app.openSettings(org.imdtv.iptvtv.ui.settings.SettingsGroup.PLAYLISTS) })
+                            onSettings = { app.openSettings(org.imdtv.iptvtv.ui.settings.SettingsGroup.PLAYLISTS) }) }
                     }
                     }
                     // Xcube 180: Live, Movies, Series and Settings are blades inside one frame (spec §6A.7).
