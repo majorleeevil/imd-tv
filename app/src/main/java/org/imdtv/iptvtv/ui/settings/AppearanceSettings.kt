@@ -11,6 +11,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import org.imdtv.iptvtv.data.settings.AppSettings
@@ -47,6 +49,8 @@ fun AppearanceAppRows(vm: SettingsViewModel, first: FocusRequester, openers: Map
 fun AppearanceLiveRows(vm: SettingsViewModel, first: FocusRequester) {
     val s by vm.settings.collectAsState()
     val f = Modifier.focusRequester(first)
+    // More rows than fit on screen since Wide channel names and Overlay buttons: the page scrolls (as the logo page does).
+    androidx.compose.foundation.layout.Column(Modifier.verticalScroll(androidx.compose.foundation.rememberScrollState()), verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(6.dp)) {
     if (s.glass()) {
         val rowChoices = guideRowChoices(s.headerSize, s.theme == ThemeId.LIQUID_GLASS)
         ChoiceRow(stringResource(R.string.set_a_guide_rows), stringResource(R.string.set_a_guide_rows_expl), rowChoices, s.guideRows, { "$it" }, f, default = rowChoices.first()) { n -> vm.update { it.copy(guideRows = n) } }
@@ -60,6 +64,7 @@ fun AppearanceLiveRows(vm: SettingsViewModel, first: FocusRequester) {
     ChoiceRow(stringResource(R.string.set_a_title_size), stringResource(R.string.set_a_title_size_live_expl), TitleSize.entries, s.titleSize, { stringResource(it.labelRes) }, default = AppSettings().titleSize, onPick = { v -> vm.update { it.copy(titleSize = v) } })
     ChoiceRow(stringResource(R.string.set_a_epg_text_size), stringResource(R.string.set_a_epg_text_size_expl), org.imdtv.iptvtv.data.settings.EpgTextSize.entries, s.epgTextSize, { stringResource(it.labelRes) }, default = AppSettings().epgTextSize, onPick = { v -> vm.update { it.copy(epgTextSize = v) } })
     SwitchRow(stringResource(R.string.set_a_overlay_buttons), stringResource(R.string.set_a_overlay_buttons_expl), s.overlayButtons) { on -> vm.update { it.copy(overlayButtons = on) } }
+    }
 }
 
 /** Appearance › Movies & Series: rows and its own title size. */
