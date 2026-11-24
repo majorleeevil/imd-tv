@@ -38,6 +38,8 @@ sealed interface Screen {
     /** [recordingId]: a recording is playing; its position is saved on Back. */
     data class Player(val title: String, val live: Boolean, val recordingId: Long? = null) : Screen
     data object Recordings : Screen
+    data object Sports : Screen
+    data class SportsMatch(val game: org.imdtv.iptvtv.data.sports.Game) : Screen
 }
 
 enum class RootBack { FOCUS_MENU, SHOW_HINT, EXIT }
@@ -47,7 +49,7 @@ enum class RootBack { FOCUS_MENU, SHOW_HINT, EXIT }
  * With [confirmExit] off, Back at a root exits at once.
  */
 fun rootBack(top: Screen, menuFocused: Boolean, hintShowing: Boolean, confirmExit: Boolean) = when {
-    !confirmExit || (top != Screen.Live && top != Screen.Vod && top != Screen.Search && top != Screen.Recordings) -> RootBack.EXIT
+    !confirmExit || (top != Screen.Live && top != Screen.Vod && top != Screen.Search && top != Screen.Recordings && top != Screen.Sports) -> RootBack.EXIT
     !menuFocused -> RootBack.FOCUS_MENU
     !hintShowing -> RootBack.SHOW_HINT
     else -> RootBack.EXIT
@@ -112,7 +114,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         if (t == Tab.SETTINGS) { push(Screen.Settings()); return }
         if (t != Tab.LIVE) player.stop() // the live preview shouldn't keep playing behind Movies/Series
         tab.value = t
-        stack.value = listOf(when (t) { Tab.LIVE -> Screen.Live; Tab.SEARCH -> Screen.Search; Tab.RECORDINGS -> Screen.Recordings; else -> Screen.Vod })
+        stack.value = listOf(when (t) { Tab.LIVE -> Screen.Live; Tab.SEARCH -> Screen.Search; Tab.RECORDINGS -> Screen.Recordings; Tab.SPORTS -> Screen.Sports; else -> Screen.Vod })
     }
 
     fun addPlaylist() { form.value = FormState(); push(Screen.Setup()) }
@@ -127,6 +129,8 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     fun openSettings(group: org.imdtv.iptvtv.ui.settings.SettingsGroup) = push(Screen.Settings(group))
 
     fun playFullScreen(title: String, live: Boolean) = push(Screen.Player(title, live))
+
+    fun openMatch(g: org.imdtv.iptvtv.data.sports.Game) = push(Screen.SportsMatch(g))
 
     /** A finished (or stopped) recording, from where it was left. */
     fun playRecording(r: org.imdtv.iptvtv.recording.RecordingEntity) {

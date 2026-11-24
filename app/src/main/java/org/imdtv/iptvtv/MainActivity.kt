@@ -85,6 +85,7 @@ class MainActivity : ComponentActivity() {
     private val vod: VodViewModel by viewModels()
     private val settingsVm: SettingsViewModel by viewModels()
     private val searchVm: org.imdtv.iptvtv.ui.search.SearchViewModel by viewModels()
+    private val sportsVm: org.imdtv.iptvtv.ui.sports.SportsViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -197,7 +198,7 @@ class MainActivity : ComponentActivity() {
                     TopNav(tab, onSelect = selectTab, Modifier.onFocusChanged { menuFocused = it.hasFocus }, menuFocus,
                         showClock = settings.showDateTime,
                         showDate = settings.showDate, pingMs = pingMs,
-                        tabs = org.imdtv.iptvtv.ui.visibleTabs(settings.recordingOn))
+                        tabs = org.imdtv.iptvtv.ui.visibleTabs(settings.recordingOn, settings.sportsTab))
                 }
                 val themeId = LocalTheme.current.id
                 // A channel from search: its category becomes the guide's, so zapping and Back behave as from the guide.
@@ -206,6 +207,7 @@ class MainActivity : ComponentActivity() {
                 }
                 // Recording switched off while its tab is open: back to Live.
                 LaunchedEffect(settings.recordingOn) { if (!settings.recordingOn && tab == Tab.RECORDINGS) selectTab(Tab.LIVE) }
+                LaunchedEffect(settings.sportsTab) { if (!settings.sportsTab && tab == Tab.SPORTS) selectTab(Tab.LIVE) }
                 val retroMenu = @androidx.compose.runtime.Composable { t: Tab ->
                     RetroMenuScreen(t, live, vod, selectTab,
                         recordings = if (settings.recordingOn) { { org.imdtv.iptvtv.recording.RecordingsScreen(null, app::playRecording, textColor = LocalTheme.current.colors.panel) } } else null,
@@ -266,6 +268,9 @@ class MainActivity : ComponentActivity() {
                             themeId == ThemeId.CELESTIAL_RETRO -> retroMenu(Tab.RECORDINGS)
                             else -> org.imdtv.iptvtv.recording.RecordingsScreen(nav, app::playRecording)
                         }
+                        // SportsHub (#26): one Glass layout for every theme for now; full size where the theme has no top nav.
+                        Screen.Sports -> org.imdtv.iptvtv.ui.sports.SportsScreen(sportsVm, live, nav, { ch -> sportsVm.returning = true; full(ch) }, { g -> sportsVm.returning = true; app.openMatch(g) }, onGuide = { selectTab(Tab.LIVE) })
+                        is Screen.SportsMatch -> org.imdtv.iptvtv.ui.sports.MatchScreen(sportsVm, live, top.game, full)
                         is Screen.Detail -> VodDetailScreen(vod, top.item, onPlay = { url, title, episode, startMs ->
                             vod.play(url, top.item, episode, startMs)
                             app.playFullScreen(title, live = false)

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SportsHub (#26). Scores come from ESPN. -->
+<resources>
+    <string name="live_tab_sports">SportsHub</string>
+    <string name="sports_games">Games</string>
+    <string name="sports_fav_teams">Favourite teams</string>
+    <string name="sports_followed_leagues">Followed leagues</string>
+    <string name="sports_standings">Standings</string>
+    <string name="sports_settings">SportsHub settings</string>
+    <string name="sports_return_guide">Return to guide</string>
+    <string name="sports_change_sport">Sport: %1$s ▾</string>
+    <string name="sports_today">Today</string>
+    <string name="sports_tomorrow">Tomorrow</string>
+    <string name="sports_favourites_title">Your teams and leagues</string>
+    <string name="sports_no_favourites">No games for your teams or leagues on this day. Pick them in Favourite teams and Followed leagues.</string>
+    <string name="sports_no_games">No games on this day.</string>
+    <string name="sports_no_other_games">No other games on this day.</string>
+    <string name="sports_stats">Stats</string>
+    <string name="sports_preview">Preview</string>
+    <string name="sports_updated">Updated %1$s</string>
+    <string name="sports_unavailable">Scores unavailable right now</string>
+    <string name="sports_on_channel">On %1$s</string>
+    <string name="sports_on_channel_at">On %1$s at %2$s</string>
+    <string name="sports_ok_full">OK: full screen</string>
+    <string name="sports_not_on_tv">Not on any of your channels right now</string>
+    <string name="sports_where_to_watch">Where to watch</string>
+    <string name="sports_recent_form">Recent form</string>
+    <string name="sports_subs">Subs</string>
+    <string name="sports_lineup_soon">Lineups appear about an hour before kick-off.</string>
+    <string name="sports_no_stats">No stats for this game yet.</string>
+    <string name="sports_your_teams">Your teams (OK removes one)</string>
+    <string name="sports_no_teams">No favourite teams yet: pick a league on the left, then a team.</string>
+    <string name="sports_no_tables">No tables for this sport</string>
+    <!-- Standings column headings: played, won, drawn, lost, goal difference, points. Keep them short. -->
+    <string name="sports_col_played">P</string>
+    <string name="sports_col_won">W</string>
+    <string name="sports_col_drawn">D</string>
+    <string name="sports_col_lost">L</string>
+    <string name="sports_col_gd">GD</string>
+    <string name="sports_col_pts">Pts</string>
+    <string name="sports_sport_football">Football</string>
+    <string name="sports_sport_american_football">American football</string>
+    <string name="sports_sport_basketball">Basketball</string>
+    <string name="sports_sport_hockey">Ice hockey</string>
+    <string name="sports_sport_rugby">Rugby union</string>
+    <string name="sports_sport_cricket">Cricket</string>
+    <string name="sports_show_tab">Show SportsHub</string>
+    <string name="sports_show_tab_expl">The SportsHub tab in the top menu. Scores are only fetched while it is open.</string>
+    <string name="sports_preview_fade">Preview fade</string>
+    <string name="sports_preview_fade_expl">Fade the preview into the background, like the TV guide. Off: a framed box.</string>
+    <string name="sports_sports_title">Sports</string>
+    <string name="sports_sport_shown_expl">Listed in Change sport</string>
+    <string name="sports_fav_add">Add %1$s to favourites</string>
+    <string name="sports_fav_remove">Remove %1$s from favourites</string>
+    <string name="sports_kickoff_in">Kick-off in %1$s</string>
+    <string name="sports_lineups_in">Lineups in %1$s</string>
+    <string name="sports_lineups_out">Lineups are out</string>
+    <string name="sports_lineups_due">Lineups due any minute</string>
+    <string name="sports_more_from_leagues">More from your leagues</string>
+    <string name="sports_live_now">Live now</string>
+    <string name="sports_ok_watch">OK to watch</string>
+</resources>

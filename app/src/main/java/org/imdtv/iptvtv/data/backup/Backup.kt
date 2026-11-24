@@ -130,6 +130,12 @@ data class BSettings(
     val smbFolder: String = "",
     val smbUser: String = "",
     val playlistUpdateHours: Int = AppSettings().playlistUpdateHours,
+    val sportsTab: Boolean = AppSettings().sportsTab,
+    val sports: List<String> = AppSettings().sports.toList(),
+    val sportsSport: String = AppSettings().sportsSport,
+    val sportsLeagues: List<String> = emptyList(),
+    val sportsTeams: List<String> = emptyList(),
+    val sportsPreviewFade: Boolean = AppSettings().sportsPreviewFade,
     val guideRows: Int = AppSettings().guideRows,
     val multiLineGuide: Boolean = AppSettings().multiLineGuide,
     val zapLeftRight: Boolean = AppSettings().zapLeftRight,
@@ -230,6 +236,8 @@ data class BSettings(
             keepAwake = keepAwake,
             smbServer = smbServer, smbShare = smbShare, smbFolder = smbFolder, smbUser = smbUser,
             playlistUpdateHours = playlistUpdateHours,
+            sportsTab = sportsTab, sports = sports.toSet(), sportsSport = sportsSport, sportsLeagues = sportsLeagues.toSet(),
+            sportsTeams = sportsTeams.toSet(), sportsPreviewFade = sportsPreviewFade,
         ).clamped()
     }
 
@@ -246,6 +254,8 @@ data class BSettings(
             removeNameSymbols = s.removeNameSymbols, mergeChannels = s.mergeChannels, mergeAcross = s.mergeAcross, mergeBy = s.mergeBy.name,
             recordingOn = s.recordingOn, recordTo = s.recordTo.name, startEarlyMin = s.startEarlyMin, endLateMin = s.endLateMin,
             keepAwake = s.keepAwake, smbServer = s.smbServer, smbShare = s.smbShare, smbFolder = s.smbFolder, smbUser = s.smbUser, playlistUpdateHours = s.playlistUpdateHours,
+            sportsTab = s.sportsTab, sports = s.sports.toList(), sportsSport = s.sportsSport, sportsLeagues = s.sportsLeagues.toList(),
+            sportsTeams = s.sportsTeams.toList(), sportsPreviewFade = s.sportsPreviewFade,
         )
     }
 }

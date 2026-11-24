@@ -32,6 +32,12 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
     private val showDate = booleanPreferencesKey("show_date")
     private val themeLooks = stringPreferencesKey("theme_looks")
     private val guidesOff = androidx.datastore.preferences.core.stringSetPreferencesKey("guides_off")
+    private val sportsTab = booleanPreferencesKey("sports_tab")
+    private val sports = androidx.datastore.preferences.core.stringSetPreferencesKey("sports")
+    private val sportsSport = stringPreferencesKey("sports_sport")
+    private val sportsLeagues = androidx.datastore.preferences.core.stringSetPreferencesKey("sports_leagues")
+    private val sportsTeams = androidx.datastore.preferences.core.stringSetPreferencesKey("sports_teams")
+    private val sportsPreviewFade = booleanPreferencesKey("sports_preview_fade")
     private val liveSubtitlesOn = booleanPreferencesKey("live_subtitles_on")
     private val videoAspect = stringPreferencesKey("video_aspect")
     private val mergeChannels = booleanPreferencesKey("merge_channels")
@@ -123,6 +129,9 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
                 ?: this[oldPlayerClock]?.let { if (it) PlayerClock.ALL else PlayerClock.OFF } ?: d.playerClock,
             showDate = this[showDate] ?: d.showDate,
             guidesOff = this[guidesOff].orEmpty(),
+            sportsTab = this[sportsTab] ?: d.sportsTab, sports = this[sports] ?: d.sports, sportsSport = this[sportsSport] ?: d.sportsSport,
+            sportsLeagues = this[sportsLeagues] ?: d.sportsLeagues, sportsTeams = this[sportsTeams] ?: d.sportsTeams,
+            sportsPreviewFade = this[sportsPreviewFade] ?: d.sportsPreviewFade,
             themeLooks = this[themeLooks]?.split('|')?.mapNotNull { e -> e.split('=', limit = 2).takeIf { it.size == 2 }?.let { it[0] to it[1] } }?.toMap().orEmpty(),
             liveSubtitlesOn = this[liveSubtitlesOn] ?: d.liveSubtitlesOn,
             videoAspect = VideoAspect.entries.find { it.name == this[videoAspect] } ?: d.videoAspect,
@@ -203,6 +212,8 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
         this[playerClock] = s.playerClock.name
         this[showDate] = s.showDate
         this[guidesOff] = s.guidesOff
+        this[sportsTab] = s.sportsTab; this[sports] = s.sports; this[sportsSport] = s.sportsSport
+        this[sportsLeagues] = s.sportsLeagues; this[sportsTeams] = s.sportsTeams; this[sportsPreviewFade] = s.sportsPreviewFade
         this[themeLooks] = s.themeLooks.entries.joinToString("|") { "${it.key}=${it.value}" }
         this[liveSubtitlesOn] = s.liveSubtitlesOn
         this[videoAspect] = s.videoAspect.name

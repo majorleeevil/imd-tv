@@ -51,11 +51,13 @@ fun keepOrFirst(current: org.imdtv.iptvtv.data.db.CategoryEntity?, list: List<or
 
 enum class Tab(val label: String, @androidx.annotation.DrawableRes val icon: Int, @androidx.annotation.StringRes val labelRes: Int) {
     SEARCH("Search", R.drawable.ic_tab_search, R.string.live_tab_search), LIVE("Live", R.drawable.ic_tab_live, R.string.live_tab_live), MOVIES("Movies", R.drawable.ic_tab_movies, R.string.live_tab_movies),
-    SERIES("Series", R.drawable.ic_tab_series, R.string.live_tab_series), RECORDINGS("Recordings", R.drawable.ic_tab_recordings, R.string.live_tab_recordings), SETTINGS("Settings", R.drawable.ic_tab_settings, R.string.live_tab_settings),
+    SERIES("Series", R.drawable.ic_tab_series, R.string.live_tab_series), RECORDINGS("Recordings", R.drawable.ic_tab_recordings, R.string.live_tab_recordings),
+    SPORTS("SportsHub", R.drawable.ic_tab_sports, R.string.live_tab_sports), SETTINGS("Settings", R.drawable.ic_tab_settings, R.string.live_tab_settings),
 }
 
-/** The main menu's entries: Recordings only while recording is switched on. */
-fun visibleTabs(recordingOn: Boolean): List<Tab> = Tab.entries.filter { it != Tab.RECORDINGS || recordingOn }
+/** The main menu's entries: Recordings only while recording is switched on, SportsHub unless hidden in its settings. */
+fun visibleTabs(recordingOn: Boolean, sportsOn: Boolean = false): List<Tab> =
+    Tab.entries.filter { (it != Tab.RECORDINGS || recordingOn) && (it != Tab.SPORTS || sportsOn) }
 
 /** A D-pad focusable, OK-clickable box that tells its content whether it has focus. */
 @Composable

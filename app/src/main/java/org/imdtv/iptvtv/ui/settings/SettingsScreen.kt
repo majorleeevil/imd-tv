@@ -61,6 +61,7 @@ enum class SettingsGroup(val title: String, @StringRes val labelRes: Int) {
     PLAYLISTS("Playlists", R.string.set_b_group_playlists), MEDIA_SERVERS("Media servers", R.string.set_b_group_media_servers), CHANNELS("Channels & categories", R.string.set_b_group_channels),
     EPG("TV guide (EPG)", R.string.set_b_group_epg), VOD("Movies & Series", R.string.set_b_group_vod), PLAYBACK("Playback", R.string.set_b_group_playback),
     APPEARANCE("Appearance", R.string.set_b_group_appearance), BEHAVIOUR("App behaviour", R.string.set_b_group_behaviour),
+    SPORTS("SportsHub", R.string.live_tab_sports),
     BACKUP("Backup & sync", R.string.set_b_group_backup), ABOUT("About", R.string.set_b_group_about),
 }
 
@@ -316,6 +317,7 @@ fun SettingsScreen(vm: SettingsViewModel, onAddPlaylist: () -> Unit, onEditPlayl
                         SettingRow(stringResource(R.string.set_b_sync), stringResource(R.string.set_b_sync_expl),
                             syncRoleLabel(syncNow.role) + " ›", Modifier.focusRequester(syncOpener)) { park(); syncOpen = true }
                     }
+                    SettingsGroup.SPORTS -> org.imdtv.iptvtv.ui.sports.SportsSettingsRows(s, vm::update, first)
                     SettingsGroup.ABOUT -> AboutRows(first)
                 }
             }

@@ -223,6 +223,16 @@ data class AppSettings(
     val guidesOff: Set<String> = emptySet(),
     /** Settings › Playlists › Update playlists every: each playlist (media servers too) is synced again once this old. */
     val playlistUpdateHours: Int = 24,
+    /** SportsHub (#26): its tab after Recordings; nothing is fetched until the screen opens. */
+    val sportsTab: Boolean = true,
+    /** Sport keys (data.sports.Sport.key) Change sport cycles through. */
+    val sports: Set<String> = org.imdtv.iptvtv.data.sports.Sport.entries.map { it.key }.toSet(),
+    /** The sport SportsHub shows. */
+    val sportsSport: String = "soccer",
+    /** Followed leagues ("soccer/eng.1") and favourite teams ("soccer:362:Aston Villa"). */
+    val sportsLeagues: Set<String> = emptySet(),
+    val sportsTeams: Set<String> = emptySet(),
+    val sportsPreviewFade: Boolean = true,
 ) {
     /** The per-theme appearance: colour, mode, guide rows, header size, preview fade. */
     fun look() = listOf(themeColour.name, themeDark, guideRows, headerSize.name, previewFade).joinToString(";")
