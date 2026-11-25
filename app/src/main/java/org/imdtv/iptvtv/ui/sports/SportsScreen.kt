@@ -346,7 +346,7 @@ private fun androidx.compose.foundation.layout.BoxScope.GamesPage(vm: SportsView
                     if (fade) PanelFade(screen)
                 } else pane?.game?.let { ScoreCard(it, Modifier.fillMaxSize()) }
                 val line = when {
-                    tv != null -> stringResource(R.string.sports_on_channel, tv.ch.name) + "  ·  " + stringResource(R.string.sports_ok_full)
+                    tv != null -> stringResource(R.string.sports_watch_full) // the channel's name meant little here (user, 2026-11-25)
                     pane?.looked == true && pane?.tv != null -> stringResource(R.string.sports_on_channel_at, pane!!.tv!!.ch.name, clockTime(pane!!.tv!!.p.start))
                     pane?.looked == true -> stringResource(R.string.sports_not_on_tv)
                     else -> null

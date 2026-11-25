@@ -182,7 +182,7 @@ private fun TeamCard(t: TeamSheet, g: Game, stats: List<StatLine>, home: Boolean
         // Right: subs.
         Column(Modifier.width(side).fillMaxHeight()) {
             if (t.subs.isNotEmpty()) {
-                Text(stringResource(R.string.sports_subs), fontSize = 11.sp, color = colors.muted, modifier = Modifier.padding(bottom = 2.dp))
+                Text(stringResource(R.string.sports_subs), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = colors.muted, modifier = Modifier.padding(bottom = 2.dp))
                 t.subs.take(10).forEach { p ->
                     Text((if (p.subbedIn) "↑ " else "") + "${p.jersey}  ${p.name}", fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis,
                         color = if (p.subbedIn) colors.accent else Color.White)

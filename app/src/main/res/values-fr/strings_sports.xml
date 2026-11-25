@@ -20,7 +20,6 @@
     <string name="sports_unavailable">Scores indisponibles pour le moment</string>
     <string name="sports_on_channel">Sur %1$s</string>
     <string name="sports_on_channel_at">Sur %1$s à %2$s</string>
-    <string name="sports_ok_full">OK : plein écran</string>
     <string name="sports_not_on_tv">Sur aucune de vos chaînes pour le moment</string>
     <string name="sports_where_to_watch">Où regarder</string>
     <string name="sports_recent_form">Forme récente</string>
@@ -67,4 +66,5 @@
     <string name="sports_ev_fulltime">Fin du match</string>
     <string name="sports_focus_preview">Aperçu au survol</string>
     <string name="sports_focus_preview_expl">S\'arrêter sur un match bascule l\'aperçu sur celui-ci. Désactivé : maintenez OK sur un match et choisissez Aperçu.</string>
+    <string name="sports_watch_full">Regarder en plein écran</string>
 </resources>

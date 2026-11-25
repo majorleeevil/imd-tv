@@ -20,7 +20,6 @@
     <string name="sports_unavailable">Skorlar şu an kullanılamıyor</string>
     <string name="sports_on_channel">%1$s kanalında</string>
     <string name="sports_on_channel_at">%1$s kanalında, saat %2$s</string>
-    <string name="sports_ok_full">OK: tam ekran</string>
     <string name="sports_not_on_tv">Şu an kanallarının hiçbirinde yok</string>
     <string name="sports_where_to_watch">Nereden izlenir</string>
     <string name="sports_recent_form">Son form</string>
@@ -67,4 +66,5 @@
     <string name="sports_ev_fulltime">Maç sonu</string>
     <string name="sports_focus_preview">Odakta önizleme</string>
     <string name="sports_focus_preview_expl">Bir maçta durunca önizleme o maça geçer. Kapalı: bir maçta OK tuşunu basılı tutup Ön izleme seçin.</string>
+    <string name="sports_watch_full">Tam ekran izle</string>
 </resources>

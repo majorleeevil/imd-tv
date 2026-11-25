@@ -20,7 +20,6 @@
     <string name="sports_unavailable">Resultat är inte tillgängliga just nu</string>
     <string name="sports_on_channel">På %1$s</string>
     <string name="sports_on_channel_at">På %1$s kl. %2$s</string>
-    <string name="sports_ok_full">OK: helskärm</string>
     <string name="sports_not_on_tv">Visas inte på någon av dina kanaler just nu</string>
     <string name="sports_where_to_watch">Var kan man se den</string>
     <string name="sports_recent_form">Senaste form</string>
@@ -67,4 +66,5 @@
     <string name="sports_ev_fulltime">Slutsignal</string>
     <string name="sports_focus_preview">Förhandsvisning vid fokus</string>
     <string name="sports_focus_preview_expl">Stannar du på en match byter förhandsvisningen till den. Av: håll in OK på en match och välj Förhandstitt.</string>
+    <string name="sports_watch_full">Titta i helskärm</string>
 </resources>

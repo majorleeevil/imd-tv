@@ -21,7 +21,6 @@
     <string name="sports_unavailable">Scores unavailable right now</string>
     <string name="sports_on_channel">On %1$s</string>
     <string name="sports_on_channel_at">On %1$s at %2$s</string>
-    <string name="sports_ok_full">OK: full screen</string>
     <string name="sports_not_on_tv">Not on any of your channels right now</string>
     <string name="sports_where_to_watch">Where to watch</string>
     <string name="sports_recent_form">Recent form</string>
@@ -69,4 +68,5 @@
     <string name="sports_ev_fulltime">Full time</string>
     <string name="sports_focus_preview">Preview on focus</string>
     <string name="sports_focus_preview_expl">Resting on a game switches the preview to it. Off: hold OK on a game and choose Preview.</string>
+    <string name="sports_watch_full">Watch full screen</string>
 </resources>

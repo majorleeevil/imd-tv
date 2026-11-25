@@ -20,7 +20,6 @@
     <string name="sports_unavailable">Ergebnisse derzeit nicht verfügbar</string>
     <string name="sports_on_channel">Auf %1$s</string>
     <string name="sports_on_channel_at">Auf %1$s um %2$s</string>
-    <string name="sports_ok_full">OK: Vollbild</string>
     <string name="sports_not_on_tv">Aktuell auf keinem deiner Sender</string>
     <string name="sports_where_to_watch">Wo läuft es?</string>
     <string name="sports_recent_form">Aktuelle Form</string>
@@ -67,4 +66,5 @@
     <string name="sports_ev_fulltime">Abpfiff</string>
     <string name="sports_focus_preview">Vorschau bei Fokus</string>
     <string name="sports_focus_preview_expl">Bleibt die Auswahl auf einem Spiel, wechselt die Vorschau dorthin. Aus: OK auf einem Spiel halten und Vorschau wählen.</string>
+    <string name="sports_watch_full">Im Vollbild ansehen</string>
 </resources>

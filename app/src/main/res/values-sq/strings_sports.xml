@@ -20,7 +20,6 @@
     <string name="sports_unavailable">Rezultatet nuk janë të disponueshme tani</string>
     <string name="sports_on_channel">Në %1$s</string>
     <string name="sports_on_channel_at">Në %1$s në %2$s</string>
-    <string name="sports_ok_full">OK: ekran i plotë</string>
     <string name="sports_not_on_tv">Tani nuk është në asnjë nga kanalet e tua</string>
     <string name="sports_where_to_watch">Ku mund ta shikosh</string>
     <string name="sports_recent_form">Forma e fundit</string>
@@ -67,4 +66,5 @@
     <string name="sports_ev_fulltime">Fundi i ndeshjes</string>
     <string name="sports_focus_preview">Pamja paraprake në fokus</string>
     <string name="sports_focus_preview_expl">Kur ndalesh te një ndeshje, pamja paraprake kalon te ajo. Joaktiv: mbaj OK te një ndeshje dhe zgjidh Parapamje.</string>
+    <string name="sports_watch_full">Shiko në ekran të plotë</string>
 </resources>

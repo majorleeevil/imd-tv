@@ -20,7 +20,6 @@
     <string name="sports_unavailable">Τα σκορ δεν είναι διαθέσιμα αυτή τη στιγμή</string>
     <string name="sports_on_channel">Στο %1$s</string>
     <string name="sports_on_channel_at">Στο %1$s στις %2$s</string>
-    <string name="sports_ok_full">OK: πλήρης οθόνη</string>
     <string name="sports_not_on_tv">Δεν προβάλλεται σε κανένα από τα κανάλια σας αυτή τη στιγμή</string>
     <string name="sports_where_to_watch">Πού να το δείτε</string>
     <string name="sports_recent_form">Πρόσφατη φόρμα</string>
@@ -67,4 +66,5 @@
     <string name="sports_ev_fulltime">Τέλος αγώνα</string>
     <string name="sports_focus_preview">Προεπισκόπηση με εστίαση</string>
     <string name="sports_focus_preview_expl">Όταν σταματάτε σε έναν αγώνα, η προεπισκόπηση αλλάζει σε αυτόν. Off: κρατήστε πατημένο το OK σε έναν αγώνα και επιλέξτε Προεπισκόπηση.</string>
+    <string name="sports_watch_full">Παρακολούθηση σε πλήρη οθόνη</string>
 </resources>

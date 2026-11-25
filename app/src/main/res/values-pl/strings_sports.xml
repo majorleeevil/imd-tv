@@ -20,7 +20,6 @@
     <string name="sports_unavailable">Wyniki są teraz niedostępne</string>
     <string name="sports_on_channel">W %1$s</string>
     <string name="sports_on_channel_at">W %1$s o %2$s</string>
-    <string name="sports_ok_full">OK: pełny ekran</string>
     <string name="sports_not_on_tv">Teraz nie ma na żadnym z Twoich kanałów</string>
     <string name="sports_where_to_watch">Gdzie oglądać</string>
     <string name="sports_recent_form">Ostatnia forma</string>
@@ -67,4 +66,5 @@
     <string name="sports_ev_fulltime">Koniec meczu</string>
     <string name="sports_focus_preview">Podgląd po zaznaczeniu</string>
     <string name="sports_focus_preview_expl">Zatrzymanie się na meczu przełącza na niego podgląd. Wyłączone: przytrzymaj OK na meczu i wybierz Zapowiedź.</string>
+    <string name="sports_watch_full">Oglądaj na pełnym ekranie</string>
 </resources>
