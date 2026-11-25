@@ -85,7 +85,8 @@ fun MatchScreen(vm: SportsViewModel, live: LiveViewModel, game: Game, onFull: (C
         when {
             m == null && !failed -> Spinner(Modifier.align(Alignment.Center), 24.dp, colors.muted)
             m == null -> Text(stringResource(R.string.sports_unavailable), fontSize = 14.sp, color = colors.muted, modifier = Modifier.align(Alignment.Center))
-            else -> Column(Modifier.padding(horizontal = 12.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            // TV-safe margins (overscan crops the edges on some TVs; 12 dp cut off the left panel and the TV icon), as the rest of the app.
+            else -> Column(Modifier.padding(start = 24.dp, end = 24.dp, top = 20.dp, bottom = 14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 // Where to watch: every channel showing it, best first (an IPTV playlist often has several).
                 if (watch.isNotEmpty()) Row(verticalAlignment = Alignment.CenterVertically) {
                     // A TV icon instead of the words, so more channels fit.
