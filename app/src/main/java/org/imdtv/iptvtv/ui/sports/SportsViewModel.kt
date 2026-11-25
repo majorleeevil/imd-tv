@@ -149,11 +149,14 @@ class SportsViewModel(app: Application) : AndroidViewModel(app) {
     private inline fun <T> searchOrEmpty(block: () -> List<T>): List<T> =
         try { block() } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { emptyList() }
 
+    /** Nothing left to watch: an hour after the game ended (finished, and an hour past its usual end). */
+    private fun over(g: Game) = g.state == GameState.POST && System.currentTimeMillis() > org.imdtv.iptvtv.data.sports.usualEnd(g) + 3_600_000L
+
     private val inFlight = HashMap<String, kotlinx.coroutines.Deferred<List<OnTv>>>()
 
     /** Every channel showing [g], best first (the match page's Where to watch row). Callers asking for the same game at once
      *  (auto-play and the focused card) share one lookup, run in the ViewModel so one caller leaving doesn't cancel it. */
-    suspend fun whereToWatch(g: Game, strip: List<String>): List<OnTv> =
+    suspend fun whereToWatch(g: Game, strip: List<String>): List<OnTv> = if (over(g)) emptyList() else
         // LAZY: Main.immediate would run a cached lookup to the end (and its remove) before getOrPut stores it.
         inFlight.getOrPut(g.id) { viewModelScope.async(start = kotlinx.coroutines.CoroutineStart.LAZY) { try { lookup(g, strip) } finally { inFlight.remove(g.id) } } }.await()
 

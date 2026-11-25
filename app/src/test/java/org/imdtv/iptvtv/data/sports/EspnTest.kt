@@ -186,4 +186,12 @@ class EspnTest {
         assertEquals(2, tables.size)
         assertTrue(tables[0].rows.first().points.isNotEmpty())
     }
+
+    @Test fun usualEndIsKickOffPlusTheSportsLength() {
+        val g = parseScoreboard(fx("scoreboard-soccer-ucl-20261124.json"), ucl).first()
+        assertEquals(g.start + 115 * 60_000L, usualEnd(g))
+        val race = parseRacing(fx("scoreboard-f1-20261121.json"), f1)
+        assertEquals(race.first().start + 60 * 60_000L, usualEnd(race.first())) // practice
+        assertEquals(race.last().start + 120 * 60_000L, usualEnd(race.last()))
+    }
 }

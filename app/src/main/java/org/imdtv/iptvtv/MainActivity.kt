@@ -269,7 +269,7 @@ class MainActivity : ComponentActivity() {
                             else -> org.imdtv.iptvtv.recording.RecordingsScreen(nav, app::playRecording)
                         }
                         // SportsHub (#26): one Glass layout for every theme for now; full size where the theme has no top nav.
-                        Screen.Sports -> org.imdtv.iptvtv.ui.sports.SportsScreen(sportsVm, live, nav, { ch -> sportsVm.returning = true; full(ch) }, { g -> sportsVm.returning = true; app.openMatch(g) }, onGuide = { selectTab(Tab.LIVE) })
+                        Screen.Sports -> org.imdtv.iptvtv.ui.sports.SportsScreen(sportsVm, live, nav, { ch -> sportsVm.returning = true; full(ch) }, { g -> sportsVm.returning = true; app.openMatch(g) })
                         is Screen.SportsMatch -> org.imdtv.iptvtv.ui.sports.MatchScreen(sportsVm, live, top.game, full)
                         is Screen.Detail -> VodDetailScreen(vod, top.item, onPlay = { url, title, episode, startMs ->
                             vod.play(url, top.item, episode, startMs)

@@ -309,6 +309,18 @@ fun parseStandings(root: JsonElement): List<Table> = root.a("children").ifEmpty 
 
 fun parseTeams(root: JsonElement): List<Side> = root.first("sports").first("leagues").a("teams").mapNotNull { side(it.o("team") ?: return@mapNotNull null) }
 
+/**
+ * When a finished game most likely ended: kick-off plus the sport's usual length with breaks.
+ * shortcut: ESPN's feeds give no end time; a long game (extra time, a rain delay) loses Where to watch early — record when POST is first seen if that matters.
+ */
+fun usualEnd(g: Game): Long = g.start + 60_000L * when (g.race?.session) {
+    RaceSession.RACE -> 120; RaceSession.SPRINT -> 45; null -> when (g.league.sport) {
+        Sport.FOOTBALL -> 115; Sport.RUGBY, Sport.RUGBY_LEAGUE -> 100; Sport.AMERICAN_FOOTBALL -> 195; Sport.BASKETBALL, Sport.HOCKEY -> 150
+        Sport.CRICKET -> 480; Sport.F1 -> 120
+    }
+    else -> 60 // practice and qualifying
+}
+
 // --- Order and matching (pure, unit-tested). ---
 
 /** Favourites panel: games of a favourite team first, then the followed leagues'; live before upcoming before finished, then by kick-off. */

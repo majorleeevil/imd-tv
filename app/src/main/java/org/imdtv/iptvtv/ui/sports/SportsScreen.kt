@@ -195,7 +195,7 @@ internal fun GameCard(g: Game, favTeams: Set<String>, modifier: Modifier = Modif
 
 @Composable
 @OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
-fun SportsScreen(vm: SportsViewModel, live: LiveViewModel, nav: @Composable () -> Unit, onFull: (ChannelEntity) -> Unit, onMatch: (Game) -> Unit, onGuide: () -> Unit) {
+fun SportsScreen(vm: SportsViewModel, live: LiveViewModel, nav: @Composable () -> Unit, onFull: (ChannelEntity) -> Unit, onMatch: (Game) -> Unit) {
     val s by vm.settings.collectAsState()
     val page by vm.page.collectAsState()
     val sport = vm.sport(s)
@@ -209,14 +209,16 @@ fun SportsScreen(vm: SportsViewModel, live: LiveViewModel, nav: @Composable () -
         // Down from the nav lands on the open page's pill, not on whichever pill is under the SportsHub tab.
         val pageFocus = remember { FocusRequester() }
         @Composable fun PagePill(res: Int, p: SportsPage) =
-            Pill(stringResource(res), if (page == p || page == SportsPage.SPORT && p == SportsPage.GAMES) Modifier.focusRequester(pageFocus) else Modifier, selected = page == p) { vm.page.value = p }
+            Pill(stringResource(res), if (page == p) Modifier.focusRequester(pageFocus) else Modifier, selected = page == p) { vm.page.value = p }
         Row(Modifier.padding(start = 24.dp, top = 62.dp).focusProperties { enter = { pageFocus } }.focusGroup(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            // The sport first: every page below is for it.
+            Pill(stringResource(R.string.sports_change_sport, sportName(sport)), if (page == SportsPage.SPORT) Modifier.focusRequester(pageFocus) else Modifier,
+                selected = page == SportsPage.SPORT) { vm.page.value = SportsPage.SPORT }
             PagePill(R.string.sports_games, SportsPage.GAMES)
             PagePill(R.string.sports_fav_teams, SportsPage.TEAMS)
             PagePill(R.string.sports_followed_leagues, SportsPage.LEAGUES)
             PagePill(R.string.sports_standings, SportsPage.STANDINGS)
             PagePill(R.string.sports_settings, SportsPage.SETTINGS)
-            Pill(stringResource(R.string.sports_return_guide), onClick = onGuide)
         }
         // Opened from the nav (whose tab left composition with the old screen, taking focus with it): start on the page pills.
         LaunchedEffect(Unit) { if (!vm.returning) { androidx.compose.runtime.withFrameNanos { }; runCatching { pageFocus.requestFocus() } } }
@@ -277,8 +279,6 @@ private fun androidx.compose.foundation.layout.BoxScope.GamesPage(vm: SportsView
     val driverTeams by vm.driverTeams.collectAsState()
     // Day strip
     Row(Modifier.padding(start = 24.dp, top = 98.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-        Pill(stringResource(R.string.sports_change_sport, sportName(sport))) { vm.page.value = SportsPage.SPORT }
-        Spacer(Modifier.width(6.dp))
         for (d in 0..4) {
             val label = when (d) {
                 0 -> stringResource(R.string.sports_today); 1 -> stringResource(R.string.sports_tomorrow)
@@ -654,7 +654,11 @@ private fun StandingsPage(vm: SportsViewModel, s: AppSettings, sport: Sport) {
     val favTeams = s.sportsTeams.map(::favouriteTeamKey).toSet()
     Column(Modifier.padding(start = 24.dp, top = 104.dp, end = 24.dp, bottom = 12.dp)) {
         if (leagues.isEmpty()) { Text(stringResource(R.string.sports_no_tables), fontSize = 13.sp, color = colors.muted); return@Column }
-        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) { items(leagues, key = { it.id }) { l -> Pill(l.name, selected = l == league) { league = l } } }
+        // One button for the competition: OK lists them all.
+        var picking by remember { mutableStateOf(false) }
+        Row { Pill((league?.name ?: "") + " ▾") { picking = true } }
+        if (picking) org.imdtv.iptvtv.ui.ContextMenu(stringResource(R.string.sports_standings), leagues.map { l -> l.name to { league = l; picking = false } },
+            leagues.indexOf(league).coerceAtLeast(0)) { picking = false }
         Box(Modifier.padding(top = 10.dp).fillMaxSize().panel().padding(12.dp)) {
             val t = tables
             when {
