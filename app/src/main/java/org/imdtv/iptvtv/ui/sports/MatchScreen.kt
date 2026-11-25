@@ -35,6 +35,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -83,29 +85,21 @@ fun MatchScreen(vm: SportsViewModel, live: LiveViewModel, game: Game, onFull: (C
         when {
             m == null && !failed -> Spinner(Modifier.align(Alignment.Center), 24.dp, colors.muted)
             m == null -> Text(stringResource(R.string.sports_unavailable), fontSize = 14.sp, color = colors.muted, modifier = Modifier.align(Alignment.Center))
-            else -> Column(Modifier.padding(horizontal = 24.dp, vertical = 14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                // Score line, then one card per team (home first).
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    // Home name, its badge, the score, the away badge and name (user's markup, 2026-11-25).
-                    Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(g.home.name, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
-                        Badge(g.home.logo, 24.dp)
-                        Text(if (g.state == GameState.PRE) "v" else "${g.home.score.orEmpty()} – ${g.away.score.orEmpty()}", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White, maxLines = 1)
-                        Badge(g.away.logo, 24.dp)
-                        Text(g.away.name, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
-                    }
-                    Text(if (g.state == GameState.PRE) dayDate(g.start) + " " + clockTime(g.start) else g.detail, fontSize = 13.sp,
-                        color = if (g.state == GameState.IN) colors.accent else colors.muted)
-                    fetched?.takeIf { it.stale }?.let { Text("  " + stringResource(R.string.sports_updated, clockTime(it.updatedAt)), fontSize = 11.sp, color = colors.muted) }
-                }
+            else -> Column(Modifier.padding(horizontal = 12.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 // Where to watch: every channel showing it, best first (an IPTV playlist often has several).
                 if (watch.isNotEmpty()) Row(verticalAlignment = Alignment.CenterVertically) {
                     // A TV icon instead of the words, so more channels fit.
                     androidx.compose.foundation.Image(androidx.compose.ui.res.painterResource(R.drawable.ic_tab_live), stringResource(R.string.sports_where_to_watch),
                         colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(colors.muted), modifier = Modifier.padding(end = 10.dp).size(18.dp))
-                    val row = androidx.compose.foundation.lazy.rememberLazyListState()
-                    androidx.compose.foundation.lazy.LazyRow(Modifier.weight(1f), state = row, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        items(watch.size) { i -> WatchCard(watch[i], if (i == 0) Modifier.focusRequester(firstWatch) else Modifier) { onFull(watch[i].ch) } }
+                    // Two rows that scroll sideways together, best first along the top row (the score moved to the left panel for room).
+                    val row = androidx.compose.foundation.rememberScrollState()
+                    val split = if (watch.size < 3) watch.size else (watch.size + 1) / 2
+                    Column(Modifier.weight(1f).horizontalScroll(row), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        listOf(watch.take(split), watch.drop(split)).filter { it.isNotEmpty() }.forEachIndexed { r, line ->
+                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                line.forEachIndexed { i, tv -> WatchCard(tv, if (r == 0 && i == 0) Modifier.focusRequester(firstWatch) else Modifier) { onFull(tv.ch) } }
+                            }
+                        }
                     }
                     // More channels to the right: like the SportsHub box's "more below" marker.
                     if (row.canScrollForward) Text("▸", fontSize = 16.sp, color = Color.White, modifier = Modifier.padding(start = 6.dp)
@@ -119,10 +113,10 @@ fun MatchScreen(vm: SportsViewModel, live: LiveViewModel, game: Game, onFull: (C
                 val football = g.league.sport == Sport.FOOTBALL
                 // Football: team cards narrowed, with the minute-by-minute events panel beside both (user's mockup, 2026-11-24).
                 Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    TeamsPanel(g, teams.take(2), Modifier.width(190.dp).fillMaxHeight())
+                    TeamsPanel(g, teams.take(2), fetched?.takeIf { it.stale }?.updatedAt, Modifier.width(190.dp).fillMaxHeight())
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         teams.take(2).forEachIndexed { i, t ->
-                            TeamCard(t, g, m.stats, home = i == 0, modifier = Modifier.weight(1f), kit = kitOf(t.side.id), side = if (football) 160.dp else 190.dp)
+                            TeamCard(t, g, m.stats, home = i == 0, modifier = Modifier.weight(1f), kit = kitOf(t.side.id), side = if (football) 118.dp else 190.dp)
                         }
                     }
                     if (football) EventsPanel(m.events, ::kitOf, Modifier.width(170.dp).fillMaxHeight())
@@ -132,21 +126,28 @@ fun MatchScreen(vm: SportsViewModel, live: LiveViewModel, game: Game, onFull: (C
     }
 }
 
-/** Left panel: the competition at the top, then each team (badge, name, recent form) level with its pitch. */
+/** Left panel: competition badge and the game's state at the top, then each team (badge, name, score, recent form) level with its pitch. */
 @Composable
-private fun TeamsPanel(g: Game, teams: List<TeamSheet>, modifier: Modifier) {
+private fun TeamsPanel(g: Game, teams: List<TeamSheet>, staleSince: Long?, modifier: Modifier) {
     val colors = LocalTheme.current.colors
     Column(modifier.panel().padding(12.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 10.dp)) {
-            Badge(g.leagueLogo, 32.dp)
-            Text(g.leagueName, fontSize = 12.sp, lineHeight = 14.sp, color = Color.White, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(start = 8.dp))
+            Badge(g.leagueLogo, 44.dp)
+            Spacer(Modifier.weight(1f))
+            Column(horizontalAlignment = Alignment.End) {
+                Text(if (g.state == GameState.PRE) dayDate(g.start) + " " + clockTime(g.start) else g.detail, fontSize = 13.sp, fontWeight = FontWeight.Bold,
+                    color = if (g.state == GameState.IN) colors.accent else colors.muted)
+                staleSince?.let { Text(stringResource(R.string.sports_updated, clockTime(it)), fontSize = 10.sp, color = colors.muted) }
+            }
         }
         teams.forEach { t ->
             Column(Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Badge(t.side.logo, 32.dp)
                     Text(t.side.name, fontSize = 15.sp, lineHeight = 17.sp, fontWeight = FontWeight.Bold, color = Color.White, maxLines = 2, overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(start = 8.dp))
+                        modifier = Modifier.padding(start = 8.dp).weight(1f))
+                    if (g.state != GameState.PRE) Text((if (t.side.id == g.away.id) g.away.score else g.home.score).orEmpty(), fontSize = 22.sp, fontWeight = FontWeight.Bold,
+                        color = Color.White, modifier = Modifier.padding(start = 6.dp))
                 }
                 Text(stringResource(R.string.sports_recent_form), fontSize = 11.sp, color = colors.muted, modifier = Modifier.padding(top = 6.dp, bottom = 3.dp))
                 t.form.take(5).forEach { f ->
@@ -182,7 +183,7 @@ private fun TeamCard(t: TeamSheet, g: Game, stats: List<StatLine>, home: Boolean
             if (t.subs.isNotEmpty()) {
                 Text(stringResource(R.string.sports_subs), fontSize = 11.sp, color = colors.muted, modifier = Modifier.padding(bottom = 2.dp))
                 t.subs.take(10).forEach { p ->
-                    Text((if (p.subbedIn) "↑ " else "") + "${p.jersey}  ${p.name}", fontSize = 10.sp, maxLines = 1,
+                    Text((if (p.subbedIn) "↑ " else "") + "${p.jersey}  ${p.name}", fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis,
                         color = if (p.subbedIn) colors.accent else Color.White)
                 }
             }
@@ -215,7 +216,17 @@ private fun EventsPanel(events: List<KeyEvent>, kit: (String?) -> Color?, modifi
         Text(stringResource(R.string.sports_events), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White, modifier = Modifier.padding(bottom = 6.dp))
         // shortcut: what the panel shows before kick-off is the user's call (2026-11-24); one muted line until then.
         if (events.isEmpty()) Text(stringResource(R.string.sports_events_soon), fontSize = 11.sp, color = colors.muted)
-        Column(Modifier.clip(RoundedCornerShape(4.dp)).verticalScroll(scroll), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        val bar = Color(0x99FFFFFF); val track = Color(0x22FFFFFF)
+        // A scroll bar down the right edge whenever the list is longer than the panel.
+        Column(Modifier.clip(RoundedCornerShape(4.dp)).drawWithContent {
+            drawContent()
+            if (scroll.maxValue in 1 until Int.MAX_VALUE) {
+                val w = 3.dp.toPx(); val x = size.width - w
+                val thumb = size.height * size.height / (size.height + scroll.maxValue)
+                drawRoundRect(track, Offset(x, 0f), Size(w, size.height), CornerRadius(w / 2))
+                drawRoundRect(bar, Offset(x, (size.height - thumb) * scroll.value / scroll.maxValue), Size(w, thumb), CornerRadius(w / 2))
+            }
+        }.verticalScroll(scroll).padding(end = 8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             events.forEach { e -> EventLine(e, kit(e.teamId)) }
         }
     }
