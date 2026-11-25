@@ -59,4 +59,10 @@
     <string name="sports_ok_watch">OK zum Ansehen</string>
     <string name="sports_team_results">Heutige Ergebnisse</string>
     <string name="sports_team_results_expl">Das Spiel eines Lieblingsteams bleibt nach Abpfiff im Favoritenbereich. Aus: Es rückt zu seiner Liga.</string>
+    <string name="sports_events">Spielereignisse</string>
+    <string name="sports_events_soon">Tore, Karten und Wechsel erscheinen hier ab Anpfiff</string>
+    <string name="sports_ev_kickoff">Anpfiff</string>
+    <string name="sports_ev_halftime">Halbzeit</string>
+    <string name="sports_ev_second_half">Zweite Halbzeit</string>
+    <string name="sports_ev_fulltime">Abpfiff</string>
 </resources>

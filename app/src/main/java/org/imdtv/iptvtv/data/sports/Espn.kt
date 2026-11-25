@@ -60,7 +60,29 @@ data class Player(val jersey: String, val name: String, val position: String, va
 data class FormGame(val result: String, val score: String, val opponent: String, val atVs: String, val league: String, val date: Long)
 data class TeamSheet(val side: Side, val formation: String?, val starters: List<Player>, val subs: List<Player>, val form: List<FormGame>)
 data class StatLine(val label: String, val home: String, val away: String)
-data class Match(val game: Game?, val teams: List<TeamSheet>, val stats: List<StatLine>, val venue: String?)
+data class Match(val game: Game?, val teams: List<TeamSheet>, val stats: List<StatLine>, val venue: String?, val events: List<KeyEvent> = emptyList())
+
+enum class EventKind { KICKOFF, HALFTIME, SECOND_HALF, FULLTIME, GOAL, YELLOW, RED, SUB }
+/** One line of the match page's events panel; [who] = scorer / booked player, or (in, out) for a substitution. */
+data class KeyEvent(val kind: EventKind, val minute: String, val teamId: String?, val who: List<String>)
+
+/** ESPN `keyEvents` (football), newest first; delays and other noise left out. */
+fun parseKeyEvents(root: JsonElement): List<KeyEvent> = root.a("keyEvents").mapNotNull { e ->
+    val type = e.o("type").s("type").orEmpty()
+    val kind = when {
+        e.s("scoringPlay") == "true" || type.startsWith("goal") || type == "own-goal" -> EventKind.GOAL
+        type == "kickoff" -> EventKind.KICKOFF
+        type == "halftime" -> EventKind.HALFTIME
+        type == "start-2nd-half" -> EventKind.SECOND_HALF
+        type == "end-regular-time" || type == "full-time" -> EventKind.FULLTIME
+        type == "yellow-card" -> EventKind.YELLOW
+        type == "red-card" || type == "second-yellow-card" -> EventKind.RED
+        type == "substitution" -> EventKind.SUB
+        else -> return@mapNotNull null
+    }
+    KeyEvent(kind, e.o("clock").s("displayValue").orEmpty(), e.o("team").s("id"),
+        e.a("participants").mapNotNull { it.o("athlete").s("displayName") })
+}.reversed()
 
 data class TableRow(val rank: Int, val team: Side, val played: String, val won: String, val drawn: String, val lost: String, val gd: String, val points: String)
 data class Table(val name: String, val rows: List<TableRow>)
@@ -156,7 +178,7 @@ fun parseSummary(root: JsonElement, league: League): Match {
     val home = byTeam[sides.getOrNull(0)?.id].orEmpty(); val away = byTeam[sides.getOrNull(1)?.id].orEmpty()
     val stats = home.keys.filter { it.isNotEmpty() && it in away }.map { StatLine(it, home.getValue(it), away.getValue(it)) }
     val venue = root.o("gameInfo").o("venue").s("fullName")
-    return Match(game, teams, stats, venue)
+    return Match(game, teams, stats, venue, parseKeyEvents(root))
 }
 
 fun parseStandings(root: JsonElement): List<Table> = root.a("children").ifEmpty { listOf(root) }.mapNotNull { child ->

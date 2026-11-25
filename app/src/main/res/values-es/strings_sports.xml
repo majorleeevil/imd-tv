@@ -59,4 +59,10 @@
     <string name="sports_ok_watch">OK para ver</string>
     <string name="sports_team_results">Resultados de hoy</string>
     <string name="sports_team_results_expl">El partido de un equipo favorito sigue en favoritos tras el final. Desactivado: baja a su liga.</string>
+    <string name="sports_events">Incidencias</string>
+    <string name="sports_events_soon">Goles, tarjetas y cambios aparecen aquí desde el saque inicial</string>
+    <string name="sports_ev_kickoff">Saque inicial</string>
+    <string name="sports_ev_halftime">Descanso</string>
+    <string name="sports_ev_second_half">Segunda parte</string>
+    <string name="sports_ev_fulltime">Final</string>
 </resources>

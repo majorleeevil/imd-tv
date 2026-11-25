@@ -59,4 +59,10 @@
     <string name="sports_ok_watch">İzlemek için OK</string>
     <string name="sports_team_results">Bugünün sonuçları</string>
     <string name="sports_team_results_expl">Favori takımın maçı bitiş düdüğünden sonra favorilerde kalır. Kapalı: kendi ligine taşınır.</string>
+    <string name="sports_events">Maç olayları</string>
+    <string name="sports_events_soon">Goller, kartlar ve oyuncu değişiklikleri başlama vuruşundan itibaren burada görünür</string>
+    <string name="sports_ev_kickoff">Başlama vuruşu</string>
+    <string name="sports_ev_halftime">Devre arası</string>
+    <string name="sports_ev_second_half">İkinci yarı</string>
+    <string name="sports_ev_fulltime">Maç sonu</string>
 </resources>

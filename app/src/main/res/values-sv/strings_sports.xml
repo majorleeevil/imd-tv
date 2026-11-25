@@ -59,4 +59,10 @@
     <string name="sports_ok_watch">OK för att titta</string>
     <string name="sports_team_results">Dagens resultat</string>
     <string name="sports_team_results_expl">Ett favoritlags match stannar bland favoriter efter slutsignalen. Av: den flyttas ner till sin liga.</string>
+    <string name="sports_events">Matchhändelser</string>
+    <string name="sports_events_soon">Mål, kort och byten visas här från avspark</string>
+    <string name="sports_ev_kickoff">Avspark</string>
+    <string name="sports_ev_halftime">Halvtid</string>
+    <string name="sports_ev_second_half">Andra halvlek</string>
+    <string name="sports_ev_fulltime">Slutsignal</string>
 </resources>

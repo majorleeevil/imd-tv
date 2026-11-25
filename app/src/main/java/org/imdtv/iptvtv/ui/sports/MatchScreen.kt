@@ -25,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -40,7 +41,9 @@ import androidx.compose.ui.unit.sp
 import androidx.tv.material3.Text
 import org.imdtv.iptvtv.R
 import org.imdtv.iptvtv.data.db.ChannelEntity
+import org.imdtv.iptvtv.data.sports.EventKind
 import org.imdtv.iptvtv.data.sports.Game
+import org.imdtv.iptvtv.data.sports.KeyEvent
 import org.imdtv.iptvtv.data.sports.GameState
 import org.imdtv.iptvtv.data.sports.Player
 import org.imdtv.iptvtv.data.sports.Sport
@@ -63,6 +66,7 @@ fun MatchScreen(vm: SportsViewModel, live: LiveViewModel, game: Game, onFull: (C
     val failed by vm.matchFailed.collectAsState()
     val strip by live.strip.collectAsState()
     val watch by produceState(emptyList<OnTv>(), game.id) { value = vm.whereToWatch(game, strip) }
+    val firstWatch = androidx.compose.runtime.remember { androidx.compose.ui.focus.FocusRequester() }
     val m = fetched?.value
     val g = m?.game ?: game
     Box(Modifier.sportsBackground()) {
@@ -82,13 +86,23 @@ fun MatchScreen(vm: SportsViewModel, live: LiveViewModel, game: Game, onFull: (C
                 if (watch.isNotEmpty()) Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(stringResource(R.string.sports_where_to_watch), fontSize = 11.sp, color = colors.muted, modifier = Modifier.padding(end = 10.dp))
                     androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        items(watch.size) { i -> WatchCard(watch[i]) { onFull(watch[i].ch) } }
+                        items(watch.size) { i -> WatchCard(watch[i], if (i == 0) Modifier.focusRequester(firstWatch) else Modifier) { onFull(watch[i].ch) } }
                     }
+                    // Nothing else on the page takes focus: start (and come back from full screen) on the first channel.
+                    LaunchedEffect(Unit) { runCatching { firstWatch.requestFocus() } }
                 }
                 val teams = m.teams.ifEmpty { listOf(TeamSheet(g.home, null, emptyList(), emptyList(), emptyList()), TeamSheet(g.away, null, emptyList(), emptyList(), emptyList())) }
-                teams.take(2).forEachIndexed { i, t ->
-                    TeamCard(t, g, m.stats, home = i == 0, modifier = Modifier.weight(1f),
-                        kit = colour(org.imdtv.iptvtv.data.sports.kitColours(g.home, g.away).let { if (t.side.id == g.away.id) it.second else it.first }))
+                val kits = org.imdtv.iptvtv.data.sports.kitColours(g.home, g.away)
+                fun kitOf(teamId: String?) = colour(if (teamId == g.away.id) kits.second else kits.first)
+                val football = g.league.sport == Sport.FOOTBALL
+                // Football: team cards narrowed, with the minute-by-minute events panel beside both (user's mockup, 2026-11-24).
+                Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        teams.take(2).forEachIndexed { i, t ->
+                            TeamCard(t, g, m.stats, home = i == 0, modifier = Modifier.weight(1f), kit = kitOf(t.side.id), side = if (football) 160.dp else 190.dp)
+                        }
+                    }
+                    if (football) EventsPanel(m.events, ::kitOf, Modifier.width(170.dp).fillMaxHeight())
                 }
             }
         }
@@ -96,7 +110,7 @@ fun MatchScreen(vm: SportsViewModel, live: LiveViewModel, game: Game, onFull: (C
 }
 
 @Composable
-private fun TeamCard(t: TeamSheet, g: Game, stats: List<StatLine>, home: Boolean, modifier: Modifier, kit: Color?) {
+private fun TeamCard(t: TeamSheet, g: Game, stats: List<StatLine>, home: Boolean, modifier: Modifier, kit: Color?, side: androidx.compose.ui.unit.Dp) {
     val colors = LocalTheme.current.colors
     Row(modifier.fillMaxWidth().panel().padding(12.dp)) {
         // Left: team, badge, recent form.
@@ -127,8 +141,8 @@ private fun TeamCard(t: TeamSheet, g: Game, stats: List<StatLine>, home: Boolean
                     color = colors.muted, modifier = Modifier.align(Alignment.Center))
             }
         }
-        // Right: competition, where to watch (first card), subs.
-        Column(Modifier.width(190.dp).fillMaxHeight()) {
+        // Right: competition, subs.
+        Column(Modifier.width(side).fillMaxHeight()) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Badge(g.leagueLogo, 28.dp)
                 Text(g.leagueName, fontSize = 11.sp, color = Color.White, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(start = 6.dp))
@@ -144,11 +158,51 @@ private fun TeamCard(t: TeamSheet, g: Game, stats: List<StatLine>, home: Boolean
     }
 }
 
+/** Goals, cards, subs and the half markers, newest at the top; each line has its team's kit colour down the side. */
+@Composable
+private fun EventsPanel(events: List<KeyEvent>, kit: (String?) -> Color?, modifier: Modifier) {
+    val colors = LocalTheme.current.colors
+    Column(modifier.panel().padding(10.dp)) {
+        Text(stringResource(R.string.sports_events), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White, modifier = Modifier.padding(bottom = 6.dp))
+        // shortcut: what the panel shows before kick-off is the user's call (2026-11-24); one muted line until then.
+        if (events.isEmpty()) Text(stringResource(R.string.sports_events_soon), fontSize = 11.sp, color = colors.muted)
+        // Not scrollable (the page has no focus here): a long game shows its newest events and clips the oldest.
+        Column(Modifier.clip(RoundedCornerShape(4.dp)), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            events.forEach { e -> EventLine(e, kit(e.teamId)) }
+        }
+    }
+}
+
+@Composable
+private fun EventLine(e: KeyEvent, kit: Color?) {
+    val colors = LocalTheme.current.colors
+    val marker = when (e.kind) {
+        EventKind.KICKOFF -> R.string.sports_ev_kickoff; EventKind.HALFTIME -> R.string.sports_ev_halftime
+        EventKind.SECOND_HALF -> R.string.sports_ev_second_half; EventKind.FULLTIME -> R.string.sports_ev_fulltime
+        else -> null
+    }
+    Row(Modifier.height(androidx.compose.foundation.layout.IntrinsicSize.Min), verticalAlignment = Alignment.CenterVertically) {
+        Box(Modifier.width(3.dp).fillMaxHeight().background(if (marker == null) kit ?: colors.accent else Color.Transparent))
+        Text(e.minute, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = colors.muted, maxLines = 1, modifier = Modifier.padding(start = 5.dp).width(42.dp))
+        if (marker != null) { Text(stringResource(marker), fontSize = 10.sp, color = colors.muted, maxLines = 1, overflow = TextOverflow.Ellipsis); return@Row }
+        when (e.kind) {
+            EventKind.GOAL -> Text("⚽", fontSize = 10.sp)
+            EventKind.YELLOW, EventKind.RED -> Box(Modifier.size(7.dp, 10.dp).clip(RoundedCornerShape(1.dp)).background(if (e.kind == EventKind.RED) Color(0xFFE53935) else Color(0xFFFDD835)))
+            else -> Text("⇄", fontSize = 10.sp, color = colors.accent)
+        }
+        Column(Modifier.padding(start = 5.dp)) {
+            Text(e.who.firstOrNull().orEmpty(), fontSize = 10.sp, color = Color.White, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            // A substitution's second name is the player going off.
+            if (e.kind == EventKind.SUB) e.who.getOrNull(1)?.let { Text("↓ $it", fontSize = 9.sp, color = colors.muted, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+        }
+    }
+}
+
 fun colour(hex: String?): Color? = hex?.toLongOrNull(16)?.let { Color(0xFF000000 or it) }
 
 /** Where to watch: the channel's logo and name, live now or its start time; OK plays it full screen. */
 @Composable
-private fun WatchCard(tv: OnTv, onWatch: () -> Unit) = FocusBox(onWatch) { f ->
+private fun WatchCard(tv: OnTv, modifier: Modifier, onWatch: () -> Unit) = FocusBox(onWatch, modifier) { f ->
     val colors = LocalTheme.current.colors
     val now = tv.liveAt(System.currentTimeMillis())
     // A button named after the channel: a red dot when it's on now, else its start time.

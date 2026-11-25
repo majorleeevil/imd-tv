@@ -59,4 +59,10 @@
     <string name="sports_ok_watch">OK per guardare</string>
     <string name="sports_team_results">Risultati di oggi</string>
     <string name="sports_team_results_expl">La partita di una squadra preferita resta nei preferiti dopo il fischio finale. Off: scende nel suo campionato.</string>
+    <string name="sports_events">Eventi della partita</string>
+    <string name="sports_events_soon">Gol, cartellini e cambi appaiono qui dal calcio d\'inizio</string>
+    <string name="sports_ev_kickoff">Calcio d\'inizio</string>
+    <string name="sports_ev_halftime">Intervallo</string>
+    <string name="sports_ev_second_half">Secondo tempo</string>
+    <string name="sports_ev_fulltime">Fine partita</string>
 </resources>

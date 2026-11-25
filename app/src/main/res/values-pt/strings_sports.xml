@@ -59,4 +59,10 @@
     <string name="sports_ok_watch">OK para assistir</string>
     <string name="sports_team_results">Resultados de hoje</string>
     <string name="sports_team_results_expl">O jogo de uma equipa favorita fica nos favoritos após o apito final. Desligado: desce para a sua liga.</string>
+    <string name="sports_events">Lances do jogo</string>
+    <string name="sports_events_soon">Golos, cartões e substituições aparecem aqui a partir do pontapé de saída</string>
+    <string name="sports_ev_kickoff">Pontapé de saída</string>
+    <string name="sports_ev_halftime">Intervalo</string>
+    <string name="sports_ev_second_half">Segunda parte</string>
+    <string name="sports_ev_fulltime">Fim do jogo</string>
 </resources>

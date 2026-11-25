@@ -59,4 +59,10 @@
     <string name="sports_ok_watch">OK pentru a urmări</string>
     <string name="sports_team_results">Rezultatele de azi</string>
     <string name="sports_team_results_expl">Meciul unei echipe favorite rămâne la favorite după final. Oprit: coboară la liga sa.</string>
+    <string name="sports_events">Faze ale meciului</string>
+    <string name="sports_events_soon">Golurile, cartonașele și schimbările apar aici de la start</string>
+    <string name="sports_ev_kickoff">Start</string>
+    <string name="sports_ev_halftime">Pauză</string>
+    <string name="sports_ev_second_half">Repriza a doua</string>
+    <string name="sports_ev_fulltime">Final</string>
 </resources>

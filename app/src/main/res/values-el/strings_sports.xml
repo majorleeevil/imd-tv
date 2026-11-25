@@ -59,4 +59,10 @@
     <string name="sports_ok_watch">OK για προβολή</string>
     <string name="sports_team_results">Σημερινά αποτελέσματα</string>
     <string name="sports_team_results_expl">Ο αγώνας αγαπημένης ομάδας μένει στα αγαπημένα μετά τη λήξη. Ανενεργό: μετακινείται στη διοργάνωσή του.</string>
+    <string name="sports_events">Γεγονότα αγώνα</string>
+    <string name="sports_events_soon">Γκολ, κάρτες και αλλαγές εμφανίζονται εδώ από την έναρξη</string>
+    <string name="sports_ev_kickoff">Έναρξη</string>
+    <string name="sports_ev_halftime">Ημίχρονο</string>
+    <string name="sports_ev_second_half">Δεύτερο ημίχρονο</string>
+    <string name="sports_ev_fulltime">Τέλος αγώνα</string>
 </resources>

@@ -61,4 +61,10 @@
     <string name="sports_ok_watch">OK to watch</string>
     <string name="sports_team_results">Today\'s results</string>
     <string name="sports_team_results_expl">Keep a favourite team\'s game in the favourites box after full time. Off: it moves down to its league.</string>
+    <string name="sports_events">Match events</string>
+    <string name="sports_events_soon">Goals, cards and subs appear here from kick-off</string>
+    <string name="sports_ev_kickoff">Kick-off</string>
+    <string name="sports_ev_halftime">Half-time</string>
+    <string name="sports_ev_second_half">Second half</string>
+    <string name="sports_ev_fulltime">Full time</string>
 </resources>

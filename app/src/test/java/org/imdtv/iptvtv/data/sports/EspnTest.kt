@@ -129,4 +129,17 @@ class EspnTest {
         assertTrue(titleNamesGame("Live PL: Man Utd v Spurs", utd, spurs))
         assertTrue(titleNamesGame("Brighton & Hove Albion v Man Utd", Side("331", "Brighton & Hove Albion", "Brighton", "BHA", null, null), utd))
     }
+
+    @Test fun keyEventsNewestFirst() {
+        val ev = parseSummary(fx("summary-soccer-eng2-post.json"), eng2).events
+        assertEquals(EventKind.FULLTIME, ev.first().kind)
+        assertEquals(EventKind.KICKOFF, ev.last().kind)
+        assertEquals(2, ev.count { it.kind == EventKind.GOAL })
+        assertTrue(ev.none { it.who.isEmpty() && it.kind == EventKind.SUB })
+        val sub = ev.last { it.kind == EventKind.SUB } // the first substitution of the game
+        assertEquals(listOf("Kuryu Matsuki", "Cameron Bragg"), sub.who)
+        assertEquals("45'", sub.minute)
+        val lastGoal = ev.first { it.kind == EventKind.GOAL }
+        assertEquals("90'+5'", lastGoal.minute); assertEquals("376", lastGoal.teamId); assertEquals("Divin Mubama", lastGoal.who.first())
+    }
 }

@@ -59,4 +59,10 @@
     <string name="sports_ok_watch">OK për ta parë</string>
     <string name="sports_team_results">Rezultatet e sotme</string>
     <string name="sports_team_results_expl">Ndeshja e një ekipi të preferuar mbetet te të preferuarat pas fundit. Joaktiv: zbret te kampionati i saj.</string>
+    <string name="sports_events">Ngjarjet e ndeshjes</string>
+    <string name="sports_events_soon">Golat, kartonët dhe zëvendësimet shfaqen këtu nga fillimi</string>
+    <string name="sports_ev_kickoff">Fillimi</string>
+    <string name="sports_ev_halftime">Pushimi</string>
+    <string name="sports_ev_second_half">Pjesa e dytë</string>
+    <string name="sports_ev_fulltime">Fundi i ndeshjes</string>
 </resources>

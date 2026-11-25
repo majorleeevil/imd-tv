@@ -59,4 +59,10 @@
     <string name="sports_ok_watch">OK om te kijken</string>
     <string name="sports_team_results">Uitslagen van vandaag</string>
     <string name="sports_team_results_expl">De wedstrijd van een favoriet team blijft na afloop bij favorieten. Uit: hij gaat naar zijn competitie.</string>
+    <string name="sports_events">Wedstrijdverloop</string>
+    <string name="sports_events_soon">Doelpunten, kaarten en wissels verschijnen hier vanaf de aftrap</string>
+    <string name="sports_ev_kickoff">Aftrap</string>
+    <string name="sports_ev_halftime">Rust</string>
+    <string name="sports_ev_second_half">Tweede helft</string>
+    <string name="sports_ev_fulltime">Einde wedstrijd</string>
 </resources>
