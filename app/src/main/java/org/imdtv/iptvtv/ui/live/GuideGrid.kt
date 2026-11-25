@@ -434,8 +434,13 @@ private fun GuideRow(
                     Text(if (progs.isEmpty()) stringResource(R.string.live_no_guide_info) else "", fontSize = style.sp(12f), color = colors.muted, modifier = Modifier.padding(horizontal = 10.dp))
                 }
             }
+            var drawnTo = Long.MIN_VALUE
             for (p in progs) {
-                val span = Timeline.span(p.start, p.stop, windowStart, end) ?: continue
+                // Overlapping guide entries (#51): a programme starts where the one before it ends, or isn't drawn (they were drawn over each other).
+                val from = maxOf(p.start, drawnTo)
+                if (from >= p.stop) continue
+                drawnTo = p.stop
+                val span = Timeline.span(from, p.stop, windowStart, end) ?: continue
                 val isNow = p.start <= now && now < p.stop
                 val past = p.stop <= now
                 val focusedNow = isFocused && p.start <= at && at < p.stop // the highlighted programme (now, or Right's pick)
@@ -454,7 +459,7 @@ private fun GuideRow(
                     else -> Modifier.width(style.dpPerMin * span.lengthMin)
                         .background(colors.cellDim.copy(alpha = if (past) .19f else .35f), RectangleShape)
                 }
-                val runsBefore = style.overflowArrows && p.start < windowStart
+                val runsBefore = style.overflowArrows && from < windowStart
                 val runsAfter = style.overflowArrows && p.stop > end
                 val rec = marked(p)
                 Box(
