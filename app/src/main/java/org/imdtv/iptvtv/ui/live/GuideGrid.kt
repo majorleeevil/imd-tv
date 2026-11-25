@@ -1,6 +1,8 @@
 @file:OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 package org.imdtv.iptvtv.ui.live
 
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.input.pointer.pointerInput
 import org.imdtv.iptvtv.ui.hasCatchUp
 import androidx.compose.ui.res.stringResource
 import org.imdtv.iptvtv.R
@@ -275,6 +277,16 @@ fun GuideGrid(
                             if (aired != null) vm.playCatchUp(ch, aired)
                             else if (later != null) { state.focusIndex = i; state.menu = GuideMenu.Programme(ch, later) } else state.onOk(ch, onFullScreen)
                         },
+                        // The tapped programme, not the row's cursor: aired (catch-up) plays, later offers Record/Remind, on now is OK.
+                        onTapAt = { t ->
+                            val p = programmes[ch.id].orEmpty().firstOrNull { it.start <= t && t < it.stop }
+                            state.focusIndex = i; vm.focused.value = ch
+                            when {
+                                p != null && p.stop <= now && ch.hasCatchUp -> vm.playCatchUp(ch, p)
+                                p != null && p.start > now -> state.menu = GuideMenu.Programme(ch, p)
+                                else -> state.onOk(ch, onFullScreen)
+                            }
+                        },
                     )
                 }
             }
@@ -347,6 +359,8 @@ private fun GuideRow(
     /** Non-null: the channel's logo replaces its name (Settings › Channels › Logos instead of names, issue #13). */
     logos: List<org.imdtv.iptvtv.data.settings.LogoKind>? = null,
     display: org.imdtv.iptvtv.data.settings.GuideChannelDisplay = org.imdtv.iptvtv.data.settings.GuideChannelDisplay.NAME,
+    /** Touch (#29): a tap on the programmes, with the time under the finger. */
+    onTapAt: ((Long) -> Unit)? = null,
 ) {
     val colors = LocalTheme.current.colors
     Row(Modifier.height(style.rowHeight).then(if (style.rowDividers) Modifier.drawBehind {
@@ -407,7 +421,10 @@ private fun GuideRow(
             }
         }
         Spacer(Modifier.width(5.dp))
-        Box(Modifier.fillMaxSize().clipToBounds()) {
+        Box(Modifier.fillMaxSize().clipToBounds().then(if (onTapAt == null) Modifier else Modifier.pointerInput(windowStart, style.dpPerMin) {
+            val perMin = style.dpPerMin.toPx()
+            detectTapGestures { o -> onTapAt(windowStart + (o.x / perMin * 60_000).toLong()) }
+        })) {
             val end = windowStart + style.windowMin * 60_000L
             if (progs.none { it.stop > windowStart && it.start < end }) {
                 // Shaped and spaced like a programme cell of this style.

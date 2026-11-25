@@ -1,5 +1,9 @@
 package org.imdtv.iptvtv.ui
 
+import kotlinx.coroutines.withTimeoutOrNull
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.ui.input.pointer.pointerInput
 import org.imdtv.iptvtv.data.settings.delta
 import org.imdtv.iptvtv.ui.hasCatchUp
 import androidx.activity.compose.BackHandler
@@ -113,7 +117,30 @@ fun PlayerScreen(player: PlayerManager, title: String, liveVm: LiveViewModel? = 
                     else -> Unit
                 }
             }
-            Box(Modifier.fillMaxSize().focusRequester(keys).focusable().onKeyEvent { e ->
+            Box(Modifier.fillMaxSize().focusRequester(keys).focusable().pointerInput(focused, overlay) {
+                // Touch (#29): tap = OK (the overlay; again closes it), swipe = that arrow's action, long press on catch-up = hold Left.
+                awaitEachGesture {
+                    val down = awaitFirstDown()
+                    var last = down.position
+                    fun moved() = (last - down.position).getDistance() > viewConfiguration.touchSlop
+                    val lifted = withTimeoutOrNull(viewConfiguration.longPressTimeoutMillis) {
+                        do { val e = awaitPointerEvent(); e.changes.firstOrNull()?.let { last = it.position } } while (e.changes.any { it.pressed })
+                        true
+                    }
+                    val long = lifted == null && !moved()
+                    if (lifted == null) do { val e = awaitPointerEvent(); e.changes.firstOrNull()?.let { last = it.position } } while (e.changes.any { it.pressed })
+                    val d = last - down.position
+                    val swipe = 48.dp.toPx()
+                    when {
+                        long -> if (focused?.hasCatchUp == true) liveVm.jumpBack(focused)
+                        overlay -> overlay = false
+                        kotlin.math.abs(d.y) > swipe && kotlin.math.abs(d.y) > kotlin.math.abs(d.x) ->
+                            arrow(if (d.y < 0) org.imdtv.iptvtv.data.settings.Dpad.UP else org.imdtv.iptvtv.data.settings.Dpad.DOWN, first = true)
+                        kotlin.math.abs(d.x) > swipe -> arrow(if (d.x < 0) org.imdtv.iptvtv.data.settings.Dpad.LEFT else org.imdtv.iptvtv.data.settings.Dpad.RIGHT, first = true)
+                        !moved() -> liveVm.lockedChannel.value?.let { liveVm.preview(it) } ?: run { overlay = true }
+                    }
+                }
+            }.onKeyEvent { e ->
                 if (overlay) return@onKeyEvent false
                 val k = when (e.key) {
                     Key.DirectionUp -> org.imdtv.iptvtv.data.settings.Dpad.UP; Key.DirectionDown -> org.imdtv.iptvtv.data.settings.Dpad.DOWN

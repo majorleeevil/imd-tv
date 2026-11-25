@@ -1,5 +1,9 @@
 package org.imdtv.iptvtv.ui
 
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import kotlinx.coroutines.withTimeoutOrNull
 import org.imdtv.iptvtv.ui.theme.glass
 import org.imdtv.iptvtv.ui.theme.LocalGlassBackdrop
 import org.imdtv.iptvtv.ui.theme.LocalTheme
@@ -68,10 +72,13 @@ fun FocusBox(
     content: @Composable BoxScope.(focused: Boolean) -> Unit,
 ) {
     var focused by remember { mutableStateOf(false) }
+    // Touch (#29): a tap doesn't move focus, so take it first, as OK would find it (a no-op on a TV, where OK comes from focus).
+    val self = remember { FocusRequester() }
     Box(
         modifier
+            .focusRequester(self)
             .onFocusChanged { if (it.isFocused != focused) { focused = it.isFocused; if (focused) onFocused() } }
-            .clickable(remember { MutableInteractionSource() }, indication = null, onClick = onClick),
+            .clickable(remember { MutableInteractionSource() }, indication = null, onClick = { runCatching { self.requestFocus() }; onClick() }),
     ) { content(focused) }
 }
 
@@ -149,7 +156,27 @@ fun isLongOk(e: android.view.KeyEvent): Boolean =
 /** Long OK runs [action] and swallows the rest of that press (repeats and key-up), so the normal click doesn't fire too. */
 fun Modifier.onLongOk(action: () -> Unit): Modifier = composed {
     var swallowing by remember { mutableStateOf(false) }
-    onPreviewKeyEvent { k ->
+    val latest by androidx.compose.runtime.rememberUpdatedState(action)
+    // Touch (#29): a long press is hold OK. Initial pass, so its lift is consumed before the click inside sees it.
+    pointerInput(Unit) {
+        awaitEachGesture {
+            val down = awaitFirstDown(requireUnconsumed = false)
+            // Lifted, or moved (a scroll), before the timeout: not a long press.
+            val up = withTimeoutOrNull(viewConfiguration.longPressTimeoutMillis) {
+                var e: androidx.compose.ui.input.pointer.PointerEvent
+                do { e = awaitPointerEvent(androidx.compose.ui.input.pointer.PointerEventPass.Initial) }
+                while (e.changes.any { it.pressed && (it.position - down.position).getDistance() < viewConfiguration.touchSlop })
+                e
+            }
+            if (up == null) {
+                latest()
+                do {
+                    val e = awaitPointerEvent(androidx.compose.ui.input.pointer.PointerEventPass.Initial)
+                    e.changes.forEach { it.consume() }
+                } while (e.changes.any { it.pressed })
+            }
+        }
+    }.onPreviewKeyEvent { k ->
         val e = k.nativeKeyEvent
         when {
             isLongOk(e) -> { swallowing = true; action(); true }
