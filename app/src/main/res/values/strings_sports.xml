@@ -72,8 +72,6 @@
     <string name="sports_sport_rugby_league">Rugby league</string>
     <!-- Followed competitions: rugby union and rugby league together. -->
     <string name="sports_group_rugby">Rugby</string>
-    <string name="sports_col_leagues">Leagues</string>
-    <string name="sports_col_cups">Cup competitions</string>
     <string name="sports_region_england">England</string>
     <string name="sports_region_scotland">Scotland</string>
     <string name="sports_region_europe">Europe</string>

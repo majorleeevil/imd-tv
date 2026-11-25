@@ -588,14 +588,16 @@ private fun TeamsPage(vm: SportsViewModel, s: AppSettings, sport: Sport) {
     }
 }
 
-/** Followed competitions: per sport (rugby union and league together), per region, leagues on the left and cups on the right. */
+/** Followed competitions: per sport (rugby union and league together), per region, two to a row. */
 @Composable
 private fun LeaguesPage(vm: SportsViewModel, s: AppSettings) {
     val colors = LocalTheme.current.colors
     val groups = LEAGUES.filter { it.sport.key in s.sports }.groupBy { if (it.sport == Sport.RUGBY_LEAGUE) Sport.RUGBY else it.sport }
-    @Composable fun Cell(l: League, modifier: Modifier) {
+    val list = androidx.compose.foundation.lazy.rememberLazyListState()
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    @Composable fun Cell(l: League, modifier: Modifier, onFocused: () -> Unit) {
         val on = l.id in s.sportsLeagues
-        FocusBox({ vm.update { it.copy(sportsLeagues = if (on) it.sportsLeagues - l.id else it.sportsLeagues + l.id) } }, modifier) { f ->
+        FocusBox({ vm.update { it.copy(sportsLeagues = if (on) it.sportsLeagues - l.id else it.sportsLeagues + l.id) } }, modifier, onFocused) { f ->
             Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(if (f) Color.White else colors.cell).padding(horizontal = 12.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
@@ -607,35 +609,33 @@ private fun LeaguesPage(vm: SportsViewModel, s: AppSettings) {
             }
         }
     }
-    LazyColumn(Modifier.padding(start = 24.dp, top = 104.dp, end = 24.dp, bottom = 12.dp).fillMaxSize().panel().padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+    LazyColumn(Modifier.padding(start = 24.dp, top = 104.dp, end = 24.dp, bottom = 12.dp).fillMaxSize().panel().padding(12.dp), state = list,
+        verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        var index = 0
         for ((sport, comps) in groups) {
+            val sportItem = index
             item(key = "s" + sport.key) {
                 Text(if (sport == Sport.RUGBY && comps.any { it.sport == Sport.RUGBY_LEAGUE }) stringResource(R.string.sports_group_rugby) else sportName(sport),
                     fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color.White, modifier = Modifier.padding(top = 4.dp))
             }
-            val hasCups = comps.any { it.cup }
-            for ((region, list) in comps.groupBy { it.region }) {
-                val leagues = list.filter { !it.cup }; val cups = list.filter { it.cup }
-                item(key = "r" + sport.key + region) {
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        if (region != org.imdtv.iptvtv.data.sports.Region.NONE) Text(regionName(region), fontSize = 13.sp, color = Color.White, fontWeight = FontWeight.Medium)
-                        if (hasCups) Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            for (res in listOf(R.string.sports_col_leagues, R.string.sports_col_cups))
-                                Text(stringResource(res), fontSize = 11.sp, color = colors.muted, modifier = Modifier.weight(1f))
+            index++
+            comps.groupBy { it.region }.entries.forEachIndexed { r, (region, regionComps) ->
+                // The headings above a region's first row aren't focusable: focusing that row scrolls them back into view
+                // (Up went straight on to the SportsHub pills with "Football / England" still off the top).
+                val head = if (r == 0) sportItem else index
+                if (region != org.imdtv.iptvtv.data.sports.Region.NONE) {
+                    item(key = "r" + sport.key + region) { Text(regionName(region), fontSize = 13.sp, color = Color.White, fontWeight = FontWeight.Medium) }
+                    index++
+                }
+                regionComps.chunked(2).forEachIndexed { row, line ->
+                    val reveal: () -> Unit = if (row == 0) ({ scope.launch { list.animateScrollToItem(head) } }) else ({})
+                    item(key = "l" + sport.key + region + line.first().id) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            line.forEach { Cell(it, Modifier.weight(1f), reveal) }
+                            if (line.size == 1) Spacer(Modifier.weight(1f))
                         }
                     }
-                }
-                // One row per line: Up/Down walk the lines, Left/Right switch column.
-                if (hasCups) items(maxOf(leagues.size, cups.size), key = { "l" + sport.key + region + it }) { i ->
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        leagues.getOrNull(i)?.let { Cell(it, Modifier.weight(1f)) } ?: Spacer(Modifier.weight(1f))
-                        cups.getOrNull(i)?.let { Cell(it, Modifier.weight(1f)) } ?: Spacer(Modifier.weight(1f))
-                    }
-                } else items(list.chunked(3), key = { "l" + sport.key + region + it.first().id }) { line ->
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        line.forEach { Cell(it, Modifier.weight(1f)) }
-                        repeat(3 - line.size) { Spacer(Modifier.weight(1f)) }
-                    }
+                    index++
                 }
             }
         }
