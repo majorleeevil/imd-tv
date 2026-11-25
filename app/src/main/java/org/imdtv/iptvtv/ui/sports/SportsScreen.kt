@@ -637,23 +637,26 @@ private fun LeaguesPage(vm: SportsViewModel, s: AppSettings, sport: Sport) {
 private fun DropDown(label: String, options: List<String>, selected: Int, modifier: Modifier = Modifier, onPick: (Int) -> Unit) {
     var open by remember { mutableStateOf(false) }
     val button = remember { FocusRequester() }
+    // The list keeps focus in while open; on close it lets go first, so focus can move back to the button (the trap refused
+    // it, and the closing list took focus away with it, to the top menu).
+    val leaving = remember { BooleanArray(1) }
     Box {
         Pill(label, modifier.focusRequester(button), selected = open) { open = !open }
         if (open) {
             val current = remember { FocusRequester() }
-            val close = { open = false; runCatching { button.requestFocus() }; Unit }
+            val close = { leaving[0] = true; runCatching { button.requestFocus() }; open = false }
             BackHandler(onBack = close)
             // Takes no room: drawn below the button, over the page.
             Column(Modifier.layout { m, c -> val p = m.measure(c.copy(minWidth = 0, minHeight = 0, maxHeight = androidx.compose.ui.unit.Constraints.Infinity))
                     layout(0, 0) { p.place(0, 38.dp.roundToPx()) } }
                 .width(280.dp).heightIn(max = 360.dp).clip(RoundedCornerShape(14.dp)).background(Color(0xF21A1C24)).padding(6.dp)
-                .focusProperties { exit = { FocusRequester.Cancel } }.focusGroup().verticalScroll(rememberScrollState()),
+                .focusProperties { exit = { if (leaving[0]) FocusRequester.Default else FocusRequester.Cancel } }.focusGroup().verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 options.forEachIndexed { i, o ->
                     Pill(o, (if (i == selected.coerceAtLeast(0)) Modifier.focusRequester(current) else Modifier).fillMaxWidth(), selected = i == selected) { close(); onPick(i) }
                 }
             }
-            LaunchedEffect(Unit) { runCatching { current.requestFocus() } }
+            LaunchedEffect(Unit) { leaving[0] = false; runCatching { current.requestFocus() } }
         }
     }
 }
