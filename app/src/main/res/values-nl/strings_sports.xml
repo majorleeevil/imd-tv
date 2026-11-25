@@ -67,4 +67,20 @@
     <string name="sports_focus_preview">Voorbeeld bij focus</string>
     <string name="sports_focus_preview_expl">Blijf je op een wedstrijd staan, dan schakelt het voorbeeld ernaar. Uit: houd OK ingedrukt op een wedstrijd en kies Voorbeschouwing.</string>
     <string name="sports_watch_full">Volledig scherm bekijken</string>
+    <string name="sports_sport_rugby_league">Rugby league</string>
+    <string name="sports_group_rugby">Rugby</string>
+    <string name="sports_col_leagues">Competities</string>
+    <string name="sports_col_cups">Bekers</string>
+    <string name="sports_region_england">Engeland</string>
+    <string name="sports_region_scotland">Schotland</string>
+    <string name="sports_region_europe">Europa</string>
+    <string name="sports_region_international">Internationaal</string>
+    <string name="sports_sport_f1">Formule 1</string>
+    <string name="sports_f1_practice">Vrije training %1$d</string>
+    <string name="sports_f1_sprint_qualifying">Sprintkwalificatie</string>
+    <string name="sports_f1_sprint">Sprint</string>
+    <string name="sports_f1_qualifying">Kwalificatie</string>
+    <string name="sports_f1_race">Race</string>
+    <string name="sports_starts_in">Start over %1$s</string>
+    <string name="sports_f1_no_results">Resultaten verschijnen hier zodra de sessie begint.</string>
 </resources>
