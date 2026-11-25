@@ -1,6 +1,15 @@
 package org.imdtv.iptvtv.ui.sports
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.focusable
+import androidx.compose.foundation.gestures.animateScrollBy
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -20,6 +29,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -76,18 +86,30 @@ fun MatchScreen(vm: SportsViewModel, live: LiveViewModel, game: Game, onFull: (C
             else -> Column(Modifier.padding(horizontal = 24.dp, vertical = 14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 // Score line, then one card per team (home first).
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("${g.home.name}  ${if (g.state == GameState.PRE) "v" else "${g.home.score.orEmpty()} – ${g.away.score.orEmpty()}"}  ${g.away.name}",
-                        fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                    // Home name, its badge, the score, the away badge and name (user's markup, 2026-11-25).
+                    Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(g.home.name, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+                        Badge(g.home.logo, 24.dp)
+                        Text(if (g.state == GameState.PRE) "v" else "${g.home.score.orEmpty()} – ${g.away.score.orEmpty()}", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White, maxLines = 1)
+                        Badge(g.away.logo, 24.dp)
+                        Text(g.away.name, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+                    }
                     Text(if (g.state == GameState.PRE) dayDate(g.start) + " " + clockTime(g.start) else g.detail, fontSize = 13.sp,
                         color = if (g.state == GameState.IN) colors.accent else colors.muted)
                     fetched?.takeIf { it.stale }?.let { Text("  " + stringResource(R.string.sports_updated, clockTime(it.updatedAt)), fontSize = 11.sp, color = colors.muted) }
                 }
                 // Where to watch: every channel showing it, best first (an IPTV playlist often has several).
                 if (watch.isNotEmpty()) Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(stringResource(R.string.sports_where_to_watch), fontSize = 11.sp, color = colors.muted, modifier = Modifier.padding(end = 10.dp))
-                    androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    // A TV icon instead of the words, so more channels fit.
+                    androidx.compose.foundation.Image(androidx.compose.ui.res.painterResource(R.drawable.ic_tab_live), stringResource(R.string.sports_where_to_watch),
+                        colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(colors.muted), modifier = Modifier.padding(end = 10.dp).size(18.dp))
+                    val row = androidx.compose.foundation.lazy.rememberLazyListState()
+                    androidx.compose.foundation.lazy.LazyRow(Modifier.weight(1f), state = row, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         items(watch.size) { i -> WatchCard(watch[i], if (i == 0) Modifier.focusRequester(firstWatch) else Modifier) { onFull(watch[i].ch) } }
                     }
+                    // More channels to the right: like the SportsHub box's "more below" marker.
+                    if (row.canScrollForward) Text("▸", fontSize = 16.sp, color = Color.White, modifier = Modifier.padding(start = 6.dp)
+                        .clip(RoundedCornerShape(8.dp)).background(Color(0x33FFFFFF)).padding(horizontal = 8.dp))
                     // Nothing else on the page takes focus: start (and come back from full screen) on the first channel.
                     LaunchedEffect(Unit) { runCatching { firstWatch.requestFocus() } }
                 }
@@ -97,6 +119,7 @@ fun MatchScreen(vm: SportsViewModel, live: LiveViewModel, game: Game, onFull: (C
                 val football = g.league.sport == Sport.FOOTBALL
                 // Football: team cards narrowed, with the minute-by-minute events panel beside both (user's mockup, 2026-11-24).
                 Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TeamsPanel(g, teams.take(2), Modifier.width(190.dp).fillMaxHeight())
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         teams.take(2).forEachIndexed { i, t ->
                             TeamCard(t, g, m.stats, home = i == 0, modifier = Modifier.weight(1f), kit = kitOf(t.side.id), side = if (football) 160.dp else 190.dp)
@@ -109,28 +132,41 @@ fun MatchScreen(vm: SportsViewModel, live: LiveViewModel, game: Game, onFull: (C
     }
 }
 
+/** Left panel: the competition at the top, then each team (badge, name, recent form) level with its pitch. */
+@Composable
+private fun TeamsPanel(g: Game, teams: List<TeamSheet>, modifier: Modifier) {
+    val colors = LocalTheme.current.colors
+    Column(modifier.panel().padding(12.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 10.dp)) {
+            Badge(g.leagueLogo, 32.dp)
+            Text(g.leagueName, fontSize = 12.sp, lineHeight = 14.sp, color = Color.White, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(start = 8.dp))
+        }
+        teams.forEach { t ->
+            Column(Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Badge(t.side.logo, 32.dp)
+                    Text(t.side.name, fontSize = 15.sp, lineHeight = 17.sp, fontWeight = FontWeight.Bold, color = Color.White, maxLines = 2, overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(start = 8.dp))
+                }
+                Text(stringResource(R.string.sports_recent_form), fontSize = 11.sp, color = colors.muted, modifier = Modifier.padding(top = 6.dp, bottom = 3.dp))
+                t.form.take(5).forEach { f ->
+                    Row(Modifier.padding(vertical = 1.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Text(f.result, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color.White, textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                            modifier = Modifier.width(18.dp).clip(RoundedCornerShape(4.dp)).background(when (f.result) { "W" -> Color(0xFF2E7D32); "L" -> Color(0xFFC62828); else -> Color(0xFF757575) }))
+                        Text("${f.score}  ${f.atVs} ${f.opponent}", fontSize = 11.sp, color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(start = 6.dp))
+                    }
+                }
+            }
+        }
+    }
+}
+
 @Composable
 private fun TeamCard(t: TeamSheet, g: Game, stats: List<StatLine>, home: Boolean, modifier: Modifier, kit: Color?, side: androidx.compose.ui.unit.Dp) {
     val colors = LocalTheme.current.colors
     Row(modifier.fillMaxWidth().panel().padding(12.dp)) {
-        // Left: team, badge, recent form.
-        Column(Modifier.width(190.dp).fillMaxHeight()) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Badge(t.side.logo, 36.dp)
-                Text(t.side.name, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White, maxLines = 2, overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(start = 8.dp))
-            }
-            Text(stringResource(R.string.sports_recent_form), fontSize = 11.sp, color = colors.muted, modifier = Modifier.padding(top = 8.dp, bottom = 3.dp))
-            t.form.take(5).forEach { f ->
-                Row(Modifier.padding(vertical = 1.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text(f.result, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color.White, textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                        modifier = Modifier.width(18.dp).clip(RoundedCornerShape(4.dp)).background(when (f.result) { "W" -> Color(0xFF2E7D32); "L" -> Color(0xFFC62828); else -> Color(0xFF757575) }))
-                    Text("${f.score}  ${f.atVs} ${f.opponent}", fontSize = 11.sp, color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(start = 6.dp))
-                }
-            }
-        }
         // Middle: the lineup on a pitch (football), else the stats.
-        Box(Modifier.padding(horizontal = 12.dp).weight(1f).fillMaxHeight()) {
+        Box(Modifier.padding(end = 12.dp).weight(1f).fillMaxHeight()) {
             when {
                 g.league.sport == Sport.FOOTBALL && t.starters.isNotEmpty() -> Pitch(lineup(t.formation, t.starters), t.formation, kit)
                 stats.isNotEmpty() -> Column(Modifier.fillMaxSize()) {
@@ -141,14 +177,10 @@ private fun TeamCard(t: TeamSheet, g: Game, stats: List<StatLine>, home: Boolean
                     color = colors.muted, modifier = Modifier.align(Alignment.Center))
             }
         }
-        // Right: competition, subs.
+        // Right: subs.
         Column(Modifier.width(side).fillMaxHeight()) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Badge(g.leagueLogo, 28.dp)
-                Text(g.leagueName, fontSize = 11.sp, color = Color.White, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(start = 6.dp))
-            }
             if (t.subs.isNotEmpty()) {
-                Text(stringResource(R.string.sports_subs), fontSize = 11.sp, color = colors.muted, modifier = Modifier.padding(top = 6.dp, bottom = 2.dp))
+                Text(stringResource(R.string.sports_subs), fontSize = 11.sp, color = colors.muted, modifier = Modifier.padding(bottom = 2.dp))
                 t.subs.take(10).forEach { p ->
                     Text((if (p.subbedIn) "↑ " else "") + "${p.jersey}  ${p.name}", fontSize = 10.sp, maxLines = 1,
                         color = if (p.subbedIn) colors.accent else Color.White)
@@ -162,12 +194,28 @@ private fun TeamCard(t: TeamSheet, g: Game, stats: List<StatLine>, home: Boolean
 @Composable
 private fun EventsPanel(events: List<KeyEvent>, kit: (String?) -> Color?, modifier: Modifier) {
     val colors = LocalTheme.current.colors
-    Column(modifier.panel().padding(10.dp)) {
+    val scroll = androidx.compose.foundation.rememberScrollState()
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    var focused by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+    val step = with(androidx.compose.ui.platform.LocalDensity.current) { 60.dp.toPx() }
+    // Down from the channels focuses it; Up/Down scroll, and Up at the top hands focus back to the channels.
+    Column(modifier.panel()
+        .border(2.dp, if (focused) Color.White else Color.Transparent, RoundedCornerShape(20.dp))
+        .onFocusChanged { focused = it.isFocused }
+        .onPreviewKeyEvent { e ->
+            if (e.type != androidx.compose.ui.input.key.KeyEventType.KeyDown) return@onPreviewKeyEvent false
+            when (e.key) {
+                androidx.compose.ui.input.key.Key.DirectionDown -> { if (scroll.canScrollForward) scope.launch { scroll.animateScrollBy(step) }; true }
+                androidx.compose.ui.input.key.Key.DirectionUp -> if (scroll.canScrollBackward) { scope.launch { scroll.animateScrollBy(-step) }; true } else false
+                else -> false
+            }
+        }
+        .focusable(events.isNotEmpty())
+        .padding(10.dp)) {
         Text(stringResource(R.string.sports_events), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White, modifier = Modifier.padding(bottom = 6.dp))
         // shortcut: what the panel shows before kick-off is the user's call (2026-11-24); one muted line until then.
         if (events.isEmpty()) Text(stringResource(R.string.sports_events_soon), fontSize = 11.sp, color = colors.muted)
-        // Not scrollable (the page has no focus here): a long game shows its newest events and clips the oldest.
-        Column(Modifier.clip(RoundedCornerShape(4.dp)), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Column(Modifier.clip(RoundedCornerShape(4.dp)).verticalScroll(scroll), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             events.forEach { e -> EventLine(e, kit(e.teamId)) }
         }
     }
@@ -191,7 +239,7 @@ private fun EventLine(e: KeyEvent, kit: Color?) {
             else -> Text("⇄", fontSize = 10.sp, color = colors.accent)
         }
         Column(Modifier.padding(start = 5.dp)) {
-            Text(e.who.firstOrNull().orEmpty(), fontSize = 10.sp, color = Color.White, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Text(e.who.firstOrNull().orEmpty(), fontSize = 10.sp, lineHeight = 12.sp, color = Color.White, maxLines = 2, overflow = TextOverflow.Ellipsis)
             // A substitution's second name is the player going off.
             if (e.kind == EventKind.SUB) e.who.getOrNull(1)?.let { Text("↓ $it", fontSize = 9.sp, color = colors.muted, maxLines = 1, overflow = TextOverflow.Ellipsis) }
         }
