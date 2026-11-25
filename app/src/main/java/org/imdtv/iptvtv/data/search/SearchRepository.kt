@@ -48,6 +48,9 @@ class SearchRepository(private val db: AppDatabase) {
         })
     }
 
+    /** Writes seen so far to [table] ("category", "channel"…), for callers caching their own results. */
+    fun writesTo(table: String): Long = writes[table] ?: 0
+
     private fun tableOf(kind: Kind) = when (kind) { Kind.LIVE -> "channel"; Kind.MOVIE -> "movie"; Kind.SERIES -> "series" }
 
     private class Entry(val id: Long, val folded: String, val number: Int?, val categoryId: Long?)
@@ -79,7 +82,9 @@ class SearchRepository(private val db: AppDatabase) {
      * Programmes not yet ended whose title has every word, on the playlist's searchable channels, soonest first (at most
      * [cap]). A guide channel shown by several channels (HD and SD) lists once, on the best-ranked of them.
      */
-    suspend fun guide(providerId: Long, strip: List<String>, query: String, now: Long, cap: Int = 300, /** SportsHub: descriptions count too. */ inDesc: Boolean = false): List<GuideHit> = withContext(Dispatchers.Default) {
+    suspend fun guide(providerId: Long, strip: List<String>, query: String, now: Long, cap: Int = 300,
+                      /** SportsHub: descriptions count too, and only programmes starting by [startsBy] (and at most a day before). */
+                      inDesc: Boolean = false, startsBy: Long = Long.MAX_VALUE / 2): List<GuideHit> = withContext(Dispatchers.Default) {
         val words = queryWords(query)
         if (words.isEmpty()) return@withContext emptyList()
         val order = index(providerId, Kind.LIVE, strip).withIndex().associate { (i, e) -> e.id to i }
@@ -93,7 +98,7 @@ class SearchRepository(private val db: AppDatabase) {
         val sources = db.epgDao().sources(providerId).associateBy { it.id }
         // Rows are on the guide's clock until shifted below: widen by the largest offset, so none ending "now" is missed.
         val slack = maxOf(db.channelDao().maxEpgOffset(providerId), sources.values.maxOfOrNull { kotlin.math.abs(it.offsetMinutes) } ?: 0) * 60_000L
-        val rows = byKey.keys.chunked(SQL_CHUNK).flatMap { if (inDesc) db.programmeDao().searchWithDesc(it, now - slack, pattern, cap) else db.programmeDao().search(it, now - slack, pattern, cap) }
+        val rows = byKey.keys.chunked(SQL_CHUNK).flatMap { if (inDesc) db.programmeDao().searchWithDesc(it, now - slack, pattern, cap, startsBy - 86_400_000L - slack, startsBy + slack) else db.programmeDao().search(it, now - slack, pattern, cap) }
             .filter { matchesAll(foldForSearch(if (inDesc) it.title + " " + it.desc.orEmpty() else it.title), words) }
         val channels = rows.mapNotNull { byKey[it.epgChannelKey]?.channelId }.distinct().chunked(SQL_CHUNK).flatMap { db.channelDao().byIds(it) }.associateBy { it.id }
         rows.mapNotNull { r ->

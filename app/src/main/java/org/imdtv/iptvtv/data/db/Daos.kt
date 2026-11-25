@@ -355,10 +355,11 @@ abstract class ProgrammeDao {
 
     /** SportsHub: as [search], but the title or the description may hold [pattern]. */
     @Query(
-        """SELECT * FROM programme WHERE epgChannelKey IN (:keys) AND stop > :now AND (title LIKE :pattern ESCAPE '\' OR "desc" LIKE :pattern ESCAPE '\')
+        """SELECT * FROM programme WHERE epgChannelKey IN (:keys) AND start BETWEEN :from AND :until AND stop > :now
+           AND (title LIKE :pattern ESCAPE '\' OR "desc" LIKE :pattern ESCAPE '\')
            AND gen = (SELECT gen FROM epg_source WHERE id = programme.sourceId) ORDER BY start LIMIT :limit"""
     )
-    abstract suspend fun searchWithDesc(keys: List<String>, now: Long, pattern: String, limit: Int): List<ProgrammeEntity>
+    abstract suspend fun searchWithDesc(keys: List<String>, now: Long, pattern: String, limit: Int, from: Long, until: Long): List<ProgrammeEntity>
 
     @Insert abstract suspend fun insertAll(list: List<ProgrammeEntity>)
     /** For use inside [androidx.room.RoomDatabase.runInTransaction] on a background thread. */
