@@ -93,6 +93,7 @@ fun sportName(s: Sport) = stringResource(when (s) {
     Sport.FOOTBALL -> R.string.sports_sport_football; Sport.AMERICAN_FOOTBALL -> R.string.sports_sport_american_football
     Sport.BASKETBALL -> R.string.sports_sport_basketball; Sport.HOCKEY -> R.string.sports_sport_hockey
     Sport.RUGBY -> R.string.sports_sport_rugby; Sport.RUGBY_LEAGUE -> R.string.sports_sport_rugby_league; Sport.CRICKET -> R.string.sports_sport_cricket
+    Sport.F1 -> R.string.sports_sport_f1
 })
 
 @Composable
@@ -177,7 +178,8 @@ internal fun GameCard(g: Game, favTeams: Set<String>, modifier: Modifier = Modif
         Row(Modifier.size(width, 56.dp).clip(RoundedCornerShape(10.dp)).background(if (f) Color.White else colors.cell).padding(horizontal = 9.dp),
             verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                for (side in listOf(g.home, g.away)) Row(verticalAlignment = Alignment.CenterVertically) {
+                if (g.race != null) RaceCardLines(g, fg)
+                else for (side in listOf(g.home, g.away)) Row(verticalAlignment = Alignment.CenterVertically) {
                     Badge(side.logo, 16.dp)
                     val fav = teamKey(g.league.sport, side.id) in favTeams
                     Text(side.short, fontSize = 12.sp, color = fg, maxLines = 1, overflow = TextOverflow.Ellipsis,
@@ -270,6 +272,8 @@ private fun androidx.compose.foundation.layout.BoxScope.GamesPage(vm: SportsView
     LaunchedEffect(sport, offset) { vm.poll(sport, offset, strip) } // stops when the page closes: no calls off screen
     // The channel search index (47k names) builds while ESPN answers, not after it on the first lookup.
     LaunchedEffect(strip) { vm.warm(strip) }
+    LaunchedEffect(sport) { if (sport == Sport.F1) vm.loadDriverTeams() }
+    val driverTeams by vm.driverTeams.collectAsState()
     // Day strip
     Row(Modifier.padding(start = 24.dp, top = 98.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
         Pill(stringResource(R.string.sports_change_sport, sportName(sport))) { vm.page.value = SportsPage.SPORT }
@@ -303,10 +307,11 @@ private fun androidx.compose.foundation.layout.BoxScope.GamesPage(vm: SportsView
     var menuGame by remember { mutableStateOf<Game?>(null) }
     menuGame?.let { g ->
         val close = { menuGame = null }
-        org.imdtv.iptvtv.ui.ContextMenu("${g.home.short} v ${g.away.short}", buildList {
+        org.imdtv.iptvtv.ui.ContextMenu(if (g.race != null) raceTitle(g) else "${g.home.short} v ${g.away.short}", buildList {
             add(stringResource(R.string.sports_preview) to { close(); vm.preview(g, strip) })
             add(stringResource(R.string.sports_stats) to { close(); onMatch(g) })
-            for (side in listOf(g.home, g.away)) {
+            // F1: both "sides" are the Grand Prix; teams are followed on Favourite teams.
+            if (g.race == null) for (side in listOf(g.home, g.away)) {
                 val key = teamKey(sport, side.id)
                 if (key in favTeams) add(stringResource(R.string.sports_fav_remove, side.name) to { close(); vm.update { st -> st.copy(sportsTeams = st.sportsTeams.filterNot { favouriteTeamKey(it) == key }.toSet()) } })
                 else add(stringResource(R.string.sports_fav_add, side.name) to { close(); vm.update { st -> st.copy(sportsTeams = st.sportsTeams + favouriteKey(sport, side.id, side.name)) } })
@@ -334,6 +339,7 @@ private fun androidx.compose.foundation.layout.BoxScope.GamesPage(vm: SportsView
                     heroes.forEach { g ->
                         androidx.compose.runtime.key("h" + g.id) {
                             Hero(g, favTeams, lineups[g.id] == true, pane?.takeIf { it.game.id == g.id }?.tv, Modifier.height(previewH).fillMaxWidth(),
+                                if (g.race != null) followedDrivers(g, s.sportsTeams, driverTeams) else emptyList(),
                                 if (g.id == vm.lastFocusedGame) Modifier.focusRequester(back) else Modifier,
                                 onFocused = { on ->
                                     heroFocused = on
@@ -451,7 +457,7 @@ private fun Countdown(to: Long, @androidx.annotation.StringRes res: Int, style: 
 
 /** A favourite team's game: both badges large behind it (faded), the teams, a countdown to kick-off and to the lineups, Stats. */
 @Composable
-private fun Hero(g: Game, favTeams: Set<String>, lineupsOut: Boolean, tv: OnTv?, modifier: Modifier, statsModifier: Modifier, onFocused: (Boolean) -> Unit, onStats: () -> Unit) {
+private fun Hero(g: Game, favTeams: Set<String>, lineupsOut: Boolean, tv: OnTv?, modifier: Modifier, drivers: List<String>, statsModifier: Modifier, onFocused: (Boolean) -> Unit, onStats: () -> Unit) {
     val colors = LocalTheme.current.colors
     val favHome = teamKey(g.league.sport, g.home.id) in favTeams
     val (fav, other) = if (favHome || teamKey(g.league.sport, g.away.id) !in favTeams) g.home to g.away else g.away to g.home
@@ -470,7 +476,11 @@ private fun Hero(g: Game, favTeams: Set<String>, lineupsOut: Boolean, tv: OnTv?,
                 Badge(g.leagueLogo, 16.dp)
                 Text(g.leagueName, fontSize = 11.sp, color = colors.muted, maxLines = 1, modifier = Modifier.padding(start = 6.dp))
             }
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            if (g.race != null) {
+                // F1: the Grand Prix and session, the followed teams' drivers (with places once it has run).
+                Text(raceTitle(g), fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                if (drivers.isNotEmpty()) Text(drivers.joinToString(" · "), fontSize = 13.sp, color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            } else Row(verticalAlignment = Alignment.CenterVertically) {
                 // Home team first (as listed everywhere); the favourite larger and bold.
                 @Composable fun Name(side: org.imdtv.iptvtv.data.sports.Side) = Text(side.name, fontSize = if (side == fav) 22.sp else 18.sp,
                     fontWeight = if (side == fav) FontWeight.Bold else FontWeight.Normal, color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -482,7 +492,7 @@ private fun Hero(g: Game, favTeams: Set<String>, lineupsOut: Boolean, tv: OnTv?,
             val big = androidx.compose.ui.text.TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Medium)
             val small = androidx.compose.ui.text.TextStyle(fontSize = 12.sp)
             when (g.state) {
-                GameState.PRE -> {
+                GameState.PRE -> if (g.race != null) Countdown(g.start, R.string.sports_starts_in, big, Color.White) else {
                     Countdown(g.start, R.string.sports_kickoff_in, big, Color.White)
                     when {
                         lineupsOut -> Text(stringResource(R.string.sports_lineups_out), style = small, color = colors.accent)
@@ -506,6 +516,7 @@ private fun Hero(g: Game, favTeams: Set<String>, lineupsOut: Boolean, tv: OnTv?,
 /** The pane without a channel: both badges, the score (or kick-off) and the league. */
 @Composable
 internal fun ScoreCard(g: Game, modifier: Modifier) {
+    if (g.race != null) return RaceScoreCard(g, modifier)
     val colors = LocalTheme.current.colors
     Column(modifier.panel().padding(14.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -535,6 +546,9 @@ private fun TeamsPage(vm: SportsViewModel, s: AppSettings, sport: Sport) {
     var league by remember(sport) { mutableStateOf(leagues.firstOrNull()) }
     val teams by produceState<List<Side>?>(null, league) { value = null; value = league?.let { vm.teams(it) } ?: emptyList() }
     val mine = s.sportsTeams.filter { it.startsWith(sport.key + ":") }
+    // F1: each team's drivers under its name.
+    LaunchedEffect(sport) { if (sport == Sport.F1) vm.loadDriverTeams() }
+    val driverTeams by vm.driverTeams.collectAsState()
     Row(Modifier.padding(start = 24.dp, top = 104.dp, end = 24.dp, bottom = 12.dp)) {
         LazyColumn(Modifier.width(210.dp).fillMaxSize().panel().padding(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             items(leagues, key = { it.id }) { l -> Pill(l.name, Modifier.fillMaxWidth(), selected = l == league) { league = l } }
@@ -556,8 +570,13 @@ private fun TeamsPage(vm: SportsViewModel, s: AppSettings, sport: Sport) {
                             Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(if (f) Color.White else colors.cell).padding(horizontal = 8.dp, vertical = 6.dp),
                                 verticalAlignment = Alignment.CenterVertically) {
                                 Badge(t.logo, 20.dp)
-                                Text(t.name, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, color = if (f) colors.onFocus else Color.White,
-                                    modifier = Modifier.padding(start = 6.dp).weight(1f))
+                                Column(Modifier.padding(start = 6.dp).weight(1f)) {
+                                    Text(t.name, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, color = if (f) colors.onFocus else Color.White)
+                                    if (sport == Sport.F1) driverTeams.filter { org.imdtv.iptvtv.data.sports.sameTeam(it.team, t.name) }.takeIf { it.isNotEmpty() }?.let { ds ->
+                                        Text(ds.joinToString(" · ") { d -> listOfNotNull(d.number?.let { "#$it" }, d.name).joinToString(" ") }, fontSize = 10.sp, maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis, color = if (f) Color(0xFF555555) else colors.muted)
+                                    }
+                                }
                                 Text(if (on) "★" else "☆", fontSize = 14.sp, color = if (on) colors.accent else if (f) colors.onFocus else colors.muted)
                             }
                         }
@@ -646,13 +665,13 @@ private fun StandingsPage(vm: SportsViewModel, s: AppSettings, sport: Sport) {
                         item(key = "h" + table.name) {
                             Column {
                                 if (t.value.size > 1) Text(table.name, fontSize = 13.sp, color = Color.White, fontWeight = FontWeight.Medium, modifier = Modifier.padding(top = 6.dp, bottom = 2.dp))
-                                TableLine("#", null, "", listOf(R.string.sports_col_played, R.string.sports_col_won, R.string.sports_col_drawn, R.string.sports_col_lost,
-                                    R.string.sports_col_gd, R.string.sports_col_pts).map { stringResource(it) }, header = true)
+                                TableLine("#", null, "", (if (sport == Sport.F1) listOf(R.string.sports_col_pts) else listOf(R.string.sports_col_played, R.string.sports_col_won,
+                                    R.string.sports_col_drawn, R.string.sports_col_lost, R.string.sports_col_gd, R.string.sports_col_pts)).map { stringResource(it) }, header = true)
                             }
                         }
                         items(table.rows, key = { table.name + it.team.id }) { r ->
                             FocusBox({}) { f ->
-                                TableLine(r.rank.toString(), r.team.logo, r.team.name, listOf(r.played, r.won, r.drawn, r.lost, r.gd, r.points),
+                                TableLine(r.rank.toString(), r.team.logo, r.team.name, if (sport == Sport.F1) listOf(r.points) else listOf(r.played, r.won, r.drawn, r.lost, r.gd, r.points),
                                     focused = f, fav = teamKey(sport, r.team.id) in favTeams)
                             }
                         }

@@ -142,4 +142,48 @@ class EspnTest {
         val lastGoal = ev.first { it.kind == EventKind.GOAL }
         assertEquals("90'+5'", lastGoal.minute); assertEquals("376", lastGoal.teamId); assertEquals("Divin Mubama", lastGoal.who.first())
     }
+
+    private val f1 = leagueById("racing/f1")!!
+
+    @Test fun f1WeekendIsOneGamePerSession() {
+        val sessions = parseRacing(fx("scoreboard-f1-20261121.json"), f1)
+        assertEquals(listOf(RaceSession.FP1, RaceSession.FP2, RaceSession.FP3, RaceSession.QUALIFYING, RaceSession.RACE), sessions.map { it.race!!.session })
+        val race = sessions.last()
+        assertEquals("Las Vegas Grand Prix", race.race!!.gp)
+        assertEquals(GameState.POST, race.state)
+        assertEquals("Max Verstappen", race.race!!.order.first().name)
+        assertTrue(race.has("racing:106893:Mercedes"))
+        assertFalse(race.has("soccer:362:Aston Villa"))
+    }
+
+    @Test fun gpNameDropsTheSponsor() {
+        assertEquals("Qatar Grand Prix", gpName("Qatar Airways Qatar Grand Prix"))
+        assertEquals("São Paulo Grand Prix", gpName("MSC Cruises São Paulo Grand Prix"))
+        assertEquals("Mexico City Grand Prix", gpName("Mexico City Grand Prix"))
+        assertEquals("Monaco Grand Prix", gpName("Monaco Grand Prix"))
+        assertEquals("Bahrain Grand Prix in Malaysia", gpName("Gulf Air Bahrain Grand Prix in Malaysia"))
+    }
+
+    @Test fun raceMatchKnowsTheSession() {
+        val r = Race("Qatar Grand Prix", RaceSession.QUALIFYING, setOf("qatar", "lusail"), emptyList())
+        assertEquals(0, raceMatch("Formula 1: Qatar Grand Prix Qualifying", r))
+        assertEquals(1, raceMatch("F1: Qatar Grand Prix", r))
+        assertEquals(null, raceMatch("F1: Qatar Grand Prix Sprint Qualifying", r))
+        assertEquals(null, raceMatch("Formula 1: Qatar Grand Prix - Race", r))
+        assertEquals(null, raceMatch("Formula 1: Las Vegas Grand Prix Qualifying", r))
+        assertEquals(null, raceMatch("Qatar v Oman", r))
+        assertEquals(0, raceMatch("Formula 1: Qatar GP Race", r.copy(session = RaceSession.RACE)))
+        assertEquals(0, raceMatch("F1 Sprint Qualifying Lusail", r.copy(session = RaceSession.SPRINT_QUALIFYING)))
+    }
+
+    @Test fun f1DriversAndTeams() {
+        val teams = parseDriverTeams(fx("jolpica-driverstandings.json"))
+        assertTrue(teams.size >= 20)
+        val race = parseRacing(fx("scoreboard-f1-20261121.json"), f1).last().race!!
+        assertTrue(race.order.count { driverTeam(it, teams) != null } >= 20)
+        assertTrue(sameTeam("Haas F1 Team", "Haas")); assertTrue(sameTeam("RB F1 Team", "Racing Bulls")); assertFalse(sameTeam("Red Bull", "Racing Bulls"))
+        val tables = parseStandings(fx("standings-f1.json"))
+        assertEquals(2, tables.size)
+        assertTrue(tables[0].rows.first().points.isNotEmpty())
+    }
 }

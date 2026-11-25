@@ -78,4 +78,13 @@
     <string name="sports_region_scotland">Scotland</string>
     <string name="sports_region_europe">Europe</string>
     <string name="sports_region_international">International</string>
+    <string name="sports_sport_f1">Formula 1</string>
+    <!-- F1 sessions. %1$d = 1, 2 or 3. -->
+    <string name="sports_f1_practice">Practice %1$d</string>
+    <string name="sports_f1_sprint_qualifying">Sprint qualifying</string>
+    <string name="sports_f1_sprint">Sprint</string>
+    <string name="sports_f1_qualifying">Qualifying</string>
+    <string name="sports_f1_race">Race</string>
+    <string name="sports_starts_in">Starts in %1$s</string>
+    <string name="sports_f1_no_results">Results appear here once the session starts.</string>
 </resources>

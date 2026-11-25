@@ -108,6 +108,13 @@ fun MatchScreen(vm: SportsViewModel, live: LiveViewModel, game: Game, onFull: (C
                     // Nothing else on the page takes focus: start (and come back from full screen) on the first channel.
                     LaunchedEffect(Unit) { runCatching { firstWatch.requestFocus() } }
                 }
+                if (g.race != null) {
+                    LaunchedEffect(Unit) { vm.loadDriverTeams() }
+                    val driverTeams by vm.driverTeams.collectAsState()
+                    val favs by vm.settings.collectAsState()
+                    RacePanel(g, driverTeams, favs.sportsTeams, fetched?.takeIf { it.stale }?.updatedAt, Modifier.weight(1f))
+                    return@Column
+                }
                 val teams = m.teams.ifEmpty { listOf(TeamSheet(g.home, null, emptyList(), emptyList(), emptyList()), TeamSheet(g.away, null, emptyList(), emptyList(), emptyList())) }
                 val kits = org.imdtv.iptvtv.data.sports.kitColours(g.home, g.away)
                 fun kitOf(teamId: String?) = colour(if (teamId == g.away.id) kits.second else kits.first)

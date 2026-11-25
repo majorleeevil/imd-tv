@@ -28,7 +28,6 @@ import org.imdtv.iptvtv.data.sports.Table
 import org.imdtv.iptvtv.data.sports.favouritesFirst
 import org.imdtv.iptvtv.data.sports.teamNames
 import org.imdtv.iptvtv.data.sports.gameMatch
-import org.imdtv.iptvtv.data.sports.titleNamesGame
 import java.time.LocalDate
 
 enum class SportsPage { GAMES, TEAMS, LEAGUES, STANDINGS, SETTINGS, SPORT }
@@ -167,7 +166,10 @@ class SportsViewModel(app: Application) : AndroidViewModel(app) {
         // Per channel: the best programme and its match strength (0 = the game as the only fixture named).
         val hits = LinkedHashMap<Long, Pair<org.imdtv.iptvtv.data.search.GuideHit, Int>>()
         // Every name, the full one too: a common short one ("villa") can fill a cap the full one ("aston villa") isn't caught by.
-        val names = teamNames(g.home)
+        // F1: programmes naming Formula 1 and the place ("Formula 1: Qatar Grand Prix Qualifying"), scored by session.
+        val race = g.race
+        val names = if (race != null) listOf("formula 1", "f1", "grand prix") else teamNames(g.home)
+        fun strength(text: String) = if (race != null) org.imdtv.iptvtv.data.sports.raceMatch(text, race) else gameMatch(text, g.home, g.away)
         for (q in names) {
             // From kick-off (not now), so earlier mentions of a common word ("Villa") can't use up the cap before the game.
             searchOrEmpty { c.search.guide(pid, strip, q, at, cap = 300, inDesc = true, startsBy = at + 10 * 60_000) }
@@ -175,15 +177,15 @@ class SportsViewModel(app: Application) : AndroidViewModel(app) {
                 // For Send logs: what the guide has for this team at kick-off, so a miss can be explained from the user's own guide.
                 .also { on -> android.util.Log.i("SportsHub", "${g.home.name} v ${g.away.name} \"$q\": ${on.size} on at kick-off; " + on.take(8).joinToString(" / ") { "${it.ch.name}: ${it.p.title} — ${it.p.desc.orEmpty().take(80)}" }) }
                 .forEach { h ->
-                    val m = gameMatch(h.p.title + " " + h.p.desc.orEmpty(), g.home, g.away) ?: return@forEach
+                    val m = strength(h.p.title + " " + h.p.desc.orEmpty()) ?: return@forEach
                     if (hits[h.ch.id].let { it == null || m < it.second }) hits[h.ch.id] = h to m
                 }
         }
         // Event channels with no guide, named for the game ("EPL 03: Wolves v Leeds"): on from kick-off for 3 hours.
         for (q in names) {
             searchOrEmpty { c.search.universal(pid, strip, q, cap = 100, vod = { emptyList() }).channels.items }
-                .filter { titleNamesGame(it.name, g.home, g.away) && !hits.containsKey(it.id) }
-                .forEach { ch -> hits[ch.id] = org.imdtv.iptvtv.data.search.GuideHit(ch, GuideProgramme(ch.name, null, null, g.start, g.start + 3 * 3_600_000L)) to (gameMatch(ch.name, g.home, g.away) ?: 1) }
+                .filter { !hits.containsKey(it.id) }
+                .forEach { ch -> val m = strength(ch.name) ?: return@forEach; hits[ch.id] = org.imdtv.iptvtv.data.search.GuideHit(ch, GuideProgramme(ch.name, null, null, g.start, g.start + 3 * 3_600_000L)) to m }
         }
         val lang = org.imdtv.iptvtv.data.catalogue.tvLanguage()
         val home = java.util.Locale.getDefault().country // "GB": a UK channel beats an Australian one, though both are English
@@ -225,7 +227,7 @@ class SportsViewModel(app: Application) : AndroidViewModel(app) {
 
     private suspend fun checkLineups(heroes: List<Game>) {
         val now = System.currentTimeMillis()
-        for (g in heroes.filter { it.state == GameState.PRE && now >= it.start - 90 * 60_000 && lineupsOut.value[it.id] != true }) {
+        for (g in heroes.filter { it.race == null && it.state == GameState.PRE && now >= it.start - 90 * 60_000 && lineupsOut.value[it.id] != true }) {
             val out = runCatching { espn.match(g).value.teams.any { it.starters.isNotEmpty() } }.getOrNull() ?: continue
             lineupsOut.value = lineupsOut.value + (g.id to out)
         }
@@ -238,7 +240,12 @@ class SportsViewModel(app: Application) : AndroidViewModel(app) {
     suspend fun pollMatch(g: Game) {
         match.value = null; matchFailed.value = false
         while (true) {
-            val m = runCatching { espn.match(g) }.getOrNull()
+            // F1 has no summary: the session comes back with its weekend.
+            val m = runCatching {
+                if (g.race == null) espn.match(g)
+                else espn.day(listOf(g.league), java.time.Instant.ofEpochMilli(g.start).atZone(java.time.ZoneId.systemDefault()).toLocalDate())
+                    ?.let { f -> f.value.find { it.id == g.id }?.let { Fetched(org.imdtv.iptvtv.data.sports.Match(it, emptyList(), emptyList(), null), f.updatedAt, f.stale) } }
+            }.getOrNull()
             if (m != null) match.value = m
             matchFailed.value = m == null && match.value == null
             val shown = m?.value?.game ?: g
@@ -253,4 +260,13 @@ class SportsViewModel(app: Application) : AndroidViewModel(app) {
     // --- Standings and team picker: fetched when their page opens. ---
     suspend fun standings(l: League): Fetched<List<Table>>? = runCatching { espn.standings(l) }.getOrNull()
     suspend fun teams(l: League): List<Side>? = runCatching { espn.teams(l) }.getOrNull()
+
+    /** F1 drivers' teams: fetched once, when an F1 page first needs them. */
+    val driverTeams = MutableStateFlow<List<org.imdtv.iptvtv.data.sports.DriverTeam>>(emptyList())
+    private var driverTeamsAsked = false
+    fun loadDriverTeams() {
+        if (driverTeamsAsked) return
+        driverTeamsAsked = true
+        viewModelScope.launch { runCatching { espn.driverTeams() }.onSuccess { driverTeams.value = it }.onFailure { driverTeamsAsked = false } }
+    }
 }

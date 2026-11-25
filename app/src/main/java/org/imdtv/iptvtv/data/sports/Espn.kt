@@ -20,7 +20,7 @@ import java.time.format.DateTimeFormatter
 import java.text.Normalizer
 
 /** SportsHub (#26): ESPN's public site API (undocumented, no key). Every parser drops what it can't read instead of throwing. */
-enum class Sport(val key: String) { FOOTBALL("soccer"), AMERICAN_FOOTBALL("football"), BASKETBALL("basketball"), HOCKEY("hockey"), RUGBY("rugby"), RUGBY_LEAGUE("rugby-league"), CRICKET("cricket") }
+enum class Sport(val key: String) { FOOTBALL("soccer"), AMERICAN_FOOTBALL("football"), BASKETBALL("basketball"), HOCKEY("hockey"), RUGBY("rugby"), RUGBY_LEAGUE("rugby-league"), CRICKET("cricket"), F1("racing") }
 
 /**
  * [slug] is ESPN's league path, e.g. "eng.1"; [id] = "soccer/eng.1", the form settings keep.
@@ -54,6 +54,7 @@ val LEAGUES = listOf(
     League(Sport.RUGBY, "180659", "Six Nations", Region.INTERNATIONAL, cup = true, table = true), League(Sport.RUGBY, "244293", "The Rugby Championship", Region.INTERNATIONAL, cup = true, table = true),
     League(Sport.RUGBY, "164205", "Rugby World Cup", Region.INTERNATIONAL, cup = true, table = true),
     League(Sport.RUGBY_LEAGUE, "3", "NRL", Region.AUSTRALIA),
+    League(Sport.F1, "f1", "Formula 1", table = true),
     // Cricket has no league list: one header feed of the current series.
     League(Sport.CRICKET, "header", "Cricket"),
 )
@@ -70,7 +71,20 @@ data class Game(
     val id: String, val league: League, val leagueName: String, val leagueLogo: String?, val start: Long, val state: GameState,
     /** "FT", "63'", "Q3 4:12"; for PRE the screen shows the local kick-off time instead. */
     val detail: String, val home: Side, val away: Side, val broadcasts: List<String>,
-) { fun has(teamKey: String) = teamKey == teamKey(league.sport, home.id) || teamKey == teamKey(league.sport, away.id) }
+    /** F1: the session; [home] and [away] are then both the Grand Prix. */
+    val race: Race? = null,
+) {
+    // Every F1 team is in every session.
+    fun has(teamKey: String) = if (race != null) teamKey.startsWith(league.sport.key + ":") else teamKey == teamKey(league.sport, home.id) || teamKey == teamKey(league.sport, away.id)
+}
+
+enum class RaceSession { FP1, FP2, FP3, SPRINT_QUALIFYING, SPRINT, QUALIFYING, RACE }
+/** One session of a race weekend: [gp] "Qatar Grand Prix", [place] the words a guide may name it by, [order] the drivers in finishing (or running) order. */
+data class Race(val gp: String, val session: RaceSession, val place: Set<String>, val order: List<Driver>)
+data class Driver(val id: String, val name: String, val short: String, val flag: String?)
+
+/** An F1 driver's team and number (Jolpica: ESPN's feed has no teams for drivers). */
+data class DriverTeam(val name: String, val code: String, val number: String?, val team: String, val points: String)
 
 /** Favourite teams are kept as "soccer:362:Aston Villa" (ESPN team ids are per sport). */
 fun teamKey(sport: Sport, id: String) = "${sport.key}:$id"
@@ -137,7 +151,7 @@ fun kitColours(home: Side, away: Side): Pair<String?, String?> =
 private fun state(s: String?) = when (s) { "in" -> GameState.IN; "post" -> GameState.POST; else -> GameState.PRE }
 
 private fun side(c: JsonElement): Side? {
-    val t = c.o("team") ?: c // cricket's header puts the team fields on the competitor
+    val t = c.o("team") ?: c.o("athlete") ?: c // cricket's header puts the team fields on the competitor; F1 standings have drivers
     val id = t.s("id") ?: c.s("id") ?: return null
     val name = t.s("displayName") ?: t.s("name") ?: return null
     return Side(id, name, t.s("shortDisplayName") ?: name, t.s("abbreviation") ?: name.take(3).uppercase(),
@@ -165,6 +179,84 @@ private fun game(e: JsonElement, comp: JsonElement?, league: League, leagueName:
     return Game(e.s("id") ?: return null, league, leagueName, leagueLogo, time(e.s("date") ?: comp.s("date")) ?: return null, state(stateStr),
         type.s("shortDetail") ?: e.s("summary") ?: "", home, away,
         comp.a("broadcasts").flatMap { b -> b.a("names").mapNotNull { (it as? JsonPrimitive)?.contentOrNull } })
+}
+
+private val SESSIONS = mapOf("FP1" to RaceSession.FP1, "FP2" to RaceSession.FP2, "FP3" to RaceSession.FP3, "SS" to RaceSession.SPRINT_QUALIFYING,
+    "SR" to RaceSession.SPRINT, "Qual" to RaceSession.QUALIFYING, "Race" to RaceSession.RACE)
+// The first word of a two-word place ("Las Vegas"): ESPN puts the sponsor first, so the name is cut back to the place.
+private val PLACE_FIRST = setOf("saudi", "united", "mexico", "são", "sao", "las", "abu", "emilia")
+
+/** "Qatar Airways Qatar Grand Prix" → "Qatar Grand Prix"; anything after ("… in Malaysia") stays. */
+fun gpName(name: String): String {
+    val m = Regex("(\\S+ )?(\\S+) Grand Prix").findAll(name).lastOrNull() ?: return name
+    val first = m.groupValues[1].trim()
+    val start = if (first.lowercase() in PLACE_FIRST) m.range.first else m.groups[2]!!.range.first
+    return name.substring(start)
+}
+
+/** An F1 weekend's scoreboard → one game per session. */
+fun parseRacing(root: JsonElement, league: League): List<Game> {
+    val l = root.first("leagues")
+    val leagueName = l.s("name") ?: league.name
+    val leagueLogo = l.first("logos").s("href")
+    return root.a("events").flatMap { e ->
+        val gp = gpName(e.s("name").orEmpty())
+        val addr = e.o("circuit").o("address")
+        val place = (listOfNotNull(gp.removeSuffix(" Grand Prix").substringBefore(" Grand Prix"), addr.s("city"), addr.s("country"))).map(::normTeam).filter { it.length >= 3 }.toSet()
+        val side = Side(e.s("id").orEmpty(), gp, gp, "F1", leagueLogo, null)
+        e.a("competitions").mapNotNull { c ->
+            runCatching {
+                val session = SESSIONS[c.o("type").s("abbreviation")] ?: return@runCatching null
+                val type = c.o("status").o("type")
+                val order = c.a("competitors").sortedBy { it.s("order")?.toIntOrNull() ?: 99 }.mapNotNull { d ->
+                    val a = d.o("athlete"); val name = a.s("displayName") ?: return@mapNotNull null
+                    Driver(d.s("id").orEmpty(), name, a.s("shortName") ?: name, a.o("flag").s("href"))
+                }
+                Game(c.s("id") ?: return@runCatching null, league, leagueName, leagueLogo, time(c.s("date")) ?: return@runCatching null, state(type.s("state")),
+                    type.s("shortDetail").orEmpty(), side, side, c.a("broadcasts").flatMap { b -> b.a("names").mapNotNull { (it as? JsonPrimitive)?.contentOrNull } },
+                    Race(gp, session, place, order))
+            }.getOrNull()
+        }
+    }
+}
+
+/** Jolpica's driver standings → each driver's current team (the last one listed). */
+fun parseDriverTeams(root: JsonElement): List<DriverTeam> = root.o("MRData").o("StandingsTable").first("StandingsLists").a("DriverStandings").mapNotNull { x ->
+    val d = x.o("Driver")
+    DriverTeam("${d.s("givenName").orEmpty()} ${d.s("familyName") ?: return@mapNotNull null}".trim(), d.s("code").orEmpty(), d.s("permanentNumber"),
+        x.a("Constructors").lastOrNull().s("name") ?: return@mapNotNull null, x.s("points").orEmpty())
+}
+
+private val TEAM_ALIASES = mapOf("rb" to "racing bulls", "visa cash app rb" to "racing bulls", "kick sauber" to "sauber")
+/** "Haas F1 Team" (Jolpica) and "Haas" (ESPN) are the same team. */
+fun sameTeam(a: String, b: String): Boolean {
+    fun n(s: String) = normTeam(s).removeSuffix(" f1 team").removeSuffix(" team").let { TEAM_ALIASES[it] ?: it }
+    return n(a) == n(b)
+}
+
+/** The ESPN driver [d] in Jolpica's list: same surname (accents aside), and the first name too when two share it. */
+fun driverTeam(d: Driver, teams: List<DriverTeam>): DriverTeam? {
+    val name = normTeam(d.name)
+    return teams.filter { name.endsWith(normTeam(it.name).substringAfterLast(' ')) }.let { m -> m.singleOrNull() ?: m.find { normTeam(it.name) == name } }
+}
+
+private val F1_WORDS = listOf("formula 1", "formula one", "f1", "grand prix")
+private val SESSION_WORDS = mapOf(
+    RaceSession.FP1 to listOf("practice 1", "first practice", "fp1", "practice one"), RaceSession.FP2 to listOf("practice 2", "second practice", "fp2", "practice two"),
+    RaceSession.FP3 to listOf("practice 3", "third practice", "fp3", "practice three"),
+    RaceSession.SPRINT_QUALIFYING to listOf("sprint qualifying", "sprint shootout"), RaceSession.SPRINT to listOf("sprint"),
+    RaceSession.QUALIFYING to listOf("qualifying"), RaceSession.RACE to listOf("race"))
+
+/**
+ * How well [text] names the session: null = not F1 at this place, or another session; 0 = this session; 1 = the weekend only
+ * ("Formula 1: Qatar Grand Prix"). The longest session words win ("Sprint Qualifying" isn't the sprint); "race" only when no other.
+ */
+fun raceMatch(text: String, r: Race): Int? {
+    val t = " ${normTeam(text)} "
+    if (F1_WORDS.none { t.contains(" $it ") } || r.place.none { t.contains(" $it ") }) return null
+    val found = SESSION_WORDS.mapValues { (_, ws) -> ws.filter { t.contains(" $it ") }.maxOfOrNull { it.length } ?: 0 }.filterValues { it > 0 }
+    val named = found.filterKeys { it != RaceSession.RACE }.maxByOrNull { it.value }?.key ?: RaceSession.RACE.takeIf { it in found }
+    return when (named) { null -> 1; r.session -> 0; else -> null }
 }
 
 /** Cricket's header feed: every current series at once. */
@@ -210,7 +302,7 @@ fun parseStandings(root: JsonElement): List<Table> = root.a("children").ifEmpty 
         val team = side(e) ?: return@mapNotNull null
         val st = e.a("stats").associate { (it.s("name") ?: "") to (it.s("displayValue") ?: "") }
         TableRow(st["rank"]?.toIntOrNull() ?: 0, team, st["gamesPlayed"].orEmpty(), st["wins"].orEmpty(), st["ties"].orEmpty(),
-            st["losses"].orEmpty(), st["pointDifferential"].orEmpty(), st["points"].orEmpty())
+            st["losses"].orEmpty(), st["pointDifferential"].orEmpty(), st["points"] ?: st["championshipPts"].orEmpty())
     }.sortedBy { if (it.rank == 0) Int.MAX_VALUE else it.rank }
     Table(child.s("name") ?: root.s("name").orEmpty(), rows)
 }
@@ -350,6 +442,9 @@ class EspnClient(private val http: OkHttpClient, private val json: Json, private
                 runCatching {
                     if (l.sport == Sport.CRICKET) get("https://site.api.espn.com/apis/personalized/v2/scoreboard/header?sport=cricket&region=gb", cacheOnly).let { f ->
                         Fetched(parseCricket(f.value, l).filter { java.time.Instant.ofEpochMilli(it.start).atZone(java.time.ZoneId.systemDefault()).toLocalDate() == day }, f.updatedAt, f.stale)
+                    } else if (l.sport == Sport.F1) get("$site/${l.sport.key}/${l.slug}/scoreboard?dates=${DAY.format(day)}", cacheOnly).let { f ->
+                        // The weekend comes whole: keep the sessions on this (local) day.
+                        Fetched(parseRacing(f.value, l).filter { java.time.Instant.ofEpochMilli(it.start).atZone(java.time.ZoneId.systemDefault()).toLocalDate() == day }, f.updatedAt, f.stale)
                     } else get("$site/${l.sport.key}/${l.slug}/scoreboard?dates=${DAY.format(day)}", cacheOnly).let { Fetched(parseScoreboard(it.value, l), it.updatedAt, it.stale) }
                 }.getOrNull()
             }
@@ -363,6 +458,9 @@ class EspnClient(private val http: OkHttpClient, private val json: Json, private
         get("https://site.api.espn.com/apis/v2/sports/${l.sport.key}/${l.slug}/standings").let { Fetched(parseStandings(it.value), it.updatedAt, it.stale) }
 
     suspend fun teams(l: League): List<Side> = parseTeams(get("$site/${l.sport.key}/${l.slug}/teams").value)
+
+    /** F1 drivers' teams (Jolpica, the open Ergast successor), cached like the rest. */
+    suspend fun driverTeams(): List<DriverTeam> = parseDriverTeams(get("https://api.jolpi.ca/ergast/f1/current/driverStandings.json").value)
 }
 
 /** ESPN's image resizer: badges come as 500 px PNGs; the screens draw them at ~40 dp. */
