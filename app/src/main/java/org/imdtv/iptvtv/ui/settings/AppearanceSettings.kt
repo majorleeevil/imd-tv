@@ -35,6 +35,14 @@ fun AppearanceAppRows(vm: SettingsViewModel, first: FocusRequester, openers: Map
         ChoiceRow(stringResource(R.string.set_a_theme_colour), stringResource(R.string.set_a_theme_colour_expl, stringResource(s.theme.labelRes)), ThemeColour.entries, s.themeColour, { stringResource(it.labelRes) }, default = AppSettings().themeColour) { c -> vm.update { it.copy(themeColour = c) } }
         ChoiceRow(stringResource(R.string.set_a_theme_mode), stringResource(R.string.set_a_theme_mode_expl), listOf(false, true), s.themeDark, { if (it) stringResource(R.string.set_a_mode_dark) else stringResource(R.string.set_a_mode_light) }, default = AppSettings().themeDark, onPick = { d -> vm.update { it.copy(themeDark = d) } })
     }
+    // Not an AppSettings value: Android (13+) or AppLanguage keeps it, and the screen restarts in the new language.
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    val activity = remember(ctx) { generateSequence(ctx) { (it as? android.content.ContextWrapper)?.baseContext }.filterIsInstance<android.app.Activity>().first() }
+    ChoiceRow(stringResource(R.string.set_b_language), stringResource(R.string.set_b_language_expl), listOf("") + org.imdtv.iptvtv.ui.AppLanguage.TAGS,
+        remember(activity) { org.imdtv.iptvtv.ui.AppLanguage.get(activity).substringBefore('-').substringBefore(',') },
+        { if (it.isEmpty()) stringResource(R.string.set_b_system_default) else org.imdtv.iptvtv.ui.AppLanguage.nativeName(it) }, default = "") { tag ->
+        org.imdtv.iptvtv.ui.AppLanguage.set(activity, tag)
+    }
     val dt = ChannelPage.DATE_TIME
     SettingRow(stringResource(dt.titleRes), stringResource(dt.explanationRes), "›", Modifier.focusRequester(openers.getValue(dt))) { onOpen(dt) }
     var confirmReset by remember { mutableStateOf(false) }

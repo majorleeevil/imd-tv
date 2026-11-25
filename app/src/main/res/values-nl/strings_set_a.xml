@@ -277,7 +277,7 @@
         <item quantity="other">%d series · OK om te tonen/verbergen · houd OK ingedrukt om te verplaatsen</item>
     </plurals>
     <string name="set_a_page_app">App</string>
-    <string name="set_a_page_app_expl">Thema, kleuren, datum en tijd</string>
+    <string name="set_a_page_app_expl">Thema, kleuren, taal, datum en tijd</string>
     <string name="set_a_page_live_tv_expl">Gidsrijen, koptekst en titels</string>
     <string name="set_a_page_vod_expl">Rijen en titels</string>
     <string name="set_a_title_size_live_expl">Grootte van zendernamen en programmatitels</string>

@@ -277,7 +277,7 @@
         <item quantity="other">%d Serien · OK zum Ein-/Ausblenden · OK halten zum Verschieben</item>
     </plurals>
     <string name="set_a_page_app">App</string>
-    <string name="set_a_page_app_expl">Design, Farben, Datum und Uhrzeit</string>
+    <string name="set_a_page_app_expl">Design, Farben, Sprache, Datum und Uhrzeit</string>
     <string name="set_a_page_live_tv_expl">Programmzeilen, Kopfzeile und Titel</string>
     <string name="set_a_page_vod_expl">Zeilen und Titel</string>
     <string name="set_a_title_size_live_expl">Größe von Sendernamen und Sendungstiteln</string>

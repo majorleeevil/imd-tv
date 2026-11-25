@@ -277,7 +277,7 @@
         <item quantity="other">%d σειρές · OK για εμφάνιση/απόκρυψη · κρατήστε OK για μετακίνηση</item>
     </plurals>
     <string name="set_a_page_app">Εφαρμογή</string>
-    <string name="set_a_page_app_expl">Θέμα, χρώματα, ημερομηνία και ώρα</string>
+    <string name="set_a_page_app_expl">Θέμα, χρώματα, γλώσσα, ημερομηνία και ώρα</string>
     <string name="set_a_page_live_tv_expl">Γραμμές οδηγού, επικεφαλίδα και τίτλοι</string>
     <string name="set_a_page_vod_expl">Γραμμές και τίτλοι</string>
     <string name="set_a_title_size_live_expl">Μέγεθος ονομάτων καναλιών και τίτλων εκπομπών</string>

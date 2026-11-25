@@ -283,7 +283,7 @@
         <item quantity="other">%d series · OK to show/hide · hold OK to move</item>
     </plurals>
     <string name="set_a_page_app">App</string>
-    <string name="set_a_page_app_expl">Theme, colours, date and time</string>
+    <string name="set_a_page_app_expl">Theme, colours, language, date and time</string>
     <string name="set_a_page_live_tv_expl">Guide rows, header and titles</string>
     <string name="set_a_page_vod_expl">Rows and titles</string>
     <string name="set_a_title_size_live_expl">Size of channel names and programme titles</string>

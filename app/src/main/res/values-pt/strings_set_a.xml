@@ -277,7 +277,7 @@
         <item quantity="other">%d séries · OK para mostrar/ocultar · manter OK para mover</item>
     </plurals>
     <string name="set_a_page_app">Aplicação</string>
-    <string name="set_a_page_app_expl">Tema, cores, data e hora</string>
+    <string name="set_a_page_app_expl">Tema, cores, idioma, data e hora</string>
     <string name="set_a_page_live_tv_expl">Linhas do guia, cabeçalho e títulos</string>
     <string name="set_a_page_vod_expl">Linhas e títulos</string>
     <string name="set_a_title_size_live_expl">Tamanho dos nomes dos canais e dos títulos dos programas</string>

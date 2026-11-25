@@ -86,7 +86,7 @@ enum class ChannelPage(@StringRes val titleRes: Int, @StringRes val explanationR
     MERGE_PLAYLISTS(R.string.set_a_page_merge_playlists, R.string.set_a_page_merge_playlists_expl, "Playlists", "Which playlists merge their channels", parent = MERGE_OPTIONS),
     // Not channel pages, but the same open/Back/refocus plumbing: Playback › Subtitles, Appearance › Date and time.
     SUBTITLES(R.string.set_a_page_subtitles, R.string.set_a_page_subtitles_expl, "Subtitles", "Movies & series and live TV"),
-    APPEARANCE_APP(R.string.set_a_page_app, R.string.set_a_page_app_expl, "App", "Theme, colours, date and time"),
+    APPEARANCE_APP(R.string.set_a_page_app, R.string.set_a_page_app_expl, "App", "Theme, colours, language, date and time"),
     APPEARANCE_LIVE(R.string.set_b_live_tv, R.string.set_a_page_live_tv_expl, "Live TV", "Guide rows, header and titles"),
     APPEARANCE_VOD(R.string.set_b_movies_series, R.string.set_a_page_vod_expl, "Movies & Series", "Rows and titles"),
     PARENTAL(R.string.set_b_parental, R.string.set_b_parental_expl, "Parental controls", "A PIN for rated programmes and locked categories"),

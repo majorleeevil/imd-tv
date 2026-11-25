@@ -277,7 +277,7 @@
         <item quantity="other">%d serier · OK för att visa/dölja · håll in OK för att flytta</item>
     </plurals>
     <string name="set_a_page_app">App</string>
-    <string name="set_a_page_app_expl">Tema, färger, datum och tid</string>
+    <string name="set_a_page_app_expl">Tema, färger, språk, datum och tid</string>
     <string name="set_a_page_live_tv_expl">Guiderader, rubrik och titlar</string>
     <string name="set_a_page_vod_expl">Rader och titlar</string>
     <string name="set_a_title_size_live_expl">Storlek på kanalnamn och programtitlar</string>

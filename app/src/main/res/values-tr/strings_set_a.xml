@@ -277,7 +277,7 @@
         <item quantity="other">%d dizi · göster/gizle için OK · taşımak için OK\'a basılı tutun</item>
     </plurals>
     <string name="set_a_page_app">Uygulama</string>
-    <string name="set_a_page_app_expl">Tema, renkler, tarih ve saat</string>
+    <string name="set_a_page_app_expl">Tema, renkler, dil, tarih ve saat</string>
     <string name="set_a_page_live_tv_expl">Rehber satırları, başlık ve başlıklar</string>
     <string name="set_a_page_vod_expl">Satırlar ve başlıklar</string>
     <string name="set_a_title_size_live_expl">Kanal adlarının ve program başlıklarının boyutu</string>

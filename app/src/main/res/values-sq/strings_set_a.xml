@@ -278,7 +278,7 @@
         <item quantity="other">%d seriale · OK për të shfaqur/fshehur · mbani OK për të zhvendosur</item>
     </plurals>
     <string name="set_a_page_app">Aplikacioni</string>
-    <string name="set_a_page_app_expl">Tema, ngjyrat, data dhe ora</string>
+    <string name="set_a_page_app_expl">Tema, ngjyrat, gjuha, data dhe ora</string>
     <string name="set_a_page_live_tv_expl">Rreshtat e programit, kreu dhe titujt</string>
     <string name="set_a_page_vod_expl">Rreshtat dhe titujt</string>
     <string name="set_a_title_size_live_expl">Madhësia e emrave të kanaleve dhe titujve të emisioneve</string>

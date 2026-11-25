@@ -288,14 +288,6 @@ fun SettingsScreen(vm: SettingsViewModel, onAddPlaylist: () -> Unit, onEditPlayl
                         SwitchRow(stringResource(R.string.set_b_hold_back), stringResource(R.string.set_b_hold_back_expl), s.holdBackOther) { on -> vm.update { it.copy(holdBackOther = on) } }
                         ChoiceRow(stringResource(R.string.set_b_guide_timeout), stringResource(R.string.set_b_guide_timeout_expl), listOf(0, 1, 2, 5, 10, 30), s.guideTimeoutMin,
                             { if (it == 0) stringResource(R.string.set_b_off) else stringResource(R.string.set_b_minutes, it) }, default = 0) { v -> vm.update { it.copy(guideTimeoutMin = v) } }
-                        // Not an AppSettings value: Android (13+) or AppLanguage keeps it, and the screen restarts in the new language.
-                        val ctx = androidx.compose.ui.platform.LocalContext.current
-                        val activity = remember(ctx) { generateSequence(ctx) { (it as? android.content.ContextWrapper)?.baseContext }.filterIsInstance<android.app.Activity>().first() }
-                        ChoiceRow(stringResource(R.string.set_b_language), stringResource(R.string.set_b_language_expl), listOf("") + org.imdtv.iptvtv.ui.AppLanguage.TAGS,
-                            remember(activity) { org.imdtv.iptvtv.ui.AppLanguage.get(activity).substringBefore('-').substringBefore(',') },
-                            { if (it.isEmpty()) stringResource(R.string.set_b_system_default) else org.imdtv.iptvtv.ui.AppLanguage.nativeName(it) }, default = "") { tag ->
-                            org.imdtv.iptvtv.ui.AppLanguage.set(activity, tag)
-                        }
                         // Once on, the page itself takes the PIN (or backup word): it can turn the controls off.
                         val parental = ChannelPage.PARENTAL
                         val scope = androidx.compose.runtime.rememberCoroutineScope()

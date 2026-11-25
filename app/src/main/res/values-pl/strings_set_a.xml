@@ -297,7 +297,7 @@
         <item quantity="other">%d serialu · OK – pokaż/ukryj · przytrzymaj OK – przenieś</item>
     </plurals>
     <string name="set_a_page_app">Aplikacja</string>
-    <string name="set_a_page_app_expl">Motyw, kolory, data i godzina</string>
+    <string name="set_a_page_app_expl">Motyw, kolory, język, data i godzina</string>
     <string name="set_a_page_live_tv_expl">Wiersze przewodnika, nagłówek i tytuły</string>
     <string name="set_a_page_vod_expl">Wiersze i tytuły</string>
     <string name="set_a_title_size_live_expl">Rozmiar nazw kanałów i tytułów programów</string>
