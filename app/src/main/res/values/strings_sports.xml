@@ -4,15 +4,15 @@
     <string name="live_tab_sports">SportsHub</string>
     <string name="sports_games">Games</string>
     <string name="sports_fav_teams">Favourite teams</string>
-    <string name="sports_followed_leagues">Followed leagues</string>
+    <string name="sports_followed_leagues">Followed competitions</string>
     <string name="sports_standings">Standings</string>
     <string name="sports_settings">SportsHub settings</string>
     <string name="sports_return_guide">Return to guide</string>
     <string name="sports_change_sport">Sport: %1$s ▾</string>
     <string name="sports_today">Today</string>
     <string name="sports_tomorrow">Tomorrow</string>
-    <string name="sports_favourites_title">Your teams and leagues</string>
-    <string name="sports_no_favourites">No games for your teams or leagues on this day. Pick them in Favourite teams and Followed leagues.</string>
+    <string name="sports_favourites_title">Your teams and competitions</string>
+    <string name="sports_no_favourites">No games for your teams or competitions on this day. Pick them in Favourite teams and Followed competitions.</string>
     <string name="sports_no_games">No games on this day.</string>
     <string name="sports_no_other_games">No other games on this day.</string>
     <string name="sports_stats">Stats</string>
@@ -55,7 +55,7 @@
     <string name="sports_lineups_in">Lineups in %1$s</string>
     <string name="sports_lineups_out">Lineups are out</string>
     <string name="sports_lineups_due">Lineups due any minute</string>
-    <string name="sports_more_from_leagues">More from your leagues</string>
+    <string name="sports_more_from_leagues">More from your competitions</string>
     <string name="sports_live_now">Live now</string>
     <string name="sports_ok_watch">OK to watch</string>
     <string name="sports_team_results">Today\'s results</string>
@@ -69,4 +69,13 @@
     <string name="sports_focus_preview">Preview on focus</string>
     <string name="sports_focus_preview_expl">Resting on a game switches the preview to it. Off: hold OK on a game and choose Preview.</string>
     <string name="sports_watch_full">Watch full screen</string>
+    <string name="sports_sport_rugby_league">Rugby league</string>
+    <!-- Followed competitions: rugby union and rugby league together. -->
+    <string name="sports_group_rugby">Rugby</string>
+    <string name="sports_col_leagues">Leagues</string>
+    <string name="sports_col_cups">Cup competitions</string>
+    <string name="sports_region_england">England</string>
+    <string name="sports_region_scotland">Scotland</string>
+    <string name="sports_region_europe">Europe</string>
+    <string name="sports_region_international">International</string>
 </resources>

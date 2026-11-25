@@ -34,6 +34,8 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
     private val guidesOff = androidx.datastore.preferences.core.stringSetPreferencesKey("guides_off")
     private val sportsTab = booleanPreferencesKey("sports_tab")
     private val sports = androidx.datastore.preferences.core.stringSetPreferencesKey("sports")
+    /** The sports that existed when [sports] was saved: one added since starts switched on. */
+    private val sportsKnown = androidx.datastore.preferences.core.stringSetPreferencesKey("sports_known")
     private val sportsSport = stringPreferencesKey("sports_sport")
     private val sportsLeagues = androidx.datastore.preferences.core.stringSetPreferencesKey("sports_leagues")
     private val sportsTeams = androidx.datastore.preferences.core.stringSetPreferencesKey("sports_teams")
@@ -130,7 +132,7 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
                 ?: this[oldPlayerClock]?.let { if (it) PlayerClock.ALL else PlayerClock.OFF } ?: d.playerClock,
             showDate = this[showDate] ?: d.showDate,
             guidesOff = this[guidesOff].orEmpty(),
-            sportsTab = this[sportsTab] ?: d.sportsTab, sports = this[sports] ?: d.sports, sportsSport = this[sportsSport] ?: d.sportsSport,
+            sportsTab = this[sportsTab] ?: d.sportsTab, sports = this[sports]?.let { it + (d.sports - (this[sportsKnown] ?: SPORTS_0_7)) } ?: d.sports, sportsSport = this[sportsSport] ?: d.sportsSport,
             sportsLeagues = this[sportsLeagues] ?: d.sportsLeagues, sportsTeams = this[sportsTeams] ?: d.sportsTeams,
             sportsPreviewFade = this[sportsPreviewFade] ?: d.sportsPreviewFade, sportsTeamResults = this[sportsTeamResults] ?: d.sportsTeamResults,
             sportsFocusPreview = this[sportsFocusPreview] ?: d.sportsFocusPreview,
@@ -213,7 +215,7 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
         this[playerClock] = s.playerClock.name
         this[showDate] = s.showDate
         this[guidesOff] = s.guidesOff
-        this[sportsTab] = s.sportsTab; this[sports] = s.sports; this[sportsSport] = s.sportsSport
+        this[sportsTab] = s.sportsTab; this[sports] = s.sports; this[sportsKnown] = AppSettings().sports; this[sportsSport] = s.sportsSport
         this[sportsLeagues] = s.sportsLeagues; this[sportsTeams] = s.sportsTeams; this[sportsPreviewFade] = s.sportsPreviewFade; this[sportsTeamResults] = s.sportsTeamResults; this[sportsFocusPreview] = s.sportsFocusPreview
         this[themeLooks] = s.themeLooks.entries.joinToString("|") { "${it.key}=${it.value}" }
         this[liveSubtitlesOn] = s.liveSubtitlesOn
@@ -288,3 +290,6 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
             s?.split(',')?.mapNotNull { n -> all.find { it.name == n.trim() } }?.distinct()?.takeIf { it.isNotEmpty() }
     }
 }
+
+/** The sports before "sports_known" was saved (0.7.x). */
+private val SPORTS_0_7 = setOf("soccer", "football", "basketball", "hockey", "rugby", "cricket")

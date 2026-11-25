@@ -41,6 +41,16 @@ class SettingsRepositoryTest {
         assertEquals(PlayerClock.ALL, repo.settings.first().playerClock)
     }
 
+    @Test fun aSportAddedSinceIsSwitchedOnButAHiddenOneStaysHidden() = runTest {
+        // Saved by 0.7.x (no "sports_known"), with cricket switched off.
+        prefs.edit { it[androidx.datastore.preferences.core.stringSetPreferencesKey("sports")] = setOf("soccer", "football", "basketball", "hockey", "rugby") }
+        val s = repo.settings.first().sports
+        assertEquals(true, "rugby-league" in s)
+        assertFalse("cricket" in s)
+        repo.update { it.copy(sports = it.sports - "rugby-league") }
+        assertFalse("rugby-league" in repo.settings.first().sports)
+    }
+
     @Test fun eachThemeKeepsItsOwnLook() {
         val liquid = AppSettings().copy(headerSize = HeaderSize.MEDIUM, themeColour = ThemeColour.TEAL).withTheme(ThemeId.LIQUID_GLASS)
         assertEquals(HeaderSize.LARGE, liquid.headerSize) // Celestial's Medium doesn't carry over

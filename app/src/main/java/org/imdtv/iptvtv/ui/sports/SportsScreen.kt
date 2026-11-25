@@ -92,8 +92,27 @@ import org.imdtv.iptvtv.ui.theme.glass
 fun sportName(s: Sport) = stringResource(when (s) {
     Sport.FOOTBALL -> R.string.sports_sport_football; Sport.AMERICAN_FOOTBALL -> R.string.sports_sport_american_football
     Sport.BASKETBALL -> R.string.sports_sport_basketball; Sport.HOCKEY -> R.string.sports_sport_hockey
-    Sport.RUGBY -> R.string.sports_sport_rugby; Sport.CRICKET -> R.string.sports_sport_cricket
+    Sport.RUGBY -> R.string.sports_sport_rugby; Sport.RUGBY_LEAGUE -> R.string.sports_sport_rugby_league; Sport.CRICKET -> R.string.sports_sport_cricket
 })
+
+@Composable
+private fun regionName(r: org.imdtv.iptvtv.data.sports.Region) = when (r) {
+    org.imdtv.iptvtv.data.sports.Region.NONE -> ""
+    org.imdtv.iptvtv.data.sports.Region.ENGLAND -> stringResource(R.string.sports_region_england)
+    org.imdtv.iptvtv.data.sports.Region.SCOTLAND -> stringResource(R.string.sports_region_scotland)
+    org.imdtv.iptvtv.data.sports.Region.EUROPE -> stringResource(R.string.sports_region_europe)
+    org.imdtv.iptvtv.data.sports.Region.INTERNATIONAL -> stringResource(R.string.sports_region_international)
+    // Real countries: the system's own name for them, in the app's language.
+    org.imdtv.iptvtv.data.sports.Region.SPAIN -> country("ES")
+    org.imdtv.iptvtv.data.sports.Region.GERMANY -> country("DE")
+    org.imdtv.iptvtv.data.sports.Region.ITALY -> country("IT")
+    org.imdtv.iptvtv.data.sports.Region.FRANCE -> country("FR")
+    org.imdtv.iptvtv.data.sports.Region.AUSTRALIA -> country("AU")
+}
+
+@Composable
+private fun country(code: String): String =
+    java.util.Locale("", code).getDisplayCountry(androidx.compose.ui.platform.LocalConfiguration.current.locales[0])
 
 /** Celestial Glass's background (cached bitmap, like the guide) or Liquid's backdrop. */
 @Composable
@@ -511,7 +530,8 @@ internal fun ScoreCard(g: Game, modifier: Modifier) {
 @Composable
 private fun TeamsPage(vm: SportsViewModel, s: AppSettings, sport: Sport) {
     val colors = LocalTheme.current.colors
-    val leagues = vm.leagues(sport).filter { it.sport != Sport.CRICKET }
+    // A cup's teams are its leagues' teams (and a long list of lower-league ones).
+    val leagues = vm.leagues(sport).filter { it.sport != Sport.CRICKET && !it.cup }.ifEmpty { vm.leagues(sport).filter { it.sport != Sport.CRICKET } }
     var league by remember(sport) { mutableStateOf(leagues.firstOrNull()) }
     val teams by produceState<List<Side>?>(null, league) { value = null; value = league?.let { vm.teams(it) } ?: emptyList() }
     val mine = s.sportsTeams.filter { it.startsWith(sport.key + ":") }
@@ -548,22 +568,54 @@ private fun TeamsPage(vm: SportsViewModel, s: AppSettings, sport: Sport) {
     }
 }
 
+/** Followed competitions: per sport (rugby union and league together), per region, leagues on the left and cups on the right. */
 @Composable
 private fun LeaguesPage(vm: SportsViewModel, s: AppSettings) {
     val colors = LocalTheme.current.colors
-    val list = LEAGUES.filter { it.sport.key in s.sports }
-    LazyVerticalGrid(GridCells.Fixed(3), Modifier.padding(start = 24.dp, top = 104.dp, end = 24.dp, bottom = 12.dp).fillMaxSize().panel().padding(12.dp),
-        verticalArrangement = Arrangement.spacedBy(6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        items(list, key = { it.id }) { l ->
-            val on = l.id in s.sportsLeagues
-            FocusBox({ vm.update { it.copy(sportsLeagues = if (on) it.sportsLeagues - l.id else it.sportsLeagues + l.id) } }) { f ->
-                Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(if (f) Color.White else colors.cell).padding(horizontal = 12.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) {
-                        Text(l.name, fontSize = 13.sp, color = if (f) colors.onFocus else Color.White, maxLines = 1)
+    val groups = LEAGUES.filter { it.sport.key in s.sports }.groupBy { if (it.sport == Sport.RUGBY_LEAGUE) Sport.RUGBY else it.sport }
+    @Composable fun Cell(l: League, modifier: Modifier) {
+        val on = l.id in s.sportsLeagues
+        FocusBox({ vm.update { it.copy(sportsLeagues = if (on) it.sportsLeagues - l.id else it.sportsLeagues + l.id) } }, modifier) { f ->
+            Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(if (f) Color.White else colors.cell).padding(horizontal = 12.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(l.name, fontSize = 13.sp, color = if (f) colors.onFocus else Color.White, maxLines = 1)
+                    if (l.sport == Sport.RUGBY_LEAGUE || l.sport == Sport.RUGBY && groups[Sport.RUGBY].orEmpty().any { it.sport == Sport.RUGBY_LEAGUE })
                         Text(sportName(l.sport), fontSize = 10.sp, color = if (f) Color(0xFF555555) else colors.muted)
+                }
+                org.imdtv.iptvtv.ui.settings.Toggle(on, f)
+            }
+        }
+    }
+    LazyColumn(Modifier.padding(start = 24.dp, top = 104.dp, end = 24.dp, bottom = 12.dp).fillMaxSize().panel().padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        for ((sport, comps) in groups) {
+            item(key = "s" + sport.key) {
+                Text(if (sport == Sport.RUGBY && comps.any { it.sport == Sport.RUGBY_LEAGUE }) stringResource(R.string.sports_group_rugby) else sportName(sport),
+                    fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color.White, modifier = Modifier.padding(top = 4.dp))
+            }
+            val hasCups = comps.any { it.cup }
+            for ((region, list) in comps.groupBy { it.region }) {
+                val leagues = list.filter { !it.cup }; val cups = list.filter { it.cup }
+                item(key = "r" + sport.key + region) {
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        if (region != org.imdtv.iptvtv.data.sports.Region.NONE) Text(regionName(region), fontSize = 13.sp, color = Color.White, fontWeight = FontWeight.Medium)
+                        if (hasCups) Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            for (res in listOf(R.string.sports_col_leagues, R.string.sports_col_cups))
+                                Text(stringResource(res), fontSize = 11.sp, color = colors.muted, modifier = Modifier.weight(1f))
+                        }
                     }
-                    org.imdtv.iptvtv.ui.settings.Toggle(on, f)
+                }
+                // One row per line: Up/Down walk the lines, Left/Right switch column.
+                if (hasCups) items(maxOf(leagues.size, cups.size), key = { "l" + sport.key + region + it }) { i ->
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        leagues.getOrNull(i)?.let { Cell(it, Modifier.weight(1f)) } ?: Spacer(Modifier.weight(1f))
+                        cups.getOrNull(i)?.let { Cell(it, Modifier.weight(1f)) } ?: Spacer(Modifier.weight(1f))
+                    }
+                } else items(list.chunked(3), key = { "l" + sport.key + region + it.first().id }) { line ->
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        line.forEach { Cell(it, Modifier.weight(1f)) }
+                        repeat(3 - line.size) { Spacer(Modifier.weight(1f)) }
+                    }
                 }
             }
         }
@@ -573,7 +625,7 @@ private fun LeaguesPage(vm: SportsViewModel, s: AppSettings) {
 @Composable
 private fun StandingsPage(vm: SportsViewModel, s: AppSettings, sport: Sport) {
     val colors = LocalTheme.current.colors
-    val all = vm.leagues(sport).filter { it.sport != Sport.CRICKET }
+    val all = vm.leagues(sport).filter { it.sport != Sport.CRICKET && it.table }
     val leagues = all.filter { it.id in s.sportsLeagues }.ifEmpty { all }
     var league by remember(sport) { mutableStateOf(leagues.firstOrNull()) }
     val tables by produceState<org.imdtv.iptvtv.data.sports.Fetched<List<Table>>?>(null, league) { value = null; value = league?.let { vm.standings(it) } }

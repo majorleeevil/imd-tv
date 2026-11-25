@@ -20,18 +20,40 @@ import java.time.format.DateTimeFormatter
 import java.text.Normalizer
 
 /** SportsHub (#26): ESPN's public site API (undocumented, no key). Every parser drops what it can't read instead of throwing. */
-enum class Sport(val key: String) { FOOTBALL("soccer"), AMERICAN_FOOTBALL("football"), BASKETBALL("basketball"), HOCKEY("hockey"), RUGBY("rugby"), CRICKET("cricket") }
+enum class Sport(val key: String) { FOOTBALL("soccer"), AMERICAN_FOOTBALL("football"), BASKETBALL("basketball"), HOCKEY("hockey"), RUGBY("rugby"), RUGBY_LEAGUE("rugby-league"), CRICKET("cricket") }
 
-/** [slug] is ESPN's league path, e.g. "eng.1"; [id] = "soccer/eng.1", the form settings keep. */
-data class League(val sport: Sport, val slug: String, val name: String) { val id get() = "${sport.key}/$slug" }
+/**
+ * [slug] is ESPN's league path, e.g. "eng.1"; [id] = "soccer/eng.1", the form settings keep.
+ * [region] groups Followed competitions ("" = no heading); [cup] puts it in the cup column; [table] = ESPN has standings for it.
+ */
+data class League(val sport: Sport, val slug: String, val name: String, val region: Region = Region.NONE, val cup: Boolean = false, val table: Boolean = !cup) {
+    val id get() = "${sport.key}/$slug"
+}
+
+enum class Region { NONE, ENGLAND, SCOTLAND, SPAIN, GERMANY, ITALY, FRANCE, EUROPE, INTERNATIONAL, AUSTRALIA }
+
+private fun soccer(slug: String, name: String, r: Region, cup: Boolean = false, table: Boolean = !cup) = League(Sport.FOOTBALL, slug, name, r, cup, table)
 
 val LEAGUES = listOf(
-    League(Sport.FOOTBALL, "eng.1", "Premier League"), League(Sport.FOOTBALL, "eng.2", "Championship"),
-    League(Sport.FOOTBALL, "uefa.champions", "Champions League"), League(Sport.FOOTBALL, "uefa.europa", "Europa League"),
-    League(Sport.FOOTBALL, "sco.1", "Scottish Premiership"), League(Sport.FOOTBALL, "esp.1", "LaLiga"),
-    League(Sport.FOOTBALL, "ger.1", "Bundesliga"), League(Sport.FOOTBALL, "ita.1", "Serie A"), League(Sport.FOOTBALL, "fra.1", "Ligue 1"),
+    soccer("eng.1", "Premier League", Region.ENGLAND), soccer("eng.2", "Championship", Region.ENGLAND),
+    soccer("eng.fa", "FA Cup", Region.ENGLAND, cup = true), soccer("eng.league_cup", "League Cup", Region.ENGLAND, cup = true),
+    soccer("eng.trophy", "EFL Trophy", Region.ENGLAND, cup = true), soccer("eng.charity", "Community Shield", Region.ENGLAND, cup = true),
+    soccer("sco.1", "Scottish Premiership", Region.SCOTLAND),
+    soccer("sco.tennents", "Scottish Cup", Region.SCOTLAND, cup = true), soccer("sco.cis", "Scottish League Cup", Region.SCOTLAND, cup = true),
+    soccer("esp.1", "LaLiga", Region.SPAIN), soccer("esp.copa_del_rey", "Copa del Rey", Region.SPAIN, cup = true), soccer("esp.super_cup", "Supercopa", Region.SPAIN, cup = true),
+    soccer("ger.1", "Bundesliga", Region.GERMANY), soccer("ger.dfb_pokal", "DFB-Pokal", Region.GERMANY, cup = true), soccer("ger.super_cup", "Supercup", Region.GERMANY, cup = true),
+    soccer("ita.1", "Serie A", Region.ITALY), soccer("ita.coppa_italia", "Coppa Italia", Region.ITALY, cup = true), soccer("ita.super_cup", "Supercoppa", Region.ITALY, cup = true),
+    soccer("fra.1", "Ligue 1", Region.FRANCE), soccer("fra.coupe_de_france", "Coupe de France", Region.FRANCE, cup = true),
+    soccer("fra.super_cup", "Trophée des Champions", Region.FRANCE, cup = true),
+    soccer("uefa.champions", "Champions League", Region.EUROPE, cup = true, table = true), soccer("uefa.europa", "Europa League", Region.EUROPE, cup = true, table = true),
+    soccer("uefa.europa.conf", "Conference League", Region.EUROPE, cup = true, table = true),
     League(Sport.AMERICAN_FOOTBALL, "nfl", "NFL"), League(Sport.BASKETBALL, "nba", "NBA"), League(Sport.HOCKEY, "nhl", "NHL"),
-    League(Sport.RUGBY, "180659", "Six Nations"), League(Sport.RUGBY, "270557", "United Rugby Championship"), League(Sport.RUGBY, "164205", "Rugby World Cup"),
+    League(Sport.RUGBY, "267979", "Premiership Rugby", Region.ENGLAND), League(Sport.RUGBY, "270559", "Top 14", Region.FRANCE),
+    League(Sport.RUGBY, "270557", "United Rugby Championship", Region.EUROPE),
+    League(Sport.RUGBY, "271937", "Champions Cup", Region.EUROPE, cup = true), League(Sport.RUGBY, "272073", "Challenge Cup", Region.EUROPE, cup = true),
+    League(Sport.RUGBY, "180659", "Six Nations", Region.INTERNATIONAL, cup = true, table = true), League(Sport.RUGBY, "244293", "The Rugby Championship", Region.INTERNATIONAL, cup = true, table = true),
+    League(Sport.RUGBY, "164205", "Rugby World Cup", Region.INTERNATIONAL, cup = true, table = true),
+    League(Sport.RUGBY_LEAGUE, "3", "NRL", Region.AUSTRALIA),
     // Cricket has no league list: one header feed of the current series.
     League(Sport.CRICKET, "header", "Cricket"),
 )
