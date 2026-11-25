@@ -325,7 +325,7 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
             if (urls.isEmpty()) return@launch
             previewed.value = null
             // vod: seekable, and not the live .ts reconnect path or the live stall watchdog.
-            player.play(urls[0], prov.userAgent, prov.login(), vod = true, startMs = startMs, fallbackUrl = urls[1])
+            player.play(urls[0], prov.userAgent, prov.login(), vod = true, startMs = startMs, fallbackUrl = urls[1], lengthMs = p.stop - p.start)
             openCatchUp.tryEmit("${ch.displayName(strip.value)} · ${p.title}")
         }
     }

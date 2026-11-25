@@ -220,13 +220,16 @@ class PlayerManager(private val context: Context) {
     /** [startMs]: a movie/episode starts there (resume), applied when the stream loads, also after the guard or a portal link. */
     /** [fallbackUrl]: played instead when [url] fails (catch-up's second link form), without the usual retries first. */
     /** [parallel]: a Plex/Jellyfin/Emby file, fetched over several connections (ParallelDataSource); never an IPTV provider. */
+    /** [lengthMs]: catch-up's programme length; the item is cut there (a server's .ts can claim ~25 h, and the bar showed it). */
     fun play(url: String, userAgent: String?, login: Login? = null, vod: Boolean = false, drm: Drm? = null, startMs: Long = 0,
-             fallbackUrl: String? = null, parallel: Boolean = false) {
+             fallbackUrl: String? = null, parallel: Boolean = false, lengthMs: Long = 0) {
         fallback = fallbackUrl
+        clipMs = lengthMs
         this.parallel = parallel
         play(url, userAgent, login, vod, drm, guarded = true, startMs)
     }
     private var fallback: String? = null
+    private var clipMs = 0L
     private var parallel = false
     /** A quarter of the RAM free now, 32–256 MiB: ~1 min of a 33 Mbit/s 4K file on a 2 GB box (#32). */
     private val readAheadBytes: Long get() {
@@ -340,6 +343,7 @@ class PlayerManager(private val context: Context) {
     }
 
     private fun mediaItem(uri: String, spec: DrmSpec?): MediaItem = MediaItem.Builder().setUri(uri).apply {
+        if (clipMs > 0) setClippingConfiguration(MediaItem.ClippingConfiguration.Builder().setEndPositionMs(clipMs).build())
         spec ?: return@apply
         setDrmConfiguration(MediaItem.DrmConfiguration.Builder(if (spec.scheme == DrmScheme.WIDEVINE) C.WIDEVINE_UUID else C.CLEARKEY_UUID).apply {
             // The playlist's licence server wins over one named in the manifest, as in Kodi.
@@ -362,7 +366,7 @@ class PlayerManager(private val context: Context) {
 
     /** A recording (file path or smb://) from [startMs]; no guard: it uses no provider connection. */
     fun playRecording(location: String, startMs: Long) {
-        fallback = null
+        fallback = null; clipMs = 0
         handler.removeCallbacks(retry)
         resolving?.cancel()
         retries = 0
@@ -438,7 +442,7 @@ class PlayerManager(private val context: Context) {
     var beforeStop: () -> Unit = {}
 
     fun stop() {
-        fallback = null
+        fallback = null; clipMs = 0
         beforeStop()
         handler.removeCallbacks(retry)
         handler.removeCallbacks(watchdog)
