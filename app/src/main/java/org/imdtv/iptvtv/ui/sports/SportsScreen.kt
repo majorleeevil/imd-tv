@@ -1,5 +1,10 @@
 package org.imdtv.iptvtv.ui.sports
 
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.zIndex
+import androidx.compose.foundation.relocation.bringIntoViewRequester
+import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -227,7 +232,7 @@ fun SportsScreen(vm: SportsViewModel, live: LiveViewModel, nav: @Composable () -
         when (page) {
             SportsPage.GAMES -> GamesPage(vm, live, s, sport, screen, onFull, onMatch)
             SportsPage.TEAMS -> TeamsPage(vm, s, sport)
-            SportsPage.LEAGUES -> LeaguesPage(vm, s)
+            SportsPage.LEAGUES -> LeaguesPage(vm, s, sport)
             SportsPage.STANDINGS -> StandingsPage(vm, s, sport)
             SportsPage.SETTINGS -> Column(Modifier.padding(start = 24.dp, top = 104.dp, bottom = 12.dp).width(620.dp).verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(6.dp)) { SportsSettingsRows(s, vm::update) }
@@ -588,60 +593,49 @@ private fun TeamsPage(vm: SportsViewModel, s: AppSettings, sport: Sport) {
     }
 }
 
-/** Followed competitions: per sport (rugby union and league together), per region, two to a row. */
+/** Followed competitions of the chosen sport (rugby union and league together), per region, two to a row. */
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
-private fun LeaguesPage(vm: SportsViewModel, s: AppSettings) {
+private fun LeaguesPage(vm: SportsViewModel, s: AppSettings, sport: Sport) {
     val colors = LocalTheme.current.colors
-    val groups = LEAGUES.filter { it.sport.key in s.sports }.groupBy { if (it.sport == Sport.RUGBY_LEAGUE) Sport.RUGBY else it.sport }
-    val list = androidx.compose.foundation.lazy.rememberLazyListState()
+    val rugby = setOf(Sport.RUGBY, Sport.RUGBY_LEAGUE)
+    val comps = LEAGUES.filter { if (sport in rugby) it.sport in rugby else it.sport == sport }
+    val bothRugby = comps.map { it.sport }.toSet().containsAll(rugby)
     val scope = androidx.compose.runtime.rememberCoroutineScope()
-    @Composable fun Cell(l: League, modifier: Modifier, onFocused: () -> Unit) {
-        val on = l.id in s.sportsLeagues
-        FocusBox({ vm.update { it.copy(sportsLeagues = if (on) it.sportsLeagues - l.id else it.sportsLeagues + l.id) } }, modifier, onFocused) { f ->
-            Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(if (f) Color.White else colors.cell).padding(horizontal = 12.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text(l.name, fontSize = 13.sp, color = if (f) colors.onFocus else Color.White, maxLines = 1)
-                    if (l.sport == Sport.RUGBY_LEAGUE || l.sport == Sport.RUGBY && groups[Sport.RUGBY].orEmpty().any { it.sport == Sport.RUGBY_LEAGUE })
-                        Text(sportName(l.sport), fontSize = 10.sp, color = if (f) Color(0xFF555555) else colors.muted)
-                }
-                org.imdtv.iptvtv.ui.settings.Toggle(on, f)
-            }
-        }
-    }
-    LazyColumn(Modifier.padding(start = 24.dp, top = 104.dp, end = 24.dp, bottom = 12.dp).fillMaxSize().panel().padding(12.dp), state = list,
-        verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        var index = 0
-        for ((sport, comps) in groups) {
-            val sportItem = index
-            item(key = "s" + sport.key) {
-                Text(if (sport == Sport.RUGBY && comps.any { it.sport == Sport.RUGBY_LEAGUE }) stringResource(R.string.sports_group_rugby) else sportName(sport),
-                    fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color.White, modifier = Modifier.padding(top = 4.dp))
-            }
-            index++
-            comps.groupBy { it.region }.entries.forEachIndexed { r, (region, regionComps) ->
-                // The headings above a region's first row aren't focusable: focusing that row scrolls them back into view
-                // (Up went straight on to the SportsHub pills with "Football / England" still off the top).
-                val head = if (r == 0) sportItem else index
-                if (region != org.imdtv.iptvtv.data.sports.Region.NONE) {
-                    item(key = "r" + sport.key + region) { Text(regionName(region), fontSize = 13.sp, color = Color.White, fontWeight = FontWeight.Medium) }
-                    index++
-                }
-                regionComps.chunked(2).forEachIndexed { row, line ->
-                    val reveal: () -> Unit = if (row == 0) ({ scope.launch { list.animateScrollToItem(head) } }) else ({})
-                    item(key = "l" + sport.key + region + line.first().id) {
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            line.forEach { Cell(it, Modifier.weight(1f), reveal) }
-                            if (line.size == 1) Spacer(Modifier.weight(1f))
+    // A plain scrolling column, not a lazy one: every row stays composed, so Up always finds the row above
+    // (the lazy list's off-screen rows let Up jump out to the SportsHub pills).
+    Column(Modifier.padding(start = 24.dp, top = 104.dp, end = 24.dp, bottom = 12.dp).fillMaxSize().panel().padding(12.dp).verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        for ((region, list) in comps.groupBy { it.region }) androidx.compose.runtime.key(region) {
+            // Focus on a region's first row brings its heading into view too.
+            val block = remember { BringIntoViewRequester() }
+            Column(Modifier.bringIntoViewRequester(block), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                if (region != org.imdtv.iptvtv.data.sports.Region.NONE) Text(regionName(region), fontSize = 14.sp, color = Color.White, fontWeight = FontWeight.Bold)
+                list.chunked(2).forEachIndexed { row, line ->
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        line.forEach { l ->
+                            val on = l.id in s.sportsLeagues
+                            FocusBox({ vm.update { it.copy(sportsLeagues = if (on) it.sportsLeagues - l.id else it.sportsLeagues + l.id) } }, Modifier.weight(1f),
+                                onFocused = { if (row == 0) scope.launch { block.bringIntoView() } }) { f ->
+                                Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(if (f) Color.White else colors.cell).padding(horizontal = 12.dp, vertical = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically) {
+                                    Column(Modifier.weight(1f)) {
+                                        Text(l.name, fontSize = 13.sp, color = if (f) colors.onFocus else Color.White, maxLines = 1)
+                                        if (bothRugby) Text(sportName(l.sport), fontSize = 10.sp, color = if (f) Color(0xFF555555) else colors.muted)
+                                    }
+                                    org.imdtv.iptvtv.ui.settings.Toggle(on, f)
+                                }
+                            }
                         }
+                        if (line.size == 1) Spacer(Modifier.weight(1f))
                     }
-                    index++
                 }
             }
         }
     }
 }
 
+@OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
 @Composable
 private fun StandingsPage(vm: SportsViewModel, s: AppSettings, sport: Sport) {
     val colors = LocalTheme.current.colors
@@ -654,12 +648,32 @@ private fun StandingsPage(vm: SportsViewModel, s: AppSettings, sport: Sport) {
     val favTeams = s.sportsTeams.map(::favouriteTeamKey).toSet()
     Column(Modifier.padding(start = 24.dp, top = 104.dp, end = 24.dp, bottom = 12.dp)) {
         if (leagues.isEmpty()) { Text(stringResource(R.string.sports_no_tables), fontSize = 13.sp, color = colors.muted); return@Column }
-        // One button for the competition: OK lists them all.
+        // One button for the competition: OK drops the list down over the table, on this screen.
         var picking by remember { mutableStateOf(false) }
-        Row { Pill((league?.name ?: "") + " ▾") { picking = true } }
-        if (picking) org.imdtv.iptvtv.ui.ContextMenu(stringResource(R.string.sports_standings), leagues.map { l -> l.name to { league = l; picking = false } },
-            leagues.indexOf(league).coerceAtLeast(0)) { picking = false }
-        Box(Modifier.padding(top = 10.dp).fillMaxSize().panel().padding(12.dp)) {
+        val picker = remember { FocusRequester() }
+        Box(Modifier.zIndex(1f)) {
+            Pill((league?.name ?: "") + " ▾", Modifier.focusRequester(picker), selected = picking) { picking = !picking }
+            if (picking) {
+                val current = remember { FocusRequester() }
+                BackHandler { picking = false; runCatching { picker.requestFocus() } }
+                // Takes no room (drawn over the table); focus stays in it until a pick or Back.
+                Column(Modifier.layout { m, c -> val p = m.measure(c.copy(minWidth = 0, minHeight = 0, maxHeight = androidx.compose.ui.unit.Constraints.Infinity))
+                        layout(0, 0) { p.place(0, 38.dp.roundToPx()) } }
+                    .width(280.dp).heightIn(max = 360.dp).clip(RoundedCornerShape(14.dp)).background(Color(0xF21A1C24)).padding(6.dp)
+                    .focusProperties { exit = { FocusRequester.Cancel } }.focusGroup().verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    leagues.forEach { l ->
+                        Pill(l.name, (if (l == league) Modifier.focusRequester(current) else Modifier).fillMaxWidth(), selected = l == league) {
+                            league = l; picking = false; runCatching { picker.requestFocus() }
+                        }
+                    }
+                }
+                LaunchedEffect(Unit) { runCatching { current.requestFocus() } }
+            }
+        }
+        // Up from the table goes to the competition button (it went past it to the menu).
+        Box(Modifier.padding(top = 10.dp).fillMaxSize().panel().padding(12.dp)
+            .focusProperties { exit = { if (it == androidx.compose.ui.focus.FocusDirection.Up) picker else FocusRequester.Default } }.focusGroup()) {
             val t = tables
             when {
                 t == null -> Spinner(Modifier.align(Alignment.Center), 20.dp, colors.muted)
