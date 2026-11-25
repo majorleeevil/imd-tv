@@ -65,4 +65,6 @@
     <string name="sports_ev_halftime">Pauză</string>
     <string name="sports_ev_second_half">Repriza a doua</string>
     <string name="sports_ev_fulltime">Final</string>
+    <string name="sports_focus_preview">Previzualizare la focalizare</string>
+    <string name="sports_focus_preview_expl">Oprirea pe un meci comută previzualizarea pe el. Oprit: ține apăsat OK pe un meci și alege Previzualizare.</string>
 </resources>

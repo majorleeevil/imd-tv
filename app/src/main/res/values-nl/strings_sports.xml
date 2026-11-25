@@ -65,4 +65,6 @@
     <string name="sports_ev_halftime">Rust</string>
     <string name="sports_ev_second_half">Tweede helft</string>
     <string name="sports_ev_fulltime">Einde wedstrijd</string>
+    <string name="sports_focus_preview">Voorbeeld bij focus</string>
+    <string name="sports_focus_preview_expl">Blijf je op een wedstrijd staan, dan schakelt het voorbeeld ernaar. Uit: houd OK ingedrukt op een wedstrijd en kies Voorbeschouwing.</string>
 </resources>

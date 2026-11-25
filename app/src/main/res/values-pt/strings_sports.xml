@@ -65,4 +65,6 @@
     <string name="sports_ev_halftime">Intervalo</string>
     <string name="sports_ev_second_half">Segunda parte</string>
     <string name="sports_ev_fulltime">Fim do jogo</string>
+    <string name="sports_focus_preview">Pré-visualizar ao focar</string>
+    <string name="sports_focus_preview_expl">Parar num jogo muda a pré-visualização para ele. Desligado: mantenha OK num jogo e escolha Antevisão.</string>
 </resources>

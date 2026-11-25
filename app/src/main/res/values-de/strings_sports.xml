@@ -65,4 +65,6 @@
     <string name="sports_ev_halftime">Halbzeit</string>
     <string name="sports_ev_second_half">Zweite Halbzeit</string>
     <string name="sports_ev_fulltime">Abpfiff</string>
+    <string name="sports_focus_preview">Vorschau bei Fokus</string>
+    <string name="sports_focus_preview_expl">Bleibt die Auswahl auf einem Spiel, wechselt die Vorschau dorthin. Aus: OK auf einem Spiel halten und Vorschau wählen.</string>
 </resources>

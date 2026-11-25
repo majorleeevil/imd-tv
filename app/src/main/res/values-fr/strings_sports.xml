@@ -65,4 +65,6 @@
     <string name="sports_ev_halftime">Mi-temps</string>
     <string name="sports_ev_second_half">Seconde période</string>
     <string name="sports_ev_fulltime">Fin du match</string>
+    <string name="sports_focus_preview">Aperçu au survol</string>
+    <string name="sports_focus_preview_expl">S\'arrêter sur un match bascule l\'aperçu sur celui-ci. Désactivé : maintenez OK sur un match et choisissez Aperçu.</string>
 </resources>

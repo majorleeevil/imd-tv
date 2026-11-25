@@ -300,9 +300,11 @@ class EspnClient(private val http: OkHttpClient, private val json: Json, private
     private val site = "https://site.api.espn.com/apis/site/v2/sports"
 
     /** The URL's body, cached per URL; on failure the last good copy (stale), else the error. */
-    private suspend fun get(url: String): Fetched<JsonElement> = withContext(Dispatchers.IO) {
+    /** [cacheOnly]: the last saved answer (stale), no network; throws when there is none. */
+    private suspend fun get(url: String, cacheOnly: Boolean = false): Fetched<JsonElement> = withContext(Dispatchers.IO) {
         val file = File(cacheDir, "%08x".format(url.hashCode()) + ".json")
         try {
+            if (cacheOnly) throw java.io.IOException("cache only")
             val body = http.newCall(Request.Builder().url(url).build()).execute().use { r ->
                 if (!r.isSuccessful) throw java.io.IOException("HTTP ${r.code}")
                 r.body!!.string()
@@ -319,13 +321,14 @@ class EspnClient(private val http: OkHttpClient, private val json: Json, private
 
     /** One day's games of [leagues], fetched in parallel; a league that fails (and has no cache) is left out. Null = all failed. */
     // shortcut: ESPN's dates= is its own (US Eastern) day, so a US game after midnight UK shows on the day before; ranges 400 on some sports
-    suspend fun day(leagues: List<League>, day: LocalDate): Fetched<List<Game>>? = coroutineScope {
+    /** [cacheOnly]: the last saved answers only, to show at once while the network answers. */
+    suspend fun day(leagues: List<League>, day: LocalDate, cacheOnly: Boolean = false): Fetched<List<Game>>? = coroutineScope {
         val parts = leagues.map { l ->
             async {
                 runCatching {
-                    if (l.sport == Sport.CRICKET) get("https://site.api.espn.com/apis/personalized/v2/scoreboard/header?sport=cricket&region=gb").let { f ->
+                    if (l.sport == Sport.CRICKET) get("https://site.api.espn.com/apis/personalized/v2/scoreboard/header?sport=cricket&region=gb", cacheOnly).let { f ->
                         Fetched(parseCricket(f.value, l).filter { java.time.Instant.ofEpochMilli(it.start).atZone(java.time.ZoneId.systemDefault()).toLocalDate() == day }, f.updatedAt, f.stale)
-                    } else get("$site/${l.sport.key}/${l.slug}/scoreboard?dates=${DAY.format(day)}").let { Fetched(parseScoreboard(it.value, l), it.updatedAt, it.stale) }
+                    } else get("$site/${l.sport.key}/${l.slug}/scoreboard?dates=${DAY.format(day)}", cacheOnly).let { Fetched(parseScoreboard(it.value, l), it.updatedAt, it.stale) }
                 }.getOrNull()
             }
         }.awaitAll().filterNotNull()

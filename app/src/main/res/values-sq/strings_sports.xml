@@ -65,4 +65,6 @@
     <string name="sports_ev_halftime">Pushimi</string>
     <string name="sports_ev_second_half">Pjesa e dytë</string>
     <string name="sports_ev_fulltime">Fundi i ndeshjes</string>
+    <string name="sports_focus_preview">Pamja paraprake në fokus</string>
+    <string name="sports_focus_preview_expl">Kur ndalesh te një ndeshje, pamja paraprake kalon te ajo. Joaktiv: mbaj OK te një ndeshje dhe zgjidh Parapamje.</string>
 </resources>

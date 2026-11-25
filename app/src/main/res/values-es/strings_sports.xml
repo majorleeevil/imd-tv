@@ -65,4 +65,6 @@
     <string name="sports_ev_halftime">Descanso</string>
     <string name="sports_ev_second_half">Segunda parte</string>
     <string name="sports_ev_fulltime">Final</string>
+    <string name="sports_focus_preview">Vista previa al enfocar</string>
+    <string name="sports_focus_preview_expl">Al detenerte en un partido, la vista previa cambia a él. Desactivado: mantén OK en un partido y elige Previa.</string>
 </resources>

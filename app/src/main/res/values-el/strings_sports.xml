@@ -65,4 +65,6 @@
     <string name="sports_ev_halftime">Ημίχρονο</string>
     <string name="sports_ev_second_half">Δεύτερο ημίχρονο</string>
     <string name="sports_ev_fulltime">Τέλος αγώνα</string>
+    <string name="sports_focus_preview">Προεπισκόπηση με εστίαση</string>
+    <string name="sports_focus_preview_expl">Όταν σταματάτε σε έναν αγώνα, η προεπισκόπηση αλλάζει σε αυτόν. Off: κρατήστε πατημένο το OK σε έναν αγώνα και επιλέξτε Προεπισκόπηση.</string>
 </resources>

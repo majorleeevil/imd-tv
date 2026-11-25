@@ -228,6 +228,7 @@ fun SportsSettingsRows(s: AppSettings, update: ((AppSettings) -> AppSettings) ->
     SwitchRow(stringResource(R.string.sports_show_tab), stringResource(R.string.sports_show_tab_expl), s.sportsTab, first) { on -> update { it.copy(sportsTab = on) } }
     SwitchRow(stringResource(R.string.sports_preview_fade), stringResource(R.string.sports_preview_fade_expl), s.sportsPreviewFade) { on -> update { it.copy(sportsPreviewFade = on) } }
     SwitchRow(stringResource(R.string.sports_team_results), stringResource(R.string.sports_team_results_expl), s.sportsTeamResults) { on -> update { it.copy(sportsTeamResults = on) } }
+    SwitchRow(stringResource(R.string.sports_focus_preview), stringResource(R.string.sports_focus_preview_expl), s.sportsFocusPreview) { on -> update { it.copy(sportsFocusPreview = on) } }
     Text(stringResource(R.string.sports_sports_title), fontSize = 14.sp, color = LocalTheme.current.colors.muted, modifier = Modifier.padding(top = 10.dp, start = 4.dp))
     for (sp in Sport.entries) {
         val on = sp.key in s.sports
@@ -248,6 +249,8 @@ private fun androidx.compose.foundation.layout.BoxScope.GamesPage(vm: SportsView
     val strip by live.strip.collectAsState()
     val colors = LocalTheme.current.colors
     LaunchedEffect(sport, offset) { vm.poll(sport, offset, strip) } // stops when the page closes: no calls off screen
+    // The channel search index (47k names) builds while ESPN answers, not after it on the first lookup.
+    LaunchedEffect(strip) { vm.warm(strip) }
     // Day strip
     Row(Modifier.padding(start = 24.dp, top = 98.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
         Pill(stringResource(R.string.sports_change_sport, sportName(sport))) { vm.page.value = SportsPage.SPORT }
@@ -274,7 +277,8 @@ private fun androidx.compose.foundation.layout.BoxScope.GamesPage(vm: SportsView
     val scope = androidx.compose.runtime.rememberCoroutineScope()
     // A card held in focus for a moment previews its game if a channel shows it now (no Preview buttons).
     var dwell by remember { mutableStateOf<Game?>(null) }
-    LaunchedEffect(dwell) { dwell?.let { kotlinx.coroutines.delay(700); vm.focusPreview(it, strip) } }
+    // Off (Settings › SportsHub › Preview on focus): only the hold-OK menu's Preview changes the preview.
+    LaunchedEffect(dwell) { dwell?.takeIf { s.sportsFocusPreview }?.let { kotlinx.coroutines.delay(250); vm.focusPreview(it, strip) } } // long enough to scroll past a card
 
     // Hold OK on a card: Preview, Stats, and each team in or out of the favourites.
     var menuGame by remember { mutableStateOf<Game?>(null) }
@@ -314,7 +318,7 @@ private fun androidx.compose.foundation.layout.BoxScope.GamesPage(vm: SportsView
                                 if (g.id == vm.lastFocusedGame) Modifier.focusRequester(back) else Modifier,
                                 onFocused = { on ->
                                     heroFocused = on
-                                    if (on) { vm.lastFocusedGame = g.id; dwell = null; vm.focusHero(g, strip) }
+                                    if (on) { vm.lastFocusedGame = g.id; dwell = null; if (s.sportsFocusPreview) vm.focusHero(g, strip) }
                                 }) { onMatch(g) }
                         }
                     }

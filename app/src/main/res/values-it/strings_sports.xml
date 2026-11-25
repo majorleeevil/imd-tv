@@ -65,4 +65,6 @@
     <string name="sports_ev_halftime">Intervallo</string>
     <string name="sports_ev_second_half">Secondo tempo</string>
     <string name="sports_ev_fulltime">Fine partita</string>
+    <string name="sports_focus_preview">Anteprima alla selezione</string>
+    <string name="sports_focus_preview_expl">Fermandoti su una partita, l\'anteprima passa a quella. Off: tieni premuto OK su una partita e scegli Anteprima.</string>
 </resources>

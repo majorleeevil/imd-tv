@@ -233,6 +233,8 @@ data class AppSettings(
     val sportsPreviewFade: Boolean = true,
     /** A favourite team's finished game stays in the favourites box (off: it moves to the league list). */
     val sportsTeamResults: Boolean = false,
+    /** A SportsHub card in focus for a moment switches the preview to its game; off: only the card menu's Preview does. */
+    val sportsFocusPreview: Boolean = true,
 ) {
     /** The per-theme appearance: colour, mode, guide rows, header size, preview fade. */
     fun look() = listOf(themeColour.name, themeDark, guideRows, headerSize.name, previewFade).joinToString(";")

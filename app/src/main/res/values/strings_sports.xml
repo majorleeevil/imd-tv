@@ -67,4 +67,6 @@
     <string name="sports_ev_halftime">Half-time</string>
     <string name="sports_ev_second_half">Second half</string>
     <string name="sports_ev_fulltime">Full time</string>
+    <string name="sports_focus_preview">Preview on focus</string>
+    <string name="sports_focus_preview_expl">Resting on a game switches the preview to it. Off: hold OK on a game and choose Preview.</string>
 </resources>

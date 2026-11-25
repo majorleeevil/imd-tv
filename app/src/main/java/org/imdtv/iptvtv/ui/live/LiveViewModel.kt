@@ -198,6 +198,16 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
     /** Gamestation has opened at the playing channel once (or the user moved first). */
     var xmbRestored = false
 
+    // The channel search index (2 s on a Chromecast for 47k names) builds in the background once the guide is up, so the
+    // first SportsHub lookup or search doesn't wait for it.
+    init {
+        viewModelScope.launch {
+            val p = provider.filterNotNull().first()
+            kotlinx.coroutines.delay(4_000)
+            c.search.warm(p.id, strip.value, listOf(org.imdtv.iptvtv.data.model.Kind.LIVE))
+        }
+    }
+
     init {
         viewModelScope.launch {
             // A recreated activity (e.g. reopened after Back-exit) gets a fresh view model while the process-wide

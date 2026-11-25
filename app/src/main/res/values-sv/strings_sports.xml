@@ -65,4 +65,6 @@
     <string name="sports_ev_halftime">Halvtid</string>
     <string name="sports_ev_second_half">Andra halvlek</string>
     <string name="sports_ev_fulltime">Slutsignal</string>
+    <string name="sports_focus_preview">Förhandsvisning vid fokus</string>
+    <string name="sports_focus_preview_expl">Stannar du på en match byter förhandsvisningen till den. Av: håll in OK på en match och välj Förhandstitt.</string>
 </resources>

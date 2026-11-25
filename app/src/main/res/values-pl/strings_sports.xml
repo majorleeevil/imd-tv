@@ -65,4 +65,6 @@
     <string name="sports_ev_halftime">Przerwa</string>
     <string name="sports_ev_second_half">Druga połowa</string>
     <string name="sports_ev_fulltime">Koniec meczu</string>
+    <string name="sports_focus_preview">Podgląd po zaznaczeniu</string>
+    <string name="sports_focus_preview_expl">Zatrzymanie się na meczu przełącza na niego podgląd. Wyłączone: przytrzymaj OK na meczu i wybierz Zapowiedź.</string>
 </resources>

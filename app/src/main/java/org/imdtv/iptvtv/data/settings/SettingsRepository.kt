@@ -39,6 +39,7 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
     private val sportsTeams = androidx.datastore.preferences.core.stringSetPreferencesKey("sports_teams")
     private val sportsPreviewFade = booleanPreferencesKey("sports_preview_fade")
     private val sportsTeamResults = booleanPreferencesKey("sports_team_results")
+    private val sportsFocusPreview = booleanPreferencesKey("sports_focus_preview")
     private val liveSubtitlesOn = booleanPreferencesKey("live_subtitles_on")
     private val videoAspect = stringPreferencesKey("video_aspect")
     private val mergeChannels = booleanPreferencesKey("merge_channels")
@@ -132,6 +133,7 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
             sportsTab = this[sportsTab] ?: d.sportsTab, sports = this[sports] ?: d.sports, sportsSport = this[sportsSport] ?: d.sportsSport,
             sportsLeagues = this[sportsLeagues] ?: d.sportsLeagues, sportsTeams = this[sportsTeams] ?: d.sportsTeams,
             sportsPreviewFade = this[sportsPreviewFade] ?: d.sportsPreviewFade, sportsTeamResults = this[sportsTeamResults] ?: d.sportsTeamResults,
+            sportsFocusPreview = this[sportsFocusPreview] ?: d.sportsFocusPreview,
             themeLooks = this[themeLooks]?.split('|')?.mapNotNull { e -> e.split('=', limit = 2).takeIf { it.size == 2 }?.let { it[0] to it[1] } }?.toMap().orEmpty(),
             liveSubtitlesOn = this[liveSubtitlesOn] ?: d.liveSubtitlesOn,
             videoAspect = VideoAspect.entries.find { it.name == this[videoAspect] } ?: d.videoAspect,
@@ -212,7 +214,7 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
         this[showDate] = s.showDate
         this[guidesOff] = s.guidesOff
         this[sportsTab] = s.sportsTab; this[sports] = s.sports; this[sportsSport] = s.sportsSport
-        this[sportsLeagues] = s.sportsLeagues; this[sportsTeams] = s.sportsTeams; this[sportsPreviewFade] = s.sportsPreviewFade; this[sportsTeamResults] = s.sportsTeamResults
+        this[sportsLeagues] = s.sportsLeagues; this[sportsTeams] = s.sportsTeams; this[sportsPreviewFade] = s.sportsPreviewFade; this[sportsTeamResults] = s.sportsTeamResults; this[sportsFocusPreview] = s.sportsFocusPreview
         this[themeLooks] = s.themeLooks.entries.joinToString("|") { "${it.key}=${it.value}" }
         this[liveSubtitlesOn] = s.liveSubtitlesOn
         this[videoAspect] = s.videoAspect.name

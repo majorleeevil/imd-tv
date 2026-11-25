@@ -66,6 +66,10 @@ class SportsViewModel(app: Application) : AndroidViewModel(app) {
 
     fun day(): LocalDate = LocalDate.now().plusDays(dayOffset.value.toLong())
 
+    suspend fun warm(strip: List<String>) {
+        c.providerRepository.activeProviderId.first()?.let { c.search.warm(it, strip, listOf(org.imdtv.iptvtv.data.model.Kind.LIVE)) }
+    }
+
     fun update(change: (AppSettings) -> AppSettings) { viewModelScope.launch { c.settings.update(change) } }
 
     /** Polls while the caller (the screen's LaunchedEffect) is alive: every 60 s with a live game, else at the next kick-off or 15 min. */
@@ -73,6 +77,12 @@ class SportsViewModel(app: Application) : AndroidViewModel(app) {
         // Same sport and day as last time (back from a match page or full screen): keep what's shown, refresh in place.
         if (shownKey != sport to offset) { games.value = null; failed.value = false; paneManual = false; pane.value = null }
         shownKey = sport to offset
+        // Nothing shown yet: the last saved games at once ("Updated hh:mm"), and the preview's channel lookup starts from them
+        // (teams and kick-off don't change) while ESPN answers.
+        if (games.value == null) espn.day(leagues(sport), LocalDate.now().plusDays(offset.toLong()), cacheOnly = true)?.let {
+            games.value = it
+            viewModelScope.launch { autoPane(strip) }
+        }
         while (true) {
             val got = espn.day(leagues(sport), LocalDate.now().plusDays(offset.toLong()))
             if (got != null) games.value = got

@@ -65,4 +65,6 @@
     <string name="sports_ev_halftime">Devre arası</string>
     <string name="sports_ev_second_half">İkinci yarı</string>
     <string name="sports_ev_fulltime">Maç sonu</string>
+    <string name="sports_focus_preview">Odakta önizleme</string>
+    <string name="sports_focus_preview_expl">Bir maçta durunca önizleme o maça geçer. Kapalı: bir maçta OK tuşunu basılı tutup Ön izleme seçin.</string>
 </resources>
