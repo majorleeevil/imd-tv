@@ -229,7 +229,8 @@ fun SportsScreen(vm: SportsViewModel, live: LiveViewModel, nav: @Composable () -
             SportsPage.STANDINGS -> StandingsPage(vm, s, sport)
             SportsPage.SETTINGS -> Column(Modifier.padding(start = 24.dp, top = 104.dp, bottom = 12.dp).width(620.dp).verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(6.dp)) { SportsSettingsRows(s, vm::update) }
-            SportsPage.SPORT -> Column(Modifier.padding(start = 24.dp, top = 104.dp).width(360.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            // Scrolls: eight sports run off the bottom of the screen (focus stopped at Cricket, so F1 couldn't be picked).
+            SportsPage.SPORT -> Column(Modifier.padding(start = 24.dp, top = 104.dp, bottom = 12.dp).width(360.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 val first = remember { FocusRequester() }
                 Sport.entries.filter { it.key in s.sports }.forEachIndexed { i, sp ->
                     org.imdtv.iptvtv.ui.settings.SettingRow(sportName(sp), "", if (sp == sport) "✓" else null, if (i == 0) Modifier.focusRequester(first) else Modifier) {
