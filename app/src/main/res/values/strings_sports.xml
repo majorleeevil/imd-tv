@@ -84,4 +84,8 @@
     <string name="sports_f1_race">Race</string>
     <string name="sports_starts_in">Starts in %1$s</string>
     <string name="sports_f1_no_results">Results appear here once the session starts.</string>
+    <!-- Standings: goals for, goals against (short), and the recent-form column. -->
+    <string name="sports_col_gf">GF</string>
+    <string name="sports_col_ga">GA</string>
+    <string name="sports_last5">Last 5</string>
 </resources>

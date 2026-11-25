@@ -80,4 +80,7 @@
     <string name="sports_f1_race">Carrera</string>
     <string name="sports_starts_in">Empieza en %1$s</string>
     <string name="sports_f1_no_results">Los resultados aparecerán aquí cuando empiece la sesión.</string>
+    <string name="sports_col_gf">GF</string>
+    <string name="sports_col_ga">GC</string>
+    <string name="sports_last5">Últimos 5</string>
 </resources>

@@ -80,4 +80,7 @@
     <string name="sports_f1_race">Αγώνας</string>
     <string name="sports_starts_in">Ξεκινά σε %1$s</string>
     <string name="sports_f1_no_results">Τα αποτελέσματα εμφανίζονται εδώ μόλις ξεκινήσει η συνεδρία.</string>
+    <string name="sports_col_gf">GF</string>
+    <string name="sports_col_ga">GA</string>
+    <string name="sports_last5">Τελευταία 5</string>
 </resources>

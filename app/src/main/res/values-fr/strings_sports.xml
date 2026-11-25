@@ -80,4 +80,7 @@
     <string name="sports_f1_race">Course</string>
     <string name="sports_starts_in">Début dans %1$s</string>
     <string name="sports_f1_no_results">Les résultats s\'afficheront ici dès le début de la session.</string>
+    <string name="sports_col_gf">BP</string>
+    <string name="sports_col_ga">BC</string>
+    <string name="sports_last5">5 derniers</string>
 </resources>

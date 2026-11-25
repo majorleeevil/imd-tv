@@ -1,5 +1,6 @@
 package org.imdtv.iptvtv.ui.sports
 
+import kotlinx.coroutines.awaitAll
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -262,6 +263,14 @@ class SportsViewModel(app: Application) : AndroidViewModel(app) {
 
     // --- Standings and team picker: fetched when their page opens. ---
     suspend fun standings(l: League): Fetched<List<Table>>? = runCatching { espn.standings(l) }.getOrNull()
+
+    /** Each team's last five (oldest first) from its latest result in the past week; the standings feed has no form. */
+    suspend fun form(l: League): Map<String, String> = kotlinx.coroutines.coroutineScope {
+        (0..6).map { d -> async { runCatching { espn.day(listOf(l), LocalDate.now().minusDays(d.toLong()))?.value }.getOrNull().orEmpty() } }.awaitAll()
+            .flatten().filter { it.state == GameState.POST }.sortedByDescending { it.start }
+            .flatMap { listOf(it.home, it.away) }.filter { !it.form.isNullOrEmpty() }
+            .distinctBy { it.id }.associate { it.id to it.form!!.take(5).reversed() }
+    }
     suspend fun teams(l: League): List<Side>? = runCatching { espn.teams(l) }.getOrNull()
 
     /** F1 drivers' teams: fetched once, when an F1 page first needs them. */

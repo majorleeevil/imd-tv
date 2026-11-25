@@ -80,4 +80,7 @@
     <string name="sports_f1_race">Wyścig</string>
     <string name="sports_starts_in">Start za %1$s</string>
     <string name="sports_f1_no_results">Wyniki pojawią się tutaj po rozpoczęciu sesji.</string>
+    <string name="sports_col_gf">BZ</string>
+    <string name="sports_col_ga">BS</string>
+    <string name="sports_last5">Ostatnie 5</string>
 </resources>

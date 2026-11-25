@@ -80,4 +80,7 @@
     <string name="sports_f1_race">Gara</string>
     <string name="sports_starts_in">Fillon pas %1$s</string>
     <string name="sports_f1_no_results">Rezultatet shfaqen këtu sapo të fillojë sesioni.</string>
+    <string name="sports_col_gf">GF</string>
+    <string name="sports_col_ga">GA</string>
+    <string name="sports_last5">5 të fundit</string>
 </resources>

@@ -80,4 +80,7 @@
     <string name="sports_f1_race">Cursă</string>
     <string name="sports_starts_in">Începe în %1$s</string>
     <string name="sports_f1_no_results">Rezultatele apar aici după începerea sesiunii.</string>
+    <string name="sports_col_gf">GM</string>
+    <string name="sports_col_ga">GP</string>
+    <string name="sports_last5">Ultimele 5</string>
 </resources>

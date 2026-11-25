@@ -80,4 +80,7 @@
     <string name="sports_f1_race">Lopp</string>
     <string name="sports_starts_in">Börjar om %1$s</string>
     <string name="sports_f1_no_results">Resultat visas här när sessionen startar.</string>
+    <string name="sports_col_gf">GM</string>
+    <string name="sports_col_ga">IM</string>
+    <string name="sports_last5">Senaste 5</string>
 </resources>

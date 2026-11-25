@@ -80,4 +80,7 @@
     <string name="sports_f1_race">Yarış</string>
     <string name="sports_starts_in">%1$s sonra başlıyor</string>
     <string name="sports_f1_no_results">Sonuçlar oturum başlayınca burada görünür.</string>
+    <string name="sports_col_gf">AG</string>
+    <string name="sports_col_ga">YG</string>
+    <string name="sports_last5">Son 5</string>
 </resources>

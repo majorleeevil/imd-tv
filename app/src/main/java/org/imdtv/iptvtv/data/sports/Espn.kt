@@ -64,8 +64,9 @@ fun leagueById(id: String) = LEAGUES.find { it.id == id }
 enum class GameState { PRE, IN, POST }
 
 /** [color] / [altColor]: ESPN's home and away colours, "660e36" (lineup tags, see [kitColours]). */
+/** [form]: ESPN's last results, newest first ("DWWLW", all competitions). */
 data class Side(val id: String, val name: String, val short: String, val abbr: String, val logo: String?, val score: String?,
-                val color: String? = null, val altColor: String? = null)
+                val color: String? = null, val altColor: String? = null, val form: String? = null)
 
 data class Game(
     val id: String, val league: League, val leagueName: String, val leagueLogo: String?, val start: Long, val state: GameState,
@@ -120,7 +121,9 @@ fun parseKeyEvents(root: JsonElement): List<KeyEvent> = root.a("keyEvents").mapN
         e.a("participants").mapNotNull { it.o("athlete").s("displayName") })
 }.reversed()
 
-data class TableRow(val rank: Int, val team: Side, val played: String, val won: String, val drawn: String, val lost: String, val gd: String, val points: String)
+/** [zone]: ESPN's colour for the place ("81D6AC", Champions League; "FF7F84", relegation), null for none. */
+data class TableRow(val rank: Int, val team: Side, val played: String, val won: String, val drawn: String, val lost: String, val gd: String, val points: String,
+                    val gf: String = "", val ga: String = "", val zone: String? = null)
 data class Table(val name: String, val rows: List<TableRow>)
 
 /** A cached or fresh answer; [stale] = the network failed and this is the last good copy from [updatedAt]. */
@@ -156,7 +159,7 @@ private fun side(c: JsonElement): Side? {
     val name = t.s("displayName") ?: t.s("name") ?: return null
     return Side(id, name, t.s("shortDisplayName") ?: name, t.s("abbreviation") ?: name.take(3).uppercase(),
         t.s("logo") ?: t.first("logos").s("href") ?: c.s("logo"), c.s("score") ?: (c.o("score") as? JsonObject).s("displayValue"),
-        hex(t.s("color")), hex(t.s("alternateColor")))
+        hex(t.s("color")), hex(t.s("alternateColor")), c.s("form"))
 }
 
 /** One scoreboard response → its games; a game that doesn't parse is skipped. */
@@ -302,7 +305,8 @@ fun parseStandings(root: JsonElement): List<Table> = root.a("children").ifEmpty 
         val team = side(e) ?: return@mapNotNull null
         val st = e.a("stats").associate { (it.s("name") ?: "") to (it.s("displayValue") ?: "") }
         TableRow(st["rank"]?.toIntOrNull() ?: 0, team, st["gamesPlayed"].orEmpty(), st["wins"].orEmpty(), st["ties"].orEmpty(),
-            st["losses"].orEmpty(), st["pointDifferential"].orEmpty(), st["points"] ?: st["championshipPts"].orEmpty())
+            st["losses"].orEmpty(), st["pointDifferential"].orEmpty(), st["points"] ?: st["championshipPts"].orEmpty(),
+            st["pointsFor"].orEmpty(), st["pointsAgainst"].orEmpty(), hex(e.o("note").s("color")?.trimStart('#')))
     }.sortedBy { if (it.rank == 0) Int.MAX_VALUE else it.rank }
     Table(child.s("name") ?: root.s("name").orEmpty(), rows)
 }

@@ -666,18 +666,25 @@ private fun StandingsPage(vm: SportsViewModel, s: AppSettings, sport: Sport) {
     val leagues = all.filter { it.id in s.sportsLeagues }.ifEmpty { all }
     var league by remember(sport) { mutableStateOf(leagues.firstOrNull()) }
     val tables by produceState<org.imdtv.iptvtv.data.sports.Fetched<List<Table>>?>(null, league) { value = null; value = league?.let { vm.standings(it) } }
-    var loaded by remember(league) { mutableStateOf(false) }
-    LaunchedEffect(tables) { if (tables != null) loaded = true }
+    val football = sport == Sport.FOOTBALL
+    val form by produceState(emptyMap<String, String>(), league) { value = emptyMap(); if (football) value = league?.let { vm.form(it) }.orEmpty() }
     val favTeams = s.sportsTeams.map(::favouriteTeamKey).toSet()
-    Column(Modifier.padding(start = 24.dp, top = 104.dp, end = 24.dp, bottom = 12.dp)) {
+    val picker = remember { FocusRequester() }
+    // Down from the pills lands on the competition button, not in the table.
+    Column(Modifier.padding(start = 24.dp, top = 104.dp, end = 24.dp, bottom = 12.dp).focusProperties { enter = { picker } }.focusGroup()) {
         if (leagues.isEmpty()) { Text(stringResource(R.string.sports_no_tables), fontSize = 13.sp, color = colors.muted); return@Column }
         // One button for the competition: OK drops the list down over the table, on this screen.
-        val picker = remember { FocusRequester() }
         Box(Modifier.zIndex(1f)) { DropDown((league?.name ?: "") + " ▾", leagues.map { it.name }, leagues.indexOf(league), Modifier.focusRequester(picker)) { league = leagues[it] } }
         // Up from the table goes to the competition button (it went past it to the menu).
         Box(Modifier.padding(top = 10.dp).fillMaxSize().panel().padding(12.dp)
             .focusProperties { exit = { if (it == androidx.compose.ui.focus.FocusDirection.Up) picker else FocusRequester.Default } }.focusGroup()) {
             val t = tables
+            val heads = when {
+                sport == Sport.F1 -> listOf(R.string.sports_col_pts)
+                football -> listOf(R.string.sports_col_played, R.string.sports_col_won, R.string.sports_col_drawn, R.string.sports_col_lost,
+                    R.string.sports_col_gf, R.string.sports_col_ga, R.string.sports_col_gd, R.string.sports_col_pts)
+                else -> listOf(R.string.sports_col_played, R.string.sports_col_won, R.string.sports_col_drawn, R.string.sports_col_lost, R.string.sports_col_gd, R.string.sports_col_pts)
+            }.map { stringResource(it) }
             when {
                 t == null -> Spinner(Modifier.align(Alignment.Center), 20.dp, colors.muted)
                 t.value.isEmpty() -> Text(stringResource(R.string.sports_no_tables), fontSize = 13.sp, color = colors.muted, modifier = Modifier.align(Alignment.Center))
@@ -687,14 +694,16 @@ private fun StandingsPage(vm: SportsViewModel, s: AppSettings, sport: Sport) {
                         item(key = "h" + table.name) {
                             Column {
                                 if (t.value.size > 1) Text(table.name, fontSize = 13.sp, color = Color.White, fontWeight = FontWeight.Medium, modifier = Modifier.padding(top = 6.dp, bottom = 2.dp))
-                                TableLine("#", null, "", (if (sport == Sport.F1) listOf(R.string.sports_col_pts) else listOf(R.string.sports_col_played, R.string.sports_col_won,
-                                    R.string.sports_col_drawn, R.string.sports_col_lost, R.string.sports_col_gd, R.string.sports_col_pts)).map { stringResource(it) }, header = true)
+                                TableLine("#", null, "", heads, header = true, form = if (football) stringResource(R.string.sports_last5) else null)
                             }
                         }
                         items(table.rows, key = { table.name + it.team.id }) { r ->
                             FocusBox({}) { f ->
-                                TableLine(r.rank.toString(), r.team.logo, r.team.name, if (sport == Sport.F1) listOf(r.points) else listOf(r.played, r.won, r.drawn, r.lost, r.gd, r.points),
-                                    focused = f, fav = teamKey(sport, r.team.id) in favTeams)
+                                TableLine(r.rank.toString(), r.team.logo, r.team.name, when {
+                                    sport == Sport.F1 -> listOf(r.points)
+                                    football -> listOf(r.played, r.won, r.drawn, r.lost, r.gf, r.ga, r.gd, r.points)
+                                    else -> listOf(r.played, r.won, r.drawn, r.lost, r.gd, r.points)
+                                }, focused = f, fav = teamKey(sport, r.team.id) in favTeams, zone = r.zone?.let(::colour), form = if (football) form[r.team.id].orEmpty() else null)
                             }
                         }
                     }
@@ -704,18 +713,33 @@ private fun StandingsPage(vm: SportsViewModel, s: AppSettings, sport: Sport) {
     }
 }
 
+/**
+ * One standings line, left-aligned (club, then narrow number columns, then the last five): a bar on the left in the place's
+ * colour (European places, relegation). [form] oldest first: W/D/L as green ✓, grey –, red ✕; a header passes its "Last 5".
+ */
 @Composable
-private fun TableLine(rank: String, logo: String?, name: String, cols: List<String>, header: Boolean = false, focused: Boolean = false, fav: Boolean = false) {
+private fun TableLine(rank: String, logo: String?, name: String, cols: List<String>, header: Boolean = false, focused: Boolean = false, fav: Boolean = false,
+                      zone: Color? = null, form: String? = null) {
     val colors = LocalTheme.current.colors
     val fg = when { focused -> colors.onFocus; header -> colors.muted; fav -> colors.accent; else -> Color.White }
     Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(if (focused) Color.White else if (header) Color.Transparent else Color(0x0DFFFFFF))
-        .padding(horizontal = 10.dp, vertical = if (header) 2.dp else 4.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text(rank, fontSize = 12.sp, color = fg, modifier = Modifier.width(28.dp))
+        .padding(end = 10.dp, top = if (header) 2.dp else 4.dp, bottom = if (header) 2.dp else 4.dp), verticalAlignment = Alignment.CenterVertically) {
+        Box(Modifier.width(4.dp).height(20.dp).background(zone ?: Color.Transparent))
+        Text(rank, fontSize = 12.sp, color = fg, textAlign = androidx.compose.ui.text.style.TextAlign.End, modifier = Modifier.padding(end = 10.dp).width(28.dp))
         if (!header) Badge(logo, 18.dp) else Spacer(Modifier.width(18.dp))
-        Text(name, fontSize = 12.sp, color = fg, maxLines = 1, fontWeight = if (fav) FontWeight.Bold else FontWeight.Normal, modifier = Modifier.padding(start = 8.dp).weight(1f))
+        Text(name, fontSize = 12.sp, color = fg, maxLines = 1, overflow = TextOverflow.Ellipsis, fontWeight = if (fav) FontWeight.Bold else FontWeight.Normal,
+            modifier = Modifier.padding(start = 8.dp).width(190.dp))
         cols.forEachIndexed { i, c ->
-            Text(c, fontSize = 12.sp, color = fg, fontWeight = if (i == cols.lastIndex && !header) FontWeight.Bold else FontWeight.Normal,
-                textAlign = androidx.compose.ui.text.style.TextAlign.End, modifier = Modifier.width(48.dp))
+            Text(c, fontSize = 12.sp, color = fg, fontWeight = if (i == cols.lastIndex) FontWeight.Bold else FontWeight.Normal,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.width(40.dp))
+        }
+        if (form != null) Row(Modifier.padding(start = 16.dp), horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+            if (header) Text(form, fontSize = 12.sp, color = fg)
+            else form.forEach { r ->
+                val (mark, bg) = when (r) { 'W' -> "✓" to Color(0xFF2E7D32); 'L' -> "✕" to Color(0xFFC62828); else -> "–" to Color(0xFF757575) }
+                Text(mark, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color.White, textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    modifier = Modifier.size(16.dp).clip(androidx.compose.foundation.shape.CircleShape).background(bg))
+            }
         }
     }
 }
