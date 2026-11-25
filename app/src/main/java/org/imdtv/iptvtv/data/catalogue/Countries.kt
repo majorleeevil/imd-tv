@@ -2,10 +2,12 @@ package org.imdtv.iptvtv.data.catalogue
 
 /** Country / language detection from provider category names (spec §3). */
 
-private class Country(val label: String, val language: String)
+/** [guides] false: only for detection (hiding by language); not a country whose epgshare guides a TV in that language gets. */
+private class Country(val label: String, val language: String, val guides: Boolean = true)
 
 private val COUNTRIES: Map<String, Country> = buildMap {
     fun add(language: String, vararg pairs: Pair<String, String>) = pairs.forEach { (code, label) -> put(code, Country(label, language)) }
+    fun more(language: String, vararg pairs: Pair<String, String>) = pairs.forEach { (code, label) -> put(code, Country(label, language, guides = false)) }
     add("English", "GB" to "United Kingdom", "US" to "United States", "CA" to "Canada", "AU" to "Australia", "IE" to "Ireland", "NZ" to "New Zealand")
     add("Arabic", "SA" to "Arabic", "AE" to "United Arab Emirates", "EG" to "Egypt", "QA" to "Qatar", "KW" to "Kuwait", "MA" to "Morocco",
         "DZ" to "Algeria", "TN" to "Tunisia", "LB" to "Lebanon", "JO" to "Jordan", "IQ" to "Iraq", "SY" to "Syria", "OM" to "Oman",
@@ -41,9 +43,45 @@ private val COUNTRIES: Map<String, Country> = buildMap {
     add("Japanese", "JP" to "Japan")
     add("Korean", "KR" to "South Korea")
     add("Thai", "TH" to "Thailand")
+    // Detection only (see Country.guides): so "Match TV language" hides them instead of keeping them as "Other".
+    more("English", "ZA" to "South Africa", "NG" to "Nigeria", "KE" to "Kenya", "JM" to "Jamaica")
+    more("Spanish", "CO" to "Colombia", "CL" to "Chile", "PE" to "Peru", "VE" to "Venezuela", "EC" to "Ecuador", "UY" to "Uruguay",
+        "PY" to "Paraguay", "BO" to "Bolivia", "CR" to "Costa Rica", "DO" to "Dominican Republic", "GT" to "Guatemala", "HN" to "Honduras",
+        "SV" to "El Salvador", "PA" to "Panama", "CU" to "Cuba")
+    more("French", "LU" to "Luxembourg", "SN" to "Senegal", "CI" to "Ivory Coast", "HT" to "Haiti")
+    more("Greek", "CY" to "Cyprus")
+    more("Albanian", "XK" to "Kosovo")
+    more("Serbian", "ME" to "Montenegro", "BA" to "Bosnia and Herzegovina")
+    more("Romanian", "MD" to "Moldova")
+    more("Russian", "BY" to "Belarus", "KZ" to "Kazakhstan")
+    more("Chinese", "HK" to "Hong Kong", "TW" to "Taiwan")
+    more("English", "SG" to "Singapore")
+    more("Slovak", "SK" to "Slovakia")
+    more("Slovenian", "SI" to "Slovenia")
+    more("Macedonian", "MK" to "North Macedonia")
+    more("Lithuanian", "LT" to "Lithuania")
+    more("Latvian", "LV" to "Latvia")
+    more("Estonian", "EE" to "Estonia")
+    more("Icelandic", "IS" to "Iceland")
+    more("Maltese", "MT" to "Malta")
+    more("Armenian", "AM" to "Armenia")
+    more("Georgian", "GE" to "Georgia")
+    more("Azerbaijani", "AZ" to "Azerbaijan")
+    more("Kurdish", "KU" to "Kurdistan")
+    more("Pashto", "AF" to "Afghanistan")
+    more("Filipino", "PH" to "Philippines")
+    more("Indonesian", "ID" to "Indonesia")
+    more("Malay", "MY" to "Malaysia")
+    more("Vietnamese", "VN" to "Vietnam")
+    more("Somali", "SO" to "Somalia")
+    more("Amharic", "ET" to "Ethiopia")
+    more("Sinhala", "LK" to "Sri Lanka")
+    more("Nepali", "NP" to "Nepal")
 }
 
-private val ALIASES = mapOf("UK" to "GB", "USA" to "US", "AR" to "SA", "ARAB" to "SA", "KSA" to "SA", "UAE" to "AE", "EN" to "GB")
+private val ALIASES = mapOf("UK" to "GB", "USA" to "US", "AR" to "SA", "ARAB" to "SA", "KSA" to "SA", "UAE" to "AE", "EN" to "GB",
+    "EXYU" to "RS", "YU" to "RS", "CYP" to "CY", "LAT" to "MX", "LATN" to "MX",
+    "CG" to "ME", "SR" to "RS", "IRL" to "IE", "SRB" to "RS", "CRO" to "HR", "SLO" to "SI", "BIH" to "BA", "MKD" to "MK")
 
 /** ISO 15924 tag → (script label, language). */
 private val SCRIPTS: Map<Character.UnicodeScript, Triple<String, String, String>> = mapOf(
@@ -110,7 +148,7 @@ fun languageOf(country: String?): String = when {
 }
 
 /** ISO codes of the countries whose language is [language] ("English" → GB, US, CA, AU, IE, NZ). */
-fun countriesOfLanguage(language: String): Set<String> = COUNTRIES.filterValues { it.language == language }.keys
+fun countriesOfLanguage(language: String): Set<String> = COUNTRIES.filterValues { it.language == language && it.guides }.keys
 
 fun countryLabel(country: String?): String = when {
     country == null -> "Other"

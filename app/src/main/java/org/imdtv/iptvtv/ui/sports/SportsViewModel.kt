@@ -123,7 +123,8 @@ class SportsViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch { pane.value = Pane(g, onTv(g, strip), true) }
     }
 
-    private val tvCache = HashMap<String, Pair<Long, List<OnTv>>>()
+    /** Per game: (time, search version, channels). The version moves on any hide/show, so a hidden category drops out at once. */
+    private val tvCache = HashMap<String, Triple<Long, Long, List<OnTv>>>()
     private val categoryNames = HashMap<Long, String?>()
 
     /**
@@ -141,7 +142,8 @@ class SportsViewModel(app: Application) : AndroidViewModel(app) {
     /** Every channel showing [g], best first (the match page's Where to watch row). */
     suspend fun whereToWatch(g: Game, strip: List<String>): List<OnTv> {
         val now = System.currentTimeMillis()
-        tvCache[g.id]?.takeIf { now - it.first < 5 * 60_000 }?.let { return it.second }
+        val version = c.search.version.value
+        tvCache[g.id]?.takeIf { now - it.first < 5 * 60_000 && it.second == version }?.let { return it.third }
         val pid = c.providerRepository.activeProviderId.first() ?: return emptyList()
         val at = maxOf(now, g.start)
         // Per channel: the best programme and its match strength (0 = the game as the only fixture named).
@@ -177,11 +179,14 @@ class SportsViewModel(app: Application) : AndroidViewModel(app) {
             return when { country != null && country == home -> 0; org.imdtv.iptvtv.data.catalogue.languageOf(country) == lang -> 1; else -> 2 }
         }
         // The game as the only fixture named; then on now (not a show starting in 10 min); then the TV's country, language; then start.
-        val found = hits.values.map { (h, m) -> Triple(h, m, place(h.ch)) }
+        // "Match TV language": a channel named for another language ("CY| Cytavision Sports") stays out, even in a shown category.
+        val keep = settings.value.matchTvLanguage
+        val found = hits.values.filter { (h, _) -> !keep || org.imdtv.iptvtv.data.catalogue.matchesLanguage(org.imdtv.iptvtv.data.catalogue.detectCountry(h.ch.name), lang) }
+            .map { (h, m) -> Triple(h, m, place(h.ch)) }
             .sortedWith(compareBy({ it.second }, { it.first.p.start > now }, { it.third }, { it.first.p.start }))
             .also { r -> android.util.Log.i("SportsHub", "${g.home.name} v ${g.away.name}: " + r.joinToString { "${it.first.ch.name} (match ${it.second}, place ${it.third})" }.ifEmpty { "no channel" }) }
             .map { OnTv(it.first.ch, it.first.p) }
-        tvCache[g.id] = now to found
+        tvCache[g.id] = Triple(now, version, found)
         return found
     }
 

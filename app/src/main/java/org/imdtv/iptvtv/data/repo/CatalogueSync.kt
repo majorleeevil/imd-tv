@@ -154,7 +154,14 @@ class CatalogueSync(
         var newlyHidden = 0
         val unique = incoming.distinctBy { it.remoteId }
         val rows = unique.map { c ->
-            existing[c.remoteId]?.copy(name = c.name, country = detectCountry(c.name)) ?: run {
+            existing[c.remoteId]?.let { e ->
+                val country = detectCountry(c.name)
+                // Newly detected as another language (a country added to the list, a renamed category): hide it like a new one.
+                // A category whose detection didn't change keeps the user's own Shown/Hidden choice.
+                val nowForeign = language != null && country != e.country && !e.hidden && matchesLanguage(e.country, language) && !matchesLanguage(country, language)
+                if (nowForeign) newlyHidden++
+                e.copy(name = c.name, country = country, hidden = e.hidden || nowForeign)
+            } ?: run {
                 val country = detectCountry(c.name)
                 val hidden = hideRules.any { it.containsMatchIn(c.name) } || (language != null && !matchesLanguage(country, language))
                 if (hidden) newlyHidden++

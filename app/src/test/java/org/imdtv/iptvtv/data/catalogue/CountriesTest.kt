@@ -10,7 +10,7 @@ class CountriesTest {
     @Test fun prefixes() = mapOf(
         "UK| ENTERTAINMENT" to "GB", "UK | SPORTS" to "GB", "GB: News" to "GB", "US | NEWS" to "US", "USA - Movies" to "US",
         "DE: Sport" to "DE", "4K-AR Movies" to "SA", "AR| MBC" to "SA", "ARAB | Kids" to "SA", "FR| Cinéma" to "FR",
-        "|IN| Hindi" to "IN", "[PL] Filmy" to "PL",
+        "|IN| Hindi" to "IN", "[PL] Filmy" to "PL", "CY| Sports" to "CY", "EXYU: Sport" to "RS", "SK| Šport" to "SK",
     ).forEach { (name, code) -> assertEquals(name, code, detectCountry(name)) }
 
     @Test fun scripts() {
@@ -20,6 +20,11 @@ class CountriesTest {
     }
 
     @Test fun noCountry() = listOf("Sports", "Movies 2024", "Kids", "UKTV Play", "USA Network").forEach { assertNull(it, detectCountry(it)) }
+
+    @Test fun cyprusIsGreekNotOther() {
+        assertEquals("Greek", languageOf(detectCountry("CY| Cytavision")))
+        assertFalse(matchesLanguage(detectCountry("CY| Cytavision"), "English"))
+    }
 
     @Test fun languages() {
         assertEquals("English", languageOf("GB")); assertEquals("English", languageOf("US"))
