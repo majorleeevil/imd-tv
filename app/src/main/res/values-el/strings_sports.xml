@@ -3,14 +3,14 @@
     <string name="live_tab_sports">SportsHub</string>
     <string name="sports_games">Αγώνες</string>
     <string name="sports_fav_teams">Αγαπημένες ομάδες</string>
-    <string name="sports_followed_leagues">Ακολουθούμενες διοργανώσεις</string>
+    <string name="sports_followed_leagues">Αγαπημένες διοργανώσεις</string>
     <string name="sports_standings">Βαθμολογία</string>
     <string name="sports_settings">Ρυθμίσεις SportsHub</string>
     <string name="sports_change_sport">Άθλημα: %1$s ▾</string>
     <string name="sports_today">Σήμερα</string>
     <string name="sports_tomorrow">Αύριο</string>
     <string name="sports_favourites_title">Οι ομάδες και οι διοργανώσεις σας</string>
-    <string name="sports_no_favourites">Δεν υπάρχουν αγώνες για τις ομάδες ή τις διοργανώσεις σας αυτή την ημέρα. Επιλέξτε τις στις Αγαπημένες ομάδες και στις Ακολουθούμενες διοργανώσεις.</string>
+    <string name="sports_no_favourites">Δεν υπάρχουν αγώνες για τις ομάδες ή τις διοργανώσεις σας αυτή την ημέρα. Επιλέξτε τις στις Αγαπημένες ομάδες και στις Αγαπημένες διοργανώσεις.</string>
     <string name="sports_no_games">Δεν υπάρχουν αγώνες αυτή την ημέρα.</string>
     <string name="sports_no_other_games">Δεν υπάρχουν άλλοι αγώνες αυτή την ημέρα.</string>
     <string name="sports_stats">Στατιστικά</string>

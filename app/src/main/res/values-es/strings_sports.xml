@@ -3,14 +3,14 @@
     <string name="live_tab_sports">SportsHub</string>
     <string name="sports_games">Partidos</string>
     <string name="sports_fav_teams">Equipos favoritos</string>
-    <string name="sports_followed_leagues">Competiciones seguidas</string>
+    <string name="sports_followed_leagues">Competiciones favoritas</string>
     <string name="sports_standings">Clasificación</string>
     <string name="sports_settings">Ajustes de SportsHub</string>
     <string name="sports_change_sport">Deporte: %1$s ▾</string>
     <string name="sports_today">Hoy</string>
     <string name="sports_tomorrow">Mañana</string>
     <string name="sports_favourites_title">Tus equipos y competiciones</string>
-    <string name="sports_no_favourites">No hay partidos de tus equipos o competiciones este día. Elígelos en Equipos favoritos y Competiciones seguidas.</string>
+    <string name="sports_no_favourites">No hay partidos de tus equipos o competiciones este día. Elígelos en Equipos favoritos y Competiciones favoritas.</string>
     <string name="sports_no_games">No hay partidos este día.</string>
     <string name="sports_no_other_games">No hay otros partidos este día.</string>
     <string name="sports_stats">Estadísticas</string>

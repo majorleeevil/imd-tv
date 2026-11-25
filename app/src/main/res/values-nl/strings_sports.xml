@@ -3,14 +3,14 @@
     <string name="live_tab_sports">SportsHub</string>
     <string name="sports_games">Wedstrijden</string>
     <string name="sports_fav_teams">Favoriete teams</string>
-    <string name="sports_followed_leagues">Gevolgde competities</string>
+    <string name="sports_followed_leagues">Favoriete competities</string>
     <string name="sports_standings">Stand</string>
     <string name="sports_settings">SportsHub-instellingen</string>
     <string name="sports_change_sport">Sport: %1$s ▾</string>
     <string name="sports_today">Vandaag</string>
     <string name="sports_tomorrow">Morgen</string>
     <string name="sports_favourites_title">Jouw teams en competities</string>
-    <string name="sports_no_favourites">Geen wedstrijden van jouw teams of competities op deze dag. Kies ze bij Favoriete teams en Gevolgde competities.</string>
+    <string name="sports_no_favourites">Geen wedstrijden van jouw teams of competities op deze dag. Kies ze bij Favoriete teams en Favoriete competities.</string>
     <string name="sports_no_games">Geen wedstrijden op deze dag.</string>
     <string name="sports_no_other_games">Geen andere wedstrijden op deze dag.</string>
     <string name="sports_stats">Statistieken</string>

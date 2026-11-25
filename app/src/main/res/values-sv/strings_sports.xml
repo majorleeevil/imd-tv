@@ -3,14 +3,14 @@
     <string name="live_tab_sports">SportsHub</string>
     <string name="sports_games">Matcher</string>
     <string name="sports_fav_teams">Favoritlag</string>
-    <string name="sports_followed_leagues">Följda tävlingar</string>
+    <string name="sports_followed_leagues">Favorittävlingar</string>
     <string name="sports_standings">Tabell</string>
     <string name="sports_settings">SportsHub-inställningar</string>
     <string name="sports_change_sport">Sport: %1$s ▾</string>
     <string name="sports_today">Idag</string>
     <string name="sports_tomorrow">Imorgon</string>
     <string name="sports_favourites_title">Dina lag och tävlingar</string>
-    <string name="sports_no_favourites">Inga matcher för dina lag eller tävlingar den här dagen. Välj dem under Favoritlag och Följda tävlingar.</string>
+    <string name="sports_no_favourites">Inga matcher för dina lag eller tävlingar den här dagen. Välj dem under Favoritlag och Favorittävlingar.</string>
     <string name="sports_no_games">Inga matcher den här dagen.</string>
     <string name="sports_no_other_games">Inga andra matcher den här dagen.</string>
     <string name="sports_stats">Statistik</string>

@@ -3,14 +3,14 @@
     <string name="live_tab_sports">SportsHub</string>
     <string name="sports_games">Meciuri</string>
     <string name="sports_fav_teams">Echipe favorite</string>
-    <string name="sports_followed_leagues">Competiții urmărite</string>
+    <string name="sports_followed_leagues">Competiții favorite</string>
     <string name="sports_standings">Clasament</string>
     <string name="sports_settings">Setări SportsHub</string>
     <string name="sports_change_sport">Sport: %1$s ▾</string>
     <string name="sports_today">Azi</string>
     <string name="sports_tomorrow">Mâine</string>
     <string name="sports_favourites_title">Echipele și competițiile tale</string>
-    <string name="sports_no_favourites">Niciun meci al echipelor sau competițiilor tale în această zi. Alege-le în Echipe favorite și Competiții urmărite.</string>
+    <string name="sports_no_favourites">Niciun meci al echipelor sau competițiilor tale în această zi. Alege-le în Echipe favorite și Competiții favorite.</string>
     <string name="sports_no_games">Niciun meci în această zi.</string>
     <string name="sports_no_other_games">Niciun alt meci în această zi.</string>
     <string name="sports_stats">Statistici</string>

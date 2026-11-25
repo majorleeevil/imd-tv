@@ -3,14 +3,14 @@
     <string name="live_tab_sports">SportsHub</string>
     <string name="sports_games">Maçlar</string>
     <string name="sports_fav_teams">Favori takımlar</string>
-    <string name="sports_followed_leagues">Takip edilen yarışmalar</string>
+    <string name="sports_followed_leagues">Favori yarışmalar</string>
     <string name="sports_standings">Puan durumu</string>
     <string name="sports_settings">SportsHub ayarları</string>
     <string name="sports_change_sport">Spor: %1$s ▾</string>
     <string name="sports_today">Bugün</string>
     <string name="sports_tomorrow">Yarın</string>
     <string name="sports_favourites_title">Takımların ve yarışmaların</string>
-    <string name="sports_no_favourites">Bu gün takımlarının veya yarışmalarının maçı yok. Bunları Favori takımlar ve Takip edilen yarışmalar bölümünden seç.</string>
+    <string name="sports_no_favourites">Bu gün takımlarının veya yarışmalarının maçı yok. Bunları Favori takımlar ve Favori yarışmalar bölümünden seç.</string>
     <string name="sports_no_games">Bu gün maç yok.</string>
     <string name="sports_no_other_games">Bu gün başka maç yok.</string>
     <string name="sports_stats">İstatistikler</string>
