@@ -14,7 +14,7 @@ Free and open source, with no ads, accounts or tracking.
 <a href="https://github.com/majorleeevil/imd-tv/releases"><img src="https://img.shields.io/github/downloads/majorleeevil/imd-tv/total?style=flat-square&label=downloads&color=2ea44f" alt="Downloads"></a>
 <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-blue?style=flat-square" alt="Licence: GPL-3.0"></a>
 <img src="https://img.shields.io/badge/Android%20TV-7.1%2B-2ea44f?style=flat-square" alt="Android TV 7.1 or newer">
-<a href="https://www.paypal.com/ncp/payment/VGKUKA7GNGEWA"><img src="https://img.shields.io/badge/buy%20me%20a%20coffee-PayPal-ffdd00?style=flat-square&logo=paypal&logoColor=black" alt="Buy me a coffee via PayPal"></a>
+<a href="https://ko-fi.com/majorleeevil"><img src="https://img.shields.io/badge/buy%20me%20a%20coffee-Ko--fi-ffdd00?style=flat-square&logo=kofi&logoColor=black" alt="Buy me a coffee via Ko-fi"></a>
 </p>
 
 <p align="center">
@@ -395,7 +395,7 @@ Requires Android TV / Google TV **7.1 or newer**, or a Fire TV on Fire OS 6 or n
 ## Free forever, private by default
 
 IMD TV is free and always will be. No accounts, no ads, no analytics, and logins are encrypted on the device. If it's
-useful to you, you can [buy me a coffee](https://www.paypal.com/ncp/payment/VGKUKA7GNGEWA), entirely optional.
+useful to you, you can [buy me a coffee](https://ko-fi.com/majorleeevil), entirely optional.
 
 Questions or problems: support@imd-tv.com or [GitHub issues](https://github.com/majorleeevil/imd-tv/issues).
 

@@ -7,7 +7,7 @@ import org.junit.Test
 class SupportRowTest {
     @Test fun supportLabelIsTheUrlWithoutScheme() {
         assertEquals(SUPPORT_URL.removePrefix("https://"), SUPPORT_LABEL)
-        assertTrue(SUPPORT_URL.startsWith("https://buymeacoffee.com/"))
+        assertTrue(SUPPORT_URL.startsWith("https://ko-fi.com/"))
     }
 
     @Test fun siteLabelIsTheSiteUrlWithoutSchemeOrSlash() {

@@ -51,8 +51,8 @@ import org.imdtv.iptvtv.R
 import org.imdtv.iptvtv.ui.MenuFrame
 import org.imdtv.iptvtv.ui.MenuItem
 
-const val SUPPORT_URL = "https://buymeacoffee.com/majorleeevil"
-const val SUPPORT_LABEL = "buymeacoffee.com/majorleeevil"
+const val SUPPORT_URL = "https://ko-fi.com/majorleeevil"
+const val SUPPORT_LABEL = "ko-fi.com/majorleeevil"
 const val WEBSITE_LABEL = "imd-tv.com"
 const val WEBSITE_URL = "https://$WEBSITE_LABEL/"
 const val SITE_LABEL = "majorleeevil.github.io/imd-tv"
