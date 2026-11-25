@@ -215,10 +215,13 @@ fun SportsScreen(vm: SportsViewModel, live: LiveViewModel, nav: @Composable () -
         val pageFocus = remember { FocusRequester() }
         @Composable fun PagePill(res: Int, p: SportsPage) =
             Pill(stringResource(res), if (page == p) Modifier.focusRequester(pageFocus) else Modifier, selected = page == p) { vm.page.value = p }
-        Row(Modifier.padding(start = 24.dp, top = 62.dp).focusProperties { enter = { pageFocus } }.focusGroup(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            // The sport first: every page below is for it.
-            Pill(stringResource(R.string.sports_change_sport, sportName(sport)), if (page == SportsPage.SPORT) Modifier.focusRequester(pageFocus) else Modifier,
-                selected = page == SportsPage.SPORT) { vm.page.value = SportsPage.SPORT }
+        // Above the pages: the sport drop-down opens over them.
+        Row(Modifier.zIndex(1f).padding(start = 24.dp, top = 62.dp).focusProperties { enter = { pageFocus } }.focusGroup(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            // The sport first: every page below is for it (the open page stays, now for the sport picked).
+            val sports = Sport.entries.filter { it.key in s.sports }
+            DropDown(stringResource(R.string.sports_change_sport, sportName(sport)), sports.map { sportName(it) }, sports.indexOf(sport)) { i ->
+                vm.update { it.copy(sportsSport = sports[i].key) }
+            }
             PagePill(R.string.sports_games, SportsPage.GAMES)
             PagePill(R.string.sports_fav_teams, SportsPage.TEAMS)
             PagePill(R.string.sports_followed_leagues, SportsPage.LEAGUES)
@@ -236,16 +239,6 @@ fun SportsScreen(vm: SportsViewModel, live: LiveViewModel, nav: @Composable () -
             SportsPage.STANDINGS -> StandingsPage(vm, s, sport)
             SportsPage.SETTINGS -> Column(Modifier.padding(start = 24.dp, top = 104.dp, bottom = 12.dp).width(620.dp).verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(6.dp)) { SportsSettingsRows(s, vm::update) }
-            // Scrolls: eight sports run off the bottom of the screen (focus stopped at Cricket, so F1 couldn't be picked).
-            SportsPage.SPORT -> Column(Modifier.padding(start = 24.dp, top = 104.dp, bottom = 12.dp).width(360.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                val first = remember { FocusRequester() }
-                Sport.entries.filter { it.key in s.sports }.forEachIndexed { i, sp ->
-                    org.imdtv.iptvtv.ui.settings.SettingRow(sportName(sp), "", if (sp == sport) "✓" else null, if (i == 0) Modifier.focusRequester(first) else Modifier) {
-                        vm.update { it.copy(sportsSport = sp.key) }; vm.page.value = SportsPage.GAMES; pillsAfterBack = true
-                    }
-                }
-                LaunchedEffect(Unit) { runCatching { first.requestFocus() } }
-            }
         }
     }
 }
@@ -635,6 +628,36 @@ private fun LeaguesPage(vm: SportsViewModel, s: AppSettings, sport: Sport) {
     }
 }
 
+/**
+ * A button that drops [options] down under itself, over what's below, on the same screen; OK picks one, Back closes it.
+ * Focus stays in the list while it's open. Put it above later siblings (zIndex) so the list draws over them.
+ */
+@OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
+@Composable
+private fun DropDown(label: String, options: List<String>, selected: Int, modifier: Modifier = Modifier, onPick: (Int) -> Unit) {
+    var open by remember { mutableStateOf(false) }
+    val button = remember { FocusRequester() }
+    Box {
+        Pill(label, modifier.focusRequester(button), selected = open) { open = !open }
+        if (open) {
+            val current = remember { FocusRequester() }
+            val close = { open = false; runCatching { button.requestFocus() }; Unit }
+            BackHandler(onBack = close)
+            // Takes no room: drawn below the button, over the page.
+            Column(Modifier.layout { m, c -> val p = m.measure(c.copy(minWidth = 0, minHeight = 0, maxHeight = androidx.compose.ui.unit.Constraints.Infinity))
+                    layout(0, 0) { p.place(0, 38.dp.roundToPx()) } }
+                .width(280.dp).heightIn(max = 360.dp).clip(RoundedCornerShape(14.dp)).background(Color(0xF21A1C24)).padding(6.dp)
+                .focusProperties { exit = { FocusRequester.Cancel } }.focusGroup().verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                options.forEachIndexed { i, o ->
+                    Pill(o, (if (i == selected.coerceAtLeast(0)) Modifier.focusRequester(current) else Modifier).fillMaxWidth(), selected = i == selected) { close(); onPick(i) }
+                }
+            }
+            LaunchedEffect(Unit) { runCatching { current.requestFocus() } }
+        }
+    }
+}
+
 @OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
 @Composable
 private fun StandingsPage(vm: SportsViewModel, s: AppSettings, sport: Sport) {
@@ -649,28 +672,8 @@ private fun StandingsPage(vm: SportsViewModel, s: AppSettings, sport: Sport) {
     Column(Modifier.padding(start = 24.dp, top = 104.dp, end = 24.dp, bottom = 12.dp)) {
         if (leagues.isEmpty()) { Text(stringResource(R.string.sports_no_tables), fontSize = 13.sp, color = colors.muted); return@Column }
         // One button for the competition: OK drops the list down over the table, on this screen.
-        var picking by remember { mutableStateOf(false) }
         val picker = remember { FocusRequester() }
-        Box(Modifier.zIndex(1f)) {
-            Pill((league?.name ?: "") + " ▾", Modifier.focusRequester(picker), selected = picking) { picking = !picking }
-            if (picking) {
-                val current = remember { FocusRequester() }
-                BackHandler { picking = false; runCatching { picker.requestFocus() } }
-                // Takes no room (drawn over the table); focus stays in it until a pick or Back.
-                Column(Modifier.layout { m, c -> val p = m.measure(c.copy(minWidth = 0, minHeight = 0, maxHeight = androidx.compose.ui.unit.Constraints.Infinity))
-                        layout(0, 0) { p.place(0, 38.dp.roundToPx()) } }
-                    .width(280.dp).heightIn(max = 360.dp).clip(RoundedCornerShape(14.dp)).background(Color(0xF21A1C24)).padding(6.dp)
-                    .focusProperties { exit = { FocusRequester.Cancel } }.focusGroup().verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    leagues.forEach { l ->
-                        Pill(l.name, (if (l == league) Modifier.focusRequester(current) else Modifier).fillMaxWidth(), selected = l == league) {
-                            league = l; picking = false; runCatching { picker.requestFocus() }
-                        }
-                    }
-                }
-                LaunchedEffect(Unit) { runCatching { current.requestFocus() } }
-            }
-        }
+        Box(Modifier.zIndex(1f)) { DropDown((league?.name ?: "") + " ▾", leagues.map { it.name }, leagues.indexOf(league), Modifier.focusRequester(picker)) { league = leagues[it] } }
         // Up from the table goes to the competition button (it went past it to the menu).
         Box(Modifier.padding(top = 10.dp).fillMaxSize().panel().padding(12.dp)
             .focusProperties { exit = { if (it == androidx.compose.ui.focus.FocusDirection.Up) picker else FocusRequester.Default } }.focusGroup()) {

@@ -30,7 +30,7 @@ import org.imdtv.iptvtv.data.sports.teamNames
 import org.imdtv.iptvtv.data.sports.gameMatch
 import java.time.LocalDate
 
-enum class SportsPage { GAMES, TEAMS, LEAGUES, STANDINGS, SETTINGS, SPORT }
+enum class SportsPage { GAMES, TEAMS, LEAGUES, STANDINGS, SETTINGS }
 
 /** Where a game is on: the channel and the programme that names both teams. */
 data class OnTv(val ch: ChannelEntity, val p: GuideProgramme) { fun liveAt(t: Long) = p.start <= t && t < p.stop }
