@@ -410,7 +410,13 @@ fun normTeam(s: String): String = Normalizer.normalize(s.lowercase(), Normalizer
     .replace("&", " and ").replace(Regex("[^a-z0-9' ]"), " ").split(' ').filter { it.isNotEmpty() && it != "fc" && it != "afc" && it != "cf" }.joinToString(" ")
 
 /** The names a team may go by in a programme title, normalised. */
-fun teamNames(side: Side): Set<String> = (listOf(side.name, side.short) + ALIASES[side.name.lowercase()].orEmpty()).map(::normTeam).filter { it.length >= 3 }.toSet()
+fun teamNames(side: Side): Set<String> = (listOf(side.name, side.short) + ALIASES[side.name.lowercase()].orEmpty()).map(::normTeam)
+    .let { n -> n + n.mapNotNull { it.substringAfterLast(' ', "").takeIf { w -> w.length >= 4 && w !in GENERIC_TEAM_WORDS } } } // "CSU Craiova" → "craiova"
+    .filter { it.length >= 3 }.toSet()
+
+/** Last words many clubs share: on their own they'd name the wrong team ("Leeds United" isn't any "... United"). */
+private val GENERIC_TEAM_WORDS = setOf("united", "city", "town", "county", "albion", "rovers", "wanderers", "athletic", "rangers",
+    "hotspur", "wednesday", "forest", "sporting", "club", "milan", "real", "athletico", "atletico", "olympique", "dynamo", "dinamo")
 
 /** A programme title names both teams (whole words). */
 fun titleNamesGame(title: String, home: Side, away: Side): Boolean = gameMatch(title, home, away) != null
@@ -427,7 +433,9 @@ fun gameMatch(text: String, home: Side, away: Side): Int? {
     val h = teamNames(home).filter { t.contains(" $it ") }
     val a = teamNames(away).filter { t.contains(" $it ") }
     if (h.isEmpty() || a.isEmpty()) return null
-    fun pair(x: String, y: String) = Regex(" ${Regex.escape(x)} (\\S* )?${Regex.escape(y)} ").findAll(t).any { (it.groupValues[1].trim()) in VERSUS }
+    // Up to two words between "v" and [y]: [y] may be the club's last word only ("Brighton vs Universitatea Craiova").
+    fun pair(x: String, y: String) = Regex(" ${Regex.escape(x)} (\\S* )?((\\S+ ){0,2})${Regex.escape(y)} ").findAll(t)
+        .any { m -> m.groupValues[1].trim().let { it in VERSUS && (it.isNotEmpty() || m.groupValues[2].isEmpty()) } }
     val fixture = h.any { x -> a.any { y -> pair(x, y) || pair(y, x) } }
     val fixtures = Regex(" (v|vs|versus) ").findAll(t).count()
     return if (fixture && fixtures <= 1) 0 else 1

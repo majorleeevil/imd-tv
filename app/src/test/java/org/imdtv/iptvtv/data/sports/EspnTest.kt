@@ -194,4 +194,16 @@ class EspnTest {
         assertEquals(race.first().start + 60 * 60_000L, usualEnd(race.first())) // practice
         assertEquals(race.last().start + 120 * 60_000L, usualEnd(race.last()))
     }
+
+    /** 26 Nov: ESPN's "CSU Craiova" is "Universitatea Craiova" in the guide and event channel names, so Brighton's game found nothing. */
+    @Test fun clubsMatchOnTheirDistinctiveLastWord() {
+        val brighton = Side("331", "Brighton & Hove Albion", "Brighton", "BHA", null, null)
+        val craiova = Side("2", "CSU Craiova", "CSU Craiova", "CRA", null, null)
+        assertEquals(0, gameMatch("Brighton vs. Universitatea Craiova", brighton, craiova))
+        assertEquals(0, gameMatch("Live UEFA Conference League Brighton v Universitatea Craiova (Kick-off 5.45pm).", brighton, craiova))
+        // Generic last words stay out: "Leeds United" must not match any "... United".
+        val leeds = Side("357", "Leeds United", "Leeds United", "LEE", null, null)
+        assertEquals(null, gameMatch("Brighton v Newcastle United", brighton, leeds))
+        assertEquals(null, gameMatch("Brighton v Aston Villa", brighton, craiova))
+    }
 }

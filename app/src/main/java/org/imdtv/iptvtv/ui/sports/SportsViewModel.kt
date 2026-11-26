@@ -189,6 +189,14 @@ class SportsViewModel(app: Application) : AndroidViewModel(app) {
                     if (hits[h.ch.id].let { it == null || m < it.second }) hits[h.ch.id] = h to m
                 }
         }
+        // The same channel in other categories ("TNT Sports 1" as HD, RAW, VIP…): often only one copy carries the guide; list each.
+        val sameName = HashMap<String, List<ChannelEntity>>()
+        for ((h, m) in hits.values.toList()) {
+            val key = org.imdtv.iptvtv.data.logos.logoKey(h.ch.name)?.key ?: continue
+            sameName.getOrPut(key) { searchOrEmpty { c.search.universal(pid, strip, key.replace('-', ' '), cap = 100, vod = { emptyList() }).channels.items } }
+                .filter { !hits.containsKey(it.id) && org.imdtv.iptvtv.data.logos.logoKey(it.name)?.key == key }
+                .forEach { hits[it.id] = org.imdtv.iptvtv.data.search.GuideHit(it, h.p) to m }
+        }
         // Event channels with no guide, named for the game ("EPL 03: Wolves v Leeds"): on from kick-off for 3 hours.
         for (q in names) {
             searchOrEmpty { c.search.universal(pid, strip, q, cap = 100, vod = { emptyList() }).channels.items }
