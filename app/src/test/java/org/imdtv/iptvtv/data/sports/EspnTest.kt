@@ -184,7 +184,7 @@ class EspnTest {
         assertTrue(sameTeam("Haas F1 Team", "Haas")); assertTrue(sameTeam("RB F1 Team", "Racing Bulls")); assertFalse(sameTeam("Red Bull", "Racing Bulls"))
         val tables = parseStandings(fx("standings-f1.json"))
         assertEquals(2, tables.size)
-        assertTrue(tables[0].rows.first().points.isNotEmpty())
+        assertTrue(tables[0].rows.first().stats["championshipPts"].orEmpty().isNotEmpty())
     }
 
     @Test fun usualEndIsKickOffPlusTheSportsLength() {

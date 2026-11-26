@@ -66,8 +66,6 @@
     <string name="sports_focus_preview">Odakta önizleme</string>
     <string name="sports_focus_preview_expl">Bir maçta durunca önizleme o maça geçer. Kapalı: bir maçta OK tuşunu basılı tutup Ön izleme seçin.</string>
     <string name="sports_watch_full">Tam ekran izle</string>
-    <string name="sports_sport_rugby_league">Ragbi ligi</string>
-    <string name="sports_group_rugby">Ragbi</string>
     <string name="sports_region_england">İngiltere</string>
     <string name="sports_region_scotland">İskoçya</string>
     <string name="sports_region_europe">Avrupa</string>

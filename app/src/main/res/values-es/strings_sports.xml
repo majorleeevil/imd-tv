@@ -66,8 +66,6 @@
     <string name="sports_focus_preview">Vista previa al enfocar</string>
     <string name="sports_focus_preview_expl">Al detenerte en un partido, la vista previa cambia a él. Desactivado: mantén OK en un partido y elige Previa.</string>
     <string name="sports_watch_full">Ver a pantalla completa</string>
-    <string name="sports_sport_rugby_league">Rugby league</string>
-    <string name="sports_group_rugby">Rugby</string>
     <string name="sports_region_england">Inglaterra</string>
     <string name="sports_region_scotland">Escocia</string>
     <string name="sports_region_europe">Europa</string>

@@ -97,7 +97,7 @@ import org.imdtv.iptvtv.ui.theme.glass
 fun sportName(s: Sport) = stringResource(when (s) {
     Sport.FOOTBALL -> R.string.sports_sport_football; Sport.AMERICAN_FOOTBALL -> R.string.sports_sport_american_football
     Sport.BASKETBALL -> R.string.sports_sport_basketball; Sport.HOCKEY -> R.string.sports_sport_hockey
-    Sport.RUGBY -> R.string.sports_sport_rugby; Sport.RUGBY_LEAGUE -> R.string.sports_sport_rugby_league; Sport.CRICKET -> R.string.sports_sport_cricket
+    Sport.RUGBY -> R.string.sports_sport_rugby; Sport.CRICKET -> R.string.sports_sport_cricket
     Sport.F1 -> R.string.sports_sport_f1
 })
 
@@ -113,7 +113,6 @@ private fun regionName(r: org.imdtv.iptvtv.data.sports.Region) = when (r) {
     org.imdtv.iptvtv.data.sports.Region.GERMANY -> country("DE")
     org.imdtv.iptvtv.data.sports.Region.ITALY -> country("IT")
     org.imdtv.iptvtv.data.sports.Region.FRANCE -> country("FR")
-    org.imdtv.iptvtv.data.sports.Region.AUSTRALIA -> country("AU")
 }
 
 @Composable
@@ -586,14 +585,12 @@ private fun TeamsPage(vm: SportsViewModel, s: AppSettings, sport: Sport) {
     }
 }
 
-/** Followed competitions of the chosen sport (rugby union and league together), per region, two to a row. */
+/** Favourite competitions of the chosen sport, per region, two to a row. */
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 private fun LeaguesPage(vm: SportsViewModel, s: AppSettings, sport: Sport) {
     val colors = LocalTheme.current.colors
-    val rugby = setOf(Sport.RUGBY, Sport.RUGBY_LEAGUE)
-    val comps = LEAGUES.filter { if (sport in rugby) it.sport in rugby else it.sport == sport }
-    val bothRugby = comps.map { it.sport }.toSet().containsAll(rugby)
+    val comps = LEAGUES.filter { it.sport == sport }
     val scope = androidx.compose.runtime.rememberCoroutineScope()
     // A plain scrolling column, not a lazy one: every row stays composed, so Up always finds the row above
     // (the lazy list's off-screen rows let Up jump out to the SportsHub pills).
@@ -612,10 +609,7 @@ private fun LeaguesPage(vm: SportsViewModel, s: AppSettings, sport: Sport) {
                                 onFocused = { if (row == 0) scope.launch { block.bringIntoView() } }) { f ->
                                 Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(if (f) Color.White else colors.cell).padding(horizontal = 12.dp, vertical = 8.dp),
                                     verticalAlignment = Alignment.CenterVertically) {
-                                    Column(Modifier.weight(1f)) {
-                                        Text(l.name, fontSize = 13.sp, color = if (f) colors.onFocus else Color.White, maxLines = 1)
-                                        if (bothRugby) Text(sportName(l.sport), fontSize = 10.sp, color = if (f) Color(0xFF555555) else colors.muted)
-                                    }
+                                    Text(l.name, fontSize = 13.sp, color = if (f) colors.onFocus else Color.White, maxLines = 1, modifier = Modifier.weight(1f))
                                     org.imdtv.iptvtv.ui.settings.Toggle(on, f)
                                 }
                             }
@@ -670,7 +664,11 @@ private fun StandingsPage(vm: SportsViewModel, s: AppSettings, sport: Sport) {
     var league by remember(sport) { mutableStateOf(leagues.firstOrNull()) }
     val tables by produceState<org.imdtv.iptvtv.data.sports.Fetched<List<Table>>?>(null, league) { value = null; value = league?.let { vm.standings(it) } }
     val football = sport == Sport.FOOTBALL
-    val form by produceState(emptyMap<String, String>(), league) { value = emptyMap(); if (football) value = league?.let { vm.form(it) }.orEmpty() }
+    val form by produceState(emptyMap<String, String>(), league, tables) {
+        value = emptyMap()
+        val ids = tables?.value?.flatMap { t -> t.rows.map { it.team.id } }?.toSet() ?: return@produceState
+        if (football) value = league?.let { vm.form(it, ids) }.orEmpty()
+    }
     val favTeams = s.sportsTeams.map(::favouriteTeamKey).toSet()
     val picker = remember { FocusRequester() }
     // Down from the pills lands on the competition button, not in the table.
@@ -682,12 +680,12 @@ private fun StandingsPage(vm: SportsViewModel, s: AppSettings, sport: Sport) {
         Box(Modifier.padding(top = 10.dp).fillMaxSize().panel().padding(12.dp)
             .focusProperties { exit = { if (it == androidx.compose.ui.focus.FocusDirection.Up) picker else FocusRequester.Default } }.focusGroup()) {
             val t = tables
-            val heads = when {
-                sport == Sport.F1 -> listOf(R.string.sports_col_pts)
-                football -> listOf(R.string.sports_col_played, R.string.sports_col_won, R.string.sports_col_drawn, R.string.sports_col_lost,
-                    R.string.sports_col_gf, R.string.sports_col_ga, R.string.sports_col_gd, R.string.sports_col_pts)
-                else -> listOf(R.string.sports_col_played, R.string.sports_col_won, R.string.sports_col_drawn, R.string.sports_col_lost, R.string.sports_col_gd, R.string.sports_col_pts)
-            }.map { stringResource(it) }
+            // Each sport's own columns (ESPN stat names); football's headings are translated, the others are ESPN's own.
+            val cols = org.imdtv.iptvtv.data.sports.tableColumns(sport)
+            val footballHeads = listOf(R.string.sports_col_played, R.string.sports_col_won, R.string.sports_col_drawn, R.string.sports_col_lost,
+                R.string.sports_col_gf, R.string.sports_col_ga, R.string.sports_col_gd, R.string.sports_col_pts).map { stringResource(it) }
+            val heads = if (football) footballHeads else cols.map { c -> t?.value?.firstNotNullOfOrNull { it.abbr[c] } ?: c }
+            val bold = cols.indexOfFirst { it == "points" || it == "championshipPts" || it == "winPercent" }
             when {
                 t == null -> Spinner(Modifier.align(Alignment.Center), 20.dp, colors.muted)
                 t.value.isEmpty() -> Text(stringResource(R.string.sports_no_tables), fontSize = 13.sp, color = colors.muted, modifier = Modifier.align(Alignment.Center))
@@ -697,16 +695,13 @@ private fun StandingsPage(vm: SportsViewModel, s: AppSettings, sport: Sport) {
                         item(key = "h" + table.name) {
                             Column {
                                 if (t.value.size > 1) Text(table.name, fontSize = 13.sp, color = Color.White, fontWeight = FontWeight.Medium, modifier = Modifier.padding(top = 6.dp, bottom = 2.dp))
-                                TableLine("#", null, "", heads, header = true, form = if (football) stringResource(R.string.sports_last5) else null)
+                                TableLine("#", null, "", heads, header = true, form = if (football) stringResource(R.string.sports_last5) else null, bold = bold)
                             }
                         }
                         items(table.rows, key = { table.name + it.team.id }) { r ->
                             FocusBox({}) { f ->
-                                TableLine(r.rank.toString(), r.team.logo, r.team.name, when {
-                                    sport == Sport.F1 -> listOf(r.points)
-                                    football -> listOf(r.played, r.won, r.drawn, r.lost, r.gf, r.ga, r.gd, r.points)
-                                    else -> listOf(r.played, r.won, r.drawn, r.lost, r.gd, r.points)
-                                }, focused = f, fav = teamKey(sport, r.team.id) in favTeams, zone = r.zone?.let(::colour), form = if (football) form[r.team.id].orEmpty() else null)
+                                TableLine(if (r.rank > 0) r.rank.toString() else "", r.team.logo, r.team.name, cols.map { r.stats[it].orEmpty() },
+                                    focused = f, fav = teamKey(sport, r.team.id) in favTeams, zone = r.zone?.let(::colour), form = if (football) form[r.team.id].orEmpty() else null, bold = bold)
                             }
                         }
                     }
@@ -722,7 +717,7 @@ private fun StandingsPage(vm: SportsViewModel, s: AppSettings, sport: Sport) {
  */
 @Composable
 private fun TableLine(rank: String, logo: String?, name: String, cols: List<String>, header: Boolean = false, focused: Boolean = false, fav: Boolean = false,
-                      zone: Color? = null, form: String? = null) {
+                      zone: Color? = null, form: String? = null, bold: Int = cols.lastIndex) {
     val colors = LocalTheme.current.colors
     val fg = when { focused -> colors.onFocus; header -> colors.muted; fav -> colors.accent; else -> Color.White }
     Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(if (focused) Color.White else if (header) Color.Transparent else Color(0x0DFFFFFF))
@@ -733,7 +728,7 @@ private fun TableLine(rank: String, logo: String?, name: String, cols: List<Stri
         Text(name, fontSize = 12.sp, color = fg, maxLines = 1, overflow = TextOverflow.Ellipsis, fontWeight = if (fav) FontWeight.Bold else FontWeight.Normal,
             modifier = Modifier.padding(start = 8.dp).width(190.dp))
         cols.forEachIndexed { i, c ->
-            Text(c, fontSize = 12.sp, color = fg, fontWeight = if (i == cols.lastIndex) FontWeight.Bold else FontWeight.Normal,
+            Text(c, fontSize = 12.sp, color = fg, fontWeight = if (i == bold) FontWeight.Bold else FontWeight.Normal,
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.width(40.dp))
         }
         if (form != null) Row(Modifier.padding(start = 16.dp), horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {

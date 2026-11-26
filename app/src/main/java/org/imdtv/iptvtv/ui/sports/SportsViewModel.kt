@@ -120,7 +120,11 @@ class SportsViewModel(app: Application) : AndroidViewModel(app) {
             return
         }
         val now = System.currentTimeMillis()
-        for (g in favs.filter { it.state != GameState.POST }) {
+        // The first favourite's card at once; a channel lookup only for games on now or about to start (one per game, in turn:
+        // every favourite took ~30 s with cups followed, and the preview switched game when one turned up).
+        if (shown == null) pane.value = favs.firstOrNull()?.let { Pane(it, null, false) }
+        val live = favs.filter { it.state == GameState.IN || it.state == GameState.PRE && it.start - now < 15 * 60_000 }
+        for (g in live) {
             val tv = onTv(g, strip)
             if (tv != null && tv.liveAt(now)) { pane.value = Pane(g, tv, true); return }
         }
@@ -264,12 +268,20 @@ class SportsViewModel(app: Application) : AndroidViewModel(app) {
     // --- Standings and team picker: fetched when their page opens. ---
     suspend fun standings(l: League): Fetched<List<Table>>? = runCatching { espn.standings(l) }.getOrNull()
 
-    /** Each team's last five (oldest first) from its latest result in the past week; the standings feed has no form. */
-    suspend fun form(l: League): Map<String, String> = kotlinx.coroutines.coroutineScope {
-        (0..6).map { d -> async { runCatching { espn.day(listOf(l), LocalDate.now().minusDays(d.toLong()))?.value }.getOrNull().orEmpty() } }.awaitAll()
-            .flatten().filter { it.state == GameState.POST }.sortedByDescending { it.start }
-            .flatMap { listOf(it.home, it.away) }.filter { !it.form.isNullOrEmpty() }
-            .distinctBy { it.id }.associate { it.id to it.form!!.take(5).reversed() }
+    /**
+     * Each team's last five (oldest first) from its latest result; the standings feed has no form. A week at a time, up to
+     * four, until every team in [teams] has one (European cups play every other week).
+     */
+    suspend fun form(l: League, teams: Set<String>): Map<String, String> = kotlinx.coroutines.coroutineScope {
+        val found = LinkedHashMap<String, String>()
+        for (week in 0 until 4) {
+            (week * 7 until week * 7 + 7).map { d -> async { runCatching { espn.day(listOf(l), LocalDate.now().minusDays(d.toLong()))?.value }.getOrNull().orEmpty() } }.awaitAll()
+                .flatten().filter { it.state == GameState.POST }.sortedByDescending { it.start }
+                .flatMap { listOf(it.home, it.away) }.filter { !it.form.isNullOrEmpty() && it.id !in found }
+                .forEach { found.putIfAbsent(it.id, it.form!!.take(5).reversed()) }
+            if (found.keys.containsAll(teams)) break
+        }
+        found
     }
     suspend fun teams(l: League): List<Side>? = runCatching { espn.teams(l) }.getOrNull()
 

@@ -66,8 +66,6 @@
     <string name="sports_focus_preview">Pré-visualizar ao focar</string>
     <string name="sports_focus_preview_expl">Parar num jogo muda a pré-visualização para ele. Desligado: mantenha OK num jogo e escolha Antevisão.</string>
     <string name="sports_watch_full">Ver em ecrã inteiro</string>
-    <string name="sports_sport_rugby_league">Rugby league</string>
-    <string name="sports_group_rugby">Rugby</string>
     <string name="sports_region_england">Inglaterra</string>
     <string name="sports_region_scotland">Escócia</string>
     <string name="sports_region_europe">Europa</string>

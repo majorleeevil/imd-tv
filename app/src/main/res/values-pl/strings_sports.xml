@@ -66,8 +66,6 @@
     <string name="sports_focus_preview">Podgląd po zaznaczeniu</string>
     <string name="sports_focus_preview_expl">Zatrzymanie się na meczu przełącza na niego podgląd. Wyłączone: przytrzymaj OK na meczu i wybierz Zapowiedź.</string>
     <string name="sports_watch_full">Oglądaj na pełnym ekranie</string>
-    <string name="sports_sport_rugby_league">Rugby league</string>
-    <string name="sports_group_rugby">Rugby</string>
     <string name="sports_region_england">Anglia</string>
     <string name="sports_region_scotland">Szkocja</string>
     <string name="sports_region_europe">Europa</string>

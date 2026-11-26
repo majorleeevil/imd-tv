@@ -66,8 +66,6 @@
     <string name="sports_focus_preview">Vorschau bei Fokus</string>
     <string name="sports_focus_preview_expl">Bleibt die Auswahl auf einem Spiel, wechselt die Vorschau dorthin. Aus: OK auf einem Spiel halten und Vorschau wählen.</string>
     <string name="sports_watch_full">Im Vollbild ansehen</string>
-    <string name="sports_sport_rugby_league">Rugby League</string>
-    <string name="sports_group_rugby">Rugby</string>
     <string name="sports_region_england">England</string>
     <string name="sports_region_scotland">Schottland</string>
     <string name="sports_region_europe">Europa</string>

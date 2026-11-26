@@ -68,9 +68,7 @@
     <string name="sports_focus_preview">Preview on focus</string>
     <string name="sports_focus_preview_expl">Resting on a game switches the preview to it. Off: hold OK on a game and choose Preview.</string>
     <string name="sports_watch_full">Watch full screen</string>
-    <string name="sports_sport_rugby_league">Rugby league</string>
     <!-- Favourite competitions: rugby union and rugby league together. -->
-    <string name="sports_group_rugby">Rugby</string>
     <string name="sports_region_england">England</string>
     <string name="sports_region_scotland">Scotland</string>
     <string name="sports_region_europe">Europe</string>

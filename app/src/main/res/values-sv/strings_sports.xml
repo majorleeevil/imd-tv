@@ -66,8 +66,6 @@
     <string name="sports_focus_preview">Förhandsvisning vid fokus</string>
     <string name="sports_focus_preview_expl">Stannar du på en match byter förhandsvisningen till den. Av: håll in OK på en match och välj Förhandstitt.</string>
     <string name="sports_watch_full">Titta i helskärm</string>
-    <string name="sports_sport_rugby_league">Rugby league</string>
-    <string name="sports_group_rugby">Rugby</string>
     <string name="sports_region_england">England</string>
     <string name="sports_region_scotland">Skottland</string>
     <string name="sports_region_europe">Europa</string>

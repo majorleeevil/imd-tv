@@ -20,7 +20,7 @@ import java.time.format.DateTimeFormatter
 import java.text.Normalizer
 
 /** SportsHub (#26): ESPN's public site API (undocumented, no key). Every parser drops what it can't read instead of throwing. */
-enum class Sport(val key: String) { FOOTBALL("soccer"), AMERICAN_FOOTBALL("football"), BASKETBALL("basketball"), HOCKEY("hockey"), RUGBY("rugby"), RUGBY_LEAGUE("rugby-league"), CRICKET("cricket"), F1("racing") }
+enum class Sport(val key: String) { FOOTBALL("soccer"), AMERICAN_FOOTBALL("football"), BASKETBALL("basketball"), HOCKEY("hockey"), RUGBY("rugby"), CRICKET("cricket"), F1("racing") }
 
 /**
  * [slug] is ESPN's league path, e.g. "eng.1"; [id] = "soccer/eng.1", the form settings keep.
@@ -30,7 +30,7 @@ data class League(val sport: Sport, val slug: String, val name: String, val regi
     val id get() = "${sport.key}/$slug"
 }
 
-enum class Region { NONE, ENGLAND, SCOTLAND, SPAIN, GERMANY, ITALY, FRANCE, EUROPE, INTERNATIONAL, AUSTRALIA }
+enum class Region { NONE, ENGLAND, SCOTLAND, SPAIN, GERMANY, ITALY, FRANCE, EUROPE, INTERNATIONAL }
 
 private fun soccer(slug: String, name: String, r: Region, cup: Boolean = false, table: Boolean = !cup) = League(Sport.FOOTBALL, slug, name, r, cup, table)
 
@@ -53,7 +53,6 @@ val LEAGUES = listOf(
     League(Sport.RUGBY, "271937", "Champions Cup", Region.EUROPE, cup = true), League(Sport.RUGBY, "272073", "Challenge Cup", Region.EUROPE, cup = true),
     League(Sport.RUGBY, "180659", "Six Nations", Region.INTERNATIONAL, cup = true, table = true), League(Sport.RUGBY, "244293", "The Rugby Championship", Region.INTERNATIONAL, cup = true, table = true),
     League(Sport.RUGBY, "164205", "Rugby World Cup", Region.INTERNATIONAL, cup = true, table = true),
-    League(Sport.RUGBY_LEAGUE, "3", "NRL", Region.AUSTRALIA),
     League(Sport.F1, "f1", "Formula 1", table = true),
     // Cricket has no league list: one header feed of the current series.
     League(Sport.CRICKET, "header", "Cricket"),
@@ -121,10 +120,21 @@ fun parseKeyEvents(root: JsonElement): List<KeyEvent> = root.a("keyEvents").mapN
         e.a("participants").mapNotNull { it.o("athlete").s("displayName") })
 }.reversed()
 
-/** [zone]: ESPN's colour for the place ("81D6AC", Champions League; "FF7F84", relegation), null for none. */
-data class TableRow(val rank: Int, val team: Side, val played: String, val won: String, val drawn: String, val lost: String, val gd: String, val points: String,
-                    val gf: String = "", val ga: String = "", val zone: String? = null)
-data class Table(val name: String, val rows: List<TableRow>)
+/** [stats]: ESPN's figures by name ("wins", "points"); [zone]: its colour for the place ("81D6AC", Champions League; "FF7F84", relegation). */
+data class TableRow(val rank: Int, val team: Side, val stats: Map<String, String>, val zone: String? = null)
+
+/** The standings columns for [s]: ESPN stat names in order (each sport's own table, as its fans know it). */
+fun tableColumns(s: Sport): List<String> = when (s) {
+    Sport.FOOTBALL -> listOf("gamesPlayed", "wins", "ties", "losses", "pointsFor", "pointsAgainst", "pointDifferential", "points")
+    Sport.AMERICAN_FOOTBALL -> listOf("wins", "losses", "ties", "winPercent", "pointsFor", "pointsAgainst", "differential")
+    Sport.BASKETBALL -> listOf("wins", "losses", "winPercent", "gamesBehind", "streak")
+    Sport.HOCKEY -> listOf("gamesPlayed", "wins", "losses", "otLosses", "pointsFor", "pointsAgainst", "points")
+    Sport.RUGBY -> listOf("gamesPlayed", "gamesWon", "gamesDrawn", "gamesLost", "pointsFor", "pointsAgainst", "pointsDifference", "bonusPoints", "points")
+    Sport.F1 -> listOf("championshipPts")
+    Sport.CRICKET -> emptyList()
+}
+/** [abbr]: ESPN's short heading for each stat name ("winPercent" → "PCT"). */
+data class Table(val name: String, val rows: List<TableRow>, val abbr: Map<String, String> = emptyMap())
 
 /** A cached or fresh answer; [stale] = the network failed and this is the last good copy from [updatedAt]. */
 data class Fetched<T>(val value: T, val updatedAt: Long, val stale: Boolean)
@@ -301,14 +311,15 @@ fun parseSummary(root: JsonElement, league: League): Match {
 fun parseStandings(root: JsonElement): List<Table> = root.a("children").ifEmpty { listOf(root) }.mapNotNull { child ->
     val entries = child.o("standings").a("entries")
     if (entries.isEmpty()) return@mapNotNull null
+    val abbr = HashMap<String, String>()
     val rows = entries.mapNotNull { e ->
         val team = side(e) ?: return@mapNotNull null
+        e.a("stats").forEach { st -> val n = st.s("name") ?: return@forEach; st.s("abbreviation")?.let { abbr.putIfAbsent(n, it) } }
         val st = e.a("stats").associate { (it.s("name") ?: "") to (it.s("displayValue") ?: "") }
-        TableRow(st["rank"]?.toIntOrNull() ?: 0, team, st["gamesPlayed"].orEmpty(), st["wins"].orEmpty(), st["ties"].orEmpty(),
-            st["losses"].orEmpty(), st["pointDifferential"].orEmpty(), st["points"] ?: st["championshipPts"].orEmpty(),
-            st["pointsFor"].orEmpty(), st["pointsAgainst"].orEmpty(), hex(e.o("note").s("color")?.trimStart('#')))
+        // NBA/NFL have no rank: their playoff seed orders the conference.
+        TableRow((st["rank"] ?: st["playoffSeed"])?.toIntOrNull() ?: 0, team, st, hex(e.o("note").s("color")?.trimStart('#')))
     }.sortedBy { if (it.rank == 0) Int.MAX_VALUE else it.rank }
-    Table(child.s("name") ?: root.s("name").orEmpty(), rows)
+    Table(child.s("name") ?: root.s("name").orEmpty(), rows, abbr)
 }
 
 fun parseTeams(root: JsonElement): List<Side> = root.first("sports").first("leagues").a("teams").mapNotNull { side(it.o("team") ?: return@mapNotNull null) }
@@ -319,7 +330,7 @@ fun parseTeams(root: JsonElement): List<Side> = root.first("sports").first("leag
  */
 fun usualEnd(g: Game): Long = g.start + 60_000L * when (g.race?.session) {
     RaceSession.RACE -> 120; RaceSession.SPRINT -> 45; null -> when (g.league.sport) {
-        Sport.FOOTBALL -> 115; Sport.RUGBY, Sport.RUGBY_LEAGUE -> 100; Sport.AMERICAN_FOOTBALL -> 195; Sport.BASKETBALL, Sport.HOCKEY -> 150
+        Sport.FOOTBALL -> 115; Sport.RUGBY -> 100; Sport.AMERICAN_FOOTBALL -> 195; Sport.BASKETBALL, Sport.HOCKEY -> 150
         Sport.CRICKET -> 480; Sport.F1 -> 120
     }
     else -> 60 // practice and qualifying
