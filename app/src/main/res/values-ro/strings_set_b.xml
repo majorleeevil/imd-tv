@@ -52,6 +52,10 @@
     <string name="set_b_dpad_default">Implicit</string>
     <string name="set_b_dpad_channel">Schimbă canalul</string>
     <string name="set_b_dpad_previous">Canale anterioare</string>
+    <string name="set_b_dpad_channel_prev">Canalul anterior</string>
+    <string name="set_b_dpad_channel_next">Canalul următor</string>
+    <string name="set_b_dpad_watched_back">Înapoi prin canalele vizionate</string>
+    <string name="set_b_dpad_watched_forward">Înainte prin canalele vizionate</string>
     <string name="set_b_dpad_info">Suprapunere cu informații</string>
     <string name="set_b_dpad_nothing">Nimic</string>
     <string name="set_b_recording">Înregistrare</string>

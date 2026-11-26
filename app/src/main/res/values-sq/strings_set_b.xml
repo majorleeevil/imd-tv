@@ -52,6 +52,10 @@
     <string name="set_b_dpad_default">Parazgjedhje</string>
     <string name="set_b_dpad_channel">Ndërro kanalin</string>
     <string name="set_b_dpad_previous">Kanalet e mëparshme</string>
+    <string name="set_b_dpad_channel_prev">Kanali i mëparshëm</string>
+    <string name="set_b_dpad_channel_next">Kanali i radhës</string>
+    <string name="set_b_dpad_watched_back">Prapa nëpër kanalet e parë</string>
+    <string name="set_b_dpad_watched_forward">Përpara nëpër kanalet e parë</string>
     <string name="set_b_dpad_info">Mbivendosja e informacionit</string>
     <string name="set_b_dpad_nothing">Asgjë</string>
     <string name="set_b_recording">Regjistrimi</string>

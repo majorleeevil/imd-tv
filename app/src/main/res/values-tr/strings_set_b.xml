@@ -52,6 +52,10 @@
     <string name="set_b_dpad_default">Varsayılan</string>
     <string name="set_b_dpad_channel">Kanal değiştir</string>
     <string name="set_b_dpad_previous">Önceki kanallar</string>
+    <string name="set_b_dpad_channel_prev">Önceki kanal</string>
+    <string name="set_b_dpad_channel_next">Sonraki kanal</string>
+    <string name="set_b_dpad_watched_back">İzlenen kanallarda geri</string>
+    <string name="set_b_dpad_watched_forward">İzlenen kanallarda ileri</string>
     <string name="set_b_dpad_info">Bilgi katmanı</string>
     <string name="set_b_dpad_nothing">Hiçbir şey</string>
     <string name="set_b_recording">Kayıt</string>

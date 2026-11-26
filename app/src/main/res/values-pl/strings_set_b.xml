@@ -52,6 +52,10 @@
     <string name="set_b_dpad_default">Domyślnie</string>
     <string name="set_b_dpad_channel">Zmiana kanału</string>
     <string name="set_b_dpad_previous">Poprzednie kanały</string>
+    <string name="set_b_dpad_channel_prev">Poprzedni kanał</string>
+    <string name="set_b_dpad_channel_next">Następny kanał</string>
+    <string name="set_b_dpad_watched_back">Wstecz po oglądanych kanałach</string>
+    <string name="set_b_dpad_watched_forward">Naprzód po oglądanych kanałach</string>
     <string name="set_b_dpad_info">Nakładka informacyjna</string>
     <string name="set_b_dpad_nothing">Nic</string>
     <string name="set_b_recording">Nagrywanie</string>

@@ -52,6 +52,10 @@
     <string name="set_b_dpad_default">Standard</string>
     <string name="set_b_dpad_channel">Sender wechseln</string>
     <string name="set_b_dpad_previous">Vorherige Sender</string>
+    <string name="set_b_dpad_channel_prev">Vorheriger Sender</string>
+    <string name="set_b_dpad_channel_next">Nächster Sender</string>
+    <string name="set_b_dpad_watched_back">Zurück durch gesehene Sender</string>
+    <string name="set_b_dpad_watched_forward">Vor durch gesehene Sender</string>
     <string name="set_b_dpad_info">Info-Overlay</string>
     <string name="set_b_dpad_nothing">Nichts</string>
     <string name="set_b_recording">Aufnahme</string>

@@ -52,6 +52,10 @@
     <string name="set_b_dpad_default">Par défaut</string>
     <string name="set_b_dpad_channel">Changer de chaîne</string>
     <string name="set_b_dpad_previous">Chaînes précédentes</string>
+    <string name="set_b_dpad_channel_prev">Chaîne précédente</string>
+    <string name="set_b_dpad_channel_next">Chaîne suivante</string>
+    <string name="set_b_dpad_watched_back">Reculer dans les chaînes regardées</string>
+    <string name="set_b_dpad_watched_forward">Avancer dans les chaînes regardées</string>
     <string name="set_b_dpad_info">Incrustation d\'infos</string>
     <string name="set_b_dpad_nothing">Rien</string>
     <string name="set_b_recording">Enregistrement</string>

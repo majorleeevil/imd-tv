@@ -52,6 +52,10 @@
     <string name="set_b_dpad_default">Standaard</string>
     <string name="set_b_dpad_channel">Zender wisselen</string>
     <string name="set_b_dpad_previous">Vorige zenders</string>
+    <string name="set_b_dpad_channel_prev">Vorige zender</string>
+    <string name="set_b_dpad_channel_next">Volgende zender</string>
+    <string name="set_b_dpad_watched_back">Terug door bekeken zenders</string>
+    <string name="set_b_dpad_watched_forward">Vooruit door bekeken zenders</string>
     <string name="set_b_dpad_info">Info-overlay</string>
     <string name="set_b_dpad_nothing">Niets</string>
     <string name="set_b_recording">Opnemen</string>

@@ -52,6 +52,10 @@
     <string name="set_b_dpad_default">Standard</string>
     <string name="set_b_dpad_channel">Byt kanal</string>
     <string name="set_b_dpad_previous">Föregående kanaler</string>
+    <string name="set_b_dpad_channel_prev">Föregående kanal</string>
+    <string name="set_b_dpad_channel_next">Nästa kanal</string>
+    <string name="set_b_dpad_watched_back">Bakåt bland sedda kanaler</string>
+    <string name="set_b_dpad_watched_forward">Framåt bland sedda kanaler</string>
     <string name="set_b_dpad_info">Informationsöverlägg</string>
     <string name="set_b_dpad_nothing">Ingenting</string>
     <string name="set_b_recording">Inspelning</string>

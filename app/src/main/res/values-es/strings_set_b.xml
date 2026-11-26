@@ -52,6 +52,10 @@
     <string name="set_b_dpad_default">Predeterminado</string>
     <string name="set_b_dpad_channel">Cambiar de canal</string>
     <string name="set_b_dpad_previous">Canales anteriores</string>
+    <string name="set_b_dpad_channel_prev">Canal anterior</string>
+    <string name="set_b_dpad_channel_next">Canal siguiente</string>
+    <string name="set_b_dpad_watched_back">Atrás por los canales vistos</string>
+    <string name="set_b_dpad_watched_forward">Adelante por los canales vistos</string>
     <string name="set_b_dpad_info">Superposición de información</string>
     <string name="set_b_dpad_nothing">Nada</string>
     <string name="set_b_recording">Grabación</string>

@@ -52,6 +52,10 @@
     <string name="set_b_dpad_default">Προεπιλογή</string>
     <string name="set_b_dpad_channel">Αλλαγή καναλιού</string>
     <string name="set_b_dpad_previous">Προηγούμενα κανάλια</string>
+    <string name="set_b_dpad_channel_prev">Προηγούμενο κανάλι</string>
+    <string name="set_b_dpad_channel_next">Επόμενο κανάλι</string>
+    <string name="set_b_dpad_watched_back">Πίσω στα κανάλια που παρακολουθήσατε</string>
+    <string name="set_b_dpad_watched_forward">Εμπρός στα κανάλια που παρακολουθήσατε</string>
     <string name="set_b_dpad_info">Επικάλυψη πληροφοριών</string>
     <string name="set_b_dpad_nothing">Τίποτα</string>
     <string name="set_b_recording">Εγγραφή</string>
