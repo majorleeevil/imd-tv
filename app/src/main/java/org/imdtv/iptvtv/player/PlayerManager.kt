@@ -185,7 +185,9 @@ class PlayerManager(private val context: Context) {
             frameRate = v?.frameRate?.takeIf { it > 0f },
             audioChannels = a?.channelCount?.takeIf { it != Format.NO_VALUE },
         )
-        if (f != _formats.value) Log.i(TAG, "formats $f ${a?.sampleMimeType} stream par ${v?.pixelWidthHeightRatio} ${tail(url)}")
+        if (f != _formats.value) Log.i(TAG, "formats $f ${a?.sampleMimeType} stream par ${v?.pixelWidthHeightRatio} ${tail(url)}" +
+            " text " + player.currentTracks.groups.filter { it.type == C.TRACK_TYPE_TEXT }.joinToString { g ->
+                g.getTrackFormat(0).let { "${it.sampleMimeType}/${it.language}${if (g.isSelected) "*" else ""}" } })
         _formats.value = f
     }
     private var userAgent: String? = null
