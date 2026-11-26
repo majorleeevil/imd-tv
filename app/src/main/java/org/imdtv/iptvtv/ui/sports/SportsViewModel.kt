@@ -223,11 +223,13 @@ class SportsViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch { onTv(g, strip).let { if (pane.value?.game?.id == g.id) pane.value = Pane(g, it, true) } }
     }
 
-    /** A card held in focus: its game takes the preview if a channel shows it now (else the preview stays as it is). */
+    /** A card held in focus: its score card in the preview at once, then its channel if one shows it now. */
     suspend fun focusPreview(g: Game, strip: List<String>) {
         if (pane.value?.game?.id == g.id) return
-        val tv = onTv(g, strip) ?: return
-        if (tv.liveAt(System.currentTimeMillis())) { paneManual = true; pane.value = Pane(g, tv, true) }
+        paneManual = true
+        pane.value = Pane(g, null, false)
+        val tv = onTv(g, strip)
+        if (pane.value?.game?.id == g.id) pane.value = Pane(g, tv, true)
     }
 
     /** Favourite team's game: whether ESPN has its lineups yet (checked from 90 min before kick-off). */
