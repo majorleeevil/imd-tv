@@ -267,7 +267,11 @@ data class EpgLinkEntity(
     val sourceId: Long,
     val xmltvId: String,
     val manual: Boolean,
-)
+) {
+    /** #54 Remove guide: a manual link to nothing, so the matcher and sibling borrowing leave the channel without a guide. */
+    val isNoGuide get() = xmltvId.isEmpty()
+    companion object { fun noGuide(channelId: Long) = EpgLinkEntity(channelId, 0, "", manual = true) }
+}
 
 @Entity(
     tableName = "name_rule",

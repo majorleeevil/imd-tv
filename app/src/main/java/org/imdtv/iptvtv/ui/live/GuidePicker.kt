@@ -22,17 +22,19 @@ import org.imdtv.iptvtv.ui.MenuFrame
 import org.imdtv.iptvtv.ui.MenuItem
 import org.imdtv.iptvtv.ui.settings.EditRow
 
-/** Use guide from… (spec §5.4): same-name channels first (playlist, then Your EPG sources), a search row, Use automatic guide when the link is manual. */
+/** Use guide from… (spec §5.4): same-name channels first (playlist, then Your EPG sources), a search row, Use automatic guide when the link is manual, Remove guide (#54) when it has one. */
 @Composable
 fun GuidePicker(vm: LiveViewModel, ch: ChannelEntity, strip: List<String>, onDismiss: () -> Unit) {
     var query by remember { mutableStateOf("") }
     var donors by remember { mutableStateOf<List<GuideChoice>?>(null) }
-    var manual by remember { mutableStateOf(false) }
-    LaunchedEffect(ch.id) { manual = vm.hasManualGuide(ch) }
+    var link by remember { mutableStateOf<org.imdtv.iptvtv.data.db.EpgLinkEntity?>(null) }
+    LaunchedEffect(ch.id) { link = vm.guideLink(ch) }
+    val manual = link?.manual == true
     LaunchedEffect(ch.id, query) { donors = vm.donors(ch, query) }
     androidx.compose.runtime.DisposableEffect(ch.id) { onDispose { vm.clearDonors() } }
     MenuFrame(stringResource(R.string.live_picker_title, ch.displayName(strip)), onDismiss) { first ->
         if (manual) MenuItem(stringResource(R.string.live_picker_automatic), Modifier.focusRequester(first)) { vm.useAutomaticGuide(ch); onDismiss() }
+        if (link?.isNoGuide == false) MenuItem(stringResource(R.string.live_picker_remove_guide), Modifier) { vm.removeGuide(ch); onDismiss() }
         // A row that opens the box on OK, so scrolling past it never opens the keyboard (user, 2026-11-10).
         EditRow(stringResource(R.string.live_picker_search), if (query.isBlank()) stringResource(R.string.live_picker_search_hint) else "“$query”", null, query,
             if (manual) Modifier else Modifier.focusRequester(first)) { query = it.trim() }

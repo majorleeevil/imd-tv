@@ -17,7 +17,7 @@ fun borrowSiblings(channels: List<ChannelEntity>, countryOf: (ChannelEntity) -> 
     val keyOf = channels.stream().map { it.id to logoKey(it.name)?.key }.collect(java.util.stream.Collectors.toList()).toMap()
     // A mixed category ("SPORTS") has no country: fall back to the channel's own prefix ("DE: Sport").
     val country = channels.stream().map { it.id to (countryOf(it) ?: detectCountry(it.name)) }.collect(java.util.stream.Collectors.toList()).toMap()
-    val donors = channels.filter { it.id in byChannel && keyOf[it.id] != null }
+    val donors = channels.filter { byChannel[it.id]?.isNoGuide == false && keyOf[it.id] != null }
         .groupBy { keyOf[it.id] to country[it.id] }
         .mapValues { (_, cs) -> byChannel.getValue((cs.firstOrNull { byChannel.getValue(it.id).manual } ?: cs.minBy { it.id }).id) }
     return channels.mapNotNull { c ->

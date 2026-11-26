@@ -623,7 +623,10 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
     private var donorPool: DonorPool? = null
     /** The picker closed: links may change before it opens again. */
     fun clearDonors() { donorPool = null }
-    suspend fun hasManualGuide(ch: ChannelEntity): Boolean = c.db.epgDao().link(ch.id)?.manual == true
+    suspend fun guideLink(ch: ChannelEntity): EpgLinkEntity? = c.db.epgDao().link(ch.id)
+    fun removeGuide(ch: ChannelEntity) {
+        viewModelScope.launch { c.db.epgDao().upsertLinks(listOf(EpgLinkEntity.noGuide(ch.id))); c.db.epgDao().refreshEpgLogos(ch.providerId); guideBump.value++ }
+    }
     fun useGuideFrom(ch: ChannelEntity, donor: ChannelEntity) {
         viewModelScope.launch {
             val l = c.db.epgDao().link(donor.id) ?: return@launch

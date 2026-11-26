@@ -25,6 +25,13 @@ class SiblingsTest {
         assertEquals("a", borrowSiblings(chs, { "GB" }, listOf(link(5, "a"), link(7, "b"))).single().xmltvId)
     }
 
+    /** #54: "No guide" on one channel stays on that channel; its HD/RAW siblings keep matching. */
+    @Test fun noGuideLinkIsNotADonor() {
+        val chs = listOf(ch(1, "Sport"), ch(2, "Sport HD"), ch(3, "Sport RAW"))
+        val out = borrowSiblings(chs, { "GB" }, listOf(EpgLinkEntity.noGuide(1), link(2, "s.uk")))
+        assertEquals(listOf(3L to "s.uk"), out.map { it.channelId to it.xmltvId })
+    }
+
     @Test fun differentCountryDoesNotBorrow() = assertEquals(emptyList<EpgLinkEntity>(),
         borrowSiblings(listOf(ch(1, "UK: Sport"), ch(2, "DE: Sport")), { if (it.id == 1L) "GB" else "DE" }, listOf(link(1, "s.uk"))))
 

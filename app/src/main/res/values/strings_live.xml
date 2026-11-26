@@ -98,6 +98,7 @@
     <string name="live_overlay_restart">Restart</string>
     <string name="live_overlay_settings">Settings</string>
     <string name="live_picker_automatic">Use automatic guide</string>
+    <string name="live_picker_remove_guide">Remove guide</string>
     <string name="live_picker_none_match">No channel with a guide matches</string>
     <string name="live_picker_none_same">No same-name channel has a guide — search for one</string>
     <string name="live_picker_search">Search channels</string>

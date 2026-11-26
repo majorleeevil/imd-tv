@@ -159,7 +159,7 @@ abstract class ChannelDao {
     @Update abstract suspend fun update(c: ChannelEntity)
     @Query("UPDATE channel SET builtinLogo = :path WHERE id = :id") abstract suspend fun setBuiltinLogo(id: Long, path: String?)
     @Query("""SELECT ch.* FROM channel ch JOIN epg_link l ON l.channelId = ch.id LEFT JOIN category cat ON cat.id = ch.categoryId
-              WHERE ch.providerId = :p AND ch.hidden = 0 AND ch.mergedInto IS NULL AND (cat.hidden IS NULL OR cat.hidden = 0)""")
+              WHERE ch.providerId = :p AND ch.hidden = 0 AND ch.mergedInto IS NULL AND (cat.hidden IS NULL OR cat.hidden = 0) AND l.xmltvId != ''""")
     abstract suspend fun withGuide(p: Long): List<ChannelEntity>
     @Query("UPDATE channel SET customLogo = :logo WHERE id = :id") abstract suspend fun setCustomLogo(id: Long, logo: String?)
     @Query("SELECT customLogo FROM channel WHERE customLogo IS NOT NULL") abstract suspend fun customLogos(): List<String>
