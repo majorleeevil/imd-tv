@@ -28,6 +28,14 @@
     <string name="set_b_autoplay_expl">Previzualizează canalul selectat după o scurtă pauză; dezactivat, apasă OK pentru previzualizare</string>
     <string name="set_b_audio_decoder">Decodor audio</string>
     <string name="set_b_audio_decoder_expl">Software (FFmpeg) redă Dolby/DTS pe orice aparat; Hardware folosește mai întâi aparatul sau TV-ul, apoi Software dacă nu pot</string>
+    <string name="set_b_audio_sync">Sincronizare audio</string>
+    <string name="set_b_audio_sync_expl">Mută sunetul mai devreme (−) sau mai târziu (+) pentru a se potrivi cu imaginea. Se aplică de la următorul canal sau titlu pe care îl pornești.</string>
+    <string name="set_b_audio_sync_off">0 ms</string>
+    <string name="set_b_audio_sync_ms">%1$s ms</string>
+    <string name="set_b_buffer">Buffer înainte de redare</string>
+    <string name="set_b_buffer_expl">Cât din flux se încarcă înainte de redare și din nou după o blocare. Mai mult înseamnă mai puține blocări, dar o pornire mai lentă. Se aplică de la următorul canal sau titlu pe care îl pornești.</string>
+    <string name="set_b_buffer_default">Implicit</string>
+    <string name="set_b_buffer_s">%1$d s</string>
     <string name="set_b_hardware">Hardware</string>
     <string name="set_b_software">Software</string>
     <string name="set_b_change_channel">Schimbă canalul cu</string>

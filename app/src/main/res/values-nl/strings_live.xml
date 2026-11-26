@@ -81,6 +81,7 @@
     <string name="live_overlay_restart">Opnieuw starten</string>
     <string name="live_overlay_settings">Instellingen</string>
     <string name="live_picker_automatic">Automatische gids gebruiken</string>
+    <string name="live_picker_remove_guide">Gids verwijderen</string>
     <string name="live_picker_none_match">Geen zender met gids komt overeen</string>
     <string name="live_picker_none_same">Geen zender met dezelfde naam heeft een gids — zoek een andere</string>
     <string name="live_picker_search">Zenders zoeken</string>

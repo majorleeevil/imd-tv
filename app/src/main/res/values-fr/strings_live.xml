@@ -81,6 +81,7 @@
     <string name="live_overlay_restart">Reprendre au début</string>
     <string name="live_overlay_settings">Réglages</string>
     <string name="live_picker_automatic">Utiliser le guide automatique</string>
+    <string name="live_picker_remove_guide">Retirer le guide</string>
     <string name="live_picker_none_match">Aucune chaîne avec guide ne correspond</string>
     <string name="live_picker_none_same">Aucune chaîne du même nom n\'a de guide — lancez une recherche</string>
     <string name="live_picker_search">Rechercher des chaînes</string>

@@ -81,6 +81,7 @@
     <string name="live_overlay_restart">Börja om</string>
     <string name="live_overlay_settings">Inställningar</string>
     <string name="live_picker_automatic">Använd automatisk guide</string>
+    <string name="live_picker_remove_guide">Ta bort guide</string>
     <string name="live_picker_none_match">Ingen kanal med guide matchar</string>
     <string name="live_picker_none_same">Ingen kanal med samma namn har en guide — sök efter en</string>
     <string name="live_picker_search">Sök kanaler</string>

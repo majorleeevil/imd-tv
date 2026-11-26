@@ -81,6 +81,7 @@
     <string name="live_overlay_restart">Neustart</string>
     <string name="live_overlay_settings">Einstellungen</string>
     <string name="live_picker_automatic">Automatisches Programm verwenden</string>
+    <string name="live_picker_remove_guide">Programm entfernen</string>
     <string name="live_picker_none_match">Kein Sender mit passendem Programm</string>
     <string name="live_picker_none_same">Kein gleichnamiger Sender hat ein Programm – such nach einem</string>
     <string name="live_picker_search">Sender suchen</string>

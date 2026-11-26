@@ -81,6 +81,7 @@
     <string name="live_overlay_restart">Από την αρχή</string>
     <string name="live_overlay_settings">Ρυθμίσεις</string>
     <string name="live_picker_automatic">Αυτόματος οδηγός</string>
+    <string name="live_picker_remove_guide">Αφαίρεση οδηγού</string>
     <string name="live_picker_none_match">Κανένα κανάλι με οδηγό δεν ταιριάζει</string>
     <string name="live_picker_none_same">Κανένα κανάλι με ίδιο όνομα δεν έχει οδηγό — κάντε αναζήτηση</string>
     <string name="live_picker_search">Αναζήτηση καναλιών</string>

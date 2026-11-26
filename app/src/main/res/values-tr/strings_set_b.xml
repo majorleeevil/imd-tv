@@ -28,6 +28,14 @@
     <string name="set_b_autoplay_expl">Odaklanılan kanalı kısa bir beklemeden sonra önizler; kapalıyken önizleme için OK\'a basın</string>
     <string name="set_b_audio_decoder">Ses çözücü</string>
     <string name="set_b_audio_decoder_expl">Yazılım (FFmpeg) Dolby/DTS\'yi her kutuda oynatır; Donanım önce kutuyu veya TV\'yi kullanır, oynatamazlarsa Yazılım devreye girer</string>
+    <string name="set_b_audio_sync">Ses senkronu</string>
+    <string name="set_b_audio_sync_expl">Sesi görüntüyle eşleşecek şekilde daha erken (−) veya daha geç (+) oynatır. Başlattığın bir sonraki kanal veya başlıktan itibaren geçerli olur.</string>
+    <string name="set_b_audio_sync_off">0 ms</string>
+    <string name="set_b_audio_sync_ms">%1$s ms</string>
+    <string name="set_b_buffer">Oynatmadan önce arabellek</string>
+    <string name="set_b_buffer_expl">Oynatmadan önce ve takılmadan sonra yayının ne kadarının yükleneceği. Daha fazlası daha az takılma ama daha yavaş başlangıç demektir. Başlattığın bir sonraki kanal veya başlıktan itibaren geçerli olur.</string>
+    <string name="set_b_buffer_default">Varsayılan</string>
+    <string name="set_b_buffer_s">%1$d s</string>
     <string name="set_b_hardware">Donanım</string>
     <string name="set_b_software">Yazılım</string>
     <string name="set_b_change_channel">Kanal değiştirme tuşları</string>

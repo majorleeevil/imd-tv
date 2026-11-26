@@ -28,6 +28,14 @@
     <string name="set_b_autoplay_expl">Aperçu de la chaîne sélectionnée après une courte pause ; désactivé, appuyez sur OK pour l\'aperçu</string>
     <string name="set_b_audio_decoder">Décodeur audio</string>
     <string name="set_b_audio_decoder_expl">Logiciel (FFmpeg) lit le Dolby/DTS sur tous les boîtiers ; Matériel utilise d\'abord le boîtier ou la TV, puis Logiciel en cas d\'échec</string>
+    <string name="set_b_audio_sync">Synchro audio</string>
+    <string name="set_b_audio_sync_expl">Avance (−) ou retarde (+) le son pour qu\'il corresponde à l\'image. S\'applique à partir de la prochaine chaîne ou du prochain titre que vous lancez.</string>
+    <string name="set_b_audio_sync_off">0 ms</string>
+    <string name="set_b_audio_sync_ms">%1$s ms</string>
+    <string name="set_b_buffer">Mémoire tampon avant lecture</string>
+    <string name="set_b_buffer_expl">Quantité de flux chargée avant la lecture, et de nouveau après une interruption. Plus de tampon signifie moins d\'interruptions mais un démarrage plus lent. S\'applique à partir de la prochaine chaîne ou du prochain titre que vous lancez.</string>
+    <string name="set_b_buffer_default">Par défaut</string>
+    <string name="set_b_buffer_s">%1$d s</string>
     <string name="set_b_hardware">Matériel</string>
     <string name="set_b_software">Logiciel</string>
     <string name="set_b_change_channel">Changer de chaîne avec</string>

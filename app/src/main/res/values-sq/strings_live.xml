@@ -81,6 +81,7 @@
     <string name="live_overlay_restart">Nga fillimi</string>
     <string name="live_overlay_settings">Cilësimet</string>
     <string name="live_picker_automatic">Përdor programin automatik</string>
+    <string name="live_picker_remove_guide">Hiq programin</string>
     <string name="live_picker_none_match">Asnjë kanal me program nuk përputhet</string>
     <string name="live_picker_none_same">Asnjë kanal me të njëjtin emër nuk ka program — kërkoni një</string>
     <string name="live_picker_search">Kërko kanale</string>

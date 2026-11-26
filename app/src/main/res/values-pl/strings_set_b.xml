@@ -28,6 +28,14 @@
     <string name="set_b_autoplay_expl">Podgląd wybranego kanału po krótkiej pauzie; po wyłączeniu naciśnij OK, aby zobaczyć podgląd</string>
     <string name="set_b_audio_decoder">Dekoder dźwięku</string>
     <string name="set_b_audio_decoder_expl">Programowy (FFmpeg) odtwarza Dolby/DTS na każdym dekoderze; Sprzętowy używa najpierw dekodera lub TV, a programowego, gdy nie dają rady</string>
+    <string name="set_b_audio_sync">Synchronizacja dźwięku</string>
+    <string name="set_b_audio_sync_expl">Przesuwa dźwięk wcześniej (−) lub później (+), aby pasował do obrazu. Działa od następnego kanału lub tytułu, który uruchomisz.</string>
+    <string name="set_b_audio_sync_off">0 ms</string>
+    <string name="set_b_audio_sync_ms">%1$s ms</string>
+    <string name="set_b_buffer">Bufor przed odtwarzaniem</string>
+    <string name="set_b_buffer_expl">Ile strumienia jest wczytywane przed odtwarzaniem i ponownie po zatrzymaniu. Więcej oznacza mniej przerw, ale wolniejszy start. Działa od następnego kanału lub tytułu, który uruchomisz.</string>
+    <string name="set_b_buffer_default">Domyślnie</string>
+    <string name="set_b_buffer_s">%1$d s</string>
     <string name="set_b_hardware">Sprzętowy</string>
     <string name="set_b_software">Programowy</string>
     <string name="set_b_change_channel">Zmiana kanału przyciskami</string>

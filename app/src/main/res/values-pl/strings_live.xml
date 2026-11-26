@@ -81,6 +81,7 @@
     <string name="live_overlay_restart">Od początku</string>
     <string name="live_overlay_settings">Ustawienia</string>
     <string name="live_picker_automatic">Użyj przewodnika automatycznego</string>
+    <string name="live_picker_remove_guide">Usuń przewodnik</string>
     <string name="live_picker_none_match">Żaden kanał z przewodnikiem nie pasuje</string>
     <string name="live_picker_none_same">Żaden kanał o tej samej nazwie nie ma przewodnika — wyszukaj inny</string>
     <string name="live_picker_search">Szukaj kanałów</string>

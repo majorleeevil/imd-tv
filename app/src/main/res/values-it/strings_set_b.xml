@@ -28,6 +28,14 @@
     <string name="set_b_autoplay_expl">Mostra l\'anteprima del canale selezionato dopo una breve pausa; se disattivata, premi OK per l\'anteprima</string>
     <string name="set_b_audio_decoder">Decoder audio</string>
     <string name="set_b_audio_decoder_expl">Software (FFmpeg) riproduce Dolby/DTS su qualsiasi box; Hardware usa prima il box o la TV, Software se non possono</string>
+    <string name="set_b_audio_sync">Sincronizzazione audio</string>
+    <string name="set_b_audio_sync_expl">Anticipa (−) o ritarda (+) l\'audio per farlo coincidere con l\'immagine. Si applica dal prossimo canale o titolo che avvii.</string>
+    <string name="set_b_audio_sync_off">0 ms</string>
+    <string name="set_b_audio_sync_ms">%1$s ms</string>
+    <string name="set_b_buffer">Buffer prima della riproduzione</string>
+    <string name="set_b_buffer_expl">Quanta parte dello stream viene caricata prima della riproduzione, e di nuovo dopo un blocco. Più buffer significa meno blocchi ma un avvio più lento. Si applica dal prossimo canale o titolo che avvii.</string>
+    <string name="set_b_buffer_default">Predefinito</string>
+    <string name="set_b_buffer_s">%1$d s</string>
     <string name="set_b_hardware">Hardware</string>
     <string name="set_b_software">Software</string>
     <string name="set_b_change_channel">Cambia canale con</string>

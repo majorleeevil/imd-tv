@@ -28,6 +28,14 @@
     <string name="set_b_autoplay_expl">Fokussierten Sender nach kurzer Pause in der Vorschau zeigen; aus: mit OK die Vorschau starten</string>
     <string name="set_b_audio_decoder">Audio-Decoder</string>
     <string name="set_b_audio_decoder_expl">Software (FFmpeg) spielt Dolby/DTS auf jeder Box; Hardware nutzt zuerst Box oder TV, Software wenn diese es nicht können</string>
+    <string name="set_b_audio_sync">Audio-Sync</string>
+    <string name="set_b_audio_sync_expl">Verschiebt den Ton früher (−) oder später (+), passend zum Bild. Gilt ab dem nächsten Sender oder Titel, den du startest.</string>
+    <string name="set_b_audio_sync_off">0 ms</string>
+    <string name="set_b_audio_sync_ms">%1$s ms</string>
+    <string name="set_b_buffer">Puffer vor der Wiedergabe</string>
+    <string name="set_b_buffer_expl">Wie viel vom Stream geladen wird, bevor er startet und nach einem Stocken erneut. Mehr bedeutet weniger Aussetzer, aber einen langsameren Start. Gilt ab dem nächsten Sender oder Titel, den du startest.</string>
+    <string name="set_b_buffer_default">Standard</string>
+    <string name="set_b_buffer_s">%1$d s</string>
     <string name="set_b_hardware">Hardware</string>
     <string name="set_b_software">Software</string>
     <string name="set_b_change_channel">Sender wechseln mit</string>

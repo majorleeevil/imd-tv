@@ -81,6 +81,7 @@
     <string name="live_overlay_restart">Reiniciar</string>
     <string name="live_overlay_settings">Ajustes</string>
     <string name="live_picker_automatic">Usar guía automática</string>
+    <string name="live_picker_remove_guide">Quitar guía</string>
     <string name="live_picker_none_match">Ningún canal con guía coincide</string>
     <string name="live_picker_none_same">Ningún canal con el mismo nombre tiene guía — busca uno</string>
     <string name="live_picker_search">Buscar canales</string>

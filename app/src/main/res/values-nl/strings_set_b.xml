@@ -28,6 +28,14 @@
     <string name="set_b_autoplay_expl">Toon na een korte pauze een voorbeeld van de geselecteerde zender; bij uit druk je op OK voor een voorbeeld</string>
     <string name="set_b_audio_decoder">Audiodecoder</string>
     <string name="set_b_audio_decoder_expl">Software (FFmpeg) speelt Dolby/DTS af op elke box; Hardware gebruikt eerst de box of TV, en Software als die het niet kunnen</string>
+    <string name="set_b_audio_sync">Audiosynchronisatie</string>
+    <string name="set_b_audio_sync_expl">Verplaatst het geluid eerder (−) of later (+) zodat het bij het beeld past. Geldt vanaf de volgende zender of titel die je start.</string>
+    <string name="set_b_audio_sync_off">0 ms</string>
+    <string name="set_b_audio_sync_ms">%1$s ms</string>
+    <string name="set_b_buffer">Buffer voor het afspelen</string>
+    <string name="set_b_buffer_expl">Hoeveel van de stream wordt geladen voordat het afspelen begint, en opnieuw na een haperen. Meer betekent minder haperingen maar een tragere start. Geldt vanaf de volgende zender of titel die je start.</string>
+    <string name="set_b_buffer_default">Standaard</string>
+    <string name="set_b_buffer_s">%1$d s</string>
     <string name="set_b_hardware">Hardware</string>
     <string name="set_b_software">Software</string>
     <string name="set_b_change_channel">Zender wisselen met</string>

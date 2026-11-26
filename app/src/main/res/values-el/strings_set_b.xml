@@ -28,6 +28,14 @@
     <string name="set_b_autoplay_expl">Προεπισκόπηση του επιλεγμένου καναλιού μετά από μικρή παύση· όταν είναι ανενεργό, πατήστε OK για προεπισκόπηση</string>
     <string name="set_b_audio_decoder">Αποκωδικοποιητής ήχου</string>
     <string name="set_b_audio_decoder_expl">Το λογισμικό (FFmpeg) παίζει Dolby/DTS σε κάθε συσκευή· το υλικό (hardware) χρησιμοποιεί πρώτα τη συσκευή ή την τηλεόραση, και λογισμικό όταν δεν μπορούν</string>
+    <string name="set_b_audio_sync">Συγχρονισμός ήχου</string>
+    <string name="set_b_audio_sync_expl">Μετακινεί τον ήχο νωρίτερα (−) ή αργότερα (+) ώστε να ταιριάζει με την εικόνα. Ισχύει από το επόμενο κανάλι ή τίτλο που θα ξεκινήσετε.</string>
+    <string name="set_b_audio_sync_off">0 ms</string>
+    <string name="set_b_audio_sync_ms">%1$s ms</string>
+    <string name="set_b_buffer">Προσωρινή αποθήκευση πριν την αναπαραγωγή</string>
+    <string name="set_b_buffer_expl">Πόσο από τη ροή φορτώνεται πριν ξεκινήσει η αναπαραγωγή, και ξανά μετά από διακοπή. Περισσότερο σημαίνει λιγότερες διακοπές αλλά πιο αργή εκκίνηση. Ισχύει από το επόμενο κανάλι ή τίτλο που θα ξεκινήσετε.</string>
+    <string name="set_b_buffer_default">Προεπιλογή</string>
+    <string name="set_b_buffer_s">%1$d s</string>
     <string name="set_b_hardware">Υλικό</string>
     <string name="set_b_software">Λογισμικό</string>
     <string name="set_b_change_channel">Αλλαγή καναλιού με</string>

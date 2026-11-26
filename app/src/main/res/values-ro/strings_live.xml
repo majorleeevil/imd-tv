@@ -81,6 +81,7 @@
     <string name="live_overlay_restart">De la început</string>
     <string name="live_overlay_settings">Setări</string>
     <string name="live_picker_automatic">Folosește ghidul automat</string>
+    <string name="live_picker_remove_guide">Elimină ghidul</string>
     <string name="live_picker_none_match">Niciun canal cu ghid nu se potrivește</string>
     <string name="live_picker_none_same">Niciun canal cu același nume nu are ghid — caută unul</string>
     <string name="live_picker_search">Caută canale</string>

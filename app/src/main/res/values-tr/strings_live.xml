@@ -81,6 +81,7 @@
     <string name="live_overlay_restart">Baştan başlat</string>
     <string name="live_overlay_settings">Ayarlar</string>
     <string name="live_picker_automatic">Otomatik rehber kullan</string>
+    <string name="live_picker_remove_guide">Rehberi kaldır</string>
     <string name="live_picker_none_match">Rehberi olan eşleşen kanal yok</string>
     <string name="live_picker_none_same">Aynı adlı hiçbir kanalın rehberi yok — arama yapın</string>
     <string name="live_picker_search">Kanal ara</string>

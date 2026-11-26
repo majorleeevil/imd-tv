@@ -28,6 +28,14 @@
     <string name="set_b_autoplay_expl">Förhandsvisa den markerade kanalen efter en kort paus; när det är av trycker du på OK för att förhandsvisa</string>
     <string name="set_b_audio_decoder">Ljudavkodare</string>
     <string name="set_b_audio_decoder_expl">Programvara (FFmpeg) spelar Dolby/DTS på vilken box som helst; Hårdvara använder boxen eller tv:n först, Programvara när de inte klarar det</string>
+    <string name="set_b_audio_sync">Ljudsynk</string>
+    <string name="set_b_audio_sync_expl">Flyttar ljudet tidigare (−) eller senare (+) så att det matchar bilden. Gäller från nästa kanal eller titel du startar.</string>
+    <string name="set_b_audio_sync_off">0 ms</string>
+    <string name="set_b_audio_sync_ms">%1$s ms</string>
+    <string name="set_b_buffer">Buffert före uppspelning</string>
+    <string name="set_b_buffer_expl">Hur mycket av strömmen som laddas innan uppspelningen startar, och igen efter ett avbrott. Mer ger färre avbrott men en långsammare start. Gäller från nästa kanal eller titel du startar.</string>
+    <string name="set_b_buffer_default">Standard</string>
+    <string name="set_b_buffer_s">%1$d s</string>
     <string name="set_b_hardware">Hårdvara</string>
     <string name="set_b_software">Programvara</string>
     <string name="set_b_change_channel">Byt kanal med</string>

@@ -28,6 +28,14 @@
     <string name="set_b_autoplay_expl">Pamje paraprake e kanalit në fokus pas një pushimi të shkurtër; kur është joaktiv, shtypni OK për pamjen paraprake</string>
     <string name="set_b_audio_decoder">Dekoduesi i audios</string>
     <string name="set_b_audio_decoder_expl">Softueri (FFmpeg) luan Dolby/DTS në çdo pajisje; Hardueri përdor fillimisht pajisjen ose TV, Softueri kur ato nuk mundin</string>
+    <string name="set_b_audio_sync">Sinkronizimi i audios</string>
+    <string name="set_b_audio_sync_expl">E zhvendos zërin më herët (−) ose më vonë (+) që të përputhet me figurën. Zbatohet nga kanali ose titulli i radhës që nis.</string>
+    <string name="set_b_audio_sync_off">0 ms</string>
+    <string name="set_b_audio_sync_ms">%1$s ms</string>
+    <string name="set_b_buffer">Buferi para luajtjes</string>
+    <string name="set_b_buffer_expl">Sa nga transmetimi ngarkohet para se të luajë, dhe sërish pas një ndalese. Më shumë do të thotë më pak ndalesa, por nisje më e ngadaltë. Zbatohet nga kanali ose titulli i radhës që nis.</string>
+    <string name="set_b_buffer_default">Parazgjedhje</string>
+    <string name="set_b_buffer_s">%1$d s</string>
     <string name="set_b_hardware">Hardueri</string>
     <string name="set_b_software">Softueri</string>
     <string name="set_b_change_channel">Ndrysho kanalin me</string>
