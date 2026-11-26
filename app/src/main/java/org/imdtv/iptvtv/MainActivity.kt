@@ -97,6 +97,10 @@ class MainActivity : ComponentActivity() {
                 .collect { app.player.setAudioDecoder(it) }
         }
         lifecycleScope.launch {
+            (application as IptvApp).container.settings.settings.map { it.audioDelayMs to it.bufferSeconds }.distinctUntilChanged()
+                .collect { (delay, buffer) -> app.player.audioDelayMs = delay; app.player.setBufferSeconds(buffer) }
+        }
+        lifecycleScope.launch {
             (application as IptvApp).container.settings.settings.map { Triple(it.subtitlesOn, it.subtitleLanguage, it.liveSubtitlesOn) }.distinctUntilChanged()
                 .collect { (on, language, live) -> app.player.setSubtitles(on, language, live) }
         }

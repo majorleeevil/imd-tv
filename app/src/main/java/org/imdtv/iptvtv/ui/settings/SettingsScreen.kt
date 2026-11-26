@@ -256,6 +256,12 @@ fun SettingsScreen(vm: SettingsViewModel, onAddPlaylist: () -> Unit, onEditPlayl
                         ChoiceRow(stringResource(R.string.set_b_audio_decoder), stringResource(R.string.set_b_audio_decoder_expl),
                             listOf(AudioDecoder.SOFTWARE, AudioDecoder.HARDWARE), s.audioDecoder,
                             { if (it == AudioDecoder.HARDWARE) stringResource(R.string.set_b_hardware) else stringResource(R.string.set_b_software) }, default = AppSettings().audioDecoder) { d -> vm.update { it.copy(audioDecoder = d) } }
+                        ChoiceRow(stringResource(R.string.set_b_audio_sync), stringResource(R.string.set_b_audio_sync_expl), (-1000..1000 step 50).toList(), s.audioDelayMs,
+                            { if (it == 0) stringResource(R.string.set_b_audio_sync_off) else stringResource(R.string.set_b_audio_sync_ms, (if (it > 0) "+" else "") + it) },
+                            default = AppSettings().audioDelayMs) { v -> vm.update { it.copy(audioDelayMs = v) } }
+                        ChoiceRow(stringResource(R.string.set_b_buffer), stringResource(R.string.set_b_buffer_expl), listOf(0, 5, 10, 15, 30), s.bufferSeconds,
+                            { if (it == 0) stringResource(R.string.set_b_buffer_default) else stringResource(R.string.set_b_buffer_s, it) },
+                            default = AppSettings().bufferSeconds) { v -> vm.update { it.copy(bufferSeconds = v) } }
                         ChoiceRow(stringResource(R.string.set_b_change_channel), stringResource(R.string.set_b_change_channel_expl),
                             listOf(false, true), s.zapLeftRight, { if (it) stringResource(R.string.set_b_left_right) else stringResource(R.string.set_b_up_down) }, default = AppSettings().zapLeftRight) { v -> vm.update { it.copy(zapLeftRight = v) } }
                         // Always the other pair of arrows: picking one here flips Change channel with.

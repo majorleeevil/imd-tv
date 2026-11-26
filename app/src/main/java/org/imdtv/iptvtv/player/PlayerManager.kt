@@ -45,6 +45,15 @@ import org.imdtv.iptvtv.data.settings.AudioDecoder
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
+/** #52 Audio sync: the audio clock reported [delayMs] ahead, so video keeps that far in front of the sound. */
+internal fun delayedPositionUs(positionUs: Long, delayMs: Int): Long =
+    if (positionUs == androidx.media3.exoplayer.audio.AudioSink.CURRENT_POSITION_NOT_SET) positionUs else positionUs + delayMs * 1000L
+
+/** #53 Buffer before playing, in seconds: (start, after a stall) in ms; null (0) = Media3's defaults, as before. */
+internal fun bufferMs(seconds: Int): Pair<Int, Int>? = if (seconds <= 0) null else
+    maxOf(seconds * 1000, androidx.media3.exoplayer.DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_MS) to
+        maxOf(seconds * 1000, androidx.media3.exoplayer.DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS)
+
 /** The app's single ExoPlayer. Create and use on the main thread. */
 @OptIn(UnstableApi::class)
 class PlayerManager(private val context: Context) {
@@ -52,12 +61,17 @@ class PlayerManager(private val context: Context) {
     var audioDecoder: AudioDecoder = AudioDecoder.SOFTWARE
         private set
     private var wantedDecoder = audioDecoder
+    /** #53 Buffer before playing (s, 0 = default): like the decoder, a change rebuilds the player at the next stream. */
+    private var bufferSeconds = 0
+    private var wantedBufferSeconds = 0
+    /** #52 Audio sync (ms); read by the audio sink on the playback thread when a stream starts or seeks. */
+    @Volatile var audioDelayMs = 0
 
     /** Rebuilt when the audio decoder changes: read it at use time, don't keep a reference. */
-    var player: ExoPlayer = build(audioDecoder)
+    var player: ExoPlayer = build(audioDecoder, bufferSeconds)
         private set
 
-    private fun build(d: AudioDecoder): ExoPlayer = ExoPlayer.Builder(
+    private fun build(d: AudioDecoder, bufferS: Int): ExoPlayer = ExoPlayer.Builder(
         context,
         // SOFTWARE (PREFER): the FFmpeg audio renderer handles AC3/E-AC3/DTS that many TV boxes can't decode.
         // HARDWARE (ON): the platform decoders or passthrough to the TV/receiver first; FFmpeg only for audio the box can't
@@ -70,15 +84,31 @@ class PlayerManager(private val context: Context) {
                 allowedVideoJoiningTimeMs: Long, out: ArrayList<Renderer>,
             ) { out += StreamAspectVideoRenderer(context, codecAdapterFactory, mediaCodecSelector, allowedVideoJoiningTimeMs,
                 enableDecoderFallback, eventHandler, eventListener) }
+            // One delay per stream (taken at flush, i.e. start or seek): changed mid-stream, the renderer won't let the clock go back.
+            override fun buildAudioSink(context: Context, enableFloatOutput: Boolean, enableAudioTrackPlaybackParams: Boolean) =
+                super.buildAudioSink(context, enableFloatOutput, enableAudioTrackPlaybackParams)?.let { sink ->
+                    object : androidx.media3.exoplayer.audio.ForwardingAudioSink(sink) {
+                        private var delay = audioDelayMs
+                        override fun flush() { delay = audioDelayMs; super.flush() }
+                        override fun getCurrentPositionUs(sourceEnded: Boolean) = delayedPositionUs(super.getCurrentPositionUs(sourceEnded), delay)
+                    }
+                }
         }.setExtensionRendererMode(
             if (d == AudioDecoder.SOFTWARE) DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER
             else DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON,
         ),
-    ).build()
+    ).apply {
+        bufferMs(bufferS)?.let { (start, stall) ->
+            setLoadControl(androidx.media3.exoplayer.DefaultLoadControl.Builder().setBufferDurationsMs(
+                maxOf(androidx.media3.exoplayer.DefaultLoadControl.DEFAULT_MIN_BUFFER_MS, start), maxOf(androidx.media3.exoplayer.DefaultLoadControl.DEFAULT_MAX_BUFFER_MS, start), start, stall).build())
+        }
+    }.build()
 
-    fun setAudioDecoder(d: AudioDecoder) {
-        wantedDecoder = d
-        if (player.playbackState != Player.STATE_IDLE || d == audioDecoder) return
+    fun setAudioDecoder(d: AudioDecoder) { wantedDecoder = d; rebuildIfIdle() }
+    fun setBufferSeconds(s: Int) { wantedBufferSeconds = s; rebuildIfIdle() }
+
+    private fun rebuildIfIdle() {
+        if (player.playbackState != Player.STATE_IDLE || wantedDecoder == audioDecoder && wantedBufferSeconds == bufferSeconds) return
         // Idle with a stream (a failed one waiting to retry): the new player must load it again, or it stays empty.
         val u = url
         if (u != null) { this.url = null; reload(u, userAgent, login, vod, drm, null) } else applyDecoder()
@@ -86,14 +116,15 @@ class PlayerManager(private val context: Context) {
 
     /** Swaps in a player built for [wantedDecoder], keeping the listener and the attached view. */
     private fun applyDecoder() {
-        if (wantedDecoder == audioDecoder) return
+        if (wantedDecoder == audioDecoder && wantedBufferSeconds == bufferSeconds) return
         val old = player
         old.removeListener(listener)
-        player = build(wantedDecoder).also { it.addListener(listener); it.addAnalyticsListener(diagnostics); applySubtitles(it) }
+        player = build(wantedDecoder, wantedBufferSeconds).also { it.addListener(listener); it.addAnalyticsListener(diagnostics); applySubtitles(it) }
         audioDecoder = wantedDecoder
+        bufferSeconds = wantedBufferSeconds
         view?.let { PlayerView.switchTargetView(player, null, it) }
         old.release()
-        Log.i(TAG, "audio decoder $audioDecoder")
+        Log.i(TAG, "audio decoder $audioDecoder, buffer ${bufferSeconds}s")
     }
 
     private var subtitlesOn = false

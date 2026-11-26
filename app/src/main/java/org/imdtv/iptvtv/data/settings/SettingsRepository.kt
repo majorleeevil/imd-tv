@@ -18,6 +18,8 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
     private val themeColour = stringPreferencesKey("theme_colour")
     private val autoplay = booleanPreferencesKey("autoplay_on_scroll")
     private val decoder = stringPreferencesKey("audio_decoder")
+    private val audioDelay = intPreferencesKey("audio_delay_ms")
+    private val bufferSeconds = intPreferencesKey("buffer_seconds")
     private val lastChannelOnStart = booleanPreferencesKey("last_channel_on_start")
     private val confirmExit = booleanPreferencesKey("confirm_exit")
     private val zapLeftRight = booleanPreferencesKey("zap_left_right")
@@ -119,6 +121,8 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
             themeColour = ThemeColour.entries.find { it.name == this[themeColour] } ?: d.themeColour,
             autoplayOnScroll = this[autoplay] ?: d.autoplayOnScroll,
             audioDecoder = this[decoder]?.let { n -> AudioDecoder.entries.find { it.name == n } } ?: d.audioDecoder,
+            audioDelayMs = this[audioDelay] ?: d.audioDelayMs,
+            bufferSeconds = this[bufferSeconds] ?: d.bufferSeconds,
             lastChannelOnStart = this[lastChannelOnStart] ?: d.lastChannelOnStart,
             confirmExit = this[confirmExit] ?: d.confirmExit,
             zapLeftRight = this[zapLeftRight] ?: d.zapLeftRight,
@@ -203,6 +207,8 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
         this[themeColour] = s.themeColour.name
         this[autoplay] = s.autoplayOnScroll
         this[decoder] = s.audioDecoder.name
+        this[audioDelay] = s.audioDelayMs
+        this[bufferSeconds] = s.bufferSeconds
         this[lastChannelOnStart] = s.lastChannelOnStart
         this[confirmExit] = s.confirmExit
         this[zapLeftRight] = s.zapLeftRight

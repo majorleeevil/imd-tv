@@ -28,6 +28,14 @@
     <string name="set_b_autoplay_expl">Preview the focused channel after a short pause; when off, press OK to preview</string>
     <string name="set_b_audio_decoder">Audio decoder</string>
     <string name="set_b_audio_decoder_expl">Software (FFmpeg) plays Dolby/DTS on any box; Hardware uses the box or TV first, Software when they can\'t</string>
+    <string name="set_b_audio_sync">Audio sync</string>
+    <string name="set_b_audio_sync_expl">Moves the sound earlier (−) or later (+) to match the picture. Applies from the next channel or title you start.</string>
+    <string name="set_b_audio_sync_off">0 ms</string>
+    <string name="set_b_audio_sync_ms">%1$s ms</string>
+    <string name="set_b_buffer">Buffer before playing</string>
+    <string name="set_b_buffer_expl">How much of the stream to load before it plays, and again after it stalls. More means fewer stalls but a slower start. Applies from the next channel or title you start.</string>
+    <string name="set_b_buffer_default">Default</string>
+    <string name="set_b_buffer_s">%1$d s</string>
     <string name="set_b_hardware">Hardware</string>
     <string name="set_b_software">Software</string>
     <string name="set_b_change_channel">Change channel with</string>

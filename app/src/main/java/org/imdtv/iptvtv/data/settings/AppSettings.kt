@@ -235,6 +235,10 @@ data class AppSettings(
     val sportsTeamResults: Boolean = false,
     /** A SportsHub card in focus for a moment switches the preview to its game; off: only the card menu's Preview does. */
     val sportsFocusPreview: Boolean = true,
+    /** #52 Audio sync, -1000..1000 ms in 50 ms steps; + = sound later. */
+    val audioDelayMs: Int = 0,
+    /** #53 Buffer before playing, seconds; 0 = default. */
+    val bufferSeconds: Int = 0,
 ) {
     /** The per-theme appearance: colour, mode, guide rows, header size, preview fade. */
     fun look() = listOf(themeColour.name, themeDark, guideRows, headerSize.name, previewFade).joinToString(";")
