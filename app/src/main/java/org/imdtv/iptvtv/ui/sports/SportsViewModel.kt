@@ -36,6 +36,9 @@ enum class SportsPage { GAMES, TEAMS, LEAGUES, STANDINGS, SETTINGS }
 /** Where a game is on: the channel and the programme that names both teams. */
 data class OnTv(val ch: ChannelEntity, val p: GuideProgramme) { fun liveAt(t: Long) = p.start <= t && t < p.stop }
 
+/** Two copies of a channel name can be the same channel unless both name a country and they differ ("VIP:" names none). */
+internal fun sameCountry(a: String?, b: String?) = a == null || b == null || a == b
+
 /** The preview pane: a game, and the channel playing it (null = the score card). */
 data class Pane(val game: Game, val tv: OnTv?, val looked: Boolean)
 
@@ -194,7 +197,9 @@ class SportsViewModel(app: Application) : AndroidViewModel(app) {
         for ((h, m) in hits.values.toList()) {
             val key = org.imdtv.iptvtv.data.logos.logoKey(h.ch.name)?.key ?: continue
             sameName.getOrPut(key) { searchOrEmpty { c.search.universal(pid, strip, key.replace('-', ' '), cap = 100, vod = { emptyList() }).channels.items } }
-                .filter { !hits.containsKey(it.id) && org.imdtv.iptvtv.data.logos.logoKey(it.name)?.key == key }
+                // Not another country's channel of that name: "DE: Sky Sport Mix" isn't "UK: Sky Sport Mix" (26 Nov).
+                .filter { !hits.containsKey(it.id) && org.imdtv.iptvtv.data.logos.logoKey(it.name)?.key == key &&
+                    sameCountry(org.imdtv.iptvtv.data.catalogue.detectCountry(it.name), org.imdtv.iptvtv.data.catalogue.detectCountry(h.ch.name)) }
                 .forEach { hits[it.id] = org.imdtv.iptvtv.data.search.GuideHit(it, h.p) to m }
         }
         // Event channels with no guide, named for the game ("EPL 03: Wolves v Leeds"): on from kick-off for 3 hours.

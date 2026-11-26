@@ -329,7 +329,11 @@ private fun androidx.compose.foundation.layout.BoxScope.GamesPage(vm: SportsView
             when {
                 fetched == null && !failed -> Spinner(Modifier.align(Alignment.Center), 20.dp, colors.muted)
                 failed -> Text(stringResource(R.string.sports_unavailable), fontSize = 13.sp, color = colors.muted, modifier = Modifier.align(Alignment.Center))
-                favs.isEmpty() -> Text(stringResource(R.string.sports_no_favourites), fontSize = 12.sp, color = colors.muted, modifier = Modifier.align(Alignment.Center).padding(horizontal = 20.dp))
+                // Nothing followed on this day: the game being browsed below (the preview's), else one on now, as the big card.
+                favs.isEmpty() -> (pane?.game ?: all.firstOrNull { it.state == GameState.IN } ?: all.firstOrNull())?.let { g ->
+                    Hero(g, favTeams, lineups[g.id] == true, pane?.takeIf { it.game.id == g.id }?.tv, Modifier.height(previewH).fillMaxWidth(),
+                        emptyList(), Modifier, onFocused = { heroFocused = it }) { onMatch(g) }
+                } ?: Text(stringResource(R.string.sports_no_favourites), fontSize = 12.sp, color = colors.muted, modifier = Modifier.align(Alignment.Center).padding(horizontal = 20.dp))
                 // A favourite team playing fills the box; the followed leagues' other games are further down (scroll).
                 // A plain scrolling column, not a lazy one: everything stays composed, so focus moving back up to a hero
                 // can't land on an item that's being disposed (it jumped on to the Sport pill).
