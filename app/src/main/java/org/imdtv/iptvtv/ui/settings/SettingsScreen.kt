@@ -261,7 +261,7 @@ fun SettingsScreen(vm: SettingsViewModel, onAddPlaylist: () -> Unit, onEditPlayl
                             default = AppSettings().audioDelayMs) { v -> vm.update { it.copy(audioDelayMs = v) } }
                         ChoiceRow(stringResource(R.string.set_b_buffer), stringResource(R.string.set_b_buffer_expl), listOf(0, 5, 10, 15, 30), s.bufferSeconds,
                             { if (it == 0) stringResource(R.string.set_b_buffer_default) else stringResource(R.string.set_b_buffer_s, it) },
-                            default = AppSettings().bufferSeconds) { v -> vm.update { it.copy(bufferSeconds = v) } }
+                            ) { v -> vm.update { it.copy(bufferSeconds = v) } } // no "(Default)" tag: the option is already called Default
                         ChoiceRow(stringResource(R.string.set_b_change_channel), stringResource(R.string.set_b_change_channel_expl),
                             listOf(false, true), s.zapLeftRight, { if (it) stringResource(R.string.set_b_left_right) else stringResource(R.string.set_b_up_down) }, default = AppSettings().zapLeftRight) { v -> vm.update { it.copy(zapLeftRight = v) } }
                         // Always the other pair of arrows: picking one here flips Change channel with.

@@ -1,5 +1,6 @@
 package org.imdtv.iptvtv.ui
 
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.ui.res.stringResource
 import org.imdtv.iptvtv.R
 
@@ -110,11 +111,16 @@ internal fun MenuFrame(title: String, onDismiss: () -> Unit, content: @Composabl
 }
 
 @Composable
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 internal fun MenuItem(label: String, modifier: Modifier, enabled: Boolean = true, more: Boolean = false, onClick: () -> Unit) {
     // Disabled: still focusable so it reads as unavailable, greyed, OK does nothing.
     FocusBox(onClick = { if (enabled) onClick() }, modifier = modifier) { f ->
         val fg = if (!enabled) Color(0x80FFFFFF).let { if (f) Color(0x99000000) else it } else if (f) Color.Black else Color.White
-        Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(if (f) Color.White else Color.Transparent)
+        // The menu's first focus lands before the dialog has its size, so a current choice far down a long list (Audio sync)
+        // stayed below the edge: scroll to it once laid out.
+        val bring = remember { androidx.compose.foundation.relocation.BringIntoViewRequester() }
+        if (f) LaunchedEffect(Unit) { withFrameNanos { }; bring.bringIntoView() }
+        Row(Modifier.fillMaxWidth().bringIntoViewRequester(bring).clip(RoundedCornerShape(8.dp)).background(if (f) Color.White else Color.Transparent)
             .padding(horizontal = 14.dp, vertical = 7.dp), verticalAlignment = Alignment.CenterVertically) {
             Text(label, fontSize = 15.sp, color = fg, modifier = Modifier.weight(1f))
             if (more) Text("›", fontSize = 18.sp, color = fg, modifier = Modifier.padding(start = 12.dp))
