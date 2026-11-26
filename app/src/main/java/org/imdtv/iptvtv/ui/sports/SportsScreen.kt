@@ -48,6 +48,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.foundation.focusGroup
@@ -293,6 +298,11 @@ private fun androidx.compose.foundation.layout.BoxScope.GamesPage(vm: SportsView
     val others = remember(favs, heroes) { favs.filter { it !in heroes } }
     val favTeams = remember(s.sportsTeams) { s.sportsTeams.map(::favouriteTeamKey).toSet() }
     val back = remember { FocusRequester() }
+    val paneFocus = remember { FocusRequester() }
+    var toPane by remember { mutableStateOf<String?>(null) }
+    // The card OK was pressed on (no followed games): Down from Watch full screen returns to it.
+    val fromCard = remember { FocusRequester() }
+    var cameFrom by remember { mutableStateOf<String?>(null) }
     val favScroll = rememberScrollState()
     var heroFocused by remember { mutableStateOf(false) }
     val scope = androidx.compose.runtime.rememberCoroutineScope()
@@ -317,8 +327,12 @@ private fun androidx.compose.foundation.layout.BoxScope.GamesPage(vm: SportsView
         }, onDismiss = close)
     }
     @Composable fun Card(g: Game, width: androidx.compose.ui.unit.Dp = 206.dp, onFocused: () -> Unit = { dwell = g }) =
-        GameCard(g, favTeams, (if (g.id == vm.lastFocusedGame) Modifier.focusRequester(back) else Modifier).onLongOk { menuGame = g }, vm.day(), width,
-            onFocused = { vm.lastFocusedGame = g.id; onFocused() }) { onMatch(g) }
+        GameCard(g, favTeams, (if (g.id == vm.lastFocusedGame) Modifier.focusRequester(back) else Modifier)
+            .then(if (g.id == cameFrom) Modifier.focusRequester(fromCard) else Modifier).onLongOk { menuGame = g }, vm.day(), width,
+            onFocused = { vm.lastFocusedGame = g.id; onFocused() }) {
+            // No followed games: OK puts the game in the top card and moves to Watch full screen (Stats beside it; Down comes back).
+            if (favs.isEmpty()) { vm.preview(g, strip); toPane = g.id; cameFrom = g.id } else onMatch(g)
+        }
 
     // Favourites box: the whole width, the preview inside it on the right.
     val boxH = 212.dp
@@ -365,8 +379,12 @@ private fun androidx.compose.foundation.layout.BoxScope.GamesPage(vm: SportsView
         val tv = pane?.tv?.takeIf { it.liveAt(System.currentTimeMillis()) }
         LaunchedEffect(tv?.ch?.id) { if (tv != null) live.preview(tv.ch, ask = false) else live.player.stop() }
         val fade = s.sportsPreviewFade && LocalGlassBackdrop.current == null // Liquid: framed, like its guide
+        LaunchedEffect(toPane, pane?.game?.id) { if (toPane != null && pane?.game?.id == toPane) { toPane = null; runCatching { paneFocus.requestFocus() } } }
         FocusBox(onClick = { tv?.let { onFull(it.ch) } ?: pane?.game?.let(onMatch) },
-            modifier = Modifier.align(Alignment.CenterEnd).padding(end = 10.dp).size(previewW, previewH).focusProperties { canFocus = pane != null }) { f ->
+            modifier = Modifier.align(Alignment.CenterEnd).padding(end = 10.dp).size(previewW, previewH).focusRequester(paneFocus)
+                .focusProperties { canFocus = pane != null }
+                // Unhandled (card scrolled away): the usual Down.
+                .onPreviewKeyEvent { e -> e.type == KeyEventType.KeyDown && e.key == Key.DirectionDown && cameFrom != null && runCatching { fromCard.requestFocus() }.isSuccess }) { f ->
             Box(Modifier.fillMaxSize()) {
                 if (tv != null) {
                     Preview(live, visible = true, screen = screen, edge = if (fade) PreviewEdge.NONE else PreviewEdge.RIM, modifier = Modifier.fillMaxSize())
@@ -484,8 +502,10 @@ private fun Hero(g: Game, favTeams: Set<String>, lineupsOut: Boolean, tv: OnTv?,
                 if (drivers.isNotEmpty()) Text(drivers.joinToString(" · "), fontSize = 13.sp, color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis)
             } else Row(verticalAlignment = Alignment.CenterVertically) {
                 // Home team first (as listed everywhere); the favourite larger and bold.
-                @Composable fun Name(side: org.imdtv.iptvtv.data.sports.Side) = Text(side.name, fontSize = if (side == fav) 22.sp else 18.sp,
-                    fontWeight = if (side == fav) FontWeight.Bold else FontWeight.Normal, color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                // Neither followed (a game browsed with no favourites): both plain.
+                @Composable fun Name(side: org.imdtv.iptvtv.data.sports.Side) = (side == fav && teamKey(g.league.sport, side.id) in favTeams).let { big ->
+                    Text(side.name, fontSize = if (big) 22.sp else 18.sp,
+                        fontWeight = if (big) FontWeight.Bold else FontWeight.Normal, color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis) }
                 Name(g.home)
                 Text(if (g.state == GameState.PRE) "  v  " else "  ${g.home.score.orEmpty()} – ${g.away.score.orEmpty()}  ", fontSize = 22.sp,
                     fontWeight = if (g.state == GameState.PRE) FontWeight.Normal else FontWeight.Bold, color = Color.White)

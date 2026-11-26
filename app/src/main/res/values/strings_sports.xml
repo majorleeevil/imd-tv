@@ -14,7 +14,7 @@
     <string name="sports_no_favourites">No games for your teams or competitions on this day. Pick them in Favourite teams and Favourite competitions.</string>
     <string name="sports_no_games">No games on this day.</string>
     <string name="sports_no_other_games">No other games on this day.</string>
-    <string name="sports_stats">Stats</string>
+    <string name="sports_stats">Stats / All Streams</string>
     <string name="sports_preview">Preview</string>
     <string name="sports_updated">Updated %1$s</string>
     <string name="sports_unavailable">Scores unavailable right now</string>
