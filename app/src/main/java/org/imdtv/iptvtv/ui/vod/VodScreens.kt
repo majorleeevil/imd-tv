@@ -104,14 +104,29 @@ fun VodHomeScreen(vm: VodViewModel, nav: @Composable () -> Unit, onOpen: (VodIte
     var refocus by remember { mutableStateOf(0) }
     // Rows load asynchronously, so the first poster grabs focus itself once it exists (per tab / grid).
     val wantFirst = remember(kind, gridCat?.id) { mutableStateOf(true) }
+    // Back from a title: its row/grid scrolled back and the title focused, not the first poster (#55).
+    var back by remember(kind, gridCat?.id) { mutableStateOf(vm.reopen?.takeIf { it.kind == kind && it.gridId == gridCat?.id }) }
+    val rowsState = androidx.compose.foundation.lazy.rememberLazyListState(back?.listIndex ?: 0, back?.listOffset ?: 0)
+    val gridState = androidx.compose.foundation.lazy.grid.rememberLazyGridState(back?.listIndex ?: 0, back?.listOffset ?: 0)
+    fun opened(row: Any?, index: Int, rows: Boolean) {
+        vm.reopen = if (rows) VodViewModel.Reopen(kind, null, row, index, rowsState.firstVisibleItemIndex, rowsState.firstVisibleItemScrollOffset)
+            else VodViewModel.Reopen(kind, gridCat?.id, null, index, gridState.firstVisibleItemIndex, gridState.firstVisibleItemScrollOffset)
+    }
 
     LaunchedEffect(focused?.id) { val f = focused ?: return@LaunchedEffect; delay(500); vm.loadDetail(f) }
     LaunchedEffect(refocus, railOpen, gridCat?.id, kind) {
         withFrameNanos { }
         runCatching { if (railOpen) railFocus.requestFocus() else firstItem.requestFocus() }
     }
+    // Rows can move while away (Continue watching appears after playing), so the opened row is found by its key.
+    LaunchedEffect(back) {
+        val b = back?.takeIf { it.row != null && wantFirst.value } ?: return@LaunchedEffect
+        val keys = buildList<Any> { if (favs.isNotEmpty()) add("fav"); cats.forEach { add(it.category.id) }; others.forEach { o -> o.categories.forEach { add("o${it.first.id}") } } }
+        val at = keys.indexOf(b.row)
+        if (at < 0) { back = null; vm.reopen = null; withFrameNanos { }; runCatching { firstItem.requestFocus() } } else rowsState.scrollToItem(at)
+    }
     val claim: @Composable () -> Unit = {
-        LaunchedEffect(Unit) { if (wantFirst.value) { withFrameNanos { }; runCatching { firstItem.requestFocus(); wantFirst.value = false } } }
+        LaunchedEffect(Unit) { if (wantFirst.value) { withFrameNanos { }; runCatching { firstItem.requestFocus(); wantFirst.value = false; vm.reopen = null } } }
     }
 
     Box(Modifier.fillMaxSize().themeBackground(LocalTheme.current.colors.vodBg)) {
@@ -154,12 +169,13 @@ fun VodHomeScreen(vm: VodViewModel, nav: @Composable () -> Unit, onOpen: (VodIte
             } else if (gridCat != null) {
                 androidx.compose.runtime.CompositionLocalProvider(androidx.compose.foundation.gestures.LocalBringIntoViewSpec provides rowToTop) { LazyVerticalGrid(GridCells.Fixed(7), verticalArrangement = Arrangement.spacedBy(14.dp),
                     contentPadding = androidx.compose.foundation.layout.PaddingValues(start = 8.dp, top = 6.dp, end = 42.dp, bottom = 20.dp),
-                    modifier = Modifier.fillMaxSize().offset(x = (-8).dp)) {
+                    state = gridState, modifier = Modifier.fillMaxSize().offset(x = (-8).dp)) {
+                    val home = back?.index?.takeIf { it < grid.size } ?: 0
                     itemsIndexed(grid, key = { _, it -> it.id }) { i, item ->
-                        if (i == 0) claim()
-                        Poster(item, Modifier.then(if (i == 0) Modifier.focusRequester(firstItem) else Modifier)
+                        if (i == home) claim()
+                        Poster(item, Modifier.then(if (i == home) Modifier.focusRequester(firstItem) else Modifier)
                             .onPreviewKeyEvent { if (i % 7 == 0 && leftKey(it)) { openRail(); true } else false },
-                            onFocused = { vm.focused.value = item }, onClick = { onOpen(item) })
+                            onFocused = { vm.focused.value = item }, onClick = { opened(null, i, rows = false); onOpen(item) })
                     }
                 } }
             } else {
@@ -171,25 +187,28 @@ fun VodHomeScreen(vm: VodViewModel, nav: @Composable () -> Unit, onOpen: (VodIte
                 val density = androidx.compose.ui.platform.LocalDensity.current
                 val rowSpec = remember(density) { with(density) { rowToTop((ROW_TITLE + 12.dp).toPx()) } }
                 BoxWithConstraints(Modifier.fillMaxSize()) { androidx.compose.runtime.CompositionLocalProvider(androidx.compose.foundation.gestures.LocalBringIntoViewSpec provides rowSpec) {
-                LazyColumn(Modifier.fillMaxSize(), contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                LazyColumn(Modifier.fillMaxSize(), state = rowsState, contentPadding = androidx.compose.foundation.layout.PaddingValues(
                     bottom = (maxHeight - rowHeight(poster, gap)).coerceAtLeast(0.dp))) {
                     if (favs.isNotEmpty()) item(key = "fav") {
-                        PosterRow(stringResource(R.string.vod_favourites_row), favs, firstItem, vm, onOpen, openRail, claim, poster = poster, gap = gap, sideways = sideways)
+                        PosterRow(stringResource(R.string.vod_favourites_row), favs, firstItem.takeIf { back == null }, vm, onOpen, openRail, claim, poster = poster, gap = gap, sideways = sideways,
+                            back = back?.takeIf { it.row == "fav" }?.index?.let { it to firstItem }, onOpened = { opened("fav", it, rows = true) })
                     }
                     itemsIndexed(cats, key = { _, c -> c.category.id }) { i, rc ->
                         val cont = rc.category.id == VodViewModel.CONTINUE_ID
                         val items by if (cont) vm.continueWatching.collectAsState()
                             else produceState<List<VodItem>?>(null, rc.category.id) { value = vm.inCategory(rc.category.id) }
                         val rows by vm.progress.collectAsState()
-                        PosterRow(rc.category.name.ifEmpty { stringResource(R.string.vod_uncategorised) }, items, firstItem.takeIf { i == 0 && favs.isEmpty() }, vm, onOpen, openRail, claim,
-                            progress = { if (cont) progressFraction(it, rows) else null }, poster = poster, gap = gap, sideways = sideways)
+                        PosterRow(rc.category.name.ifEmpty { stringResource(R.string.vod_uncategorised) }, items, firstItem.takeIf { back == null && i == 0 && favs.isEmpty() }, vm, onOpen, openRail, claim,
+                            progress = { if (cont) progressFraction(it, rows) else null }, poster = poster, gap = gap, sideways = sideways,
+                            back = back?.takeIf { it.row == rc.category.id }?.index?.let { it to firstItem }, onOpened = { opened(rc.category.id, it, rows = true) })
                     }
                     // All covers every playlist in use: the other playlists' categories follow, "Plex (Home) › Films".
                     others.forEach { o ->
                         items(o.categories, key = { "o${it.first.id}" }) { (cat, _) ->
                             val items by produceState<List<VodItem>?>(null, cat.id) { value = vm.inCategory(cat.id) }
-                            PosterRow("${o.provider.railTitle()} › ${cat.name.ifEmpty { stringResource(R.string.vod_uncategorised) }}", items, firstItem.takeIf { favs.isEmpty() && cats.isEmpty() && o === others.first() && cat == o.categories.first().first },
-                                vm, onOpen, openRail, claim, poster = poster, gap = gap, sideways = sideways)
+                            PosterRow("${o.provider.railTitle()} › ${cat.name.ifEmpty { stringResource(R.string.vod_uncategorised) }}", items, firstItem.takeIf { back == null && favs.isEmpty() && cats.isEmpty() && o === others.first() && cat == o.categories.first().first },
+                                vm, onOpen, openRail, claim, poster = poster, gap = gap, sideways = sideways,
+                                back = back?.takeIf { it.row == "o${cat.id}" }?.index?.let { it to firstItem }, onOpened = { opened("o${cat.id}", it, rows = true) })
                         }
                     }
                 } } }
@@ -224,7 +243,14 @@ private fun rowHeight(poster: androidx.compose.ui.unit.Dp, gap: androidx.compose
 @Composable
 private fun PosterRow(title: String, items: List<VodItem>?, focus: FocusRequester?, vm: VodViewModel, onOpen: (VodItem) -> Unit, openRail: () -> Unit, claim: @Composable () -> Unit,
                       progress: (VodItem) -> Float? = { null }, poster: androidx.compose.ui.unit.Dp = 165.dp, gap: androidx.compose.ui.unit.Dp = 18.dp,
-                      sideways: androidx.compose.foundation.gestures.BringIntoViewSpec) {
+                      sideways: androidx.compose.foundation.gestures.BringIntoViewSpec,
+                      back: Pair<Int, FocusRequester>? = null, onOpened: (Int) -> Unit = {}) {
+    // [back]: the poster opened before (#55) takes the screen's first focus, with the row scrolled to it.
+    val target = (back?.first ?: 0).let { if (items != null) it.coerceAtMost(items.lastIndex.coerceAtLeast(0)) else it }
+    val req = back?.second ?: focus
+    val rowState = androidx.compose.foundation.lazy.rememberLazyListState(target)
+    // A row still loading has only placeholders: scroll to the opened poster once its titles are in.
+    if (back != null) LaunchedEffect(items != null) { if (items != null) rowState.scrollToItem(target) }
     Column(Modifier.padding(bottom = gap)) {
         // Fixed line height: the column's scroll-to-top offset counts on it ([ROW_TITLE]).
         Text(title, fontSize = 14.sp, lineHeight = 18.sp, maxLines = 1, fontWeight = FontWeight.SemiBold, color = Color.White, modifier = Modifier.height(ROW_TITLE))
@@ -232,15 +258,15 @@ private fun PosterRow(title: String, items: List<VodItem>?, focus: FocusRequeste
         androidx.compose.runtime.CompositionLocalProvider(androidx.compose.foundation.gestures.LocalBringIntoViewSpec provides sideways) {
         // Padding leaves room for the focused poster's 1.06× scale and outline, which a LazyRow would clip.
         LazyRow(horizontalArrangement = Arrangement.spacedBy(11.dp), contentPadding = androidx.compose.foundation.layout.PaddingValues(start = 8.dp, end = 50.dp, top = 6.dp, bottom = 6.dp),
-            modifier = Modifier.padding(start = 0.dp).offset(x = (-8).dp)) {
+            state = rowState, modifier = Modifier.padding(start = 0.dp).offset(x = (-8).dp)) {
             // While loading (null) the row shows focusable placeholders: an empty row has nothing to focus, so a fast
             // Down made the focus search lay out every remaining row in one key event (ANR). Keyed by position so the
             // placeholder that has focus becomes the real poster in the same slot and keeps it.
             itemsIndexed(items ?: List(PLACEHOLDERS) { null }, key = { i, _ -> i }) { i, item ->
-                if (i == 0 && focus != null) claim()
-                Poster(item, Modifier.then(if (i == 0 && focus != null) Modifier.focusRequester(focus) else Modifier)
+                if (i == target && req != null) claim()
+                Poster(item, Modifier.then(if (i == target && req != null) Modifier.focusRequester(req) else Modifier)
                     .onPreviewKeyEvent { if (i == 0 && leftKey(it)) { openRail(); true } else false },
-                    progress = item?.let(progress), height = poster, onFocused = { item?.let { vm.focused.value = it } }, onClick = { item?.let(onOpen) })
+                    progress = item?.let(progress), height = poster, onFocused = { item?.let { vm.focused.value = it } }, onClick = { item?.let { onOpened(i); onOpen(it) } })
             }
         }
         }

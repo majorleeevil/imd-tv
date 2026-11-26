@@ -180,6 +180,9 @@ class VodViewModel(private val app: Application) : AndroidViewModel(app) {
     fun warmSearch() { viewModelScope.launch { inUse(kind.value).forEach { c.search.warm(it, emptyList(), listOf(kind.value)) } } }
 
     val focused = MutableStateFlow<VodItem?>(null)
+    /** #55: the title opened from the rows/grid, so Back lands on it (the screen is rebuilt after the detail page). */
+    data class Reopen(val kind: Kind, val gridId: Long?, val row: Any?, val index: Int, val listIndex: Int, val listOffset: Int)
+    var reopen: Reopen? = null
     val details = MutableStateFlow<Map<Long, VodDetail>>(emptyMap())
 
     init {
