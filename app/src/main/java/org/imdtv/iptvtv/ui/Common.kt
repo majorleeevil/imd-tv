@@ -73,12 +73,14 @@ fun FocusBox(
 ) {
     var focused by remember { mutableStateOf(false) }
     // Touch (#29): a tap doesn't move focus, so take it first, as OK would find it (a no-op on a TV, where OK comes from focus).
+    // In touch mode Compose 1.7's clickable can't take focus at all, so a tap that left focus elsewhere still runs onFocused:
+    // focus-driven lists (Settings sections) follow the tap.
     val self = remember { FocusRequester() }
     Box(
         modifier
             .focusRequester(self)
             .onFocusChanged { if (it.isFocused != focused) { focused = it.isFocused; if (focused) onFocused() } }
-            .clickable(remember { MutableInteractionSource() }, indication = null, onClick = { runCatching { self.requestFocus() }; onClick() }),
+            .clickable(remember { MutableInteractionSource() }, indication = null, onClick = { runCatching { self.requestFocus() }; if (!focused) onFocused(); onClick() }),
     ) { content(focused) }
 }
 
