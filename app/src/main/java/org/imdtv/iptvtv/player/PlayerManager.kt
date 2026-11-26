@@ -54,6 +54,14 @@ internal fun bufferMs(seconds: Int): Pair<Int, Int>? = if (seconds <= 0) null el
     maxOf(seconds * 1000, androidx.media3.exoplayer.DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_MS) to
         maxOf(seconds * 1000, androidx.media3.exoplayer.DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS)
 
+/** #50: closed captions assumed in a live .ts that declares none: CEA-608 CC1 first (picked on a tie), then CEA-708 service 1. */
+@OptIn(UnstableApi::class)
+private val LIVE_CAPTIONS = listOf(
+    Format.Builder().setSampleMimeType(androidx.media3.common.MimeTypes.APPLICATION_CEA608).setAccessibilityChannel(1).build(),
+    Format.Builder().setSampleMimeType(androidx.media3.common.MimeTypes.APPLICATION_CEA708).setAccessibilityChannel(1)
+        .setInitializationData(androidx.media3.common.util.CodecSpecificDataUtil.buildCea708InitializationData(false)).build(),
+)
+
 /** The app's single ExoPlayer. Create and use on the main thread. */
 @OptIn(UnstableApi::class)
 class PlayerManager(private val context: Context) {
@@ -355,7 +363,10 @@ class PlayerManager(private val context: Context) {
             parallel && vod && spec == null && req.url.startsWith("http") -> androidx.media3.datasource.DataSource.Factory { ParallelDataSource(http, aheadBytes = readAheadBytes) }
             else -> http
         }
-        val factory = DefaultMediaSourceFactory(DefaultDataSource.Factory(context, upstream))
+        // #50: a live .ts whose PMT declares no captions (IPTV restreams drop it) got no caption track; HLS already gets CC1.
+        val factory = if (vod) DefaultMediaSourceFactory(DefaultDataSource.Factory(context, upstream))
+            else DefaultMediaSourceFactory(DefaultDataSource.Factory(context, upstream),
+                androidx.media3.extractor.DefaultExtractorsFactory().setTsSubtitleFormats(LIVE_CAPTIONS))
         spec?.let { factory.setDrmSessionManagerProvider(drmSessions(it, http)) }
         // A stream format with no module in the app (e.g. Smooth Streaming) throws here: report it, don't crash.
         val source = try {
