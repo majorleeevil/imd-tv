@@ -113,7 +113,8 @@ fun EpgGroupRows(vm: SettingsViewModel, first: Modifier, sourcesOpener: Modifier
 @Composable
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 fun EpgSourcesPage(vm: SettingsViewModel, modifier: Modifier, first: FocusRequester, park: () -> Unit, onClose: () -> Unit) {
-    val providers by vm.providers.collectAsState()
+    val all by vm.providers.collectAsState()
+    val providers = all.filterNot { it.type.mediaServer } // Plex, Jellyfin, SMB…: no live TV, so no guide
     val settings by vm.settings.collectAsState()
     var open by remember { mutableStateOf<Long?>(null) }
     val rows = remember { mutableMapOf<Long, FocusRequester>() }

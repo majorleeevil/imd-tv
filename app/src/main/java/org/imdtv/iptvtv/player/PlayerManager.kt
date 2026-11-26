@@ -81,6 +81,9 @@ class PlayerManager(private val context: Context) {
     private var wantedBufferSeconds = 0
     /** #52 Audio sync (ms); read by the audio sink on the playback thread when a stream starts or seeks. */
     @Volatile var audioDelayMs = 0
+    /** The live channel's own audio sync (Player menu), overriding [audioDelayMs] for the stream passed to [play]. */
+    @Volatile private var channelDelayMs: Int? = null
+    private val effectiveDelayMs get() = channelDelayMs ?: audioDelayMs
 
     /** Rebuilt when the audio decoder changes: read it at use time, don't keep a reference. */
     var player: ExoPlayer = build(audioDecoder, bufferSeconds)
@@ -103,8 +106,8 @@ class PlayerManager(private val context: Context) {
             override fun buildAudioSink(context: Context, enableFloatOutput: Boolean, enableAudioTrackPlaybackParams: Boolean) =
                 super.buildAudioSink(context, enableFloatOutput, enableAudioTrackPlaybackParams)?.let { sink ->
                     object : androidx.media3.exoplayer.audio.ForwardingAudioSink(sink) {
-                        private var delay = audioDelayMs
-                        override fun flush() { delay = audioDelayMs; super.flush() }
+                        private var delay = effectiveDelayMs
+                        override fun flush() { delay = effectiveDelayMs; super.flush() }
                         override fun getCurrentPositionUs(sourceEnded: Boolean) = delayedPositionUs(super.getCurrentPositionUs(sourceEnded), delay)
                     }
                 }
@@ -271,8 +274,9 @@ class PlayerManager(private val context: Context) {
     /** [lengthMs]: catch-up's programme length; the item is cut there (a server's .ts can claim ~25 h, and the bar showed it). */
     fun play(url: String, userAgent: String?, login: Login? = null, vod: Boolean = false, drm: Drm? = null, startMs: Long = 0,
              fallbackUrl: String? = null, parallel: Boolean = false, lengthMs: Long = 0,
-             subtitles: List<org.imdtv.iptvtv.data.source.SideSubtitle> = emptyList()) {
+             subtitles: List<org.imdtv.iptvtv.data.source.SideSubtitle> = emptyList(), channelAudioDelayMs: Int? = null) {
         sideSubs = subtitles
+        channelDelayMs = channelAudioDelayMs
         fallback = fallbackUrl
         clipMs = lengthMs
         this.parallel = parallel
@@ -289,7 +293,13 @@ class PlayerManager(private val context: Context) {
         return readAheadFor(m.availMem, Runtime.getRuntime().maxMemory())
     }
 
-    /** Asked before a provider stream starts (a recording may hold the login's only connection); true = not now. It
+    /** The playing channel's audio sync changed in the Player menu: applies now (the sink takes it when flushed). */
+    fun setChannelAudioDelay(ms: Int?) {
+        channelDelayMs = ms
+        if (player.isCurrentMediaItemSeekable) player.seekTo(player.currentPosition) else start()
+    }
+
+        /** Asked before a provider stream starts (a recording may hold the login's only connection); true = not now. It
      *  gets a retry that plays without asking again. */
     var guard: ((retry: () -> Unit) -> Boolean)? = null
 
@@ -425,7 +435,7 @@ class PlayerManager(private val context: Context) {
 
     /** A recording (file path or smb://) from [startMs]; no guard: it uses no provider connection. */
     fun playRecording(location: String, startMs: Long) {
-        fallback = null; clipMs = 0
+        fallback = null; clipMs = 0; channelDelayMs = null
         handler.removeCallbacks(retry)
         resolving?.cancel()
         retries = 0

@@ -53,6 +53,8 @@ internal sealed interface GuideMenu {
     data class PickDay(val ch: ChannelEntity, val windowMin: Int) : GuideMenu
     /** The full-screen overlay's Settings card: subtitles, record, favourite, add to category. */
     data class Player(val ch: ChannelEntity) : GuideMenu
+    /** Player menu › Audio sync: this channel's own, or Settings' (user, 26 Nov). */
+    data class AudioSync(val ch: ChannelEntity) : GuideMenu
     /** OK on a later programme highlighted in the guide. */
     data class Programme(val ch: ChannelEntity, val p: org.imdtv.iptvtv.data.repo.GuideProgramme) : GuideMenu
     data class CancelRecording(val ch: ChannelEntity, val p: org.imdtv.iptvtv.data.repo.GuideProgramme) : GuideMenu
@@ -136,6 +138,7 @@ fun GuideMenus(vm: LiveViewModel, state: GuideState) {
                     else add(stringResource(R.string.live_menu_record_now) to { vm.recordNow(m.ch); state.menu = null })
                 }
                 if (m.ch.hasCatchUp) add(stringResource(R.string.live_menu_catchup) to { state.menu = GuideMenu.CatchUp(m.ch) })
+                add(stringResource(R.string.live_menu_audio_sync, syncLabel(vm.channelAudioDelay(m.ch) ?: vm.settings.collectAsState().value.audioDelayMs)) to { state.menu = GuideMenu.AudioSync(m.ch) })
                 val fav = m.ch.id in favourites
                 add((if (fav) stringResource(R.string.live_menu_fav_remove) else stringResource(R.string.live_menu_fav_add)) to { vm.toggleFavourite(m.ch); state.menu = null })
                 add(stringResource(R.string.live_menu_add_to_category) to { state.menu = GuideMenu.AddTo(m.ch) })
@@ -185,7 +188,16 @@ fun GuideMenus(vm: LiveViewModel, state: GuideState) {
             ContextMenu(stringResource(R.string.live_menu_epg_offset_title, m.ch.displayName(strip)), items,
                 (steps.indexOf(m.ch.epgOffsetMinutes ?: 0) + 1).takeIf { it > 0 } ?: 0) { state.menu = null } // on the current value, else 0:00
         }
-        is GuideMenu.CatchUp -> {
+        is GuideMenu.AudioSync -> {
+            val own = vm.channelAudioDelay(m.ch)
+            val values = (-1000..1000 step 50).toList()
+            val global = vm.settings.collectAsState().value.audioDelayMs
+            fun mark(on: Boolean) = if (on) "✓  " else "     "
+            ContextMenu(stringResource(R.string.set_b_audio_sync), listOf(mark(own == null) + stringResource(R.string.live_menu_audio_sync_settings, syncLabel(global)) to { vm.setChannelAudioDelay(m.ch, null); state.menu = null }) +
+                values.map { v -> mark(own == v) + syncLabel(v) to { vm.setChannelAudioDelay(m.ch, v); state.menu = null } },
+                own?.let { values.indexOf(it) + 1 } ?: 0) { state.menu = null }
+        }
+                is GuideMenu.CatchUp -> {
             val list by androidx.compose.runtime.produceState<List<org.imdtv.iptvtv.data.repo.GuideProgramme>?>(null, m.ch) { value = vm.catchUpProgrammes(m.ch) }
             val progs = list ?: return
             val today = org.imdtv.iptvtv.ui.dayDate(System.currentTimeMillis())
@@ -347,3 +359,7 @@ fun MergedChannelsMenu(head: ChannelEntity, strip: List<String>, load: suspend (
         }
     }
 }
+
+/** "Off", "+250 ms", "-100 ms": as Settings › Playback › Audio sync shows it. */
+@Composable
+private fun syncLabel(ms: Int) = if (ms == 0) stringResource(R.string.set_b_audio_sync_off) else stringResource(R.string.set_b_audio_sync_ms, (if (ms > 0) "+" else "") + ms)

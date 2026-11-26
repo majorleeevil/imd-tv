@@ -48,7 +48,7 @@
     <string name="set_b_dpad_down">Baixo ao ver</string>
     <string name="set_b_dpad_left">Esquerda ao ver</string>
     <string name="set_b_dpad_right">Direita ao ver</string>
-    <string name="set_b_dpad_expl">TV em direto em ecrã inteiro: o que esta seta faz. Predefinição: como definido em mudar de canal e canal anterior</string>
+    <string name="set_b_dpad_expl">TV em direto em ecrã inteiro: o que esta seta faz</string>
     <string name="set_b_dpad_default">Predefinição</string>
     <string name="set_b_dpad_channel">Mudar de canal</string>
     <string name="set_b_dpad_previous">Canais anteriores</string>

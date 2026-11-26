@@ -1,5 +1,6 @@
 package org.imdtv.iptvtv.player
 
+import org.imdtv.iptvtv.data.settings.encodeChannelDelays
 import androidx.media3.exoplayer.audio.AudioSink
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -26,5 +27,12 @@ class PlaybackTuningTest {
         assertEquals(128 * mib, readAheadFor(availRam = 800 * mib, maxHeap = 384 * mib)) // largeHeap on the Chromecast: heap levelled at ~335 of 384 MB playing 4K
         assertEquals(100 * mib, readAheadFor(availRam = 400 * mib, maxHeap = 512 * mib)) // free RAM still limits
         assertEquals(16 * mib, readAheadFor(availRam = 800 * mib, maxHeap = 192 * mib))  // floor
+    }
+
+    /** Audio sync per channel (user, 26 Nov): keys survive links with "=" and ";" in them. */
+    @Test fun channelDelaysRoundTrip() {
+        val m = mapOf(org.imdtv.iptvtv.data.settings.channelDelayKey(3, "1535959") to 250,
+            org.imdtv.iptvtv.data.settings.channelDelayKey(7, "http://x.tv/live.ts?a=1;b=2") to -100)
+        assertEquals(m, org.imdtv.iptvtv.data.settings.parseChannelDelays(m.encodeChannelDelays()))
     }
 }

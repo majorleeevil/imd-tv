@@ -48,7 +48,7 @@
     <string name="set_b_dpad_down">W dół podczas oglądania</string>
     <string name="set_b_dpad_left">W lewo podczas oglądania</string>
     <string name="set_b_dpad_right">W prawo podczas oglądania</string>
-    <string name="set_b_dpad_expl">Telewizja na żywo na pełnym ekranie: co robi ta strzałka. Domyślnie: jak w ustawieniach zmiany kanału i poprzedniego kanału</string>
+    <string name="set_b_dpad_expl">Telewizja na żywo na pełnym ekranie: co robi ta strzałka</string>
     <string name="set_b_dpad_default">Domyślnie</string>
     <string name="set_b_dpad_channel">Zmiana kanału</string>
     <string name="set_b_dpad_previous">Poprzednie kanały</string>

@@ -135,4 +135,6 @@
     <string name="live_parental_locked">%1$s is vergrendeld door ouderlijk toezicht.</string>
     <string name="live_parental_locked_app">De app is gesloten sinds de pincode voor het laatst is ingevoerd.</string>
     <string name="live_parental_locked_ok">Druk op OK om de pincode in te voeren.</string>
+    <string name="live_menu_audio_sync">Audiosynchronisatie: %1$s</string>
+    <string name="live_menu_audio_sync_settings">Zoals in Instellingen (%1$s)</string>
 </resources>

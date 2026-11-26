@@ -48,7 +48,7 @@
     <string name="set_b_dpad_down">İzlerken aşağı</string>
     <string name="set_b_dpad_left">İzlerken sol</string>
     <string name="set_b_dpad_right">İzlerken sağ</string>
-    <string name="set_b_dpad_expl">Tam ekran canlı TV: bu okun yaptığı iş. Varsayılan: kanal değiştirme ve önceki kanal ayarlarına göre</string>
+    <string name="set_b_dpad_expl">Tam ekran canlı TV: bu okun yaptığı iş</string>
     <string name="set_b_dpad_default">Varsayılan</string>
     <string name="set_b_dpad_channel">Kanal değiştir</string>
     <string name="set_b_dpad_previous">Önceki kanallar</string>

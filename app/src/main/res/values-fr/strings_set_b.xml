@@ -48,7 +48,7 @@
     <string name="set_b_dpad_down">Bas pendant le visionnage</string>
     <string name="set_b_dpad_left">Gauche pendant le visionnage</string>
     <string name="set_b_dpad_right">Droite pendant le visionnage</string>
-    <string name="set_b_dpad_expl">TV en direct en plein écran : ce que fait cette flèche. Par défaut : selon les réglages de changement de chaîne et de chaîne précédente</string>
+    <string name="set_b_dpad_expl">TV en direct en plein écran : ce que fait cette flèche</string>
     <string name="set_b_dpad_default">Par défaut</string>
     <string name="set_b_dpad_channel">Changer de chaîne</string>
     <string name="set_b_dpad_previous">Chaînes précédentes</string>

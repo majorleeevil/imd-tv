@@ -48,7 +48,7 @@
     <string name="set_b_dpad_down">Poshtë gjatë shikimit</string>
     <string name="set_b_dpad_left">Majtas gjatë shikimit</string>
     <string name="set_b_dpad_right">Djathtas gjatë shikimit</string>
-    <string name="set_b_dpad_expl">TV live në ekran të plotë: çfarë bën kjo shigjetë. Parazgjedhje: si në cilësimet e ndërrimit të kanalit dhe kanalit të mëparshëm</string>
+    <string name="set_b_dpad_expl">TV live në ekran të plotë: çfarë bën kjo shigjetë</string>
     <string name="set_b_dpad_default">Parazgjedhje</string>
     <string name="set_b_dpad_channel">Ndërro kanalin</string>
     <string name="set_b_dpad_previous">Kanalet e mëparshme</string>

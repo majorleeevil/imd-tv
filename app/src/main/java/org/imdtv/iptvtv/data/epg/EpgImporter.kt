@@ -43,9 +43,19 @@ class EpgImporter(
             val file = File.createTempFile("epg-${source.id}-", ".xml")
             try {
                 val url = withLogin(source.url, db.providerDao().get(source.providerId)?.login())
-                http.newCall(Request.Builder().url(url).build()).execute().use { resp ->
-                    if (!resp.isSuccessful) throw IOException("EPG request failed: HTTP ${resp.code} ${resp.message}")
-                    file.sink().buffer().use { it.writeAll(resp.body!!.source()) }
+                // A DNS miss is often momentary ("Unable to resolve host epgshare01.online", fine seconds later): try twice more.
+                for (wait in listOf(2_000L, 5_000L, -1L)) {
+                    try {
+                        http.newCall(Request.Builder().url(url).build()).execute().use { resp ->
+                            if (!resp.isSuccessful) throw IOException("EPG request failed: HTTP ${resp.code} ${resp.message}")
+                            file.sink().buffer().use { it.writeAll(resp.body!!.source()) }
+                        }
+                        break
+                    } catch (e: java.net.UnknownHostException) {
+                        if (wait < 0) throw e
+                        Log.w(TAG, "DNS miss for ${logUrl(source.url)}, retrying in ${wait / 1000} s")
+                        kotlinx.coroutines.delay(wait)
+                    }
                 }
                 Log.i(TAG, "Downloaded ${logUrl(source.url)}: ${file.length() / 1024} KB in ${now() - t} ms")
                 // The generation from the database: a caller's copy of the source may be older than the last import.

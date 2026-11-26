@@ -48,7 +48,7 @@
     <string name="set_b_dpad_down">Omlaag tijdens kijken</string>
     <string name="set_b_dpad_left">Links tijdens kijken</string>
     <string name="set_b_dpad_right">Rechts tijdens kijken</string>
-    <string name="set_b_dpad_expl">Live tv op volledig scherm: wat deze pijl doet. Standaard: zoals ingesteld bij zender wisselen en vorige zender</string>
+    <string name="set_b_dpad_expl">Live tv op volledig scherm: wat deze pijl doet</string>
     <string name="set_b_dpad_default">Standaard</string>
     <string name="set_b_dpad_channel">Zender wisselen</string>
     <string name="set_b_dpad_previous">Vorige zenders</string>

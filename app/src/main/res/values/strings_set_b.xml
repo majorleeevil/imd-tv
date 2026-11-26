@@ -48,7 +48,7 @@
     <string name="set_b_dpad_down">Down while watching</string>
     <string name="set_b_dpad_left">Left while watching</string>
     <string name="set_b_dpad_right">Right while watching</string>
-    <string name="set_b_dpad_expl">Full screen live TV: what this arrow does. Default: as Change channel with and View Previous Channel With set it</string>
+    <string name="set_b_dpad_expl">Full screen live TV: what this arrow does</string>
     <string name="set_b_dpad_default">Default</string>
     <string name="set_b_dpad_channel">Change channel</string>
     <string name="set_b_dpad_previous">Previous channels</string>

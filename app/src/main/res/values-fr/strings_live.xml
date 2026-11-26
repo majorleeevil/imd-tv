@@ -135,4 +135,6 @@
     <string name="live_parental_locked">%1$s est verrouillé par le contrôle parental.</string>
     <string name="live_parental_locked_app">L\'application a été fermée depuis la dernière saisie du code PIN.</string>
     <string name="live_parental_locked_ok">Appuyez sur OK pour saisir le code PIN.</string>
+    <string name="live_menu_audio_sync">Synchro audio : %1$s</string>
+    <string name="live_menu_audio_sync_settings">Comme dans les réglages (%1$s)</string>
 </resources>

@@ -19,6 +19,7 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
     private val autoplay = booleanPreferencesKey("autoplay_on_scroll")
     private val decoder = stringPreferencesKey("audio_decoder")
     private val audioDelay = intPreferencesKey("audio_delay_ms")
+    private val channelAudioDelays = stringPreferencesKey("channel_audio_delays")
     private val bufferSeconds = intPreferencesKey("buffer_seconds")
     private val lastChannelOnStart = booleanPreferencesKey("last_channel_on_start")
     private val confirmExit = booleanPreferencesKey("confirm_exit")
@@ -122,6 +123,7 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
             autoplayOnScroll = this[autoplay] ?: d.autoplayOnScroll,
             audioDecoder = this[decoder]?.let { n -> AudioDecoder.entries.find { it.name == n } } ?: d.audioDecoder,
             audioDelayMs = this[audioDelay] ?: d.audioDelayMs,
+            channelAudioDelays = this[channelAudioDelays] ?: d.channelAudioDelays,
             bufferSeconds = this[bufferSeconds] ?: d.bufferSeconds,
             lastChannelOnStart = this[lastChannelOnStart] ?: d.lastChannelOnStart,
             confirmExit = this[confirmExit] ?: d.confirmExit,
@@ -208,6 +210,7 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
         this[autoplay] = s.autoplayOnScroll
         this[decoder] = s.audioDecoder.name
         this[audioDelay] = s.audioDelayMs
+        this[channelAudioDelays] = s.channelAudioDelays
         this[bufferSeconds] = s.bufferSeconds
         this[lastChannelOnStart] = s.lastChannelOnStart
         this[confirmExit] = s.confirmExit

@@ -48,7 +48,7 @@
     <string name="set_b_dpad_down">Κάτω κατά την προβολή</string>
     <string name="set_b_dpad_left">Αριστερά κατά την προβολή</string>
     <string name="set_b_dpad_right">Δεξιά κατά την προβολή</string>
-    <string name="set_b_dpad_expl">Ζωντανή TV σε πλήρη οθόνη: τι κάνει αυτό το βέλος. Προεπιλογή: όπως ορίζουν οι ρυθμίσεις αλλαγής καναλιού και προηγούμενου καναλιού</string>
+    <string name="set_b_dpad_expl">Ζωντανή TV σε πλήρη οθόνη: τι κάνει αυτό το βέλος</string>
     <string name="set_b_dpad_default">Προεπιλογή</string>
     <string name="set_b_dpad_channel">Αλλαγή καναλιού</string>
     <string name="set_b_dpad_previous">Προηγούμενα κανάλια</string>

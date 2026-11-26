@@ -48,7 +48,7 @@
     <string name="set_b_dpad_down">Jos în timpul vizionării</string>
     <string name="set_b_dpad_left">Stânga în timpul vizionării</string>
     <string name="set_b_dpad_right">Dreapta în timpul vizionării</string>
-    <string name="set_b_dpad_expl">TV live pe tot ecranul: ce face această săgeată. Implicit: cum este setat la schimbarea canalului și canalul anterior</string>
+    <string name="set_b_dpad_expl">TV live pe tot ecranul: ce face această săgeată</string>
     <string name="set_b_dpad_default">Implicit</string>
     <string name="set_b_dpad_channel">Schimbă canalul</string>
     <string name="set_b_dpad_previous">Canale anterioare</string>

@@ -1,5 +1,6 @@
 package org.imdtv.iptvtv.ui.live
 
+import org.imdtv.iptvtv.data.settings.encodeChannelDelays
 import org.imdtv.iptvtv.R
 
 import org.imdtv.iptvtv.data.db.EpgChannelEntity
@@ -323,7 +324,7 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
                 val url = org.imdtv.iptvtv.data.source.m3uCatchUpUrl(ch.streamUrl, ch.catchupSource, p.start, p.stop, System.currentTimeMillis())
                 if (url != null) {
                     previewed.value = null
-                    player.play(url, prov.userAgent, prov.login(), vod = true, startMs = startMs)
+                    player.play(url, prov.userAgent, prov.login(), vod = true, startMs = startMs, channelAudioDelayMs = channelAudioDelay(ch))
                     openCatchUp.tryEmit("${ch.displayName(strip.value)} · ${p.title}")
                     return@launch
                 }
@@ -335,7 +336,8 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
             if (urls.isEmpty()) return@launch
             previewed.value = null
             // vod: seekable, and not the live .ts reconnect path or the live stall watchdog.
-            player.play(urls[0], prov.userAgent, prov.login(), vod = true, startMs = startMs, fallbackUrl = urls[1], lengthMs = p.stop - p.start)
+            player.play(urls[0], prov.userAgent, prov.login(), vod = true, startMs = startMs, fallbackUrl = urls[1], lengthMs = p.stop - p.start,
+                channelAudioDelayMs = channelAudioDelay(ch))
             openCatchUp.tryEmit("${ch.displayName(strip.value)} · ${p.title}")
         }
     }
@@ -397,7 +399,7 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
             // Merged channels play their best source (Settings › Channels › Merge by); others play themselves at once.
             val src = if (ch.mergeHead) org.imdtv.iptvtv.data.repo.ChannelMerge.pick(c.db, c.http, ch,
                 settings.value.mergeBy, p.userAgent, p.login()) else ch
-            if (previewed.value?.id == ch.id) { previewedUrl.value = src.streamUrl; player.play(src.streamUrl, p.userAgent, p.login(), drm = src.drm()) }
+            if (previewed.value?.id == ch.id) { previewedUrl.value = src.streamUrl; player.play(src.streamUrl, p.userAgent, p.login(), drm = src.drm(), channelAudioDelayMs = channelAudioDelay(ch)) }
             c.settings.update { it.copy(lastLiveChannelId = ch.id) }
         }
     }
@@ -740,6 +742,15 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
 
     /** Moves [delta] places among the categories the rail shows, so a step never vanishes behind a hidden one. */
     private val moveLock = kotlinx.coroutines.sync.Mutex()
+    /** The channel's own audio sync (Player menu), or null = Settings › Playback › Audio sync. */
+    fun channelAudioDelay(ch: ChannelEntity): Int? = org.imdtv.iptvtv.data.settings.parseChannelDelays(settings.value.channelAudioDelays)[
+        org.imdtv.iptvtv.data.settings.channelDelayKey(ch.providerId, ch.remoteId)]
+    fun setChannelAudioDelay(ch: ChannelEntity, ms: Int?) {
+        val key = org.imdtv.iptvtv.data.settings.channelDelayKey(ch.providerId, ch.remoteId)
+        viewModelScope.launch { c.settings.update { s -> s.copy(channelAudioDelays = org.imdtv.iptvtv.data.settings.parseChannelDelays(s.channelAudioDelays)
+            .let { if (ms == null) it - key else it + (key to ms) }.encodeChannelDelays()) } }
+        player.setChannelAudioDelay(ms)
+    }
     fun setLiveSubtitles(on: Boolean) { viewModelScope.launch { c.settings.update { it.copy(liveSubtitlesOn = on) } } }
     fun setVideoAspect(a: org.imdtv.iptvtv.data.settings.VideoAspect) { viewModelScope.launch { c.settings.update { it.copy(videoAspect = a) } } }
 

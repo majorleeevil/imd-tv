@@ -48,7 +48,7 @@
     <string name="set_b_dpad_down">Abajo al ver</string>
     <string name="set_b_dpad_left">Izquierda al ver</string>
     <string name="set_b_dpad_right">Derecha al ver</string>
-    <string name="set_b_dpad_expl">TV en directo a pantalla completa: lo que hace esta flecha. Predeterminado: según los ajustes de cambiar de canal y canal anterior</string>
+    <string name="set_b_dpad_expl">TV en directo a pantalla completa: lo que hace esta flecha</string>
     <string name="set_b_dpad_default">Predeterminado</string>
     <string name="set_b_dpad_channel">Cambiar de canal</string>
     <string name="set_b_dpad_previous">Canales anteriores</string>

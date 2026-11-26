@@ -152,4 +152,17 @@ class EpgImporterTest {
         assertEquals("http://h:8080/xmltv.php", EpgImporter.logUrl("http://h:8080/xmltv.php?username=alice&password=s3cret"))
         assertEquals("http://e/guide.xml.gz", EpgImporter.logUrl("http://e/guide.xml.gz"))
     }
+
+    /** 26 Nov: "Unable to resolve host epgshare01.online" now and then, while it resolved fine a moment later: one DNS miss is retried. */
+    @Test
+    fun dnsMissIsRetried() = runTest {
+        server.enqueue(MockResponse().setBody(Buffer().write(fixture())))
+        val src = source("/guide.xml")
+        var misses = 1
+        val flakyDns = object : okhttp3.Dns {
+            override fun lookup(hostname: String) = if (misses-- > 0) throw java.net.UnknownHostException(hostname) else okhttp3.Dns.SYSTEM.lookup(hostname)
+        }
+        val n = EpgImporter(db, OkHttpClient.Builder().dns(flakyDns).build(), XmltvParser(), now = { now }).import(src, daysToKeep = 7, pastDays = 1)
+        org.junit.Assert.assertTrue(n > 0)
+    }
 }

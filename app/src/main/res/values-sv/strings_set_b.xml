@@ -48,7 +48,7 @@
     <string name="set_b_dpad_down">Ned när du tittar</string>
     <string name="set_b_dpad_left">Vänster när du tittar</string>
     <string name="set_b_dpad_right">Höger när du tittar</string>
-    <string name="set_b_dpad_expl">Live-tv i helskärm: vad den här pilen gör. Standard: som inställningarna för kanalbyte och föregående kanal</string>
+    <string name="set_b_dpad_expl">Live-tv i helskärm: vad den här pilen gör</string>
     <string name="set_b_dpad_default">Standard</string>
     <string name="set_b_dpad_channel">Byt kanal</string>
     <string name="set_b_dpad_previous">Föregående kanaler</string>

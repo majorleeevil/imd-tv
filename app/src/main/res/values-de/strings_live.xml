@@ -135,4 +135,6 @@
     <string name="live_parental_locked">%1$s ist durch die Kindersicherung gesperrt.</string>
     <string name="live_parental_locked_app">Die App wurde seit der letzten PIN-Eingabe geschlossen.</string>
     <string name="live_parental_locked_ok">Drücke OK, um die PIN einzugeben.</string>
+    <string name="live_menu_audio_sync">Audio-Sync: %1$s</string>
+    <string name="live_menu_audio_sync_settings">Wie in den Einstellungen (%1$s)</string>
 </resources>

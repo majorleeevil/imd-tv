@@ -262,17 +262,14 @@ fun SettingsScreen(vm: SettingsViewModel, onAddPlaylist: () -> Unit, onEditPlayl
                         ChoiceRow(stringResource(R.string.set_b_buffer), stringResource(R.string.set_b_buffer_expl), listOf(0, 5, 10, 15, 30), s.bufferSeconds,
                             { if (it == 0) stringResource(R.string.set_b_buffer_default) else stringResource(R.string.set_b_buffer_s, it) },
                             ) { v -> vm.update { it.copy(bufferSeconds = v) } } // no "(Default)" tag: the option is already called Default
-                        ChoiceRow(stringResource(R.string.set_b_change_channel), stringResource(R.string.set_b_change_channel_expl),
-                            listOf(false, true), s.zapLeftRight, { if (it) stringResource(R.string.set_b_left_right) else stringResource(R.string.set_b_up_down) }, default = AppSettings().zapLeftRight) { v -> vm.update { it.copy(zapLeftRight = v) } }
-                        // Always the other pair of arrows: picking one here flips Change channel with.
-                        ChoiceRow(stringResource(R.string.set_b_prev_channel), stringResource(R.string.set_b_prev_channel_expl),
-                            listOf(true, false), !s.zapLeftRight, { if (it) stringResource(R.string.set_b_left_right) else stringResource(R.string.set_b_up_down) }, default = !AppSettings().zapLeftRight) { v -> vm.update { it.copy(zapLeftRight = !v) } }
-                        // Each arrow's own action (#21); Default keeps the two rows above in charge.
+                        // Each arrow's own action (#21). The old "Change channel with" pair is gone: a saved choice still shows
+                        // here as the arrow's action, and the default pair is tagged (Default).
                         val dpad = org.imdtv.iptvtv.data.settings.parseDpadKeys(s.dpadKeys)
                         listOf(org.imdtv.iptvtv.data.settings.Dpad.UP to R.string.set_b_dpad_up, org.imdtv.iptvtv.data.settings.Dpad.DOWN to R.string.set_b_dpad_down,
                             org.imdtv.iptvtv.data.settings.Dpad.LEFT to R.string.set_b_dpad_left, org.imdtv.iptvtv.data.settings.Dpad.RIGHT to R.string.set_b_dpad_right).forEach { (k, title) ->
-                            ChoiceRow(stringResource(title), stringResource(R.string.set_b_dpad_expl), org.imdtv.iptvtv.data.settings.DpadAction.entries,
-                                dpad[k] ?: org.imdtv.iptvtv.data.settings.DpadAction.DEFAULT, { stringResource(it.labelRes) }, default = org.imdtv.iptvtv.data.settings.DpadAction.DEFAULT) { a ->
+                            ChoiceRow(stringResource(title), stringResource(R.string.set_b_dpad_expl), org.imdtv.iptvtv.data.settings.DpadAction.entries - org.imdtv.iptvtv.data.settings.DpadAction.DEFAULT,
+                                org.imdtv.iptvtv.data.settings.dpadAction(k, s.zapLeftRight, dpad), { stringResource(it.labelRes) },
+                                default = org.imdtv.iptvtv.data.settings.dpadAction(k, AppSettings().zapLeftRight, emptyMap())) { a ->
                                 vm.update { it.copy(dpadKeys = (org.imdtv.iptvtv.data.settings.parseDpadKeys(it.dpadKeys) + (k to a)).encodeDpadKeys()) }
                             }
                         }

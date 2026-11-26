@@ -48,7 +48,7 @@
     <string name="set_b_dpad_down">Giù durante la visione</string>
     <string name="set_b_dpad_left">Sinistra durante la visione</string>
     <string name="set_b_dpad_right">Destra durante la visione</string>
-    <string name="set_b_dpad_expl">TV in diretta a schermo intero: cosa fa questa freccia. Predefinito: come impostato per cambio canale e canale precedente</string>
+    <string name="set_b_dpad_expl">TV in diretta a schermo intero: cosa fa questa freccia</string>
     <string name="set_b_dpad_default">Predefinito</string>
     <string name="set_b_dpad_channel">Cambia canale</string>
     <string name="set_b_dpad_previous">Canali precedenti</string>

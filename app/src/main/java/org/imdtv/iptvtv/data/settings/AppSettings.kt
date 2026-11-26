@@ -115,6 +115,14 @@ fun dpadAction(key: Dpad, zapLeftRight: Boolean, custom: Map<Dpad, DpadAction>):
 /** -1 for Up and Left, 1 for Down and Right (the zap and previous-channel step). */
 val Dpad.delta get() = if (this == Dpad.UP || this == Dpad.LEFT) -1 else 1
 
+/** A channel's key for [AppSettings.channelAudioDelays]: its playlist and its id there (kept across playlist updates). */
+fun channelDelayKey(providerId: Long, remoteId: String) = "$providerId:$remoteId"
+/** "key=ms" lines (M3U ids are links, which may hold "=" or ";" but never a line break). */
+fun parseChannelDelays(s: String): Map<String, Int> = s.lines().mapNotNull { l ->
+    l.substringBeforeLast('=', "").takeIf { it.isNotEmpty() }?.let { k -> l.substringAfterLast('=').toIntOrNull()?.let { k to it } }
+}.toMap()
+fun Map<String, Int>.encodeChannelDelays() = entries.joinToString("\n") { "${it.key}=${it.value}" }
+
 /** Settings › Movies & Series › Sort by: one order for every movie and series list (issue #11). */
 enum class VodSort(@StringRes val labelRes: Int) { PLAYLIST(R.string.set_b_vod_sort_playlist), AZ(R.string.set_b_vod_sort_az), ADDED(R.string.set_b_vod_sort_added) }
 
@@ -237,6 +245,8 @@ data class AppSettings(
     val sportsFocusPreview: Boolean = true,
     /** #52 Audio sync, -1000..1000 ms in 50 ms steps; + = sound later. */
     val audioDelayMs: Int = 0,
+    /** Audio sync per live channel, overriding [audioDelayMs]: see [parseChannelDelays]. */
+    val channelAudioDelays: String = "",
     /** #53 Buffer before playing, seconds; 0 = default. */
     val bufferSeconds: Int = 0,
 ) {

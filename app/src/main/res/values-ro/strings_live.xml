@@ -135,4 +135,6 @@
     <string name="live_parental_locked">%1$s este blocat prin controlul parental.</string>
     <string name="live_parental_locked_app">Aplicația a fost închisă de la ultima introducere a PIN-ului.</string>
     <string name="live_parental_locked_ok">Apasă OK pentru a introduce PIN-ul.</string>
+    <string name="live_menu_audio_sync">Sincronizare audio: %1$s</string>
+    <string name="live_menu_audio_sync_settings">Ca în Setări (%1$s)</string>
 </resources>

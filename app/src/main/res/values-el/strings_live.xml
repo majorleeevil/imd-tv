@@ -135,4 +135,6 @@
     <string name="live_parental_locked">Το %1$s είναι κλειδωμένο από τον γονικό έλεγχο.</string>
     <string name="live_parental_locked_app">Η εφαρμογή έχει κλείσει από την τελευταία φορά που εισήχθη το PIN.</string>
     <string name="live_parental_locked_ok">Πατήστε OK για να εισαγάγετε το PIN.</string>
+    <string name="live_menu_audio_sync">Συγχρονισμός ήχου: %1$s</string>
+    <string name="live_menu_audio_sync_settings">Όπως στις Ρυθμίσεις (%1$s)</string>
 </resources>

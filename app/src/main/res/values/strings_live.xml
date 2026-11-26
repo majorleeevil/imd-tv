@@ -135,4 +135,6 @@
     <string name="live_menu_merge_options">Merge options</string>
     <string name="live_menu_merge_options_title">Merge options · %1$s</string>
     <string name="live_rail_jump_hint">Hold up: top / previous playlist\nHold down: next playlist / bottom</string>
+    <string name="live_menu_audio_sync">Audio sync: %1$s</string>
+    <string name="live_menu_audio_sync_settings">As in Settings (%1$s)</string>
 </resources>

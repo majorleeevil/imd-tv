@@ -135,4 +135,6 @@
     <string name="live_parental_locked">%1$s, ebeveyn denetimi tarafından kilitlendi.</string>
     <string name="live_parental_locked_app">PIN en son girildiğinden beri uygulama kapatıldı.</string>
     <string name="live_parental_locked_ok">PIN girmek için Tamam\'a basın.</string>
+    <string name="live_menu_audio_sync">Ses senkronu: %1$s</string>
+    <string name="live_menu_audio_sync_settings">Ayarlar\'daki gibi (%1$s)</string>
 </resources>

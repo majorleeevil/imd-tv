@@ -135,4 +135,6 @@
     <string name="live_parental_locked">%1$s är barnlåst av föräldrakontrollen.</string>
     <string name="live_parental_locked_app">Appen har stängts sedan PIN-koden senast angavs.</string>
     <string name="live_parental_locked_ok">Tryck på OK för att ange PIN-koden.</string>
+    <string name="live_menu_audio_sync">Ljudsynk: %1$s</string>
+    <string name="live_menu_audio_sync_settings">Som i Inställningar (%1$s)</string>
 </resources>

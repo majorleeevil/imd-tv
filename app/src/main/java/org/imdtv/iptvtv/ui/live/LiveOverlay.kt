@@ -77,7 +77,7 @@ fun LiveOverlay(vm: LiveViewModel, onGuide: () -> Unit, onPick: (ChannelEntity) 
     val progress = cur?.let { ((now - it.start).toFloat() / (it.stop - it.start)).coerceIn(0f, 1f) }
 
     val plus = LocalTheme.current.id == ThemeId.CELESTIAL_PLUS
-    val small = plus
+    val small = true
     val guideFocus = remember { FocusRequester() }
     val menus = remember(vm) { GuideState(vm, 0, androidx.compose.foundation.lazy.LazyListState(), false, previews = false) }
     // The player menu opens above the Settings button, not mid-screen (#28): small buttons put it first, cards second.
@@ -147,17 +147,8 @@ fun LiveOverlay(vm: LiveViewModel, onGuide: () -> Unit, onPick: (ChannelEntity) 
                 contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 48.dp),
             ) {
                 val settingsMenu = { menus.menu = GuideMenu.Player(ch) }
-                if (plus) {
-                    // Subtitles, aspect, record, favourite and add to category, at hand while watching.
-                    item(key = "settings") { OverlayButton(R.drawable.ic_tab_settings, stringResource(R.string.live_overlay_settings), onClick = settingsMenu) }
-                    item(key = "guide") { OverlayButton(R.drawable.ic_tab_live, stringResource(R.string.live_tv_guide), Modifier.focusRequester(guideFocus), onGuide) }
-                    // Catch-up: the programme on now from its start.
-                    if (ch.hasCatchUp && cur != null) item(key = "restart") { OverlayButton(R.drawable.ic_restart, stringResource(R.string.live_overlay_restart)) { vm.playCatchUp(ch, cur) } }
-                } else {
-                    item(key = "guide") { OverlayTextCard(stringResource(R.string.live_tv_guide), Modifier.focusRequester(guideFocus), onGuide) }
-                    item(key = "settings") { OverlayTextCard(stringResource(R.string.live_overlay_settings), onClick = settingsMenu) }
-                    if (ch.hasCatchUp && cur != null) item(key = "restart") { OverlayTextCard(stringResource(R.string.live_overlay_restart)) { vm.playCatchUp(ch, cur) } }
-                }
+                // Only a small cog (user, 26 Nov): subtitles, aspect, record, catch-up, favourites. The guide is Back; Restart is in Catch up.
+                item(key = "settings") { OverlayCog(stringResource(R.string.live_overlay_settings), Modifier.focusRequester(guideFocus), settingsMenu) }
                 // Small buttons aren't channels: a line sets them apart from the history (#31).
                 if (small && recents.isNotEmpty()) item(key = "line") { Box(Modifier.padding(horizontal = 4.dp, vertical = 12.dp).width(1.dp).fillMaxHeight().background(Color(0x4DFFFFFF))) }
                 items(recents, key = { it.id }) { r ->
@@ -172,25 +163,13 @@ fun LiveOverlay(vm: LiveViewModel, onGuide: () -> Unit, onPick: (ChannelEntity) 
 private val ROW_HEIGHT = 78.dp
 private val ROW_BOTTOM = 24.dp
 
-/** A small icon button with its name under it, in the overlay's bottom row. */
+/** The overlay's settings button: an icon only, [label] for screen readers. */
 @Composable
-private fun OverlayButton(icon: Int, label: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
-    OverlayCard(onClick, modifier, width = 88.dp) { f ->
-        val fg = if (f) LocalTheme.current.colors.onFocus else Color.White
-        Column(Modifier.fillMaxSize().padding(horizontal = 4.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-            androidx.tv.material3.Icon(androidx.compose.ui.res.painterResource(icon), null, tint = fg, modifier = Modifier.size(28.dp))
-            Text(label, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = fg, maxLines = 2, lineHeight = 13.sp,
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 4.dp))
-        }
-    }
-}
-
-/** A channel-sized card with a name, as the overlay had before #2. */
-@Composable
-private fun OverlayTextCard(label: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
-    OverlayCard(onClick, modifier) { f ->
+private fun OverlayCog(label: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    OverlayCard(onClick, modifier, width = 56.dp) { f ->
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text(label, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = if (f) LocalTheme.current.colors.onFocus else Color.White)
+            androidx.tv.material3.Icon(androidx.compose.ui.res.painterResource(R.drawable.ic_tab_settings), label,
+                tint = if (f) LocalTheme.current.colors.onFocus else Color.White, modifier = Modifier.size(26.dp))
         }
     }
 }
