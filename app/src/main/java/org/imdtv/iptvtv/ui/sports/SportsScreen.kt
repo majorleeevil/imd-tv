@@ -296,9 +296,9 @@ private fun androidx.compose.foundation.layout.BoxScope.GamesPage(vm: SportsView
         }
     }
     val all = fetched?.value.orEmpty()
-    val (favs, rest) = remember(all, s.sportsTeams, s.sportsLeagues, s.sportsTeamResults) { favouritesFirst(all, s.sportsTeams, s.sportsLeagues, s.sportsTeamResults) }
+    // Top box: favourite teams' games only. Every other game is below, favourite leagues first (★) (user, 26 Nov).
     val heroes = remember(all, s.sportsTeams, s.sportsTeamResults) { vm.heroes(all, s) }
-    val others = remember(favs, heroes) { favs.filter { it !in heroes } }
+    val rest = remember(all, heroes) { all.filter { it !in heroes } }
     val favTeams = remember(s.sportsTeams) { s.sportsTeams.map(::favouriteTeamKey).toSet() }
     val back = remember { FocusRequester() }
     val paneFocus = remember { FocusRequester() }
@@ -334,7 +334,7 @@ private fun androidx.compose.foundation.layout.BoxScope.GamesPage(vm: SportsView
             .then(if (g.id == cameFrom) Modifier.focusRequester(fromCard) else Modifier).onLongOk { menuGame = g }, vm.day(), width,
             onFocused = { vm.lastFocusedGame = g.id; onFocused() }) {
             // No followed games: OK puts the game in the top card and moves to Watch full screen (Stats beside it; Down comes back).
-            if (favs.isEmpty()) { vm.preview(g, strip); toPane = g.id; cameFrom = g.id } else onMatch(g)
+            vm.preview(g, strip); toPane = g.id; cameFrom = g.id
         }
 
     // Favourites box: the whole width, the preview inside it on the right.
@@ -347,7 +347,7 @@ private fun androidx.compose.foundation.layout.BoxScope.GamesPage(vm: SportsView
                 fetched == null && !failed -> Spinner(Modifier.align(Alignment.Center), 20.dp, colors.muted)
                 failed -> Text(stringResource(R.string.sports_unavailable), fontSize = 13.sp, color = colors.muted, modifier = Modifier.align(Alignment.Center))
                 // Nothing followed on this day: the game being browsed below (the preview's), else one on now, as the big card.
-                favs.isEmpty() -> (pane?.game ?: all.firstOrNull { it.state == GameState.IN } ?: all.firstOrNull())?.let { g ->
+                heroes.isEmpty() -> (pane?.game ?: all.firstOrNull { it.state == GameState.IN } ?: all.firstOrNull())?.let { g ->
                     Hero(g, favTeams, lineups[g.id] == true, pane?.takeIf { it.game.id == g.id }?.tv, Modifier.height(previewH).fillMaxWidth(),
                         emptyList(), Modifier, onFocused = { heroFocused = it }) { onMatch(g) }
                 } ?: Text(stringResource(R.string.sports_no_favourites), fontSize = 12.sp, color = colors.muted, modifier = Modifier.align(Alignment.Center).padding(horizontal = 20.dp))
@@ -366,16 +366,10 @@ private fun androidx.compose.foundation.layout.BoxScope.GamesPage(vm: SportsView
                                 }) { onMatch(g) }
                         }
                     }
-                    if (heroes.isEmpty() || others.isNotEmpty())
-                        Text(stringResource(if (heroes.isEmpty()) R.string.sports_favourites_title else R.string.sports_more_from_leagues),
-                            fontSize = 13.sp, color = Color.White, fontWeight = FontWeight.Medium)
-                    others.chunked(2).forEach { row ->
-                        androidx.compose.runtime.key(row.joinToString { it.id }) { Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) { row.forEach { Card(it) } } }
-                    }
                 }
             }
             // More games below: only while the favourite team's card has focus.
-            if (heroFocused && others.isNotEmpty()) Text("▾", fontSize = 16.sp, color = Color.White, modifier = Modifier.align(Alignment.BottomCenter).offset(y = 9.dp)
+            if (heroFocused && heroes.size > 1) Text("▾", fontSize = 16.sp, color = Color.White, modifier = Modifier.align(Alignment.BottomCenter).offset(y = 9.dp)
                 .clip(RoundedCornerShape(8.dp)).background(Color(0x33FFFFFF)).padding(horizontal = 14.dp))
         }
         // Preview pane: the channel showing the game, else its score card. OK = full screen.
@@ -412,7 +406,8 @@ private fun androidx.compose.foundation.layout.BoxScope.GamesPage(vm: SportsView
     Box(Modifier.padding(start = 24.dp, top = 356.dp, end = 24.dp, bottom = 12.dp).fillMaxSize().panel().padding(horizontal = 12.dp, vertical = 6.dp)) {
         if (fetched != null && rest.isEmpty()) Text(stringResource(if (all.isEmpty()) R.string.sports_no_games else R.string.sports_no_other_games), fontSize = 12.sp,
             color = colors.muted, modifier = Modifier.align(Alignment.Center))
-        val sections = remember(rest) { rest.groupBy { it.leagueName }.toList().map { (name, games) -> name to liveFirst(games) } }
+        val sections = remember(rest, s.sportsLeagues) { rest.groupBy { it.leagueName }.toList().map { (name, games) -> name to liveFirst(games) }
+            .sortedBy { it.second.first().league.id !in s.sportsLeagues } }
         // Each league is exactly 76 dp (16 heading + 4 + 56 cards) and two plus their gap fill the panel, so no row is cut off at the bottom.
         // Exactly four cards across: with scroll-only-if-needed, moving along shifts by whole cards, none half off the edge.
         androidx.compose.foundation.layout.BoxWithConstraints {
@@ -422,7 +417,7 @@ private fun androidx.compose.foundation.layout.BoxScope.GamesPage(vm: SportsView
                 Column {
                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.height(16.dp).padding(start = 2.dp)) {
                         Badge(games.first().leagueLogo, 14.dp)
-                        Text(name, fontSize = 11.sp, color = Color.White, fontWeight = FontWeight.Medium, modifier = Modifier.padding(start = 6.dp))
+                        Text((if (games.first().league.id in s.sportsLeagues) "★ " else "") + name, fontSize = 11.sp, color = Color.White, fontWeight = FontWeight.Medium, modifier = Modifier.padding(start = 6.dp))
                     }
                     Spacer(Modifier.height(4.dp))
                     Box {
