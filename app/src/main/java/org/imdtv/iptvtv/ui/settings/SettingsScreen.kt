@@ -267,7 +267,7 @@ fun SettingsScreen(vm: SettingsViewModel, onAddPlaylist: () -> Unit, onEditPlayl
                         val dpad = org.imdtv.iptvtv.data.settings.parseDpadKeys(s.dpadKeys)
                         listOf(org.imdtv.iptvtv.data.settings.Dpad.UP to R.string.set_b_dpad_up, org.imdtv.iptvtv.data.settings.Dpad.DOWN to R.string.set_b_dpad_down,
                             org.imdtv.iptvtv.data.settings.Dpad.LEFT to R.string.set_b_dpad_left, org.imdtv.iptvtv.data.settings.Dpad.RIGHT to R.string.set_b_dpad_right).forEach { (k, title) ->
-                            ChoiceRow(stringResource(title), stringResource(R.string.set_b_dpad_expl), org.imdtv.iptvtv.data.settings.DpadAction.entries - org.imdtv.iptvtv.data.settings.DpadAction.DEFAULT,
+                            ChoiceRow(stringResource(title), stringResource(R.string.set_b_dpad_expl), org.imdtv.iptvtv.data.settings.DPAD_CHOICES,
                                 org.imdtv.iptvtv.data.settings.dpadAction(k, s.zapLeftRight, dpad), { stringResource(it.labelRes) },
                                 default = org.imdtv.iptvtv.data.settings.dpadAction(k, AppSettings().zapLeftRight, emptyMap())) { a ->
                                 vm.update { it.copy(dpadKeys = (org.imdtv.iptvtv.data.settings.parseDpadKeys(it.dpadKeys) + (k to a)).encodeDpadKeys()) }

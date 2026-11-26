@@ -94,7 +94,11 @@ enum class Dpad { UP, DOWN, LEFT, RIGHT }
 
 /** What an arrow does full screen; DEFAULT = what Change channel with / View Previous Channel With set. */
 enum class DpadAction(@StringRes val labelRes: Int) {
-    DEFAULT(R.string.set_b_dpad_default), CHANNEL(R.string.set_b_dpad_channel), PREVIOUS(R.string.set_b_dpad_previous),
+    DEFAULT(R.string.set_b_dpad_default),
+    /** Saved before 26 Nov: direction from the arrow; [dpadAction] turns them into the named ones below. Not offered. */
+    CHANNEL(R.string.set_b_dpad_channel), PREVIOUS(R.string.set_b_dpad_previous),
+    CHANNEL_PREV(R.string.set_b_dpad_channel_prev), CHANNEL_NEXT(R.string.set_b_dpad_channel_next),
+    WATCHED_BACK(R.string.set_b_dpad_watched_back), WATCHED_FORWARD(R.string.set_b_dpad_watched_forward),
     GUIDE(R.string.live_tv_guide), CATEGORIES(R.string.set_a_page_categories), INFO(R.string.set_b_dpad_info),
     SETTINGS(R.string.set_b_settings), NOTHING(R.string.set_b_dpad_nothing),
 }
@@ -110,7 +114,15 @@ fun Map<Dpad, DpadAction>.encodeDpadKeys() = filterValues { it != DpadAction.DEF
 
 /** [key]'s action; DEFAULT becomes CHANNEL on the change-channel pair and PREVIOUS on the other, as before #21. */
 fun dpadAction(key: Dpad, zapLeftRight: Boolean, custom: Map<Dpad, DpadAction>): DpadAction =
-    custom[key]?.takeIf { it != DpadAction.DEFAULT } ?: if ((key == Dpad.LEFT || key == Dpad.RIGHT) == zapLeftRight) DpadAction.CHANNEL else DpadAction.PREVIOUS
+    when (val a = custom[key]?.takeIf { it != DpadAction.DEFAULT } ?: if ((key == Dpad.LEFT || key == Dpad.RIGHT) == zapLeftRight) DpadAction.CHANNEL else DpadAction.PREVIOUS) {
+        // Up/Left went down the list (and forward through watched channels); Down/Right up it (and back).
+        DpadAction.CHANNEL -> if (key.delta < 0) DpadAction.CHANNEL_PREV else DpadAction.CHANNEL_NEXT
+        DpadAction.PREVIOUS -> if (key.delta < 0) DpadAction.WATCHED_FORWARD else DpadAction.WATCHED_BACK
+        else -> a
+    }
+
+/** The choices offered for an arrow (the old direction-less ones are left out). */
+val DPAD_CHOICES = DpadAction.entries - DpadAction.DEFAULT - DpadAction.CHANNEL - DpadAction.PREVIOUS
 
 /** -1 for Up and Left, 1 for Down and Right (the zap and previous-channel step). */
 val Dpad.delta get() = if (this == Dpad.UP || this == Dpad.LEFT) -1 else 1

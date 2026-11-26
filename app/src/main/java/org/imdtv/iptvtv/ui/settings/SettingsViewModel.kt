@@ -146,6 +146,15 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    /** A media server's name, address or (SMB) login edited in place; a new address or login loads it again. */
+    fun editServer(id: Long, resync: Boolean, change: (org.imdtv.iptvtv.data.db.ProviderEntity) -> org.imdtv.iptvtv.data.db.ProviderEntity) {
+        viewModelScope.launch {
+            val p = c.db.providerDao().get(id) ?: return@launch
+            c.providerRepository.update(change(p))
+            if (resync) updatePlaylist(id)
+        }
+    }
+
     fun setEnabled(id: Long, on: Boolean) { viewModelScope.launch { c.db.providerDao().setEnabled(id, on) } }
 
     fun updatePlaylist(id: Long) {

@@ -92,10 +92,22 @@ fun PlaylistPage(
         Text(p.name, fontSize = 20.sp, color = Color.White, modifier = Modifier.padding(top = 6.dp, bottom = 18.dp))
         val plex = p.type.mediaServer // Plex, Jellyfin: no form to edit (signed in under Media servers), no live
         if (!plex) SettingRow(stringResource(R.string.set_a_edit), stringResource(R.string.set_a_edit_expl), null, Modifier.focusRequester(first)) { onEdit(id) }
+        // Media servers: edited here, not deleted and added again (user, 26 Nov). Plex/Jellyfin/Emby/Stremio sign-ins stay as they are.
+        if (plex) {
+            EditRow(stringResource(R.string.set_a_name_hint), "", p.name, p.name, Modifier.focusRequester(first)) { n -> if (n.isNotBlank()) vm.editServer(id, false) { it.copy(name = n.trim()) } }
+            if (p.type != org.imdtv.iptvtv.data.db.ProviderType.STREMIO)
+                EditRow(stringResource(R.string.set_b_jf_address_row), "", p.url, p.url, keyboard = androidx.compose.ui.text.input.KeyboardType.Uri) { u ->
+                    if (u.isNotBlank()) vm.editServer(id, true) { it.copy(url = u.trim()) }
+                }
+            if (p.type == org.imdtv.iptvtv.data.db.ProviderType.SMB) {
+                EditRow(stringResource(R.string.set_b_username), "", p.username.orEmpty().ifEmpty { null }, p.username.orEmpty()) { u -> vm.editServer(id, true) { it.copy(username = u.trim()) } }
+                EditRow(stringResource(R.string.set_b_password), "", if (p.password.isNullOrEmpty()) null else "••••", "", secret = true) { pw -> vm.editServer(id, true) { it.copy(password = pw) } }
+            }
+        }
         // Off leaves it out of the categories list's other playlists. The one in use hands over to another switched-on
         // playlist first; when it's the only one, it stays on.
         SwitchRow(stringResource(R.string.set_a_use_playlist), stringResource(when { !p.enabled -> R.string.set_a_use_playlist_off; activeId == id -> R.string.set_a_use_playlist_on; else -> R.string.set_a_use_playlist_listed }),
-            p.enabled, if (plex) Modifier.focusRequester(first) else Modifier) { on ->
+            p.enabled) { on ->
             if (on || activeId != id) vm.setEnabled(id, on)
             else providers.filter { it.id != id && it.enabled }.minByOrNull { it.type.mediaServer }?.let { vm.setEnabled(id, false); onUse(it.id) }
         }

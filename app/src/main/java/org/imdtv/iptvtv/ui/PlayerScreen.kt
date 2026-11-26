@@ -108,8 +108,10 @@ fun PlayerScreen(player: PlayerManager, title: String, liveVm: LiveViewModel? = 
             // An arrow's action (#21): zaps repeat while held; the others act once, on the first press.
             fun arrow(k: org.imdtv.iptvtv.data.settings.Dpad, first: Boolean) {
                 when (org.imdtv.iptvtv.data.settings.dpadAction(k, zapLeftRight, dpad)) {
-                    org.imdtv.iptvtv.data.settings.DpadAction.CHANNEL -> liveVm.zapBy(k.delta)
-                    org.imdtv.iptvtv.data.settings.DpadAction.PREVIOUS -> liveVm.toPreviousChannel(k.delta)
+                    org.imdtv.iptvtv.data.settings.DpadAction.CHANNEL_PREV -> liveVm.zapBy(-1)
+                    org.imdtv.iptvtv.data.settings.DpadAction.CHANNEL_NEXT -> liveVm.zapBy(1)
+                    org.imdtv.iptvtv.data.settings.DpadAction.WATCHED_BACK -> liveVm.toPreviousChannel(1)
+                    org.imdtv.iptvtv.data.settings.DpadAction.WATCHED_FORWARD -> liveVm.toPreviousChannel(-1)
                     org.imdtv.iptvtv.data.settings.DpadAction.GUIDE -> if (first) onGuide()
                     org.imdtv.iptvtv.data.settings.DpadAction.CATEGORIES -> if (first) onCategories()
                     org.imdtv.iptvtv.data.settings.DpadAction.INFO -> if (first) overlay = true
