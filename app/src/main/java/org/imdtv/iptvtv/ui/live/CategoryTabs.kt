@@ -1,5 +1,6 @@
 package org.imdtv.iptvtv.ui.live
 
+import org.imdtv.iptvtv.ui.onSwipe
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -100,10 +101,10 @@ internal fun CategoryTabs(
             val title = item.entry.titleText()
             val width = remember(title) { with(density) { measurer.measure(title, LABEL).size.width.toDp() } }
             FocusBox(
-                onClick = onDown,
+                onClick = { if (move != null) onMoveEnd(false) else onDown() }, // touch: a tap drops a move
                 onFocused = { if (!isSelected && move == null) onPick(item.entry) },
                 modifier = (if (isSelected) Modifier.focusRequester(focus) else Modifier)
-                    .then(if (isMoving) Modifier.focusRequester(moveFocus) else Modifier)
+                    .then(if (isMoving) Modifier.focusRequester(moveFocus).onSwipe(vertical = false) { dx, _ -> onMove(dx) } else Modifier)
                     .then(if (item.entry != RailEntry.Recent) Modifier.onLongOk { onLongPress(item.entry) } else Modifier)
                     .width(tabWidth(width)).fillMaxHeight(),
             ) { f ->

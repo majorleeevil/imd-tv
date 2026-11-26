@@ -1,5 +1,7 @@
 package org.imdtv.iptvtv.ui.search
 
+import org.imdtv.iptvtv.ui.OpenOnTap
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -50,6 +52,8 @@ fun SearchBar(query: String, onQuery: (String) -> Unit, placeholder: String, mod
     var focused by remember { mutableStateOf(false) }
     val keyboard = LocalSoftwareKeyboardController.current
     val focus = LocalFocusManager.current
+    val interaction = remember { MutableInteractionSource() }
+    OpenOnTap(interaction) { if (!editing) { editing = true; keyboard?.show() } }
     Row(
         modifier.background(background, RoundedCornerShape(14.dp))
             .border(2.dp, if (focused) color else Color.Transparent, RoundedCornerShape(14.dp))
@@ -60,7 +64,7 @@ fun SearchBar(query: String, onQuery: (String) -> Unit, placeholder: String, mod
         Box(Modifier.padding(start = 8.dp)) {
             if (query.isEmpty()) Text(placeholder, fontSize = 13.sp, color = color.copy(alpha = .7f), maxLines = 1)
             BasicTextField(
-                query, onQuery, singleLine = true, readOnly = !editing,
+                query, onQuery, singleLine = true, readOnly = !editing, interactionSource = interaction,
                 textStyle = androidx.tv.material3.LocalTextStyle.current.merge(TextStyle(color = color, fontSize = 13.sp)), cursorBrush = SolidColor(color),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                 keyboardActions = KeyboardActions(onSearch = { keyboard?.hide(); focus.moveFocus(FocusDirection.Down) }),

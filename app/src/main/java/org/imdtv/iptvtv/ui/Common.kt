@@ -1,5 +1,8 @@
 package org.imdtv.iptvtv.ui
 
+import androidx.compose.ui.input.pointer.positionChange
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -185,6 +188,64 @@ fun Modifier.onLongOk(action: () -> Unit): Modifier = composed {
             swallowing && e.keyCode in OK_KEYS -> { if (e.action == android.view.KeyEvent.ACTION_UP) swallowing = false; true }
             else -> false
         }
+    }
+}
+
+/** A touch tap (a still finger lifted), for what a remote reaches by a key with no click of its own. Not consumed. */
+fun Modifier.onTouchTap(action: (Offset) -> Unit): Modifier = composed {
+    val act by androidx.compose.runtime.rememberUpdatedState(action)
+    pointerInput(Unit) {
+        awaitEachGesture {
+            val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+            while (true) {
+                val c = awaitPointerEvent(PointerEventPass.Initial).changes.firstOrNull { it.id == down.id } ?: return@awaitEachGesture
+                if (c.isConsumed || (c.position - down.position).getDistance() > viewConfiguration.touchSlop) return@awaitEachGesture
+                if (!c.pressed) { act(c.position); return@awaitEachGesture }
+            }
+        }
+    }
+}
+
+/**
+ * Touch stand-in for the D-pad: every 48dp of drag along an allowed axis calls [onStep] with the finger's direction
+ * (dx or dy is -1/1). Once locked to an axis it consumes the touch, so it never also clicks or scrolls; a drag along
+ * a disallowed axis is left alone (a list under it still scrolls).
+ */
+fun Modifier.onSwipe(horizontal: Boolean = true, vertical: Boolean = true, onStep: (dx: Int, dy: Int) -> Unit): Modifier = composed {
+    val step by androidx.compose.runtime.rememberUpdatedState(onStep)
+    pointerInput(horizontal, vertical) {
+        val stepPx = 48.dp.toPx()
+        awaitEachGesture {
+            val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+            var total = Offset.Zero
+            var axis = 0 // 0 undecided, 1 horizontal, 2 vertical
+            while (true) {
+                val c = awaitPointerEvent(PointerEventPass.Initial).changes.firstOrNull { it.id == down.id } ?: return@awaitEachGesture
+                if (!c.pressed) return@awaitEachGesture
+                total += c.positionChange()
+                if (axis == 0 && total.getDistance() > viewConfiguration.touchSlop) {
+                    axis = if (kotlin.math.abs(total.x) > kotlin.math.abs(total.y)) 1 else 2
+                    if (if (axis == 1) !horizontal else !vertical) return@awaitEachGesture
+                }
+                if (axis == 0) continue
+                c.consume()
+                val along = if (axis == 1) total.x else total.y
+                if (kotlin.math.abs(along) >= stepPx) {
+                    val d = if (along > 0) 1 else -1
+                    if (axis == 1) step(d, 0) else step(0, d)
+                    total = if (axis == 1) total.copy(x = along - d * stepPx) else total.copy(y = along - d * stepPx)
+                }
+            }
+        }
+    }
+}
+
+/** Touch never sends OK: a tap on a read-only-until-OK text field (one using [interaction]) opens it as OK does. */
+@Composable
+fun OpenOnTap(interaction: androidx.compose.foundation.interaction.InteractionSource, open: () -> Unit) {
+    val o by androidx.compose.runtime.rememberUpdatedState(open)
+    androidx.compose.runtime.LaunchedEffect(interaction) {
+        interaction.interactions.collect { if (it is androidx.compose.foundation.interaction.PressInteraction.Release) o() }
     }
 }
 

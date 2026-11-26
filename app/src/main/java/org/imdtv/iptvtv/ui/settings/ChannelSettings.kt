@@ -1,5 +1,6 @@
 package org.imdtv.iptvtv.ui.settings
 
+import org.imdtv.iptvtv.ui.onSwipe
 import org.imdtv.iptvtv.data.repo.RailEntry
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.pluralStringResource
@@ -241,10 +242,11 @@ private fun CategoryListPage(vm: SettingsViewModel, kind: Kind, first: FocusRequ
             // OK toggles shown/hidden, a long OK picks the category up to move (user, 2026-11-13).
             // canFocus reads `moving` itself: the captured isMoving is stale when the lambda re-runs, which dropped focus.
             FocusBox(
-                onClick = { if (isMoving) moving = null else { pending[cat.id] = !hidden; vm.setHidden(cat, !hidden) } },
+                onClick = { if (moving != null) moving = null else { pending[cat.id] = !hidden; vm.setHidden(cat, !hidden) } }, // touch: any tap drops
                 // Hold OK picks it up at once, as Manage channels (no Move up / Move down box).
                 modifier = Modifier.focusProperties { canFocus = moving == null || moving == cat.id }
                     .onLongOk { if (moving == null) { moving = cat.id; movedFrom = rows.indexOfFirst { it.category.id == cat.id } } }
+                    .then(if (isMoving) Modifier.onSwipe(horizontal = false) { _, dy -> vm.move(cat, dy) } else Modifier) // touch: drag it
                     .onPreviewKeyEvent { e ->
                         if (!isMoving) return@onPreviewKeyEvent false
                         val down = e.type == KeyEventType.KeyDown
@@ -398,7 +400,7 @@ private fun ManageChannelsPage(vm: SettingsViewModel, first: FocusRequester, onC
             FocusBox(
                 onClick = {
                     when {
-                        isMoving -> moving = null
+                        moving != null -> moving = null // touch: any tap drops
                         selecting -> if (ticked) selected.remove(ch.id) else selected.add(ch.id)
                         (counts[ch.id] ?: 0) == 0 -> toggle(ch)
                         tap[0]?.isActive == true && tapId[0] == ch.id -> { tap[0]?.cancel(); viewing = ch }
@@ -410,6 +412,7 @@ private fun ManageChannelsPage(vm: SettingsViewModel, first: FocusRequester, onC
                 modifier = (if (list.firstVisibleItemIndex > 2 && i == list.firstVisibleItemIndex - 3) Modifier.focusRequester(first) else Modifier)
                     .focusProperties { canFocus = moving == null || moving == ch.id }
                     .onLongOk { if (!selecting && moving == null) { if (by != org.imdtv.iptvtv.data.db.SortBy.MANUAL) toManual = ch else { moving = ch.id; movedFrom = channels.indexOfFirst { it.id == ch.id } } } }
+                    .then(if (isMoving) Modifier.onSwipe(horizontal = false) { _, dy -> vm.moveChannel(ch, dy) } else Modifier) // touch: drag it
                     .onPreviewKeyEvent { e ->
                         if (!isMoving) return@onPreviewKeyEvent false
                         val down = e.type == KeyEventType.KeyDown
@@ -572,12 +575,13 @@ private fun YourCategoriesPage(vm: SettingsViewModel, first: FocusRequester) {
                     // canFocus reads `moving` itself: the captured isMoving is stale when the lambda re-runs, which dropped focus.
                     Modifier.focusProperties { canFocus = moving == null || moving == g.id }
                         .onLongOk { if (moving == null) { order = groups; moving = g.id } }
+                        .then(if (isMoving) Modifier.onSwipe(horizontal = false) { _, dy -> moveWithin(groups, groups.indexOf(g), dy) { it.placement }?.let { order = it } } else Modifier)
                         .onPreviewKeyEvent { e ->
                             if (!isMoving) return@onPreviewKeyEvent false
                             val d = when (e.key) { Key.DirectionUp -> -1; Key.DirectionDown -> 1; Key.DirectionLeft, Key.DirectionRight -> 0; else -> return@onPreviewKeyEvent false }
                             if (d != 0 && e.type == KeyEventType.KeyDown) moveWithin(groups, groups.indexOf(g), d) { it.placement }?.let { order = it }
                             true
-                        }, moving = isMoving) { if (isMoving) drop() else menu = GroupMenu.Options(g) }
+                        }, moving = isMoving) { if (moving != null) drop() else menu = GroupMenu.Options(g) } // touch: any tap drops
             }
         }
     }
@@ -642,12 +646,13 @@ private fun ChannelOrderPage(vm: SettingsViewModel, entry: RailEntry, title: Str
             val isPicked = picked == ch.id
             SettingRow((if (isPicked) "↕ " else "") + ch.displayName(emptyList()), if (isPicked) stringResource(R.string.set_a_move_hint) else "", null,
                 Modifier.focusProperties { canFocus = picked == null || picked == ch.id }
+                    .then(if (isPicked) Modifier.onSwipe(horizontal = false) { _, dy -> moveWithin(channels, channels.indexOf(ch), dy) { GroupPlacement.NORMAL }?.let { order = it } } else Modifier)
                     .onPreviewKeyEvent { e ->
                         if (!isPicked) return@onPreviewKeyEvent false
                         val d = when (e.key) { Key.DirectionUp -> -1; Key.DirectionDown -> 1; Key.DirectionLeft, Key.DirectionRight -> 0; else -> return@onPreviewKeyEvent false }
                         if (d != 0 && e.type == KeyEventType.KeyDown) moveWithin(channels, channels.indexOf(ch), d) { GroupPlacement.NORMAL }?.let { order = it }
                         true
-                    }, moving = isPicked) { if (isPicked) drop() else if (by != org.imdtv.iptvtv.data.db.SortBy.MANUAL) toManual = ch else { order = channels; picked = ch.id } }
+                    }, moving = isPicked) { if (picked != null) drop() else if (by != org.imdtv.iptvtv.data.db.SortBy.MANUAL) toManual = ch else { order = channels; picked = ch.id } }
         }
     }
 }

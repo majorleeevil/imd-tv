@@ -18,8 +18,8 @@ android {
         // 25: Fire Stick 4K 1st gen (Fire OS 6 = Android 7.1) said "problem parsing the package" at 26 (#30).
         minSdk = 25
         targetSdk = 35
-        versionCode = 13
-        versionName = "0.8.0"
+        versionCode = 14
+        versionName = "0.8.1"
     }
 
     // Release key, kept outside the repo: ~/.config/iptv-tv/keystore.properties (storeFile, storePassword, keyAlias,
@@ -104,4 +104,7 @@ dependencies {
     testImplementation(libs.coroutines.test)
     testImplementation(libs.okhttp.mockwebserver)
     testImplementation(libs.room.testing)
+    testImplementation(platform(libs.compose.bom))
+    testImplementation(libs.compose.ui.test) // touch gesture tests (Robolectric)
+    debugImplementation(libs.compose.ui.test.manifest)
 }

@@ -1,5 +1,6 @@
 package org.imdtv.iptvtv.ui.live
 
+import org.imdtv.iptvtv.ui.onSwipe
 import androidx.compose.ui.res.stringResource
 import org.imdtv.iptvtv.R
 
@@ -129,9 +130,9 @@ internal fun Rail(
             itemsIndexed(items, key = { _, c -> c.entry.key }) { i, rc ->
                 val isMoving = rc.entry.key == movingKey
                 FocusBox(
-                    onClick = { onPick(rc.entry) },
+                    onClick = { if (move != null) onMoveEnd(false) else onPick(rc.entry) }, // touch: a tap drops a move
                     modifier = (if (i == start) Modifier.focusRequester(focus) else Modifier)
-                        .then(if (isMoving) Modifier.focusRequester(moveFocus) else Modifier)
+                        .then(if (isMoving) Modifier.focusRequester(moveFocus).onSwipe(horizontal = false) { _, dy -> onMove(dy) } else Modifier)
                         .then(if (rc.entry.key == focusKey) Modifier.focusRequester(keyFocus) else Modifier)
                         .then(track(rc.entry.key))
                         // Every entry but Recently watched has a menu.

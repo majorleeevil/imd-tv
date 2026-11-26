@@ -231,6 +231,7 @@ fun Field(
     val interaction = remember { MutableInteractionSource() }
     val focused by interaction.collectIsFocusedAsState()
     val focus = LocalFocusManager.current
+    OpenOnTap(interaction) { if (!editing) { editing = true; keyboardCtl?.show() } }
     Column {
         if (label.isNotEmpty()) Text(label, color = Color.LightGray)
         BasicTextField(

@@ -1,5 +1,6 @@
 package org.imdtv.iptvtv.ui.xcube
 
+import org.imdtv.iptvtv.ui.onTouchTap
 import androidx.compose.foundation.layout.wrapContentSize
 import org.imdtv.iptvtv.R
 import androidx.compose.ui.res.stringResource
@@ -117,9 +118,9 @@ fun XcubeFrame(selected: Tab, onBlade: (Tab) -> Unit, cardFocus: FocusRequester,
         onDrawBehind { drawImage(img) }
     }) {
         // Each label is centred on the visible strip of its blade.
-        left.forEachIndexed { i, t -> BladeLabel(stringResource(LABELS.getValue(t)), Modifier.offset(x = EDGE + BLADE * i + BLADE / 2 - 40.dp, y = 70.dp)) }
+        left.forEachIndexed { i, t -> BladeLabel(stringResource(LABELS.getValue(t)), Modifier.offset(x = EDGE + BLADE * i + BLADE / 2 - 40.dp, y = 70.dp).onTouchTap { onBlade(t) }) }
         right.forEachIndexed { i, t ->
-            BladeLabel(stringResource(LABELS.getValue(t)), Modifier.align(Alignment.TopEnd).offset(x = -(EDGE + BLADE * (right.size - i - 1) + BLADE / 2 - 40.dp), y = 70.dp))
+            BladeLabel(stringResource(LABELS.getValue(t)), Modifier.align(Alignment.TopEnd).offset(x = -(EDGE + BLADE * (right.size - i - 1) + BLADE / 2 - 40.dp), y = 70.dp).onTouchTap { onBlade(t) })
         }
         Box(Modifier.fillMaxSize().padding(start = EDGE + BLADE * left.size + 14.dp, end = EDGE + BLADE * right.size + 14.dp, top = 10.dp, bottom = 10.dp)) {
             Text(stringResource(TITLES.getValue(selected)), fontSize = 20.sp, color = Color.White, modifier = Modifier.padding(start = 24.dp, top = 14.dp))

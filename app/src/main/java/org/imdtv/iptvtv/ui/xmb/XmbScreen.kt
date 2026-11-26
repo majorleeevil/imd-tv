@@ -1,5 +1,6 @@
 package org.imdtv.iptvtv.ui.xmb
 
+import org.imdtv.iptvtv.ui.onSwipe
 import org.imdtv.iptvtv.ui.live.titleText
 import androidx.activity.compose.BackHandler
 import org.imdtv.iptvtv.recording.recordingStatus
@@ -239,6 +240,12 @@ fun XmbScreen(
                     // shortcut: a fixed 8-item page (about what the XMB column shows), measure it if users ask.
                     else -> org.imdtv.iptvtv.ui.live.pageKey(e.key)?.let { live.xmb = x.move(it * 8, count); true } ?: false
                 }
+            }
+            // Touch: swipes move as the D-pad, content following the finger (finger left = Right, finger up = Down); a tap is OK.
+            .onSwipe { dx, dy ->
+                if (editing) return@onSwipe
+                val count = if (inFolder) folderCount else items.size
+                live.xmb = when { dx < 0 -> x.right(columns); dx > 0 -> x.left(columns); dy < 0 -> x.down(count); else -> x.up(count) }
             }
             .onLongOk { (focusedChannel ?: searchHit as? ChannelEntity)?.let { guide.menu = GuideMenu.Channel(it) } }
             .clickable(remember { MutableInteractionSource() }, indication = null, onClick = click)

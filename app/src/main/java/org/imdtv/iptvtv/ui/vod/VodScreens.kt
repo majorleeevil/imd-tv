@@ -1,5 +1,6 @@
 package org.imdtv.iptvtv.ui.vod
 
+import org.imdtv.iptvtv.ui.onTouchTap
 import org.imdtv.iptvtv.ui.live.railFocusTrap
 import org.imdtv.iptvtv.ui.theme.LocalTheme
 import org.imdtv.iptvtv.R
@@ -144,7 +145,7 @@ fun VodHomeScreen(vm: VodViewModel, nav: @Composable () -> Unit, onOpen: (VodIte
             }
             Text(stringResource(R.string.vod_category), fontSize = 11.sp, color = LocalTheme.current.colors.muted)
             Text(stringResource(R.string.vod_category_pill, gridCat?.name ?: stringResource(if (kind == Kind.MOVIE) R.string.vod_all_movies else R.string.vod_all_series)), fontSize = 11.sp, color = Color.White,
-                fontWeight = FontWeight.Medium, modifier = Modifier.padding(start = 4.dp).clip(RoundedCornerShape(10.dp))
+                fontWeight = FontWeight.Medium, modifier = Modifier.padding(start = 4.dp).onTouchTap { railOpen = true }.clip(RoundedCornerShape(10.dp))
                     .background(Color(0x1AFFFFFF)).padding(horizontal = 8.dp, vertical = 3.dp))
         }
         // In-category search sits just above the title (search spec); it searches what the rows/grid show.

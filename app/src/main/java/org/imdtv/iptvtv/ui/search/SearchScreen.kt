@@ -1,5 +1,7 @@
 package org.imdtv.iptvtv.ui.search
 
+import org.imdtv.iptvtv.ui.OpenOnTap
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.background
 import androidx.annotation.StringRes
 import androidx.compose.ui.res.stringResource
@@ -115,6 +117,8 @@ fun SearchScreen(
     val hadFocus = remember { mutableStateOf(false) } // onFocusChanged also reports "not focused" once on first layout
     val keyboard = LocalSoftwareKeyboardController.current
     val focus = LocalFocusManager.current
+    val interaction = remember { MutableInteractionSource() }
+    OpenOnTap(interaction) { if (!editing) { editing = true; keyboard?.show() } }
     LaunchedEffect(Unit) { vm.warm() }
     LaunchedEffect(Unit) {
         withFrameNanos { }
@@ -138,7 +142,7 @@ fun SearchScreen(
             Box(Modifier.padding(start = 12.dp).weight(1f)) {
                 if (query.isEmpty()) Text(stringResource(R.string.vod_search_hint), fontSize = 18.sp, color = LocalTheme.current.colors.muted)
                 BasicTextField(
-                    query, { vm.query.value = it }, singleLine = true, readOnly = !editing,
+                    query, { vm.query.value = it }, singleLine = true, readOnly = !editing, interactionSource = interaction,
                     textStyle = androidx.tv.material3.LocalTextStyle.current.merge(TextStyle(color = Color.White, fontSize = 18.sp)), cursorBrush = SolidColor(Color.White),
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                     // Done/Search on the keyboard drops focus to the results.

@@ -1,6 +1,7 @@
 @file:OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 package org.imdtv.iptvtv.ui.live
 
+import org.imdtv.iptvtv.ui.onSwipe
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.input.pointer.pointerInput
 import org.imdtv.iptvtv.ui.hasCatchUp
@@ -267,9 +268,25 @@ fun GuideGrid(
                                     } ?: false
                                 }
                             }
+                            // Touch: a sideways swipe is Left/Right on this row (finger right = earlier); a picked-up row is dragged.
+                            .then(if (moving && move != null) Modifier.onSwipe(horizontal = false) { _, dy ->
+                                val m = state.rowMove ?: return@onSwipe
+                                val from = m.order.indexOfFirst { it.id == ch.id }
+                                val j = from + dy
+                                if (from >= 0 && j in m.order.indices) { state.rowMove = m.copy(order = m.order.toMutableList().apply { add(j, removeAt(from)) }); state.focusIndex = j }
+                            } else Modifier.onSwipe(vertical = false) { dx, _ ->
+                                if (state.railOpen || merging != null) return@onSwipe
+                                state.focusIndex = i; vm.focused.value = ch
+                                val progs = programmes[ch.id].orEmpty()
+                                if (dx < 0) vm.moveCursor(progs, 1, style.windowMin, ch.archiveDays)
+                                else if (!vm.moveCursor(progs, -1, style.windowMin, ch.archiveDays)) {
+                                    if (ch.hasCatchUp && !vm.inPast.value) vm.enterPast(ch, style.windowMin) else onLeftAtStart()
+                                }
+                            })
                             .onLongOk { state.focusIndex = i; state.menu = if (past && ch.hasCatchUp) GuideMenu.PickDay(ch, style.windowMin) else GuideMenu.Channel(ch) },
                         onFocused = { vm.focused.value = ch; state.focusIndex = i; if (past && !ch.hasCatchUp) vm.leavePast() },
                         onClick = {
+                            if (tapDuringPick(ch, state, vm)) return@GuideRow
                             // A past programme highlighted (catch-up): OK plays it.
                             val aired = if (past) programmes[ch.id].orEmpty().firstOrNull { it.start <= at && at < it.stop && it.stop <= now } else null
                             // A later programme highlighted: OK offers a reminder and, with recording on, to record it, instead of playing.
@@ -279,6 +296,7 @@ fun GuideGrid(
                         },
                         // The tapped programme, not the row's cursor: aired (catch-up) plays, later offers Record/Remind, on now is OK.
                         onTapAt = { t ->
+                            if (tapDuringPick(ch, state, vm)) return@GuideRow
                             val p = programmes[ch.id].orEmpty().firstOrNull { it.start <= t && t < it.stop }
                             state.focusIndex = i; vm.focused.value = ch
                             when {
@@ -336,6 +354,13 @@ private fun moveKey(e: androidx.compose.ui.input.key.KeyEvent, m: RowMove, i: In
         else -> {}
     }
     return true
+}
+
+/** Touch has no OK: a tap while a row is picked up drops it ([moveKey]), while merging merges into the tapped row ([mergeKey]). */
+private fun tapDuringPick(ch: ChannelEntity, state: GuideState, vm: LiveViewModel): Boolean {
+    state.rowMove?.takeIf { !it.dropped }?.let { vm.saveGuideOrder(it.ch, it.before, it.order); state.rowMove = it.copy(dropped = true); return true }
+    state.rowMerge?.let { if (ch.id != it.ch.id) vm.merge(it.ch, ch); state.rowMerge = null; return true }
+    return false
 }
 
 /** Channel Up/Down and Page Up/Down page through a list: -1 up, 1 down, null for any other key. */

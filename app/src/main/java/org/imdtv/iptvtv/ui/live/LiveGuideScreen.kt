@@ -1,5 +1,6 @@
 package org.imdtv.iptvtv.ui.live
 
+import org.imdtv.iptvtv.ui.onTouchTap
 import androidx.compose.ui.res.stringResource
 import org.imdtv.iptvtv.R
 
@@ -89,7 +90,8 @@ fun LiveGuideScreen(vm: LiveViewModel, nav: @Composable () -> Unit, onFullScreen
             Text(stringResource(R.string.live_all_hidden), fontSize = 16.sp,
                 color = Color.White, modifier = Modifier.padding(start = 24.dp, top = 380.dp))
         }
-        Row(Modifier.padding(start = 24.dp, top = gridTop - 18.dp), verticalAlignment = Alignment.CenterVertically) {
+        // Touch: a tap on the "◀ category" line opens the rail (a remote presses Left).
+        Row(Modifier.padding(start = 24.dp, top = gridTop - 18.dp).onTouchTap { state.railOpen = true }, verticalAlignment = Alignment.CenterVertically) {
             Text(
                 "◀ ${entry?.titleText().orEmpty()}", fontSize = 11.sp, color = Color.White, maxLines = 1,
                 modifier = Modifier.clip(RoundedCornerShape(10.dp)).background(colors.cellDim).padding(horizontal = 7.dp, vertical = 2.dp),

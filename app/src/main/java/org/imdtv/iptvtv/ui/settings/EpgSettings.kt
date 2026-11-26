@@ -1,5 +1,8 @@
 package org.imdtv.iptvtv.ui.settings
 
+import org.imdtv.iptvtv.ui.onTouchTap
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.pluralStringResource
 import org.imdtv.iptvtv.R
@@ -54,7 +57,10 @@ import org.imdtv.iptvtv.data.settings.EPG_INTERVALS
 fun <T> StepperRow(title: String, explanation: String, values: List<T>, current: T, label: (T) -> String, modifier: Modifier = Modifier,
     onChange: (T) -> Unit) {
     val i = values.indexOf(current).coerceAtLeast(0)
-    SettingRow(title, explanation, "‹ ${label(values[i])} ›", modifier.onPreviewKeyEvent { e ->
+    var width by remember { mutableIntStateOf(0) }
+    SettingRow(title, explanation, "‹ ${label(values[i])} ›", modifier.onSizeChanged { width = it.width }
+        .onTouchTap { p -> values.getOrNull(i + if (p.x < width / 2) -1 else 1)?.let(onChange) } // touch: left half ‹, right half ›
+        .onPreviewKeyEvent { e ->
         val step = when (e.key) { Key.DirectionLeft -> -1; Key.DirectionRight -> 1; else -> return@onPreviewKeyEvent false }
         if (e.type == KeyEventType.KeyDown) values.getOrNull(i + step)?.let(onChange)
         true
