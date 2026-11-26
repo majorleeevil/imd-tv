@@ -18,4 +18,13 @@ class PlaybackTuningTest {
         assertEquals(10_000 to 10_000, bufferMs(10))
         assertEquals(androidx.media3.exoplayer.DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_MS to androidx.media3.exoplayer.DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS, bufferMs(1))
     }
+
+    /** Read-ahead buffers live on the Java heap on Android, beside Media3's ~125 MiB video buffer (OOM crashes, 26 Nov). */
+    @Test fun readAheadLeavesRoomForMedia3AndTheApp() {
+        val mib = 1L shl 20
+        assertEquals(16 * mib, readAheadFor(availRam = 800 * mib, maxHeap = 256 * mib))  // was 200 MiB: crashed ~40 s in
+        assertEquals(128 * mib, readAheadFor(availRam = 800 * mib, maxHeap = 384 * mib)) // largeHeap on the Chromecast: heap levelled at ~335 of 384 MB playing 4K
+        assertEquals(100 * mib, readAheadFor(availRam = 400 * mib, maxHeap = 512 * mib)) // free RAM still limits
+        assertEquals(16 * mib, readAheadFor(availRam = 800 * mib, maxHeap = 192 * mib))  // floor
+    }
 }

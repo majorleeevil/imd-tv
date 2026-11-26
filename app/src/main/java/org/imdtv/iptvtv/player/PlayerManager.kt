@@ -62,6 +62,13 @@ private val LIVE_CAPTIONS = listOf(
         .setInitializationData(androidx.media3.common.util.CodecSpecificDataUtil.buildCea708InitializationData(false)).build(),
 )
 
+/**
+ * Plex/Jellyfin read-ahead (#32): a quarter of the RAM free now, 16–256 MiB, leaving 256 MiB of the heap for Media3's own
+ * buffer (~125 MiB of video) and the app (~60 MiB with a 4K movie open; 192 left only ~15 MiB free on the Chromecast). ART keeps direct buffers on the Java heap: ~200 MiB on a 256 MB heap crashed 4K
+ * movies ~40 s in (OOM, 26 Nov).
+ */
+internal fun readAheadFor(availRam: Long, maxHeap: Long): Long = minOf(availRam / 4, maxHeap - (256L shl 20)).coerceIn(16L shl 20, 256L shl 20)
+
 /** The app's single ExoPlayer. Create and use on the main thread. */
 @OptIn(UnstableApi::class)
 class PlayerManager(private val context: Context) {
@@ -276,11 +283,10 @@ class PlayerManager(private val context: Context) {
     private var sideSubs: List<org.imdtv.iptvtv.data.source.SideSubtitle> = emptyList()
     private var clipMs = 0L
     private var parallel = false
-    /** A quarter of the RAM free now, 32–256 MiB: ~1 min of a 33 Mbit/s 4K file on a 2 GB box (#32). */
     private val readAheadBytes: Long get() {
         val m = android.app.ActivityManager.MemoryInfo()
         (context.getSystemService(Context.ACTIVITY_SERVICE) as android.app.ActivityManager).getMemoryInfo(m)
-        return (m.availMem / 4).coerceIn(32L shl 20, 256L shl 20)
+        return readAheadFor(m.availMem, Runtime.getRuntime().maxMemory())
     }
 
     /** Asked before a provider stream starts (a recording may hold the login's only connection); true = not now. It
@@ -302,7 +308,8 @@ class PlayerManager(private val context: Context) {
         this.login = login
         this.drm = drm
         _formats.value = StreamFormats.UNKNOWN
-        Log.i(TAG, "play ${tail(url)}${if (vod) " (vod)" else ""}${drm?.let { " drm=${it.type}" }.orEmpty()}")
+        Log.i(TAG, "play ${tail(url)}${if (vod) " (vod)" else ""}${drm?.let { " drm=${it.type}" }.orEmpty()}" +
+            if (vod && sideSubs.isNotEmpty()) " + ${sideSubs.size} subtitle files ${sideSubs.joinToString { "${it.language}/${it.mime}" }}" else "")
         start()
         stall.reset()
         handler.removeCallbacks(watchdog)

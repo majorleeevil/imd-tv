@@ -27,7 +27,7 @@ class ParallelDataSource(
     private val upstream: DataSource.Factory,
     private val connections: Int = 4,
     private val chunkBytes: Int = 2 shl 20,
-    /** Read-ahead kept outside the Java heap (direct buffers): Plezy held ~300 MB; the app's heap limit is 256 MB. */
+    /** Read-ahead: direct buffers, which ART still counts against the app's heap (see readAheadFor). */
     private val aheadBytes: Long = 16L shl 20,
     private val log: (String) -> Unit = { android.util.Log.i("IptvPlayer", it) },
 ) : DataSource {
