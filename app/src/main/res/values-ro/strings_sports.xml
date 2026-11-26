@@ -13,7 +13,7 @@
     <string name="sports_no_favourites">Niciun meci al echipelor sau competițiilor tale în această zi. Alege-le în Echipe favorite și Competiții favorite.</string>
     <string name="sports_no_games">Niciun meci în această zi.</string>
     <string name="sports_no_other_games">Niciun alt meci în această zi.</string>
-    <string name="sports_stats">Statistici</string>
+    <string name="sports_stats">Statistici / Toate transmisiile</string>
     <string name="sports_preview">Previzualizare</string>
     <string name="sports_updated">Actualizat %1$s</string>
     <string name="sports_unavailable">Scorurile nu sunt disponibile acum</string>

@@ -179,6 +179,9 @@ internal fun status(g: Game, day: java.time.LocalDate? = null): String {
     return if (day != null && local != day) dayDate(g.start).substringBefore(' ') + " " + clockTime(g.start) else clockTime(g.start)
 }
 
+/** A league's row: live games first, then those still to kick off (soonest first), full time last (user, 26 Nov). */
+internal fun liveFirst(games: List<Game>) = games.sortedWith(compareBy({ when (it.state) { GameState.IN -> 0; GameState.PRE -> 1; GameState.POST -> 2 } }, { it.start }))
+
 @Composable
 internal fun GameCard(g: Game, favTeams: Set<String>, modifier: Modifier = Modifier, day: java.time.LocalDate? = null, width: androidx.compose.ui.unit.Dp = 206.dp, onFocused: () -> Unit = {}, onClick: () -> Unit) =
     FocusBox(onClick, modifier, onFocused) { f ->
@@ -409,7 +412,7 @@ private fun androidx.compose.foundation.layout.BoxScope.GamesPage(vm: SportsView
     Box(Modifier.padding(start = 24.dp, top = 356.dp, end = 24.dp, bottom = 12.dp).fillMaxSize().panel().padding(horizontal = 12.dp, vertical = 6.dp)) {
         if (fetched != null && rest.isEmpty()) Text(stringResource(if (all.isEmpty()) R.string.sports_no_games else R.string.sports_no_other_games), fontSize = 12.sp,
             color = colors.muted, modifier = Modifier.align(Alignment.Center))
-        val sections = remember(rest) { rest.groupBy { it.leagueName }.toList() }
+        val sections = remember(rest) { rest.groupBy { it.leagueName }.toList().map { (name, games) -> name to liveFirst(games) } }
         // Each league is exactly 76 dp (16 heading + 4 + 56 cards) and two plus their gap fill the panel, so no row is cut off at the bottom.
         // Exactly four cards across: with scroll-only-if-needed, moving along shifts by whole cards, none half off the edge.
         androidx.compose.foundation.layout.BoxWithConstraints {

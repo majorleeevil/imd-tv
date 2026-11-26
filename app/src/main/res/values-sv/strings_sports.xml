@@ -13,7 +13,7 @@
     <string name="sports_no_favourites">Inga matcher för dina lag eller tävlingar den här dagen. Välj dem under Favoritlag och Favorittävlingar.</string>
     <string name="sports_no_games">Inga matcher den här dagen.</string>
     <string name="sports_no_other_games">Inga andra matcher den här dagen.</string>
-    <string name="sports_stats">Statistik</string>
+    <string name="sports_stats">Statistik / Alla strömmar</string>
     <string name="sports_preview">Förhandstitt</string>
     <string name="sports_updated">Uppdaterad %1$s</string>
     <string name="sports_unavailable">Resultat är inte tillgängliga just nu</string>

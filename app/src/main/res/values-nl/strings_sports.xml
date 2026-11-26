@@ -13,7 +13,7 @@
     <string name="sports_no_favourites">Geen wedstrijden van jouw teams of competities op deze dag. Kies ze bij Favoriete teams en Favoriete competities.</string>
     <string name="sports_no_games">Geen wedstrijden op deze dag.</string>
     <string name="sports_no_other_games">Geen andere wedstrijden op deze dag.</string>
-    <string name="sports_stats">Statistieken</string>
+    <string name="sports_stats">Statistieken / Alle streams</string>
     <string name="sports_preview">Voorbeschouwing</string>
     <string name="sports_updated">Bijgewerkt %1$s</string>
     <string name="sports_unavailable">Uitslagen nu niet beschikbaar</string>

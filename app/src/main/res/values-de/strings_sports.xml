@@ -13,7 +13,7 @@
     <string name="sports_no_favourites">Keine Spiele deiner Teams oder Wettbewerbe an diesem Tag. Wähle sie unter Lieblingsteams und Lieblingswettbewerbe.</string>
     <string name="sports_no_games">Keine Spiele an diesem Tag.</string>
     <string name="sports_no_other_games">Keine weiteren Spiele an diesem Tag.</string>
-    <string name="sports_stats">Statistik</string>
+    <string name="sports_stats">Statistik / Alle Streams</string>
     <string name="sports_preview">Vorschau</string>
     <string name="sports_updated">Aktualisiert %1$s</string>
     <string name="sports_unavailable">Ergebnisse derzeit nicht verfügbar</string>

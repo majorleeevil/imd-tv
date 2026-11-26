@@ -13,7 +13,7 @@
     <string name="sports_no_favourites">Bu gün takımlarının veya yarışmalarının maçı yok. Bunları Favori takımlar ve Favori yarışmalar bölümünden seç.</string>
     <string name="sports_no_games">Bu gün maç yok.</string>
     <string name="sports_no_other_games">Bu gün başka maç yok.</string>
-    <string name="sports_stats">İstatistikler</string>
+    <string name="sports_stats">İstatistikler / Tüm Yayınlar</string>
     <string name="sports_preview">Ön izleme</string>
     <string name="sports_updated">Güncellendi %1$s</string>
     <string name="sports_unavailable">Skorlar şu an kullanılamıyor</string>

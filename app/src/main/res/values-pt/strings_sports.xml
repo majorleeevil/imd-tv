@@ -13,7 +13,7 @@
     <string name="sports_no_favourites">Sem jogos das suas equipas ou competições neste dia. Escolha-as em Equipas favoritas e Competições favoritas.</string>
     <string name="sports_no_games">Sem jogos neste dia.</string>
     <string name="sports_no_other_games">Sem outros jogos neste dia.</string>
-    <string name="sports_stats">Estatísticas</string>
+    <string name="sports_stats">Estatísticas / Todas as transmissões</string>
     <string name="sports_preview">Antevisão</string>
     <string name="sports_updated">Atualizado %1$s</string>
     <string name="sports_unavailable">Resultados indisponíveis de momento</string>
