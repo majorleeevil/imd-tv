@@ -90,9 +90,10 @@ class LogoRepository(
     /** Up to 8 tv-logos URLs for "Change logo…"; empty when the list isn't available. */
     suspend fun candidatesFor(ch: ChannelEntity): List<String> {
         val index = index() ?: return emptyList()
-        val key = logoKey(ch.name) ?: return emptyList()
-        val country = ch.categoryId?.let { db.categoryDao().get(it)?.country }
-        return index.candidates(key, countryFolders(country, index)).map { TV_LOGOS_RAW + it }
+        // The user's rename first ("True Crime" for CBS Reality, #43), then the playlist's name.
+        val keys = listOfNotNull(ch.customName, ch.name).mapNotNull { logoKey(it) }.distinct().ifEmpty { return emptyList() }
+        val folders = countryFolders(ch.categoryId?.let { db.categoryDao().get(it)?.country }, index)
+        return keys.flatMap { index.candidates(it, folders) }.distinct().map { TV_LOGOS_RAW + it }
     }
 
     /** Matches every channel of the provider; returns how many have a tv-logos file. No list → nothing changes. */
