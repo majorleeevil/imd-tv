@@ -129,6 +129,7 @@ class PlexSourceTest {
         val subs = source().subtitles("m7")
         assertEquals(2, subs.size) // embedded (no key) and pgs left out
         assertEquals("/library/streams/7", subs[0].url.toHttpUrl().encodedPath); assertEquals("~iptvp~", subs[0].url.toHttpUrl().queryParameter("X-Plex-Token"))
+        assertEquals("utf-8", subs[0].url.toHttpUrl().queryParameter("encoding"))
         assertEquals("application/x-subrip", subs[0].mime); assertEquals("eng", subs[0].language); assertEquals("English (SRT External)", subs[0].label)
         assertEquals("text/x-ssa", subs[1].mime)
     }

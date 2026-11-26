@@ -216,7 +216,8 @@ class PlexSource(
         ?.streams.orEmpty().mapNotNull { st ->
             val key = st.key?.takeIf { st.streamType == 3 } ?: return@mapNotNull null
             val mime = when (st.codec.lowercase()) { "srt" -> "application/x-subrip"; "ass", "ssa" -> "text/x-ssa"; "vtt", "webvtt" -> "text/vtt"; else -> return@mapNotNull null }
-            SideSubtitle(url(key, "X-Plex-Token" to PASS_TOKEN).toString(), mime, st.languageCode, st.displayTitle)
+            // encoding: Plex re-encodes the file to UTF-8 (the player assumes UTF-8; a cp1255 .srt showed as boxes).
+            SideSubtitle(url(key, "encoding" to "utf-8", "X-Plex-Token" to PASS_TOKEN).toString(), mime, st.languageCode, st.displayTitle)
         }
 
     override suspend fun movieDetail(id: String): MovieDetail {
