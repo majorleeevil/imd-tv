@@ -99,6 +99,7 @@ fun VodHomeScreen(vm: VodViewModel, nav: @Composable () -> Unit, onOpen: (VodIte
     val matches by vm.matches.collectAsState()
     val others by vm.otherPlaylists.collectAsState()
     var railOpen by remember { mutableStateOf(false) }
+    val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
     val firstItem = remember { FocusRequester() }
     val railFocus = remember { FocusRequester() }
     var refocus by remember { mutableStateOf(0) }
@@ -148,7 +149,9 @@ fun VodHomeScreen(vm: VodViewModel, nav: @Composable () -> Unit, onOpen: (VodIte
         LaunchedEffect(kind) { vm.warmSearch(); vm.refreshResume() }
         org.imdtv.iptvtv.ui.search.SearchBar(query, { vm.query.value = it },
             stringResource(R.string.vod_search_in, gridCat?.name ?: stringResource(if (kind == Kind.MOVIE) R.string.vod_all_movies else R.string.vod_all_series)),
-            Modifier.padding(start = 50.dp, top = 62.dp).width(410.dp))
+            Modifier.padding(start = 50.dp, top = 62.dp).width(410.dp),
+            // Right opens the category rail (#44): nothing to the bar's right takes focus, so Right went nowhere.
+            onSide = { if (it > 0) railOpen = true else focusManager.moveFocus(androidx.compose.ui.focus.FocusDirection.Left) })
         focused?.let { Hero(it, details[it.id], Modifier.padding(start = 50.dp, top = 100.dp).width(410.dp), titleLines = 1) }
 
         val openRail = { railOpen = true }
