@@ -291,7 +291,10 @@ class VodViewModel(private val app: Application) : AndroidViewModel(app) {
                 runCatching { (source(p) as? org.imdtv.iptvtv.data.source.StremioSource)?.stream(url) }.getOrNull()
                     ?: return@launch run { android.widget.Toast.makeText(app, R.string.vod_stremio_no_stream, android.widget.Toast.LENGTH_LONG).show() }
             } else url
-            startPlay(p, real, item, episode, startMs)
+            // #47: Plex keeps sidecar subtitles as separate streams; a failed lookup just plays without them.
+            val subs = if (p?.type == org.imdtv.iptvtv.data.db.ProviderType.PLEX && item != null)
+                runCatching { source(p).subtitles(episode.ifEmpty { item.remoteId }) }.getOrDefault(emptyList()) else emptyList()
+            startPlay(p, real, item, episode, startMs, subs)
         }
     }
 
@@ -308,8 +311,9 @@ class VodViewModel(private val app: Application) : AndroidViewModel(app) {
         viewModelScope.launch { if (on || c.parental.askPin()) c.db.categoryDao().setParentalLock(cat.id, on) }
     }
 
-    private fun startPlay(p: ProviderEntity?, url: String, item: VodItem?, episode: String, startMs: Long) {
-        player.play(url, p?.userAgent, p?.login(), vod = true, startMs = startMs,
+    private fun startPlay(p: ProviderEntity?, url: String, item: VodItem?, episode: String, startMs: Long,
+                          subs: List<org.imdtv.iptvtv.data.source.SideSubtitle> = emptyList()) {
+        player.play(url, p?.userAgent, p?.login(), vod = true, startMs = startMs, subtitles = subs,
             parallel = p?.type == org.imdtv.iptvtv.data.db.ProviderType.PLEX || p?.type == org.imdtv.iptvtv.data.db.ProviderType.JELLYFIN || p?.type == org.imdtv.iptvtv.data.db.ProviderType.EMBY)
         learn?.cancel()
         if (item == null) return

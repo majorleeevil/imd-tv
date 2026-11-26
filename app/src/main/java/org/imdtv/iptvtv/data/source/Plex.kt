@@ -47,7 +47,8 @@ import java.util.concurrent.TimeUnit
 )
 @Serializable data class PlexDir(val key: String, val type: String = "", val title: String = "")
 @Serializable data class PlexTag(val tag: String = "")
-@Serializable data class PlexPart(val key: String)
+@Serializable data class PlexStream(val streamType: Int = 0, val key: String? = null, val codec: String = "", val languageCode: String? = null, val displayTitle: String? = null)
+@Serializable data class PlexPart(val key: String, @SerialName("Stream") val streams: List<PlexStream> = emptyList())
 @Serializable data class PlexMedia(val height: Int? = null, @SerialName("Part") val parts: List<PlexPart> = emptyList())
 @Serializable data class PlexItem(
     val ratingKey: String, val title: String = "", val year: Int? = null, val rating: Double? = null, val audienceRating: Double? = null,
@@ -209,6 +210,14 @@ class PlexSource(
                 .use { if (!it.isSuccessful) throw PlexException(it.code, u.encodedPath) }
         }
     }
+
+    /** #47: Plex lists a sidecar .srt/.ass/.vtt as a subtitle stream (type 3) with its own key; embedded ones have none. */
+    override suspend fun subtitles(id: String) = get(url("/library/metadata/$id")).items.firstOrNull()?.media?.firstOrNull()?.parts?.firstOrNull()
+        ?.streams.orEmpty().mapNotNull { st ->
+            val key = st.key?.takeIf { st.streamType == 3 } ?: return@mapNotNull null
+            val mime = when (st.codec.lowercase()) { "srt" -> "application/x-subrip"; "ass", "ssa" -> "text/x-ssa"; "vtt", "webvtt" -> "text/vtt"; else -> return@mapNotNull null }
+            SideSubtitle(url(key, "X-Plex-Token" to PASS_TOKEN).toString(), mime, st.languageCode, st.displayTitle)
+        }
 
     override suspend fun movieDetail(id: String): MovieDetail {
         val m = get(url("/library/metadata/$id")).items.first()

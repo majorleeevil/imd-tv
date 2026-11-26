@@ -1,6 +1,7 @@
 package org.imdtv.iptvtv.data.source
 
 import kotlinx.coroutines.test.runTest
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
@@ -51,6 +52,10 @@ class PlexSourceTest {
                     "/library/sections/1/all" -> { pages += u.queryParameter("X-Plex-Container-Start")!!; moviePage(pages.last().toInt()) }
                     "/library/sections/3/all" -> { showPageSize = u.queryParameter("X-Plex-Container-Size"); shows }
                     "/library/metadata/s1" -> show
+                    "/library/metadata/m7" -> """{"MediaContainer":{"Metadata":[{"ratingKey":"m7","Media":[{"Part":[{"key":"/library/parts/7/f.mp4","Stream":[
+                        {"streamType":1,"codec":"h264"},{"streamType":3,"codec":"srt","languageCode":"fre"},
+                        {"streamType":3,"key":"/library/streams/7","codec":"srt","languageCode":"eng","displayTitle":"English (SRT External)"},
+                        {"streamType":3,"key":"/library/streams/8","codec":"ass"},{"streamType":3,"key":"/library/streams/9","codec":"pgs"}]}]}]}]}}"""
                     "/library/metadata/s1/allLeaves" -> leaves
                     "/library/onDeck" -> """{"MediaContainer":{"Metadata":[
                         {"type":"episode","ratingKey":"e2","grandparentRatingKey":"s1","viewOffset":456539,"duration":3114195,"lastViewedAt":1795383579},
@@ -118,5 +123,13 @@ class PlexSourceTest {
 
     @Test fun adultLibrariesStartUnticked() {
         assertTrue(plexSkipByDefault("Adult")); assertTrue(plexSkipByDefault("XXX movies")); assertFalse(plexSkipByDefault("Movies - 4K"))
+    }
+
+    @Test fun externalSubtitlesOnly() = runTest {
+        val subs = source().subtitles("m7")
+        assertEquals(2, subs.size) // embedded (no key) and pgs left out
+        assertEquals("/library/streams/7", subs[0].url.toHttpUrl().encodedPath); assertEquals("~iptvp~", subs[0].url.toHttpUrl().queryParameter("X-Plex-Token"))
+        assertEquals("application/x-subrip", subs[0].mime); assertEquals("eng", subs[0].language); assertEquals("English (SRT External)", subs[0].label)
+        assertEquals("text/x-ssa", subs[1].mime)
     }
 }

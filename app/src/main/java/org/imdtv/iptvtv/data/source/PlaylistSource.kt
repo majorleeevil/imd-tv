@@ -33,7 +33,13 @@ interface PlaylistSource {
 
     /** Media servers: tell the server where this title was left (Continue watching both ways). Others: nothing. */
     suspend fun reportProgress(p: ProgressReport) {}
+
+    /** Media servers: subtitle files kept beside movie/episode [id] (not inside the video), for the player to side-load. */
+    suspend fun subtitles(id: String): List<SideSubtitle> = emptyList()
 }
+
+/** An external subtitle file: [url] may hold PASS_TOKEN (the player puts the login back); [language] ISO code or null. */
+data class SideSubtitle(val url: String, val mime: String, val language: String?, val label: String?)
 
 /** Where a movie ([episode] "") or episode of series [remoteId] was left: [watched], or [positionMs] (0 and not watched = forget it). */
 data class ProgressReport(val kind: org.imdtv.iptvtv.data.model.Kind, val remoteId: String, val episode: String, val positionMs: Long, val durationMs: Long,

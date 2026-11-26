@@ -253,13 +253,17 @@ class PlayerManager(private val context: Context) {
     /** [parallel]: a Plex/Jellyfin/Emby file, fetched over several connections (ParallelDataSource); never an IPTV provider. */
     /** [lengthMs]: catch-up's programme length; the item is cut there (a server's .ts can claim ~25 h, and the bar showed it). */
     fun play(url: String, userAgent: String?, login: Login? = null, vod: Boolean = false, drm: Drm? = null, startMs: Long = 0,
-             fallbackUrl: String? = null, parallel: Boolean = false, lengthMs: Long = 0) {
+             fallbackUrl: String? = null, parallel: Boolean = false, lengthMs: Long = 0,
+             subtitles: List<org.imdtv.iptvtv.data.source.SideSubtitle> = emptyList()) {
+        sideSubs = subtitles
         fallback = fallbackUrl
         clipMs = lengthMs
         this.parallel = parallel
         play(url, userAgent, login, vod, drm, guarded = true, startMs)
     }
     private var fallback: String? = null
+    /** #47: a media server's external subtitle files for the title passed to [play]. */
+    private var sideSubs: List<org.imdtv.iptvtv.data.source.SideSubtitle> = emptyList()
     private var clipMs = 0L
     private var parallel = false
     /** A quarter of the RAM free now, 32–256 MiB: ~1 min of a 33 Mbit/s 4K file on a 2 GB box (#32). */
@@ -374,6 +378,10 @@ class PlayerManager(private val context: Context) {
     }
 
     private fun mediaItem(uri: String, spec: DrmSpec?): MediaItem = MediaItem.Builder().setUri(uri).apply {
+        if (vod && sideSubs.isNotEmpty()) setSubtitleConfigurations(sideSubs.map {
+            MediaItem.SubtitleConfiguration.Builder(android.net.Uri.parse(withLogin(it.url, login))).setMimeType(it.mime)
+                .setLanguage(it.language).setLabel(it.label).build()
+        })
         if (clipMs > 0) setClippingConfiguration(MediaItem.ClippingConfiguration.Builder().setEndPositionMs(clipMs).build())
         spec ?: return@apply
         setDrmConfiguration(MediaItem.DrmConfiguration.Builder(if (spec.scheme == DrmScheme.WIDEVINE) C.WIDEVINE_UUID else C.CLEARKEY_UUID).apply {
