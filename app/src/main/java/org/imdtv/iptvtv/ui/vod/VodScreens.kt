@@ -107,8 +107,9 @@ fun VodHomeScreen(vm: VodViewModel, nav: @Composable () -> Unit, onOpen: (VodIte
     val wantFirst = remember(kind, gridCat?.id) { mutableStateOf(true) }
     // Back from a title: its row/grid scrolled back and the title focused, not the first poster (#55).
     var back by remember(kind, gridCat?.id) { mutableStateOf(vm.reopen?.takeIf { it.kind == kind && it.gridId == gridCat?.id }) }
-    val rowsState = androidx.compose.foundation.lazy.rememberLazyListState(back?.listIndex ?: 0, back?.listOffset ?: 0)
-    val gridState = androidx.compose.foundation.lazy.grid.rememberLazyGridState(back?.listIndex ?: 0, back?.listOffset ?: 0)
+    // Fresh per tab / category (grid ↔ rows starts at the top, as before); only Back from a title restores a position.
+    val rowsState = remember(kind, gridCat?.id) { androidx.compose.foundation.lazy.LazyListState(back?.listIndex ?: 0, back?.listOffset ?: 0) }
+    val gridState = remember(kind, gridCat?.id) { androidx.compose.foundation.lazy.grid.LazyGridState(back?.listIndex ?: 0, back?.listOffset ?: 0) }
     fun opened(row: Any?, index: Int, rows: Boolean) {
         vm.reopen = if (rows) VodViewModel.Reopen(kind, null, row, index, rowsState.firstVisibleItemIndex, rowsState.firstVisibleItemScrollOffset)
             else VodViewModel.Reopen(kind, gridCat?.id, null, index, gridState.firstVisibleItemIndex, gridState.firstVisibleItemScrollOffset)
