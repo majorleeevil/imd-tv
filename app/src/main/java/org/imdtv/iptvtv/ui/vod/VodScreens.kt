@@ -1,5 +1,6 @@
 package org.imdtv.iptvtv.ui.vod
 
+import org.imdtv.iptvtv.ui.live.railFocusTrap
 import org.imdtv.iptvtv.ui.theme.LocalTheme
 import org.imdtv.iptvtv.R
 import androidx.compose.ui.res.stringResource
@@ -362,7 +363,7 @@ private fun VodRail(cats: List<RailCategory>, selectedId: Long?, focus: FocusReq
     val state = rememberLazyListState(keys.indexOf(selectedKey).coerceAtLeast(0))
     val railKeys = org.imdtv.iptvtv.ui.live.rememberRailKeys(state, keys, starts)
     Column(
-        Modifier.fillMaxHeight().width(260.dp).shadow(30.dp).background(Color(0xF515171D)).padding(horizontal = 20.dp, vertical = 35.dp)
+        Modifier.fillMaxHeight().width(260.dp).railFocusTrap().shadow(30.dp).background(Color(0xF515171D)).padding(horizontal = 20.dp, vertical = 35.dp)
             .onPreviewKeyEvent { e -> if (railKeys.onKey(e)) true else if (e.type == KeyEventType.KeyDown && (e.key == Key.Back || e.key == Key.DirectionLeft && e.nativeKeyEvent.repeatCount == 0)) { onClose(); true } else false },
     ) {
         Text(stringResource(R.string.vod_categories_header), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = LocalTheme.current.colors.muted, letterSpacing = 2.sp, modifier = Modifier.padding(bottom = 12.dp))

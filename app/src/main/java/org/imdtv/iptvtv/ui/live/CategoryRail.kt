@@ -34,6 +34,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.foundation.focusGroup
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
@@ -91,7 +93,7 @@ internal fun Rail(
         }
     }
     Column(
-        Modifier.fillMaxHeight().width(260.dp)
+        Modifier.fillMaxHeight().width(260.dp).railFocusTrap()
             .then(if (LocalGlassBackdrop.current != null) Modifier.glass(RoundedCornerShape(topEnd = 16.dp, bottomEnd = 16.dp))
                 else Modifier.shadow(30.dp).background(LocalTheme.current.colors.panel))
             .padding(horizontal = 20.dp, vertical = 35.dp)
@@ -155,6 +157,12 @@ internal fun Rail(
         }
     }
 }
+
+/** Up/Down past the rail's ends stay in it: Up from the top row went to the nav bar and left the rail open (26 Nov). */
+@OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
+internal fun Modifier.railFocusTrap() = focusProperties {
+    exit = { if (it == androidx.compose.ui.focus.FocusDirection.Up || it == androidx.compose.ui.focus.FocusDirection.Down) FocusRequester.Cancel else FocusRequester.Default }
+}.focusGroup()
 
 /** Ends move mode; Back (cancel) puts the category back where it started. */
 internal fun endRailMove(vm: LiveViewModel, state: GuideState, rail: List<RailItem>, cancel: Boolean) {
