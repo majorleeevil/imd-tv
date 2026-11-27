@@ -252,10 +252,10 @@ class MainActivity : ComponentActivity() {
                         live.watched(ch)
                         app.playFullScreen(ch.displayName(live.strip.value), live = true)
                     }
-                    // #65: a tile's channel full screen, as from the guide; the stream Multi-Watch paused isn't played again.
+                    // #65: a tile's channel full screen, as from search: Back lands on it in its own category. The paused stream isn't played again.
                     val MultiWatchHost = @androidx.compose.runtime.Composable {
                         val multi by app.multi.collectAsState()
-                        org.imdtv.iptvtv.ui.MultiWatchScreen(multi, live, onFull = { ch -> app.leaveMulti(); full(ch) }, onRemove = app::removeFromMulti)
+                        org.imdtv.iptvtv.ui.MultiWatchScreen(multi, live, onFull = { ch -> app.leaveMulti(); searchChannel(ch) }, onRemove = app::removeFromMulti)
                     }
                     val screens = @androidx.compose.runtime.Composable { card: XcubeCard? ->
                     when (top) {
