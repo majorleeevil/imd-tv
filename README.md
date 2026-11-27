@@ -34,12 +34,12 @@ any box. Every screen is designed for the remote first, and it's tested on budge
 boxes. Your logins stay encrypted on your box, and nothing about what you watch leaves it.
 
 > [!IMPORTANT]
-> **New in 0.7.1:** bug fixes. Plex no longer takes over Live TV, 4K movies from Plex and Jellyfin stop buffering, the
-> TV guide and logos find more channels, follower sync carries hidden and renamed channels, and it installs on older Fire
-> TV Sticks. [All the changes](https://github.com/majorleeevil/imd-tv/releases/tag/v0.7.1).
+> **New in 0.9.1:** A major update bringing Multi-Watch, letting you watch up to four live channels simultaneously, alongside a much expanded SportsHub with golf,
+> UFC, US college sports and more football competitions. Also includes fixes for startup crashes on certain Android devices, TV guide refresh issues, playback
+> navigation and improvements to device sync and backups [All the changes](https://github.com/majorleeevil/imd-tv/releases/tag/v0.9.1).
 >
-> **0.7.0** brought Plex, Jellyfin and Stremio next to your playlist, TV guide search, parental controls and more.
-> [0.7.0 changes](https://github.com/majorleeevil/imd-tv/releases/tag/v0.7.0).
+> **0.8.0** brought a SportsHub, SMB / NAS as Media Servers, Ability to add playlists and EPG sources from your phone, Stremio sources, Audio Sync, Wider Channel Names and more features & fixes.
+> [0.8.2 changes](https://github.com/majorleeevil/imd-tv/releases/tag/v0.8.2).
 
 > [!NOTE]
 > IMD TV is a media player. It does not provide, sell or link to any channels or content. Use the playlist you
