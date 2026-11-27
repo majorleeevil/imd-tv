@@ -137,4 +137,12 @@
     <string name="live_parental_locked_ok">Tryck på OK för att ange PIN-koden.</string>
     <string name="live_menu_audio_sync">Ljudsynk: %1$s</string>
     <string name="live_menu_audio_sync_settings">Som i Inställningar (%1$s)</string>
+    <!-- #65 Multi-Watch, #69 startup crash -->
+    <string name="multi_add">Lägg till i Multi-Watch</string>
+    <string name="multi_remove">Ta bort från Multi-Watch</string>
+    <string name="multi_hint">Lägg till fler kanaler från spelarens Inställningar-meny eller SportsHub · Tillbaka för att lämna</string>
+    <string name="multi_locked">Låst</string>
+    <string name="crash_title">IMD TV stoppades vid start. Kopiera uppgifterna nedan till ett GitHub-ärende.</string>
+    <string name="crash_copy">Kopiera</string>
+    <string name="crash_open_anyway">Öppna ändå</string>
 </resources>

@@ -324,6 +324,8 @@ private fun androidx.compose.foundation.layout.BoxScope.GamesPage(vm: SportsView
         org.imdtv.iptvtv.ui.ContextMenu(if (g.race != null) raceTitle(g) else "${g.home.short} v ${g.away.short}", buildList {
             add(stringResource(R.string.sports_preview) to { close(); vm.preview(g, strip) })
             add(stringResource(R.string.sports_stats) to { close(); onMatch(g) })
+            // #65: the channel showing it now joins Multi-Watch (not on now: says so in the preview).
+            add(stringResource(R.string.multi_add) to { close(); scope.launch { vm.onTv(g, strip)?.takeIf { it.liveAt(System.currentTimeMillis()) }?.let { live.multiWatch.tryEmit(it.ch) } ?: vm.preview(g, strip) } })
             // F1: both "sides" are the Grand Prix; teams are followed on Favourite teams.
             if (g.race == null) for (side in listOf(g.home, g.away)) {
                 val key = teamKey(sport, side.id)
@@ -379,10 +381,11 @@ private fun androidx.compose.foundation.layout.BoxScope.GamesPage(vm: SportsView
         val tv = pane?.tv?.takeIf { it.liveAt(System.currentTimeMillis()) }
         LaunchedEffect(tv?.ch?.id) { if (tv != null) live.preview(tv.ch, ask = false) else live.player.stop() }
         val fade = s.sportsPreviewFade && LocalGlassBackdrop.current == null // Liquid: framed, like its guide
+        val multiFocus = remember { FocusRequester() }
         LaunchedEffect(toPane, pane?.game?.id) { if (toPane != null && pane?.game?.id == toPane) { toPane = null; runCatching { paneFocus.requestFocus() } } }
         FocusBox(onClick = { tv?.let { onFull(it.ch) } ?: pane?.game?.let(onMatch) },
             modifier = Modifier.align(Alignment.CenterEnd).padding(end = 10.dp).size(previewW, previewH).focusRequester(paneFocus)
-                .focusProperties { canFocus = pane != null }
+                .focusProperties { canFocus = pane != null; if (tv != null) right = multiFocus }
                 // Unhandled (card scrolled away): the usual Down.
                 .onPreviewKeyEvent { e -> e.type == KeyEventType.KeyDown && e.key == Key.DirectionDown && cameFrom != null && runCatching { fromCard.requestFocus() }.isSuccess }) { f ->
             Box(Modifier.fillMaxSize()) {
@@ -402,6 +405,12 @@ private fun androidx.compose.foundation.layout.BoxScope.GamesPage(vm: SportsView
                         .padding(horizontal = 10.dp, vertical = 5.dp))
                 else if (f) Box(Modifier.fillMaxSize().border(2.dp, Color.White, RoundedCornerShape(16.dp)))
             }
+        }
+        // #65: beside Watch full screen (Right from the preview): the channel joins Multi-Watch.
+        if (tv != null) FocusBox({ live.multiWatch.tryEmit(tv.ch) }, Modifier.align(Alignment.BottomEnd).padding(end = 18.dp, bottom = 18.dp)
+            .focusRequester(multiFocus).focusProperties { left = paneFocus }) { f ->
+            Text(stringResource(R.string.multi_add), fontSize = 11.sp, maxLines = 1, color = if (f) Color.Black else Color.White,
+                modifier = Modifier.clip(RoundedCornerShape(10.dp)).background(if (f) Color.White else Color(0x59000000)).padding(horizontal = 10.dp, vertical = 5.dp))
         }
     }
 

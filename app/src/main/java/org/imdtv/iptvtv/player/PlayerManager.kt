@@ -20,6 +20,7 @@ import org.imdtv.iptvtv.data.source.DrmSpec
 import org.imdtv.iptvtv.data.source.drmSpec
 import org.imdtv.iptvtv.data.source.isStalkerLink
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.cancel
 import androidx.media3.exoplayer.drm.DefaultDrmSessionManager
 import androidx.media3.exoplayer.drm.DefaultDrmSessionManagerProvider
 import androidx.media3.exoplayer.drm.DrmSessionManagerProvider
@@ -509,6 +510,12 @@ class PlayerManager(private val context: Context) {
 
     /** Called before every stop (Back, the app leaving the screen, a tab change) while the stream is still loaded. */
     var beforeStop: () -> Unit = {}
+
+    /** #65: a Multi-Watch tile's player goes with its tile. */
+    fun release() { stop(); scope.cancel(); player.release() }
+
+    /** #65: the stream [toBackground] saved isn't wanted back (Multi-Watch closed by picking another channel). */
+    fun forgetResume() { resume = null }
 
     fun stop() {
         fallback = null; clipMs = 0

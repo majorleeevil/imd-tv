@@ -137,4 +137,12 @@
     <string name="live_parental_locked_ok">Shtypni OK për të shkruar PIN-in.</string>
     <string name="live_menu_audio_sync">Sinkronizimi i audios: %1$s</string>
     <string name="live_menu_audio_sync_settings">Si në Cilësime (%1$s)</string>
+    <!-- #65 Multi-Watch, #69 startup crash -->
+    <string name="multi_add">Shto te Multi-Watch</string>
+    <string name="multi_remove">Hiq nga Multi-Watch</string>
+    <string name="multi_hint">Shto më shumë kanale nga menyja Cilësimet e luajtësit ose SportsHub · Prapa për të dalë</string>
+    <string name="multi_locked">I kyçur</string>
+    <string name="crash_title">IMD TV ndaloi gjatë nisjes. Kopjo detajet më poshtë në një issue në GitHub.</string>
+    <string name="crash_copy">Kopjo</string>
+    <string name="crash_open_anyway">Hape gjithsesi</string>
 </resources>

@@ -137,4 +137,12 @@
     <string name="live_parental_locked_ok">Appuyez sur OK pour saisir le code PIN.</string>
     <string name="live_menu_audio_sync">Synchro audio : %1$s</string>
     <string name="live_menu_audio_sync_settings">Comme dans les réglages (%1$s)</string>
+    <!-- #65 Multi-Watch, #69 startup crash -->
+    <string name="multi_add">Ajouter au Multi-Watch</string>
+    <string name="multi_remove">Retirer du Multi-Watch</string>
+    <string name="multi_hint">Ajoutez d\'autres chaînes depuis le menu Paramètres du lecteur ou SportsHub · Retour pour quitter</string>
+    <string name="multi_locked">Verrouillée</string>
+    <string name="crash_title">IMD TV s\'est arrêtée au démarrage. Copiez les détails ci-dessous dans un ticket GitHub.</string>
+    <string name="crash_copy">Copier</string>
+    <string name="crash_open_anyway">Ouvrir quand même</string>
 </resources>

@@ -137,4 +137,12 @@
     <string name="live_parental_locked_ok">Apasă OK pentru a introduce PIN-ul.</string>
     <string name="live_menu_audio_sync">Sincronizare audio: %1$s</string>
     <string name="live_menu_audio_sync_settings">Ca în Setări (%1$s)</string>
+    <!-- #65 Multi-Watch, #69 startup crash -->
+    <string name="multi_add">Adaugă la Multi-Watch</string>
+    <string name="multi_remove">Elimină din Multi-Watch</string>
+    <string name="multi_hint">Adaugă mai multe canale din meniul Setări al playerului sau din SportsHub · Înapoi pentru a ieși</string>
+    <string name="multi_locked">Blocat</string>
+    <string name="crash_title">IMD TV s-a oprit la pornire. Copiază detaliile de mai jos într-un issue pe GitHub.</string>
+    <string name="crash_copy">Copiază</string>
+    <string name="crash_open_anyway">Deschide oricum</string>
 </resources>

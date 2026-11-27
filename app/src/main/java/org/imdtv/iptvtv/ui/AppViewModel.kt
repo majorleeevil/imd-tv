@@ -40,6 +40,8 @@ sealed interface Screen {
     data object Recordings : Screen
     data object Sports : Screen
     data class SportsMatch(val game: org.imdtv.iptvtv.data.sports.Game) : Screen
+    /** #65: up to four live channels at once (AppViewModel.multi). */
+    data object MultiWatch : Screen
 }
 
 enum class RootBack { FOCUS_MENU, SHOW_HINT, EXIT }
@@ -139,6 +141,27 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         push(Screen.Player(r.title, live = false, recordingId = r.id))
     }
 
+    /** #65 Multi-Watch's channels, kept until the app closes so more can be added from the player menu or SportsHub. */
+    val multi = MutableStateFlow<List<org.imdtv.iptvtv.data.db.ChannelEntity>>(emptyList())
+
+    /** Adds [ch] (a fifth replaces the last) and opens Multi-Watch; the main player lets go of its stream until it closes. */
+    fun addToMulti(ch: org.imdtv.iptvtv.data.db.ChannelEntity) {
+        multi.value = withMulti(multi.value, ch)
+        if (stack.value.last() != Screen.MultiWatch) { player.toBackground(); push(Screen.MultiWatch) }
+    }
+
+    fun removeFromMulti(ch: org.imdtv.iptvtv.data.db.ChannelEntity) {
+        multi.value = multi.value.filter { it.id != ch.id }
+        if (multi.value.isEmpty() && stack.value.last() == Screen.MultiWatch) back()
+    }
+
+    /** Leaves Multi-Watch without playing the stream it paused (a tile's channel goes full screen next). */
+    fun leaveMulti() {
+        if (stack.value.last() != Screen.MultiWatch) return
+        player.forgetResume()
+        stack.value = leftMulti(stack.value)
+    }
+
     /** Returns false at a root screen, so the activity can finish. */
     fun back(): Boolean {
         val top = stack.value.last()
@@ -151,6 +174,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         }
         if (top is Screen.Player && !top.live) player.stop()
         stack.value = stack.value.dropLast(1)
+        if (top == Screen.MultiWatch) player.toForeground() // the stream it paused
         // A channel played from search: there is no preview to return to.
         if (top is Screen.Player && stack.value.last() == Screen.Search) player.stop()
         // Catch-up opened from live full screen: back to the live stream.
@@ -256,3 +280,13 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     fun done() { form.value = FormState(); tab.value = Tab.LIVE; stack.value = listOf(Screen.Live) }
 
 }
+
+/** Four tiles: more is beyond most TV boxes' video decoders. */
+const val MULTI_MAX = 4
+
+/** [ch] added to Multi-Watch's [list] once; a fifth replaces the last. */
+internal fun withMulti(list: List<org.imdtv.iptvtv.data.db.ChannelEntity>, ch: org.imdtv.iptvtv.data.db.ChannelEntity) =
+    if (list.any { it.id == ch.id }) list else (if (list.size >= MULTI_MAX) list.dropLast(1) else list) + ch
+
+/** Multi-Watch closed for a tile's channel full screen: opened from live full screen, that goes too (Back = the guide, not a stale player). */
+internal fun leftMulti(stack: List<Screen>): List<Screen> = stack.dropLast(1).let { s -> if ((s.last() as? Screen.Player)?.live == true && s.size > 1) s.dropLast(1) else s }

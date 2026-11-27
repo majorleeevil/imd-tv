@@ -138,6 +138,7 @@ fun GuideMenus(vm: LiveViewModel, state: GuideState) {
                     else add(stringResource(R.string.live_menu_record_now) to { vm.recordNow(m.ch); state.menu = null })
                 }
                 if (m.ch.hasCatchUp) add(stringResource(R.string.live_menu_catchup) to { state.menu = GuideMenu.CatchUp(m.ch) })
+                add(stringResource(R.string.multi_add) to { vm.multiWatch.tryEmit(m.ch); state.menu = null })
                 add(stringResource(R.string.live_menu_audio_sync, syncLabel(vm.channelAudioDelay(m.ch) ?: vm.settings.collectAsState().value.audioDelayMs)) to { state.menu = GuideMenu.AudioSync(m.ch) })
                 val fav = m.ch.id in favourites
                 add((if (fav) stringResource(R.string.live_menu_fav_remove) else stringResource(R.string.live_menu_fav_add)) to { vm.toggleFavourite(m.ch); state.menu = null })

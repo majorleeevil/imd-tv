@@ -406,6 +406,25 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    /** #65 Multi-Watch: a channel asked for from the player menu; the activity adds it and opens Multi-Watch. */
+    val multiWatch = kotlinx.coroutines.flow.MutableSharedFlow<ChannelEntity>(extraBufferCapacity = 1)
+
+    /** A Multi-Watch tile's own player, released with the tile. */
+    fun tilePlayer(): org.imdtv.iptvtv.player.PlayerManager = org.imdtv.iptvtv.player.PlayerManager(getApplication()).also {
+        it.resolveLink = c.stalkerLinks::resolve
+        it.setAudioDecoder(settings.value.audioDecoder)
+    }
+
+    /** Plays [ch] in a tile as [preview] would (parental PIN, merged channels' best source); false = locked. */
+    suspend fun playInTile(pm: org.imdtv.iptvtv.player.PlayerManager, ch: ChannelEntity): Boolean {
+        val on = if (c.settings.settings.first().parentalOn) onNow(ch) else null
+        if (!c.parental.allow(lockedNow(ch, on), "c${ch.id}", on?.stop ?: (System.currentTimeMillis() + 3_600_000L), ask = true)) return false
+        val p = c.db.providerDao().get(ch.providerId) ?: return false
+        val src = if (ch.mergeHead) org.imdtv.iptvtv.data.repo.ChannelMerge.pick(c.db, c.http, ch, settings.value.mergeBy, p.userAgent, p.login()) else ch
+        pm.play(src.streamUrl, p.userAgent, p.login(), drm = src.drm(), channelAudioDelayMs = channelAudioDelay(ch))
+        return true
+    }
+
     /** The user's own list (a custom category or Favourites) [ch] plays from, so the guide reopens there (#63). */
     private fun ownListKey(ch: ChannelEntity): String? = entry.value
         ?.takeIf { (it is RailEntry.Custom || it == RailEntry.Favourites) && channels.value.any { c -> c.id == ch.id } }?.key

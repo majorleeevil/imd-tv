@@ -245,11 +245,17 @@ class MainActivity : ComponentActivity() {
                 }) {
                     // A catch-up programme picked in a guide menu opens with the movie controls (pause, seek).
                     androidx.compose.runtime.LaunchedEffect(live) { live.openCatchUp.collect { app.playFullScreen(it, live = false) } }
+                    androidx.compose.runtime.LaunchedEffect(live) { live.multiWatch.collect(app::addToMulti) }
                     app.resumeLive = { live.focused.value?.let(live::preview) }
                     val full: (org.imdtv.iptvtv.data.db.ChannelEntity) -> Unit = { ch ->
                         live.preview(ch)
                         live.watched(ch)
                         app.playFullScreen(ch.displayName(live.strip.value), live = true)
+                    }
+                    // #65: a tile's channel full screen, as from the guide; the stream Multi-Watch paused isn't played again.
+                    val MultiWatchHost = @androidx.compose.runtime.Composable {
+                        val multi by app.multi.collectAsState()
+                        org.imdtv.iptvtv.ui.MultiWatchScreen(multi, live, onFull = { ch -> app.leaveMulti(); full(ch) }, onRemove = app::removeFromMulti)
                     }
                     val screens = @androidx.compose.runtime.Composable { card: XcubeCard? ->
                     when (top) {
@@ -288,6 +294,7 @@ class MainActivity : ComponentActivity() {
                             app.playFullScreen(title, live = false)
                         }, onOpen = app::open)
                         // keyed: live → catch-up (Restart) swaps one Player for another here, and PlayerScreen's live-only state calls must not be reused
+                        Screen.MultiWatch -> MultiWatchHost()
                         is Screen.Player -> androidx.compose.runtime.key(top) { PlayerScreen(app.player, top.title, live.takeIf { top.live }, onGuide = { app.back() }, showClock = settings.playerClock == org.imdtv.iptvtv.data.settings.PlayerClock.ALL ||
                             settings.playerClock == org.imdtv.iptvtv.data.settings.PlayerClock.LIVE && top.live, aspect = settings.videoAspect,
                             // Plus, Retro and Gamestation show their categories with the guide already.
@@ -345,7 +352,8 @@ class MainActivity : ComponentActivity() {
     override fun onStart() {
         super.onStart()
         if (crashScreen) return
-        app.player.toForeground()
+        // Multi-Watch's tiles start again by themselves; the main player's stream waits until it closes.
+        if (app.stack.value.last() != Screen.MultiWatch) app.player.toForeground()
         // TV boxes keep the app alive for days: check on every return to it, at most once an hour.
         lifecycleScope.launch { (application as IptvApp).container.updater.check() }
         (application as IptvApp).container.sync.onForeground()

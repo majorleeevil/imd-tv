@@ -137,4 +137,12 @@
     <string name="live_parental_locked_ok">PIN girmek için Tamam\'a basın.</string>
     <string name="live_menu_audio_sync">Ses senkronu: %1$s</string>
     <string name="live_menu_audio_sync_settings">Ayarlar\'daki gibi (%1$s)</string>
+    <!-- #65 Multi-Watch, #69 startup crash -->
+    <string name="multi_add">Multi-Watch\'a ekle</string>
+    <string name="multi_remove">Multi-Watch\'tan kaldır</string>
+    <string name="multi_hint">Oynatıcının Ayarlar menüsünden veya SportsHub\'dan daha fazla kanal ekleyin · Çıkmak için Geri</string>
+    <string name="multi_locked">Kilitli</string>
+    <string name="crash_title">IMD TV başlatılırken durdu. Aşağıdaki ayrıntıları bir GitHub kaydına kopyalayın.</string>
+    <string name="crash_copy">Kopyala</string>
+    <string name="crash_open_anyway">Yine de aç</string>
 </resources>
