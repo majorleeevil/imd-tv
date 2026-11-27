@@ -76,6 +76,7 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
     private val daysToKeep = intPreferencesKey("epg_days_to_keep")
     private val pastDays = intPreferencesKey("epg_past_days")
     private val lastChannel = longPreferencesKey("last_live_channel_id")
+    private val lastEntry = stringPreferencesKey("last_live_entry_key")
     private val matchLanguage = booleanPreferencesKey("match_tv_language")
     private val logoOrder = stringPreferencesKey("logo_order")
     private val guideOrder = stringPreferencesKey("guide_order")
@@ -172,6 +173,7 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
             epgDaysToKeep = this[daysToKeep] ?: d.epgDaysToKeep,
             epgPastDays = this[pastDays] ?: d.epgPastDays,
             lastLiveChannelId = this[lastChannel],
+            lastLiveEntryKey = this[lastEntry],
             matchTvLanguage = this[matchLanguage] ?: d.matchTvLanguage,
             logoOrder = order(this[logoOrder] ?: this[oldLogoSource]?.let(OLD_LOGO::get), LogoKind.entries) ?: d.logoOrder,
             guideOrder = order(this[guideKinds], GuideKind.entries)
@@ -273,6 +275,7 @@ class SettingsRepository(private val prefs: DataStore<Preferences>) {
         s.subtitleLanguage?.let { this[subtitleLanguage] = it } ?: remove(subtitleLanguage)
         s.backupFolder?.let { this[backupFolder] = it } ?: remove(backupFolder)
         s.lastLiveChannelId?.let { this[lastChannel] = it } ?: remove(lastChannel)
+        s.lastLiveEntryKey?.let { this[lastEntry] = it } ?: remove(lastEntry)
         this[recordingOn] = s.recordingOn
         this[recordTo] = s.recordTo.name
         s.recordUsbPath?.let { this[recordUsbPath] = it } ?: remove(recordUsbPath)

@@ -261,6 +261,8 @@ data class AppSettings(
     val channelAudioDelays: String = "",
     /** #53 Buffer before playing, seconds; 0 = default. */
     val bufferSeconds: Int = 0,
+    /** The custom category or Favourites [lastLiveChannelId] was played from (#63); null = its own category. */
+    val lastLiveEntryKey: String? = null,
 ) {
     /** The per-theme appearance: colour, mode, guide rows, header size, preview fade. */
     fun look() = listOf(themeColour.name, themeDark, guideRows, headerSize.name, previewFade).joinToString(";")

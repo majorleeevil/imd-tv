@@ -217,11 +217,13 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
             // A merged source plays through the channel it's merged into, which is the one the guide shows.
             val playing = player.currentUrl?.let { c.db.channelDao().byStreamUrl(p.id, it) }?.let { s -> s.mergedInto?.let { c.db.channelDao().get(it) } ?: s }
             if (playing != null) { focused.value = playing; previewedUrl.value = player.currentUrl; previewed.value = playing }
+            val saved = c.settings.settings.first().let { s -> s.lastLiveEntryKey?.takeIf { s.lastLiveChannelId == playing?.id } }
             // Also moves off an entry that vanished or belongs to a previously active provider.
             rail.filterNotNull().collect { list ->
                 val entries = list.map { it.entry }
                 entry.value = entries.firstOrNull { it.key == pendingEntryKey }?.also { pendingEntryKey = null }
                     ?: entries.firstOrNull { it.key == entry.value?.key }
+                    ?: entries.firstOrNull { it.key == saved }
                     ?: entries.firstOrNull { it is RailEntry.Provider && it.category.id == playing?.categoryId }
                     ?: entries.firstOrNull()
             }
@@ -374,7 +376,7 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
     val lockedChannel = MutableStateFlow<ChannelEntity?>(null)
 
     /** [ask] false (autoplay while scrolling): a locked channel just doesn't play, the PIN is asked only on OK. */
-    fun preview(ch: ChannelEntity, ask: Boolean = true) {
+    fun preview(ch: ChannelEntity, ask: Boolean = true, key: String? = ownListKey(ch)) {
         previewed.value = ch
         previewJob?.cancel() // a latency check for the channel scrolled past stops here
         previewJob = viewModelScope.launch {
@@ -400,9 +402,15 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
             val src = if (ch.mergeHead) org.imdtv.iptvtv.data.repo.ChannelMerge.pick(c.db, c.http, ch,
                 settings.value.mergeBy, p.userAgent, p.login()) else ch
             if (previewed.value?.id == ch.id) { previewedUrl.value = src.streamUrl; player.play(src.streamUrl, p.userAgent, p.login(), drm = src.drm(), channelAudioDelayMs = channelAudioDelay(ch)) }
-            c.settings.update { it.copy(lastLiveChannelId = ch.id) }
+            saveLast(ch, key)
         }
     }
+
+    /** The user's own list (a custom category or Favourites) [ch] plays from, so the guide reopens there (#63). */
+    private fun ownListKey(ch: ChannelEntity): String? = entry.value
+        ?.takeIf { (it is RailEntry.Custom || it == RailEntry.Favourites) && channels.value.any { c -> c.id == ch.id } }?.key
+
+    private suspend fun saveLast(ch: ChannelEntity, key: String?) = c.settings.update { it.copy(lastLiveChannelId = ch.id, lastLiveEntryKey = key) }
 
     init {
         // Parental controls: a rated programme starting on the channel being watched is checked like a new channel.
@@ -422,11 +430,11 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     /** A channel started full screen (or zapped to): Recents and the last channel. Previews only set the last channel. */
-    fun watched(ch: ChannelEntity) {
+    fun watched(ch: ChannelEntity, key: String? = ownListKey(ch)) {
         history.played(ch)
         viewModelScope.launch {
             c.db.recentDao().record(ch.providerId, ch.id, System.currentTimeMillis())
-            c.settings.update { it.copy(lastLiveChannelId = ch.id) }
+            saveLast(ch, key)
         }
     }
 
@@ -521,7 +529,8 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
 
     /** A Recents card: play it and select its category, so Up/Down then zaps there and Back lands on it in the guide. */
     fun switchTo(ch: ChannelEntity) {
-        rail.value?.map { it.entry }?.find { it is RailEntry.Provider && it.category.id == ch.categoryId }?.let { select(it) }
+        // Picked from the custom category or Favourites already open: stay in it (#63).
+        if (ownListKey(ch) == null) rail.value?.map { it.entry }?.find { it is RailEntry.Provider && it.category.id == ch.categoryId }?.let { select(it) }
         focused.value = ch
         preview(ch)
         watched(ch)
@@ -530,11 +539,13 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
     /** Launch on the last channel full screen: select its category and focus it so Back lands on it in the guide. */
     fun startOn(ch: ChannelEntity) {
         focused.value = ch
-        preview(ch)
-        watched(ch)
         viewModelScope.launch {
-            rail.filterNotNull().first { it.isNotEmpty() }.map { it.entry }
-                .find { it is RailEntry.Provider && it.category.id == ch.categoryId }?.let { select(it) }
+            // Read before preview/watched save this channel's list over it.
+            val saved = c.settings.settings.first().let { s -> s.lastLiveEntryKey?.takeIf { s.lastLiveChannelId == ch.id } }
+            preview(ch, key = saved)
+            watched(ch, saved)
+            val entries = rail.filterNotNull().first { it.isNotEmpty() }.map { it.entry }
+            (entries.find { it.key == saved } ?: entries.find { it is RailEntry.Provider && it.category.id == ch.categoryId })?.let { select(it) }
         }
     }
 
