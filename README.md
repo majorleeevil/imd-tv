@@ -76,7 +76,23 @@ Leave full screen and the channel carries on in the guide's **preview** while yo
 
 ### Movies, series and media servers
 
-Posters, seasons and episodes, **resume** where you left off. Your **Plex**, **Jellyfin** and **Stremio** libraries sit alongside, with **Continue watching** that syncs both ways.
+Posters, seasons and episodes, **resume** where you left off. Your **Plex**, **Jellyfin**, **Emby** and **Stremio** libraries and your **SMB / NAS** shares sit alongside, with **Continue watching** that syncs both ways.
+
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+
+### SportsHub
+
+**Live scores**, fixtures, line-ups and tables, and **which of your channels is showing each game**. Football, NFL, NBA, NHL, rugby union, cricket, F1, golf, UFC and US college sports.
+
+</td>
+<td width="50%" valign="top">
+
+### Multi-Watch
+
+Watch up to **four live channels at once**, side by side or in a 2×2 grid. Sound follows the tile you highlight.
 
 </td>
 </tr>
@@ -92,7 +108,7 @@ One search for **channels, films, series and TV guide programmes**. Watch what's
 
 ### Record live TV
 
-Record **now** or **schedule** from the guide, to the box, a **USB drive** or a **network share**. Starts early, ends late, and keeps the box awake.
+Record **now** or **schedule** from the guide, to the box, a **USB drive** or a **network share**. Starts early, ends late, and keeps the box awake. Or set a **reminder** and get a popup two minutes before.
 
 </td>
 </tr>
@@ -137,6 +153,14 @@ A **PIN** and backup word. Lock by **rating**, by **category** or by **channel**
 <td width="50%" align="center"><img src="site/img/movie-detail.webp" alt="Movie details"><br><sub>Movie details</sub></td>
 <td width="50%" align="center"><img src="site/img/settings/phone-form.webp" alt="Add a playlist from your phone"><br><sub>Add a playlist from your phone</sub></td>
 </tr>
+<tr>
+<td width="50%" align="center"><img src="site/img/sportshub-games.webp" alt="SportsHub, Games: a live game at the top, today's games below with favourite leagues starred"><br><sub>SportsHub: your teams at the top, every other game below</sub></td>
+<td width="50%" align="center"><img src="site/img/sportshub-match.webp" alt="SportsHub match page: line-ups, recent form, match events and the channels showing the game"><br><sub>A match page with line-ups and where to watch</sub></td>
+</tr>
+<tr>
+<td width="50%" align="center"><img src="site/img/sportshub-standings.webp" alt="SportsHub, Standings: a league table with each team's last five results"><br><sub>SportsHub standings</sub></td>
+<td width="50%" align="center"><img src="site/img/sportshub-competitions.webp" alt="SportsHub, Favourite competitions: switches for each country's leagues and cups"><br><sub>Follow only the competitions you want</sub></td>
+</tr>
 </table>
 
 Six themes, all with the same fast guide:
@@ -161,14 +185,20 @@ Six themes, all with the same fast guide:
 <details open>
 <summary><b>And all of this, free</b></summary>
 
-- Your Plex and Jellyfin libraries, and the movie and series catalogs of your Stremio add-ons, next to your playlist's. Sign in with a code, pick the libraries, and later updates fetch only what changed
-- Continue watching that works both ways with Plex, Jellyfin and Stremio: start a film here and finish it in the app on your phone
+- SportsHub: live scores, fixtures, line-ups and tables, with the channels in your playlist that are showing each game. Pick your sports, favourite teams and competitions, or hide the tab if you don't follow sport
+- Multi-Watch: up to four live channels on screen at once, added from the player's menu or from SportsHub
+- Your Plex, Jellyfin and Emby libraries, and the movie and series catalogs of your Stremio add-ons, next to your playlist's. Sign in with a code, pick the libraries, and later updates fetch only what changed
+- SMB / NAS network shares: folders become categories, S01E02-style files become series, the rest become movies
+- Continue watching that works both ways with Plex, Jellyfin, Emby and Stremio: start a film here and finish it in the app on your phone
+- Stremio's Choose source lists every direct link the add-ons offer; Plex subtitle files (.srt, .ass, .vtt) show in the player
+- Reminders: a popup two minutes before a programme starts, with Watch or Dismiss
 - One Favourites list and one Continue watching for every playlist and media server you use
 - Parental controls: a PIN and backup word, locks by rating, by category or by channel, and you choose how long an unlock lasts
 - Add or edit a playlist from your phone: scan the QR code on the TV and type the login there. Your passwords are never sent to the phone
 - Search the TV guide: programmes on now and later, then watch or record in one press
 - Sort channels by the playlist's order, A–Z or your own order, and give channels your own numbers
-- Show channels by name, by logo or both, and pick the text size that suits your TV
+- Show channels by name, by logo or both, with wide channel names if you want them, and pick the text size that suits your TV
+- Mark the playing channel with ▶ in the TV guide
 - Sort movies and series by the playlist's order, A–Z or recently added
 - Playlists and media servers update in the background, every 6, 12, 24 or 48 hours
 - Channel and Page Up/Down move a whole screen at a time; hold Back in the guide for the other Back action, or go full screen on its own after a few minutes
@@ -185,11 +215,12 @@ Six themes, all with the same fast guide:
 - DRM channels: M3U channels protected with ClearKey or Widevine play too
 - Recently watched channels, one press away
 - An open-source guide, built in – if you want it. No more creating your own guides
-- The ability to choose the priority of EPGs: the open-source guide, your playlist's guide or EPG sources you add yourself. You decide
+- The ability to choose the priority of EPGs: the open-source guide, your playlist's guide or EPG sources you add yourself (typed on the TV or sent from your phone). Pick or remove the guide for any single channel
 - Keep up to 14 days of guide, past and upcoming
 - Plays HLS, DASH and MPEG-TS streams, with a custom user agent per playlist if your provider needs one
-- Subtitles on live TV, when the channel has them
-- Change channel with Up/Down or Left/Right, and step back through the channels you watched
+- Subtitles on live TV, including the CEA-608/708 closed captions US channels carry
+- Choose what each arrow key does while watching: next or previous channel, back through watched channels, the guide, categories and more
+- Audio sync, for all channels or saved per channel, and a choice of how long to buffer before playing
 - Aspect ratio in the player: Auto, 16:9, 4:3 or Fill
 - An on-screen clock, 12- or 24-hour and also while you watch, and an optional connection ping
 - One-click updates, with a short “what's new” after each one
@@ -219,7 +250,7 @@ Six themes, all with the same fast guide:
 
 <table>
 <tr>
-<td width="50%" align="center"><img src="site/img/settings/media-servers.webp" alt="Settings, Media servers: Plex, Jellyfin, Stremio and update playlists every"><br><sub>Settings, Media servers: Plex, Jellyfin, Stremio and update playlists every</sub></td>
+<td width="50%" align="center"><img src="site/img/settings/media-servers.webp" alt="Settings, Media servers: Plex, Jellyfin, Emby, Stremio, SMB / NAS and update playlists every"><br><sub>Settings, Media servers: Plex, Jellyfin, Emby, Stremio, SMB / NAS and update playlists every</sub></td>
 <td width="50%" align="center"><img src="site/img/settings/plex-link.webp" alt="Add Plex server: a code to enter at plex.tv/link, and a QR code"><br><sub>Add Plex server: a code to enter at plex.tv/link, and a QR code</sub></td>
 </tr>
 <tr>
@@ -299,6 +330,18 @@ Six themes, all with the same fast guide:
 </details>
 
 <details>
+<summary><b>SportsHub</b></summary>
+
+<table>
+<tr>
+<td width="50%" align="center"><img src="site/img/settings/sportshub-1.webp" alt="Settings, SportsHub: show SportsHub, preview fade, today's results, preview on focus and the sports list"><br><sub>Settings, SportsHub: show SportsHub, preview fade, today's results, preview on focus and the sports list</sub></td>
+<td width="50%" align="center"><img src="site/img/sportshub-teams.webp" alt="SportsHub, Favourite teams: pick teams league by league"><br><sub>SportsHub, Favourite teams: pick teams league by league</sub></td>
+</tr>
+</table>
+
+</details>
+
+<details>
 <summary><b>Parental controls</b></summary>
 
 <table>
@@ -359,7 +402,7 @@ Requires Android TV / Google TV **7.1 or newer**, or a Fire TV on Fire OS 6 or n
 <details>
 <summary><b>Media servers</b></summary>
 
-- Plex, Jellyfin and Stremio aren't in backup files. After restoring a backup, add them again under Settings › Media servers.
+- Media servers (Plex, Jellyfin, Emby, Stremio and SMB / NAS) aren't in backup files. After restoring a backup, add them again under Settings › Media servers.
 - The first add of a very large server downloads the whole library and can take 10 minutes or more on a busy shared
   server. Later updates fetch only what changed.
 
@@ -370,7 +413,7 @@ Requires Android TV / Google TV **7.1 or newer**, or a Fire TV on Fire OS 6 or n
 
 - Only direct links (http/https) play. Torrent streams would need a torrent engine, which the app doesn't have, so a title
   whose add-ons offer only torrents can't be played.
-- No stream picker: the first direct link the add-ons give is played, in your Stremio account's add-on order.
+- Play takes the first direct link the add-ons give, in your Stremio account's add-on order. Use Choose source to pick another.
 - Each catalog is capped at 500 titles, and Continue watching shows only titles in the catalogs you picked.
 
 </details>
@@ -389,6 +432,17 @@ Requires Android TV / Google TV **7.1 or newer**, or a Fire TV on Fire OS 6 or n
   USB drive that's `Android/data/org.imdtv.iptvtv/files/Recordings`). Network-share recordings stay.
 - DASH and encrypted streams can't be recorded. Recordings are saved as received (`.ts`), not converted.
 - No live pause and no series recording.
+
+</details>
+
+<details>
+<summary><b>SportsHub and Multi-Watch</b></summary>
+
+- Scores come from ESPN's public feeds and are only fetched while SportsHub is open. Darts and rugby league aren't
+  there, because there is no free data source.
+- Each Multi-Watch tile is its own stream, so four tiles need four connections from your provider. Some boxes can't
+  decode four HD channels at once; a tile that can't play shows its error.
+- Emby and Stremio are untested by us so far. Please report how they go.
 
 </details>
 
