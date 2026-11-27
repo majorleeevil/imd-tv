@@ -76,7 +76,7 @@ import org.imdtv.iptvtv.work.CatalogueSyncWorker
 
 class MainActivity : ComponentActivity() {
     override fun attachBaseContext(newBase: android.content.Context) {
-        super.attachBaseContext(fitPhone(org.imdtv.iptvtv.ui.AppLanguage.wrap(newBase)))
+        super.attachBaseContext(org.imdtv.iptvtv.ui.AppLanguage.wrap(newBase))
         org.imdtv.iptvtv.ui.namesLocale = resources.configuration.locales[0].let { if (it.language == "en") java.util.Locale.UK else it }
     }
 
@@ -93,10 +93,11 @@ class MainActivity : ComponentActivity() {
         if (crashScreen) return
         // Phones and tablets (#60): Android 15 draws apps under the status bar, which sat over the top of every screen.
         // Full screen like a video app instead; a swipe from the edge shows the bars for a moment.
-        if (!isTv(this)) androidx.core.view.WindowCompat.getInsetsController(window, window.decorView).run {
+        // Never fatal: uncertified boxes that report themselves as phones (Ugoos) stopped opening after 0.8.x (Reddit, #69).
+        if (!isTv(this)) runCatching { androidx.core.view.WindowCompat.getInsetsController(window, window.decorView).run {
             systemBarsBehavior = androidx.core.view.WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
             hide(androidx.core.view.WindowInsetsCompat.Type.systemBars())
-        }
+        } }
         CatalogueSyncWorker.runOnLaunch(this)
         lifecycleScope.launch { (application as IptvApp).container.updater.checkWhatsNew() }
         // Audio decoder (spec §4.4): the player rebuilds when idle, else from the next stream.
@@ -361,18 +362,4 @@ class MainActivity : ComponentActivity() {
 }
 
 internal fun isTv(c: android.content.Context) =
-    (c.getSystemService(android.content.Context.UI_MODE_SERVICE) as android.app.UiModeManager).currentModeType == android.content.res.Configuration.UI_MODE_TYPE_TELEVISION
-
-/**
- * Phones (#29): the screens are laid out for 960×540 dp, so a screen shorter than 540 dp gets a lower density until it is
- * 540 dp tall: the TV layout, just smaller. TVs (and tablets, tall enough already) keep their own.
- */
-internal fun fitPhone(base: android.content.Context): android.content.Context {
-    if (isTv(base)) return base
-    val m = base.resources.displayMetrics
-    val dpi = phoneDensityDpi(minOf(m.widthPixels, m.heightPixels), base.resources.configuration.densityDpi) ?: return base
-    return base.createConfigurationContext(android.content.res.Configuration(base.resources.configuration).apply { densityDpi = dpi })
-}
-
-/** The density that makes [shortPx] 540 dp, or null when it already is at least that. */
-internal fun phoneDensityDpi(shortPx: Int, densityDpi: Int): Int? = (shortPx * 160 / 540).takeIf { it < densityDpi }
+    (c.getSystemService(android.content.Context.UI_MODE_SERVICE) as? android.app.UiModeManager)?.currentModeType == android.content.res.Configuration.UI_MODE_TYPE_TELEVISION
