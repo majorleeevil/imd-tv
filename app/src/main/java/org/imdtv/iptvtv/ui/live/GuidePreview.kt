@@ -1,5 +1,6 @@
 package org.imdtv.iptvtv.ui.live
 
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.ui.res.stringResource
 import org.imdtv.iptvtv.R
 
@@ -135,6 +136,14 @@ fun Preview(vm: LiveViewModel, visible: Boolean, screen: Size, modifier: Modifie
     }
 }
 
+/** A header title too long for its space scrolls, at most [MARQUEE_TIMES] times (#61), so the screen doesn't keep redrawing.
+ *  Keyed on the text: each new title gets its own scrolls. */
+@Composable
+private fun HeaderTitle(text: String, fontSize: androidx.compose.ui.unit.TextUnit, modifier: Modifier, fontWeight: FontWeight? = null) = androidx.compose.runtime.key(text) {
+    Text(text, fontSize = fontSize, fontWeight = fontWeight, color = Color.White, maxLines = 1,
+        modifier = modifier.basicMarquee(MARQUEE_TIMES))
+}
+
 @Composable
 fun Hero(ch: ChannelEntity?, name: String, progs: List<GuideProgramme>, now: Long, logoSource: List<LogoKind>, badges: List<String>, modifier: Modifier,
          size: HeaderSize = HeaderSize.LARGE, /** The highlighted programme's time (a later one after Right). */ at: Long = now,
@@ -160,15 +169,13 @@ fun Hero(ch: ChannelEntity?, name: String, progs: List<GuideProgramme>, now: Lon
         if (size == HeaderSize.SMALL || sky && size == HeaderSize.MEDIUM) Row(verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.padding(bottom = if (sky && size == HeaderSize.SMALL) 2.dp else 5.dp)) {
             logo()
-            Text(cur?.title ?: name, fontSize = 31.sp * ts, color = Color.White, maxLines = 1,
-                overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(start = 12.dp))
+            HeaderTitle(cur?.title ?: name, fontSize = 31.sp * ts, modifier = Modifier.padding(start = 12.dp))
         } else {
             if (showName) Row(verticalAlignment = Alignment.CenterVertically) {
                 logo()
-                Text(name, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(start = 12.dp))
+                HeaderTitle(name, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(start = 12.dp))
             } else logo()
-            Text(cur?.title ?: name, fontSize = 31.sp * ts, color = Color.White, maxLines = 1,
-                overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 9.dp, bottom = 5.dp))
+            HeaderTitle(cur?.title ?: name, fontSize = 31.sp * ts, modifier = Modifier.padding(top = 9.dp, bottom = 5.dp))
         }
         Row(horizontalArrangement = Arrangement.spacedBy(7.dp), verticalAlignment = Alignment.CenterVertically) {
             if (cur != null) {

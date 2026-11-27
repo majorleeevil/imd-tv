@@ -139,7 +139,7 @@ val RETRO_GRID = GridStyle(27.dp, 180.dp, 7.5.dp, 90, 3.dp, FontWeight.Bold, foc
 private val PILL = RoundedCornerShape(5.dp)
 /** A long channel name scrolls this many times, then stops: scrolling forever redrew the whole screen ~40 times a second
  *  while the guide sat still, which on a 4K stream made the Thomson 140G's UI crawl (25-50 ms a frame). */
-private const val MARQUEE_TIMES = 3
+internal const val MARQUEE_TIMES = 3
 private val BOX = RoundedCornerShape(2.dp)
 private val CELL = RoundedCornerShape(4.dp)
 private val SEPARATOR = Color(0x40FFFFFF)
