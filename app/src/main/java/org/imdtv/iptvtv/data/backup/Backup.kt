@@ -61,10 +61,21 @@ data class BPlaylist(
     val merges: List<BMerge> = emptyList(),
     /** Merge channels for this playlist (older backups: on). */
     val mergeOn: Boolean = true,
+    /** Guides picked or removed by hand per channel (older backups have none). */
+    val guideLinks: List<BGuideLink> = emptyList(),
 )
 
 @Serializable
-data class BChannelEdit(val channel: String, val name: String? = null, val offsetMinutes: Int? = null)
+data class BChannelEdit(val channel: String, val name: String? = null, val offsetMinutes: Int? = null,
+                        /** A logo picked by its web address (a file on this box can't travel; older backups have none, #62). */
+                        val logo: String? = null)
+
+/**
+ * "Use guide from…" / "Remove guide" on a channel (#62): [source] = the guide's address, or "own:N" for the playlist's
+ * own guide N (its address carries the login); [xmltvId] "" = no guide.
+ */
+@Serializable
+data class BGuideLink(val channel: String, val source: String, val xmltvId: String)
 
 /** [member] plays through [head]; both remote ids. */
 @Serializable

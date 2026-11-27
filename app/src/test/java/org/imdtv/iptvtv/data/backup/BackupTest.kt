@@ -328,6 +328,39 @@ class BackupTest {
         assertEquals(sa.mergeChannels to sa.removeNameSymbols, sb.mergeChannels to sb.removeNameSymbols)
     }
 
+    /** #62: a follower gets the master's web logos and hand-picked or removed guides (its own are replaced). */
+    @Test fun mirrorCarriesLogosAndHandPickedGuides() = runTest {
+        val a = env()
+        val p = a.providers.add(xtream()).also { a.providers.syncNow(it) }
+        a.providers.addEpgSource(p, "http://guide/uk.xml", "UK guide")
+        val ach = a.db.channelDao().byProvider(p).associateBy { it.remoteId }
+        val asrc = a.db.epgDao().sources(p).associateBy { it.url }
+        a.db.channelDao().setCustomLogo(ach.getValue("1").id, "https://logos/bbc1.png")
+        a.db.channelDao().setCustomLogo(ach.getValue("2").id, "/storage/emulated/0/Download/sky.png") // a file: stays home
+        a.db.epgDao().upsertLinks(listOf(
+            org.imdtv.iptvtv.data.db.EpgLinkEntity(ach.getValue("1").id, asrc.getValue(catalogue.epg.single()).id, "bbc1.uk", manual = true),
+            org.imdtv.iptvtv.data.db.EpgLinkEntity(ach.getValue("2").id, asrc.getValue("http://guide/uk.xml").id, "sky.news", manual = true),
+            org.imdtv.iptvtv.data.db.EpgLinkEntity.noGuide(ach.getValue("3").id)))
+        val json = org.imdtv.iptvtv.data.sync.encodeSnapshot(a.backup.syncSnapshot())
+        assertFalse(json.contains("s3cret-pw".let { "password=$it" })) // the own guide travels as own:0, not its address
+
+        val b = env()
+        val q = b.providers.add(xtream()).also { b.providers.syncNow(it) }
+        b.db.channelDao().byProvider(q).single { it.remoteId == "3" }.let {
+            b.db.epgDao().upsertLinks(listOf(org.imdtv.iptvtv.data.db.EpgLinkEntity(it.id, b.db.epgDao().sources(q).first().id, "mine", manual = true)))
+        }
+        b.backup.mirror(org.imdtv.iptvtv.data.sync.decodeSnapshot(json)) {}
+
+        val bch = b.db.channelDao().byProvider(q).associateBy { it.remoteId }
+        val bsrc = b.db.epgDao().sources(q).associate { it.id to it.url }
+        assertEquals("https://logos/bbc1.png", bch.getValue("1").customLogo)
+        assertEquals(null, bch.getValue("2").customLogo)
+        val links = b.db.epgDao().links(q).filter { it.manual }.associateBy { it.channelId }
+        assertEquals(catalogue.epg.single() to "bbc1.uk", links.getValue(bch.getValue("1").id).let { bsrc[it.sourceId] to it.xmltvId })
+        assertEquals("http://guide/uk.xml" to "sky.news", links.getValue(bch.getValue("2").id).let { bsrc[it.sourceId] to it.xmltvId })
+        assertTrue(links.getValue(bch.getValue("3").id).isNoGuide)
+    }
+
     @Test fun mirrorAddsNewPlaylistWithItsLogin() = runTest {
         val a = env()
         a.customise()

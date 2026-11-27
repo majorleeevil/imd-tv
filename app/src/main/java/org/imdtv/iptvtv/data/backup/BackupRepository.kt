@@ -8,6 +8,7 @@ import org.imdtv.iptvtv.data.security.withLogin
 import androidx.room.withTransaction
 import kotlinx.coroutines.flow.first
 import org.imdtv.iptvtv.data.db.AppDatabase
+import org.imdtv.iptvtv.data.db.EpgLinkEntity
 import org.imdtv.iptvtv.data.db.EpgSourceEntity
 import org.imdtv.iptvtv.data.db.FavouriteEntity
 import org.imdtv.iptvtv.data.db.ORIGIN_PLAYLIST
@@ -68,7 +69,9 @@ class BackupRepository(
             groups = db.customGroupDao().observe(p.id).first().map { BGroup(it.name, it.sortOrder, db.customGroupDao().memberRemoteIds(it.id), it.placement.name, it.sortBy.name) },
             favourites = favourites, categoryStrip = p.categoryStrip, channelOrder = channelOrder, contentOff = p.contentOff, enabled = p.enabled, channelNumbers = channelNumbers, lockedChannels = chans.filter { it.parentalLock }.map { it.remoteId },
             hiddenChannels = chans.filter { it.hidden }.map { it.remoteId },
-            channelEdits = chans.filter { it.customName != null || it.epgOffsetMinutes != null }.map { BChannelEdit(it.remoteId, it.customName, it.epgOffsetMinutes) },
+            channelEdits = chans.filter { it.customName != null || it.epgOffsetMinutes != null || webLogo(it.customLogo) != null }
+                .map { BChannelEdit(it.remoteId, it.customName, it.epgOffsetMinutes, webLogo(it.customLogo)) },
+            guideLinks = guideLinks(p, own, login, remoteOf),
             merges = chans.filter { !it.mergedAuto }.mapNotNull { c -> c.mergedInto?.let(remoteOf::get)?.let { BMerge(c.remoteId, it) } }, mergeOn = p.mergeOn,
             progress = db.progressDao().all(p.id).let { rows ->
                 val movies = rows.filter { it.kind == Kind.MOVIE }.map { it.itemId }.distinct().chunked(900).flatMap { db.movieDao().byIds(it) }.associate { it.id to it.remoteId }
@@ -77,6 +80,20 @@ class BackupRepository(
                     BProgress(r.kind.name, it, r.episode, r.positionMs, r.durationMs, r.updatedAt, r.completed) } }
             },
         )
+    }
+
+    private fun webLogo(logo: String?) = logo?.takeIf { it.startsWith("http://") || it.startsWith("https://") }
+
+    /** Hand-picked guides by source address ("own:N" for the playlist's own); a source whose address holds a login is left out. */
+    private suspend fun guideLinks(p: ProviderEntity, own: List<String>, login: List<String>, remoteOf: Map<Long, String>): List<BGuideLink> {
+        val urls = db.epgDao().sources(p.id).associate { it.id to it.url }
+        return db.epgDao().links(p.id).filter { it.manual }.mapNotNull { l ->
+            val ch = remoteOf[l.channelId] ?: return@mapNotNull null
+            if (l.isNoGuide) return@mapNotNull BGuideLink(ch, "", "")
+            val url = urls[l.sourceId] ?: return@mapNotNull null
+            val i = own.indexOf(url)
+            BGuideLink(ch, if (i >= 0) "own:$i" else url.takeUnless { org.imdtv.iptvtv.data.security.urlHoldsAny(it, login) } ?: return@mapNotNull null, l.xmltvId)
+        }
     }
 
     /**
@@ -158,6 +175,8 @@ class BackupRepository(
                 db.customGroupDao().deleteForProvider(id)
                 db.channelDao().clearSortOrders(id)
                 db.channelDao().clearUserEdits(id) // hidden, renamed, numbers, offsets, locks, hand merges: the master's replace them
+                db.epgDao().deleteManualLinks(id)
+                // shortcut: a logo the master drops stays on followers (theirs may be a file on that box), clear it by hand there.
             }
             applyUserData(id, b)
         }
@@ -203,7 +222,20 @@ class BackupRepository(
         channels.let { m -> b.hiddenChannels.mapNotNull(m::get) }.chunked(900).forEach { db.channelDao().setHiddenForIds(it, true) }
         b.hiddenChannels.forEach { if (it in channels) applied++ else skipped++ }
         b.channelEdits.forEach { e -> channels[e.channel]?.let { cid ->
-            e.name?.let { db.channelDao().setCustomName(cid, it) }; e.offsetMinutes?.let { db.channelDao().setEpgOffset(cid, it) }; applied++ } ?: skipped++ }
+            e.name?.let { db.channelDao().setCustomName(cid, it) }; e.offsetMinutes?.let { db.channelDao().setEpgOffset(cid, it) }
+            e.logo?.let { db.channelDao().setCustomLogo(cid, it) }; applied++ } ?: skipped++ }
+        if (b.guideLinks.isNotEmpty()) {
+            val own = providers.ownEpgUrls(db.providerDao().get(id)!!)
+            val sourceIds = db.epgDao().sources(id).associate { it.url to it.id }
+            val links = b.guideLinks.mapNotNull { g ->
+                val cid = channels[g.channel] ?: return@mapNotNull null
+                if (g.xmltvId.isEmpty()) return@mapNotNull EpgLinkEntity.noGuide(cid)
+                val url = if (g.source.startsWith("own:")) own.getOrNull(g.source.removePrefix("own:").toIntOrNull() ?: -1) else g.source
+                // An open-source guide the follower hasn't listed yet: picked up by a later sync.
+                sourceIds[url]?.let { EpgLinkEntity(cid, it, g.xmltvId, manual = true) }
+            }
+            db.epgDao().upsertLinks(links); applied += links.size; skipped += b.guideLinks.size - links.size
+        }
         b.merges.groupBy { it.head }.forEach { (head, ms) ->
             val into = channels[head]
             val members = ms.mapNotNull { channels[it.member] }

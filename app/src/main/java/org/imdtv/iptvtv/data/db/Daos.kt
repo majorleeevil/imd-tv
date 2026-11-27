@@ -407,6 +407,8 @@ interface EpgDao {
     suspend fun links(providerId: Long): List<EpgLinkEntity>
     @Query("SELECT * FROM epg_link WHERE channelId = :channelId") suspend fun link(channelId: Long): EpgLinkEntity?
     @Query("DELETE FROM epg_link WHERE channelId = :id") suspend fun deleteLink(id: Long)
+    @Query("DELETE FROM epg_link WHERE manual = 1 AND channelId IN (SELECT id FROM channel WHERE providerId = :providerId)")
+    suspend fun deleteManualLinks(providerId: Long)
     @Query("SELECT * FROM epg_link WHERE channelId IN (:ids)") suspend fun linksFor(ids: List<Long>): List<EpgLinkEntity>
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun upsertLinks(list: List<EpgLinkEntity>)
     /** Copies each channel's linked guide icon to channel.epgLogo; only changed rows are written. */
