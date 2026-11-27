@@ -562,7 +562,7 @@ internal fun ScoreCard(g: Game, modifier: Modifier) {
 private fun TeamsPage(vm: SportsViewModel, s: AppSettings, sport: Sport) {
     val colors = LocalTheme.current.colors
     // A cup's teams are its leagues' teams (and a long list of lower-league ones).
-    val leagues = vm.leagues(sport).filter { it.sport != Sport.CRICKET && !it.cup }.ifEmpty { vm.leagues(sport).filter { it.sport != Sport.CRICKET } }
+    val leagues = vm.leagues(sport).filter { !it.cup }.ifEmpty { vm.leagues(sport) }
     var league by remember(sport) { mutableStateOf(leagues.firstOrNull()) }
     val teams by produceState<List<Side>?>(null, league) { value = null; value = league?.let { vm.teams(it) } ?: emptyList() }
     val mine = s.sportsTeams.filter { it.startsWith(sport.key + ":") }

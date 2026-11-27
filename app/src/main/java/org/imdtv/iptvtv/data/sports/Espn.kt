@@ -278,6 +278,10 @@ fun parseCricket(root: JsonElement, league: League): List<Game> = root.first("sp
     l.a("events").mapNotNull { e -> runCatching { game(e, e, league, name, null) }.getOrNull() }
 }
 
+/** ESPN marks a level game settled on penalties W or L ("1-1 L"); football counts it as a draw (#68). */
+internal fun formResult(result: String, score: String): String =
+    score.split('-').map { it.trim() }.let { if (it.size == 2 && it[0].isNotEmpty() && it[0] == it[1]) "D" else result }
+
 fun parseSummary(root: JsonElement, league: League): Match {
     val header = root.o("header")
     val comp = header.first("competitions")
@@ -286,7 +290,7 @@ fun parseSummary(root: JsonElement, league: League): Match {
     val sides = comp.a("competitors").mapNotNull { side(it) }
     val forms = root.a("lastFiveGames").associate { f ->
         f.o("team").s("id") to f.a("events").mapNotNull { e ->
-            FormGame(e.s("gameResult") ?: return@mapNotNull null, e.s("score").orEmpty(), e.o("opponent").s("displayName").orEmpty(),
+            FormGame(formResult(e.s("gameResult") ?: return@mapNotNull null, e.s("score").orEmpty()), e.s("score").orEmpty(), e.o("opponent").s("displayName").orEmpty(),
                 e.s("atVs").orEmpty(), e.s("leagueAbbreviation").orEmpty(), time(e.s("gameDate")) ?: 0)
         }
     }
@@ -492,11 +496,17 @@ class EspnClient(private val http: OkHttpClient, private val json: Json, private
     suspend fun standings(l: League): Fetched<List<Table>> =
         get("https://site.api.espn.com/apis/v2/sports/${l.sport.key}/${l.slug}/standings").let { Fetched(parseStandings(it.value), it.updatedAt, it.stale) }
 
-    suspend fun teams(l: League): List<Side> = parseTeams(get("$site/${l.sport.key}/${l.slug}/teams").value)
+    suspend fun teams(l: League): List<Side> =
+        if (l.sport == Sport.CRICKET) CRICKET_NATIONS else parseTeams(get("$site/${l.sport.key}/${l.slug}/teams").value)
 
     /** F1 drivers' teams (Jolpica, the open Ergast successor), cached like the rest. */
     suspend fun driverTeams(): List<DriverTeam> = parseDriverTeams(get("https://api.jolpi.ca/ergast/f1/current/driverStandings.json").value)
 }
+
+/** ESPN has no cricket team list: the Test nations by their ESPNcricinfo ids, which its scoreboards use (#68). */
+private val CRICKET_NATIONS = listOf("1" to "England", "2" to "Australia", "3" to "South Africa", "4" to "West Indies", "5" to "New Zealand",
+    "6" to "India", "7" to "Pakistan", "8" to "Sri Lanka", "9" to "Zimbabwe", "25" to "Bangladesh", "29" to "Ireland", "40" to "Afghanistan")
+    .map { (id, name) -> Side(id, name, name, name, "https://a.espncdn.com/i/teamlogos/cricket/500/$id.png", null) }
 
 /** ESPN's image resizer: badges come as 500 px PNGs; the screens draw them at ~40 dp. */
 fun smallLogo(url: String?, px: Int = 96): String? = url?.let {

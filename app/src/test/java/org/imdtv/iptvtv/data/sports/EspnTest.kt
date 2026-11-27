@@ -206,4 +206,12 @@ class EspnTest {
         assertEquals(null, gameMatch("Brighton v Newcastle United", brighton, leeds))
         assertEquals(null, gameMatch("Brighton v Aston Villa", brighton, craiova))
     }
+
+    @Test
+    fun levelScoreSettledOnPenaltiesIsADraw() {
+        assertEquals("D", formResult("L", "1-1"))  // Carabao Cup, lost the shoot-out
+        assertEquals("D", formResult("W", "2 - 2"))
+        assertEquals("L", formResult("L", "0-1"))
+        assertEquals("W", formResult("W", ""))
+    }
 }
