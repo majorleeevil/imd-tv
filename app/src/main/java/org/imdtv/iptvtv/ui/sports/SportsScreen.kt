@@ -118,6 +118,9 @@ private fun regionName(r: org.imdtv.iptvtv.data.sports.Region) = when (r) {
     org.imdtv.iptvtv.data.sports.Region.GERMANY -> country("DE")
     org.imdtv.iptvtv.data.sports.Region.ITALY -> country("IT")
     org.imdtv.iptvtv.data.sports.Region.FRANCE -> country("FR")
+    org.imdtv.iptvtv.data.sports.Region.IRELAND -> country("IE")
+    org.imdtv.iptvtv.data.sports.Region.SAUDI_ARABIA -> country("SA")
+    org.imdtv.iptvtv.data.sports.Region.ASIA -> stringResource(R.string.sports_region_asia)
 }
 
 @Composable

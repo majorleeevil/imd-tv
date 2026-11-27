@@ -26,13 +26,16 @@ enum class Sport(val key: String) { FOOTBALL("soccer"), AMERICAN_FOOTBALL("footb
  * [slug] is ESPN's league path, e.g. "eng.1"; [id] = "soccer/eng.1", the form settings keep.
  * [region] groups Followed competitions ("" = no heading); [cup] puts it in the cup column; [table] = ESPN has standings for it.
  */
-data class League(val sport: Sport, val slug: String, val name: String, val region: Region = Region.NONE, val cup: Boolean = false, val table: Boolean = !cup) {
+data class League(val sport: Sport, val slug: String, val name: String, val region: Region = Region.NONE, val cup: Boolean = false, val table: Boolean = !cup,
+                  /** Fetched for the day's games only once followed: every league is a request per refresh. */
+                  val optIn: Boolean = false) {
     val id get() = "${sport.key}/$slug"
 }
 
-enum class Region { NONE, ENGLAND, SCOTLAND, SPAIN, GERMANY, ITALY, FRANCE, EUROPE, INTERNATIONAL }
+enum class Region { NONE, ENGLAND, SCOTLAND, IRELAND, SPAIN, GERMANY, ITALY, FRANCE, SAUDI_ARABIA, EUROPE, ASIA, INTERNATIONAL }
 
 private fun soccer(slug: String, name: String, r: Region, cup: Boolean = false, table: Boolean = !cup) = League(Sport.FOOTBALL, slug, name, r, cup, table)
+private fun extra(slug: String, name: String, r: Region, cup: Boolean = false, table: Boolean = !cup) = League(Sport.FOOTBALL, slug, name, r, cup, table, optIn = true)
 
 val LEAGUES = listOf(
     soccer("eng.1", "Premier League", Region.ENGLAND), soccer("eng.2", "Championship", Region.ENGLAND),
@@ -47,6 +50,21 @@ val LEAGUES = listOf(
     soccer("fra.super_cup", "Trophée des Champions", Region.FRANCE, cup = true),
     soccer("uefa.champions", "Champions League", Region.EUROPE, cup = true, table = true), soccer("uefa.europa", "Europa League", Region.EUROPE, cup = true, table = true),
     soccer("uefa.europa.conf", "Conference League", Region.EUROPE, cup = true, table = true),
+    // #68: Ireland, Saudi Arabia, Asia and national teams, fetched once followed (SportsHub › Competitions).
+    extra("irl.1", "League of Ireland Premier Division", Region.IRELAND),
+    extra("ksa.1", "Saudi Pro League", Region.SAUDI_ARABIA), extra("ksa.kings.cup", "King's Cup", Region.SAUDI_ARABIA, cup = true),
+    extra("afc.champions", "AFC Champions League Elite", Region.ASIA, cup = true, table = true),
+    extra("fifa.world", "World Cup", Region.INTERNATIONAL, cup = true, table = true),
+    extra("fifa.worldq.uefa", "World Cup Qualifying (Europe)", Region.INTERNATIONAL, cup = true, table = true),
+    extra("uefa.euro", "European Championship", Region.INTERNATIONAL, cup = true, table = true),
+    extra("uefa.euroq", "Euro Qualifying", Region.INTERNATIONAL, cup = true, table = true),
+    extra("uefa.nations", "Nations League", Region.INTERNATIONAL, cup = true, table = true),
+    extra("fifa.friendly", "International Friendlies", Region.INTERNATIONAL, cup = true),
+    extra("concacaf.gold", "Gold Cup", Region.INTERNATIONAL, cup = true, table = true),
+    extra("concacaf.nations.league", "CONCACAF Nations League", Region.INTERNATIONAL, cup = true, table = true),
+    extra("conmebol.america", "Copa América", Region.INTERNATIONAL, cup = true, table = true),
+    extra("afc.asian.cup", "AFC Asian Cup", Region.INTERNATIONAL, cup = true, table = true),
+    extra("caf.nations", "Africa Cup of Nations", Region.INTERNATIONAL, cup = true, table = true),
     League(Sport.AMERICAN_FOOTBALL, "nfl", "NFL"), League(Sport.BASKETBALL, "nba", "NBA"), League(Sport.HOCKEY, "nhl", "NHL"),
     League(Sport.RUGBY, "267979", "Premiership Rugby", Region.ENGLAND), League(Sport.RUGBY, "270559", "Top 14", Region.FRANCE),
     League(Sport.RUGBY, "270557", "United Rugby Championship", Region.EUROPE),

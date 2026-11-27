@@ -67,6 +67,9 @@ class SportsViewModel(app: Application) : AndroidViewModel(app) {
 
     fun leagues(s: Sport) = LEAGUES.filter { it.sport == s }
 
+    /** The leagues whose games a day shows: opt-in ones only when followed. */
+    private fun dayLeagues(s: Sport) = leagues(s).filter { !it.optIn || it.id in settings.value.sportsLeagues }
+
     fun day(): LocalDate = LocalDate.now().plusDays(dayOffset.value.toLong())
 
     suspend fun warm(strip: List<String>) {
@@ -82,12 +85,12 @@ class SportsViewModel(app: Application) : AndroidViewModel(app) {
         shownKey = sport to offset
         // Nothing shown yet: the last saved games at once ("Updated hh:mm"), and the preview's channel lookup starts from them
         // (teams and kick-off don't change) while ESPN answers.
-        if (games.value == null) espn.day(leagues(sport), LocalDate.now().plusDays(offset.toLong()), cacheOnly = true)?.let {
+        if (games.value == null) espn.day(dayLeagues(sport), LocalDate.now().plusDays(offset.toLong()), cacheOnly = true)?.let {
             games.value = it
             viewModelScope.launch { autoPane(strip) }
         }
         while (true) {
-            val got = espn.day(leagues(sport), LocalDate.now().plusDays(offset.toLong()))
+            val got = espn.day(dayLeagues(sport), LocalDate.now().plusDays(offset.toLong()))
             if (got != null) games.value = got
             failed.value = got == null && games.value == null
             autoPane(strip)

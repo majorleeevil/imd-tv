@@ -81,4 +81,5 @@
     <string name="sports_col_gf">GM</string>
     <string name="sports_col_ga">IM</string>
     <string name="sports_last5">Senaste 5</string>
+    <string name="sports_region_asia">Asien</string>
 </resources>
