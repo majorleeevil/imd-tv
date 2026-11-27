@@ -45,7 +45,7 @@ import org.imdtv.iptvtv.ui.live.LiveViewModel
  * (Watch full screen, Remove); Back leaves. Tiles play only while the app is on screen, like the main player.
  */
 @Composable
-fun MultiWatchScreen(channels: List<ChannelEntity>, live: LiveViewModel, onFull: (ChannelEntity) -> Unit, onRemove: (ChannelEntity) -> Unit) {
+fun MultiWatchScreen(channels: List<ChannelEntity>, live: LiveViewModel, onFull: (ChannelEntity) -> Unit, onRemove: (ChannelEntity) -> Unit, onAdd: () -> Unit) {
     val strip by live.strip.collectAsState()
     val lifecycle by androidx.lifecycle.compose.LocalLifecycleOwner.current.lifecycle.currentStateFlow.collectAsState()
     val onScreen = lifecycle.isAtLeast(Lifecycle.State.STARTED)
@@ -69,7 +69,10 @@ fun MultiWatchScreen(channels: List<ChannelEntity>, live: LiveViewModel, onFull:
                 }
             }
         }
-        if (channels.size < org.imdtv.iptvtv.ui.MULTI_MAX) Text(stringResource(R.string.multi_hint), fontSize = 11.sp, color = Color.White,
+        // Shown for a few seconds when Multi-Watch opens or a tile is added or removed, then out of the way.
+        var hint by remember { mutableStateOf(true) }
+        LaunchedEffect(channels.size) { hint = true; kotlinx.coroutines.delay(6_000); hint = false }
+        if (hint && channels.size < org.imdtv.iptvtv.ui.MULTI_MAX) Text(stringResource(R.string.multi_hint), fontSize = 11.sp, color = Color.White,
             modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 14.dp).clip(RoundedCornerShape(10.dp)).background(Color(0x99000000))
                 .padding(horizontal = 12.dp, vertical = 5.dp))
     }
@@ -78,7 +81,7 @@ fun MultiWatchScreen(channels: List<ChannelEntity>, live: LiveViewModel, onFull:
         ContextMenu(ch.displayName(strip), listOf(
             stringResource(R.string.sports_watch_full) to { menuFor = null; onFull(ch) },
             stringResource(R.string.multi_remove) to { menuFor = null; onRemove(ch) },
-        )) { menuFor = null }
+        ) + (if (channels.size < org.imdtv.iptvtv.ui.MULTI_MAX) listOf(stringResource(R.string.multi_add_channel) to { menuFor = null; onAdd() }) else emptyList())) { menuFor = null }
     }
 }
 

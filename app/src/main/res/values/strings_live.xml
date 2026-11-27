@@ -140,6 +140,7 @@
     <!-- #65 Multi-Watch -->
     <string name="multi_add">Add to Multi-Watch</string>
     <string name="multi_remove">Remove from Multi-Watch</string>
-    <string name="multi_hint">Add more channels from the player\'s Settings menu or SportsHub · Back to leave</string>
+    <string name="multi_hint">OK on a tile › Add channel · Back to leave</string>
+    <string name="multi_add_channel">Add channel</string>
     <string name="multi_locked">Locked</string>
 </resources>

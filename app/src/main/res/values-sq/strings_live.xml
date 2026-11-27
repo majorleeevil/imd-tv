@@ -140,7 +140,8 @@
     <!-- #65 Multi-Watch, #69 startup crash -->
     <string name="multi_add">Shto te Multi-Watch</string>
     <string name="multi_remove">Hiq nga Multi-Watch</string>
-    <string name="multi_hint">Shto më shumë kanale nga menyja Cilësimet e luajtësit ose SportsHub · Prapa për të dalë</string>
+    <string name="multi_hint">OK në një pllakë › Shto kanal · Prapa për të dalë</string>
+    <string name="multi_add_channel">Shto kanal</string>
     <string name="multi_locked">I kyçur</string>
     <string name="crash_title">IMD TV ndaloi gjatë nisjes. Kopjo detajet më poshtë në një issue në GitHub.</string>
     <string name="crash_copy">Kopjo</string>

@@ -155,6 +155,34 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         if (multi.value.isEmpty() && stack.value.last() == Screen.MultiWatch) back()
     }
 
+    /** #65 "Add channel" on a tile: the guide opens, and the next channel picked for full screen joins Multi-Watch instead. */
+    var pickingMulti = false
+        private set
+
+    fun pickForMulti() {
+        if (stack.value.last() != Screen.MultiWatch) return
+        player.forgetResume()
+        pickingMulti = true
+        selectTab(Tab.LIVE)
+    }
+
+    /** The guide's full-screen pick while [pickingMulti]: true when it was taken for Multi-Watch. */
+    fun takeMultiPick(ch: org.imdtv.iptvtv.data.db.ChannelEntity): Boolean {
+        if (!pickingMulti) return false
+        pickingMulti = false
+        addToMulti(ch)
+        return true
+    }
+
+    /** Back in the guide while picking: back to Multi-Watch without adding. */
+    fun cancelMultiPick(): Boolean {
+        if (!pickingMulti) return false
+        pickingMulti = false
+        if (multi.value.isEmpty()) return false
+        player.toBackground(); push(Screen.MultiWatch)
+        return true
+    }
+
     /** Leaves Multi-Watch without playing the stream it paused (a tile's channel goes full screen next). */
     fun leaveMulti() {
         if (stack.value.last() != Screen.MultiWatch) return

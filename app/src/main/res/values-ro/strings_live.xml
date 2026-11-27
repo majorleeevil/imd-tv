@@ -140,7 +140,8 @@
     <!-- #65 Multi-Watch, #69 startup crash -->
     <string name="multi_add">Adaugă la Multi-Watch</string>
     <string name="multi_remove">Elimină din Multi-Watch</string>
-    <string name="multi_hint">Adaugă mai multe canale din meniul Setări al playerului sau din SportsHub · Înapoi pentru a ieși</string>
+    <string name="multi_hint">OK pe o casetă › Adaugă canal · Înapoi pentru a ieși</string>
+    <string name="multi_add_channel">Adaugă canal</string>
     <string name="multi_locked">Blocat</string>
     <string name="crash_title">IMD TV s-a oprit la pornire. Copiază detaliile de mai jos într-un issue pe GitHub.</string>
     <string name="crash_copy">Copiază</string>

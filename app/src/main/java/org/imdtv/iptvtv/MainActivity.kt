@@ -190,6 +190,7 @@ class MainActivity : ComponentActivity() {
                 }
                 BackHandler {
                     when {
+                        top == Screen.Live && app.cancelMultiPick() -> Unit
                         // Back in the live guide opens the playing channel (menu focused keeps the usual Back).
                         inGuide && settings.backToFullScreen && !menuFocused -> guideToFull()
                         top == Screen.Vod && grid != null && settings.theme != ThemeId.XCUBE_180 && settings.theme != ThemeId.GAMESTATION -> vod.gridCategory.value = null
@@ -249,14 +250,16 @@ class MainActivity : ComponentActivity() {
                     androidx.compose.runtime.LaunchedEffect(live) { live.multiWatch.collect(app::addToMulti) }
                     app.resumeLive = { live.focused.value?.let(live::preview) }
                     val full: (org.imdtv.iptvtv.data.db.ChannelEntity) -> Unit = { ch ->
+                        if (!app.takeMultiPick(ch)) {
                         live.preview(ch)
                         live.watched(ch)
                         app.playFullScreen(ch.displayName(live.strip.value), live = true)
+                        }
                     }
                     // #65: a tile's channel full screen, as from search: Back lands on it in its own category. The paused stream isn't played again.
                     val MultiWatchHost = @androidx.compose.runtime.Composable {
                         val multi by app.multi.collectAsState()
-                        org.imdtv.iptvtv.ui.MultiWatchScreen(multi, live, onFull = { ch -> app.leaveMulti(); searchChannel(ch) }, onRemove = app::removeFromMulti)
+                        org.imdtv.iptvtv.ui.MultiWatchScreen(multi, live, onFull = { ch -> app.leaveMulti(); searchChannel(ch) }, onRemove = app::removeFromMulti, onAdd = app::pickForMulti)
                     }
                     val screens = @androidx.compose.runtime.Composable { card: XcubeCard? ->
                     when (top) {

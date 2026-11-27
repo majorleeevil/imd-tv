@@ -140,7 +140,8 @@
     <!-- #65 Multi-Watch, #69 startup crash -->
     <string name="multi_add">Προσθήκη στο Multi-Watch</string>
     <string name="multi_remove">Αφαίρεση από το Multi-Watch</string>
-    <string name="multi_hint">Προσθέστε κι άλλα κανάλια από το μενού Ρυθμίσεις της αναπαραγωγής ή το SportsHub · Πίσω για έξοδο</string>
+    <string name="multi_hint">OK σε ένα πλακίδιο › Προσθήκη καναλιού · Πίσω για έξοδο</string>
+    <string name="multi_add_channel">Προσθήκη καναλιού</string>
     <string name="multi_locked">Κλειδωμένο</string>
     <string name="crash_title">Το IMD TV σταμάτησε κατά την εκκίνηση. Αντιγράψτε τις λεπτομέρειες παρακάτω σε ένα issue στο GitHub.</string>
     <string name="crash_copy">Αντιγραφή</string>

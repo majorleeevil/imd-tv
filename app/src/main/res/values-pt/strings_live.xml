@@ -140,7 +140,8 @@
     <!-- #65 Multi-Watch, #69 startup crash -->
     <string name="multi_add">Adicionar ao Multi-Watch</string>
     <string name="multi_remove">Remover do Multi-Watch</string>
-    <string name="multi_hint">Adicione mais canais no menu Definições do leitor ou no SportsHub · Voltar para sair</string>
+    <string name="multi_hint">OK num mosaico › Adicionar canal · Voltar para sair</string>
+    <string name="multi_add_channel">Adicionar canal</string>
     <string name="multi_locked">Bloqueado</string>
     <string name="crash_title">O IMD TV parou ao iniciar. Copie os detalhes abaixo para um issue no GitHub.</string>
     <string name="crash_copy">Copiar</string>

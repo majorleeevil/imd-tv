@@ -140,7 +140,8 @@
     <!-- #65 Multi-Watch, #69 startup crash -->
     <string name="multi_add">Multi-Watch\'a ekle</string>
     <string name="multi_remove">Multi-Watch\'tan kaldır</string>
-    <string name="multi_hint">Oynatıcının Ayarlar menüsünden veya SportsHub\'dan daha fazla kanal ekleyin · Çıkmak için Geri</string>
+    <string name="multi_hint">Bir kutucukta OK › Kanal ekle · Çıkmak için Geri</string>
+    <string name="multi_add_channel">Kanal ekle</string>
     <string name="multi_locked">Kilitli</string>
     <string name="crash_title">IMD TV başlatılırken durdu. Aşağıdaki ayrıntıları bir GitHub kaydına kopyalayın.</string>
     <string name="crash_copy">Kopyala</string>

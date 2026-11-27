@@ -18,8 +18,8 @@ android {
         // 25: Fire Stick 4K 1st gen (Fire OS 6 = Android 7.1) said "problem parsing the package" at 26 (#30).
         minSdk = 25
         targetSdk = 35
-        versionCode = 16
-        versionName = "0.9.0"
+        versionCode = 17
+        versionName = "0.9.1"
     }
 
     // Release key, kept outside the repo: ~/.config/iptv-tv/keystore.properties (storeFile, storePassword, keyAlias,
