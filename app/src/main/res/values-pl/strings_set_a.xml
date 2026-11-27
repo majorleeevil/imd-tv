@@ -342,4 +342,6 @@
     <string name="set_a_update_playlists_every">Aktualizuj playlisty co</string>
     <string name="set_a_update_playlists_every_expl">Jak często każda playlista, w tym serwery Plex i Jellyfin, jest ponownie pobierana w tle</string>
     <string name="set_a_deleting">Usuwanie…</string>
+    <string name="set_a_mark_playing">Oznacz odtwarzany kanał</string>
+    <string name="set_a_mark_playing_expl">▶ przed nazwą odtwarzanego kanału, aby łatwo go znaleźć po przewinięciu przewodnika</string>
 </resources>

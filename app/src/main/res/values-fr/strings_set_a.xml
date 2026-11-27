@@ -320,4 +320,6 @@
     <string name="set_a_update_playlists_every">Actualiser les listes toutes les</string>
     <string name="set_a_update_playlists_every_expl">Fréquence de téléchargement en arrière-plan de chaque liste, serveurs Plex et Jellyfin compris</string>
     <string name="set_a_deleting">Suppression…</string>
+    <string name="set_a_mark_playing">Marquer la chaîne en cours</string>
+    <string name="set_a_mark_playing_expl">Un ▶ devant le nom de la chaîne en cours de lecture, pour la retrouver après avoir fait défiler le guide</string>
 </resources>

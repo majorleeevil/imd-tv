@@ -320,4 +320,6 @@
     <string name="set_a_update_playlists_every">Atualizar listas a cada</string>
     <string name="set_a_update_playlists_every_expl">Com que frequência cada lista, incluindo servidores Plex e Jellyfin, é transferida novamente em segundo plano</string>
     <string name="set_a_deleting">A eliminar…</string>
+    <string name="set_a_mark_playing">Marcar o canal em reprodução</string>
+    <string name="set_a_mark_playing_expl">Um ▶ antes do nome do canal em reprodução, para o encontrar de novo depois de percorrer o guia</string>
 </resources>

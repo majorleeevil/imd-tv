@@ -321,4 +321,6 @@
     <string name="set_a_update_playlists_every">Update playlists every</string>
     <string name="set_a_update_playlists_every_expl">How often every playlist, Plex and Jellyfin server included, downloads again in the background</string>
     <string name="set_a_deleting">Deleting…</string>
+    <string name="set_a_mark_playing">Mark the playing channel</string>
+    <string name="set_a_mark_playing_expl">A ▶ before the name of the channel that is playing, so you can find it again after scrolling the guide</string>
 </resources>

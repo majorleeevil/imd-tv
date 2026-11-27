@@ -320,4 +320,6 @@
     <string name="set_a_update_playlists_every">Ενημέρωση λιστών κάθε</string>
     <string name="set_a_update_playlists_every_expl">Πόσο συχνά κάθε λίστα, συμπεριλαμβανομένων των διακομιστών Plex και Jellyfin, ξαναλαμβάνεται στο παρασκήνιο</string>
     <string name="set_a_deleting">Διαγραφή…</string>
+    <string name="set_a_mark_playing">Σήμανση του καναλιού που παίζει</string>
+    <string name="set_a_mark_playing_expl">Ένα ▶ πριν από το όνομα του καναλιού που παίζει, για να το βρίσκετε ξανά μετά την κύλιση του οδηγού</string>
 </resources>

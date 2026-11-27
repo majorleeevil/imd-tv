@@ -331,4 +331,6 @@
     <string name="set_a_update_playlists_every">Actualizează playlisturile la fiecare</string>
     <string name="set_a_update_playlists_every_expl">Cât de des este descărcat din nou în fundal fiecare playlist, inclusiv serverele Plex și Jellyfin</string>
     <string name="set_a_deleting">Se șterge…</string>
+    <string name="set_a_mark_playing">Marchează canalul redat</string>
+    <string name="set_a_mark_playing_expl">Un ▶ înaintea numelui canalului redat, ca să-l găsești din nou după ce derulezi ghidul</string>
 </resources>

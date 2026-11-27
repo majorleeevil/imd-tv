@@ -321,4 +321,6 @@
     <string name="set_a_update_playlists_every">Përditëso listat çdo</string>
     <string name="set_a_update_playlists_every_expl">Sa shpesh shkarkohet sërish në sfond çdo listë, përfshirë serverat Plex dhe Jellyfin</string>
     <string name="set_a_deleting">Po fshihet…</string>
+    <string name="set_a_mark_playing">Shëno kanalin që po luan</string>
+    <string name="set_a_mark_playing_expl">Një ▶ para emrit të kanalit që po luan, që ta gjeni sërish pasi të lëvizni në udhëzues</string>
 </resources>

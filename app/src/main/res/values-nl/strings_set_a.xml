@@ -320,4 +320,6 @@
     <string name="set_a_update_playlists_every">Afspeellijsten bijwerken elke</string>
     <string name="set_a_update_playlists_every_expl">Hoe vaak elke afspeellijst, inclusief Plex- en Jellyfin-servers, op de achtergrond opnieuw wordt gedownload</string>
     <string name="set_a_deleting">Verwijderen…</string>
+    <string name="set_a_mark_playing">Spelende zender markeren</string>
+    <string name="set_a_mark_playing_expl">Een ▶ voor de naam van de zender die speelt, zodat je hem terugvindt na het scrollen door de gids</string>
 </resources>

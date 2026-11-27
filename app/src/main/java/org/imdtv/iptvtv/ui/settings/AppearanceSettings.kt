@@ -69,6 +69,7 @@ fun AppearanceLiveRows(vm: SettingsViewModel, first: FocusRequester) {
     }
     SwitchRow(stringResource(R.string.set_a_multi_line), stringResource(R.string.set_a_multi_line_expl), s.multiLineGuide, if (s.glass()) Modifier else f) { on -> vm.update { it.copy(multiLineGuide = on) } }
     SwitchRow(stringResource(R.string.set_a_wide_names), stringResource(R.string.set_a_wide_names_expl), s.wideGuideNames) { on -> vm.update { it.copy(wideGuideNames = on) } }
+    SwitchRow(stringResource(R.string.set_a_mark_playing), stringResource(R.string.set_a_mark_playing_expl), s.markPlaying) { on -> vm.update { it.copy(markPlaying = on) } }
     ChoiceRow(stringResource(R.string.set_a_title_size), stringResource(R.string.set_a_title_size_live_expl), TitleSize.entries, s.titleSize, { stringResource(it.labelRes) }, default = AppSettings().titleSize, onPick = { v -> vm.update { it.copy(titleSize = v) } })
     ChoiceRow(stringResource(R.string.set_a_epg_text_size), stringResource(R.string.set_a_epg_text_size_expl), org.imdtv.iptvtv.data.settings.EpgTextSize.entries, s.epgTextSize, { stringResource(it.labelRes) }, default = AppSettings().epgTextSize, onPick = { v -> vm.update { it.copy(epgTextSize = v) } })
     }

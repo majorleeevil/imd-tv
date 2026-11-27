@@ -176,6 +176,8 @@ data class AppSettings(
     val multiLineGuide: Boolean = false,
     /** Twice the guide's channel column, and the channel name beside the header logo (#20). */
     val wideGuideNames: Boolean = false,
+    /** #57: ▶ before the playing channel's name in the guide. */
+    val markPlaying: Boolean = false,
     /** Movies and series start with subtitles in [subtitleLanguage] when the file has that language. */
     val subtitlesOn: Boolean = false,
     /** ISO 639-1 code; null = the TV's language. */
@@ -293,7 +295,7 @@ data class AppSettings(
     /** Appearance › Reset: every Appearance setting (all themes' looks too) back to its default. */
     fun resetAppearance() = AppSettings().let { d ->
         copy(theme = d.theme, themeColour = d.themeColour, themeDark = d.themeDark, guideRows = d.guideRows, headerSize = d.headerSize,
-            previewFade = d.previewFade, themeLooks = emptyMap(), multiLineGuide = d.multiLineGuide, wideGuideNames = d.wideGuideNames, showDateTime = d.showDateTime,
+            previewFade = d.previewFade, themeLooks = emptyMap(), multiLineGuide = d.multiLineGuide, wideGuideNames = d.wideGuideNames, markPlaying = d.markPlaying, showDateTime = d.showDateTime,
             showDate = d.showDate, clock24h = d.clock24h, playerClock = d.playerClock, epgTextSize = d.epgTextSize)
     }
 

@@ -320,4 +320,6 @@
     <string name="set_a_update_playlists_every">Playlists aktualisieren alle</string>
     <string name="set_a_update_playlists_every_expl">Wie oft jede Playlist, auch Plex- und Jellyfin-Server, im Hintergrund neu heruntergeladen wird</string>
     <string name="set_a_deleting">Wird gelöscht…</string>
+    <string name="set_a_mark_playing">Laufenden Sender markieren</string>
+    <string name="set_a_mark_playing_expl">Ein ▶ vor dem Namen des laufenden Senders, damit Sie ihn nach dem Blättern im Programmführer wiederfinden</string>
 </resources>

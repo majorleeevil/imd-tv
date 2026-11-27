@@ -320,4 +320,6 @@
     <string name="set_a_update_playlists_every">Oynatma listelerini şu sıklıkla güncelle</string>
     <string name="set_a_update_playlists_every_expl">Plex ve Jellyfin sunucuları dahil her oynatma listesinin arka planda ne sıklıkla yeniden indirileceği</string>
     <string name="set_a_deleting">Siliniyor…</string>
+    <string name="set_a_mark_playing">Oynatılan kanalı işaretle</string>
+    <string name="set_a_mark_playing_expl">Oynatılan kanalın adının önünde bir ▶, rehberde gezindikten sonra onu yeniden bulmanız için</string>
 </resources>

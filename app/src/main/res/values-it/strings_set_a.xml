@@ -320,4 +320,6 @@
     <string name="set_a_update_playlists_every">Aggiorna le playlist ogni</string>
     <string name="set_a_update_playlists_every_expl">Con quale frequenza ogni playlist, inclusi i server Plex e Jellyfin, viene scaricata di nuovo in background</string>
     <string name="set_a_deleting">Eliminazione…</string>
+    <string name="set_a_mark_playing">Segna il canale in riproduzione</string>
+    <string name="set_a_mark_playing_expl">Un ▶ prima del nome del canale in riproduzione, per ritrovarlo dopo aver scorso la guida</string>
 </resources>

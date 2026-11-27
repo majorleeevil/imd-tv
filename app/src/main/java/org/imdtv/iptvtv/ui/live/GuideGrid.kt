@@ -158,6 +158,8 @@ fun GuideGrid(
     val display = vm.settings.collectAsState().value.guideDisplay
     val logos = logoSource.takeIf { display != org.imdtv.iptvtv.data.settings.GuideChannelDisplay.NAME }
     val wide = vm.settings.collectAsState().value.wideGuideNames
+    val markPlaying = vm.settings.collectAsState().value.markPlaying
+    val playingId by vm.previewingId.collectAsState()
     val grid = remember(base, wide) { if (wide) base.wideChannels() else base }
     val style = remember(grid, multiLine, epg) { grid.forGuide(multiLine, epg) }
     val listed by vm.channels.collectAsState()
@@ -230,7 +232,7 @@ fun GuideGrid(
                 itemsIndexed(channels, key = { _, ch -> ch.id }) { i, ch ->
                     val moving = move?.ch?.id == ch.id && !move.dropped || merging?.ch?.id == ch.id
                     GuideRow(
-                        ch, (if (moving && merging == null) "↕ " else "") + ch.displayName(strip), programmes[ch.id].orEmpty(), now, at, windowStart, style, isFocused = focused?.id == ch.id && !state.railOpen && state.heldFocus == null, moving = moving, logos = logos, display = display,
+                        ch, (if (moving && merging == null) "↕ " else if (markPlaying && ch.id == playingId) "▶ " else "") + ch.displayName(strip), programmes[ch.id].orEmpty(), now, at, windowStart, style, isFocused = focused?.id == ch.id && !state.railOpen && state.heldFocus == null, moving = moving, logos = logos, display = display,
                         marked = { p -> (ch.id to p.start) in marks || ch.id in recordingOnChannel && p.start <= now && now < p.stop },
                         modifier = (if (i == state.focusIndex) Modifier.focusRequester(state.rowFocus) else Modifier)
                             .onPreviewKeyEvent { e ->

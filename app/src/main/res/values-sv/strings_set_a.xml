@@ -320,4 +320,6 @@
     <string name="set_a_update_playlists_every">Uppdatera spellistor var</string>
     <string name="set_a_update_playlists_every_expl">Hur ofta varje spellista, inklusive Plex- och Jellyfin-servrar, laddas ned igen i bakgrunden</string>
     <string name="set_a_deleting">Tar bort…</string>
+    <string name="set_a_mark_playing">Markera kanalen som spelas</string>
+    <string name="set_a_mark_playing_expl">En ▶ före namnet på kanalen som spelas, så att du hittar den igen efter att ha bläddrat i guiden</string>
 </resources>
