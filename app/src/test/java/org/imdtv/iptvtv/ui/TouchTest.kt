@@ -71,6 +71,20 @@ class TouchTest {
         assertEquals(1, taps)
     }
 
+    @Test fun aTapPressesAFormButton() { // #59: tv-material3's Button answered OK only
+        var clicks = 0
+        rule.setContent { FormButton(onClick = { clicks++ }, Modifier.testTag("b")) { androidx.tv.material3.Text("Save") } }
+        rule.onNodeWithTag("b").performTouchInput { click() }
+        assertEquals(1, clicks)
+    }
+
+    @Test fun aTapOnAGreyedOutFormButtonDoesNothing() {
+        var clicks = 0
+        rule.setContent { FormButton(onClick = { clicks++ }, Modifier.testTag("b"), enabled = false) { androidx.tv.material3.Text("Watch") } }
+        rule.onNodeWithTag("b").performTouchInput { click() }
+        assertEquals(0, clicks)
+    }
+
     @Test fun aLongPressIsHoldOkAndSwallowsTheClick() {
         var long = 0
         var clicks = 0

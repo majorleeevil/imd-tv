@@ -141,7 +141,7 @@ private fun ProviderForm(vm: AppViewModel, editing: ProviderEntity?) {
             }, verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (editing == null) Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     FORM_TYPES.forEach { t ->
-                        Button(onClick = { type = t }) { Text((if (t == type) "● " else "○ ") + t.name) }
+                        FormButton(onClick = { type = t }) { Text((if (t == type) "● " else "○ ") + t.name) }
                     }
                 }
                 FormField(stringResource(when (type) { ProviderType.XTREAM -> R.string.set_b_server_url; ProviderType.M3U -> R.string.set_b_playlist_url; ProviderType.PLEX, ProviderType.JELLYFIN, ProviderType.STREMIO, ProviderType.EMBY, ProviderType.SMB -> R.string.set_b_server_url; ProviderType.STALKER -> R.string.set_b_portal_url }),
@@ -166,8 +166,8 @@ private fun ProviderForm(vm: AppViewModel, editing: ProviderEntity?) {
                     value = name.ifBlank { stringResource(R.string.set_b_automatic) }, initial = name, saveLabel = stringResource(R.string.set_b_confirm)) { name = it } // "Save" here read as the form's Save (user, 2026-11-15)
                 if (!ready) {
                     // The buttons stay while busy: if Save left the screen, focus fell to the top and the error showed off screen.
-                    Button(onClick = {
-                        if (state.busy) return@Button
+                    FormButton(onClick = {
+                        if (state.busy) return@FormButton
                         val secret = if (type == ProviderType.STALKER) org.imdtv.iptvtv.data.source.StalkerLogin(user, pass, deviceId, deviceId2, model).packed().orEmpty() else pass
                         vm.save(type, url, user, secret, epg, agent, editing, name)
                     }, Modifier.fillMaxWidth().focusRequester(save)) {
@@ -176,14 +176,14 @@ private fun ProviderForm(vm: AppViewModel, editing: ProviderEntity?) {
                     // Below Save, not above it: a line above pushed Save off the bottom of the Stalker form.
                     if (!state.busy) state.error?.let { Text(it, color = Color(0xFFFF8A80), fontSize = 13.sp, maxLines = 3) }
                     // First run (#37): set up from a backup instead, e.g. copying another TV's config.
-                    if (editing == null && vm.stack.collectAsState().value.size == 1) Button(onClick = { if (!state.busy) vm.openSettings(org.imdtv.iptvtv.ui.settings.SettingsGroup.BACKUP) }, Modifier.fillMaxWidth()) {
+                    if (editing == null && vm.stack.collectAsState().value.size == 1) FormButton(onClick = { if (!state.busy) vm.openSettings(org.imdtv.iptvtv.ui.settings.SettingsGroup.BACKUP) }, Modifier.fillMaxWidth()) {
                         Text(stringResource(R.string.set_b_backup_restore_title), fontSize = 16.sp, textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp))
                     }
                 }
                 // Greyed out (not pressable) until the playlist has loaded; Back still leaves. "Finish", not "Done": beside Save, Done read as saving.
                 // A failed add / edit: the same button sends the logs instead (Watch / Finish would be greyed out anyway).
                 val failed = !ready && !state.busy && state.error != null
-                Button(onClick = { if (failed) sendLogs = true else if (editing == null) vm.done() else vm.back() },
+                FormButton(onClick = { if (failed) sendLogs = true else if (editing == null) vm.done() else vm.back() },
                     Modifier.fillMaxWidth().padding(top = 4.dp).focusRequester(next), enabled = ready || failed) {
                     Text(when { failed -> stringResource(R.string.set_b_send_logs); editing == null -> stringResource(R.string.set_b_watch); else -> stringResource(R.string.set_b_finish) }, fontSize = 18.sp,
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp))
@@ -219,6 +219,11 @@ private fun FormField(label: String, value: String, keyboard: KeyboardType = Key
         }
     }
 }
+
+/** The form's buttons: tv-material3 1.0's Button answers only the remote's OK, so a touch tap presses it too (#59). */
+@Composable
+internal fun FormButton(onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true, content: @Composable androidx.compose.foundation.layout.RowScope.() -> Unit) =
+    Button(onClick = onClick, modifier = modifier.onTouchTap { if (enabled) onClick() }, enabled = enabled, content = content)
 
 @Composable
 fun Field(
