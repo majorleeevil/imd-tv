@@ -466,17 +466,22 @@ fun gameMatch(text: String, home: Side, away: Side): Int? {
 // --- Network + cache. ---
 
 private val DAY = DateTimeFormatter.BASIC_ISO_DATE
+private val USER_AGENT = "IMD TV/${org.imdtv.iptvtv.BuildConfig.VERSION_NAME} (Android; +https://github.com/majorleeevil/imd-tv)"
 
 class EspnClient(private val http: OkHttpClient, private val json: Json, private val cacheDir: File) {
     private val site = "https://site.api.espn.com/apis/site/v2/sports"
 
     /** The URL's body, cached per URL; on failure the last good copy (stale), else the error. */
     /** [cacheOnly]: the last saved answer (stale), no network; throws when there is none. */
-    private suspend fun get(url: String, cacheOnly: Boolean = false): Fetched<JsonElement> = withContext(Dispatchers.IO) {
+    /** [maxAgeMs]: a saved answer younger than this is used as it is, without asking ESPN again (#58: fewer requests, faster pages). */
+    private suspend fun get(url: String, cacheOnly: Boolean = false, maxAgeMs: Long = 0): Fetched<JsonElement> = withContext(Dispatchers.IO) {
         val file = File(cacheDir, "%08x".format(url.hashCode()) + ".json")
         try {
             if (cacheOnly) throw java.io.IOException("cache only")
-            val body = http.newCall(Request.Builder().url(url).build()).execute().use { r ->
+            val saved = file.lastModified()
+            if (saved > 0 && System.currentTimeMillis() - saved < maxAgeMs) return@withContext Fetched(json.parseToJsonElement(file.readText()), saved, false)
+            // #58: say who is asking, honestly, rather than pass as a browser.
+            val body = http.newCall(Request.Builder().url(url).header("User-Agent", USER_AGENT).build()).execute().use { r ->
                 if (!r.isSuccessful) throw java.io.IOException("HTTP ${r.code}")
                 r.body!!.string()
             }
@@ -494,15 +499,17 @@ class EspnClient(private val http: OkHttpClient, private val json: Json, private
     // shortcut: ESPN's dates= is its own (US Eastern) day, so a US game after midnight UK shows on the day before; ranges 400 on some sports
     /** [cacheOnly]: the last saved answers only, to show at once while the network answers. */
     suspend fun day(leagues: List<League>, day: LocalDate, cacheOnly: Boolean = false): Fetched<List<Game>>? = coroutineScope {
+        // Results from before yesterday don't change (the standings' form reads up to four weeks of days); ESPN's day is US time.
+        val maxAge = if (day < LocalDate.now().minusDays(1)) Long.MAX_VALUE else 0L
         val parts = leagues.map { l ->
             async {
                 runCatching {
-                    if (l.sport == Sport.CRICKET) get("https://site.api.espn.com/apis/personalized/v2/scoreboard/header?sport=cricket&region=gb", cacheOnly).let { f ->
+                    if (l.sport == Sport.CRICKET) get("https://site.api.espn.com/apis/personalized/v2/scoreboard/header?sport=cricket&region=gb", cacheOnly, maxAge).let { f ->
                         Fetched(parseCricket(f.value, l).filter { java.time.Instant.ofEpochMilli(it.start).atZone(java.time.ZoneId.systemDefault()).toLocalDate() == day }, f.updatedAt, f.stale)
-                    } else if (l.sport == Sport.F1) get("$site/${l.sport.key}/${l.slug}/scoreboard?dates=${DAY.format(day)}", cacheOnly).let { f ->
+                    } else if (l.sport == Sport.F1) get("$site/${l.sport.key}/${l.slug}/scoreboard?dates=${DAY.format(day)}", cacheOnly, maxAge).let { f ->
                         // The weekend comes whole: keep the sessions on this (local) day.
                         Fetched(parseRacing(f.value, l).filter { java.time.Instant.ofEpochMilli(it.start).atZone(java.time.ZoneId.systemDefault()).toLocalDate() == day }, f.updatedAt, f.stale)
-                    } else get("$site/${l.sport.key}/${l.slug}/scoreboard?dates=${DAY.format(day)}", cacheOnly).let { Fetched(parseScoreboard(it.value, l), it.updatedAt, it.stale) }
+                    } else get("$site/${l.sport.key}/${l.slug}/scoreboard?dates=${DAY.format(day)}", cacheOnly, maxAge).let { Fetched(parseScoreboard(it.value, l), it.updatedAt, it.stale) }
                 }.getOrNull()
             }
         }.awaitAll().filterNotNull()
@@ -512,13 +519,13 @@ class EspnClient(private val http: OkHttpClient, private val json: Json, private
     suspend fun match(g: Game): Fetched<Match> = get("$site/${g.league.sport.key}/${g.league.slug}/summary?event=${g.id}").let { Fetched(parseSummary(it.value, g.league), it.updatedAt, it.stale) }
 
     suspend fun standings(l: League): Fetched<List<Table>> =
-        get("https://site.api.espn.com/apis/v2/sports/${l.sport.key}/${l.slug}/standings").let { Fetched(parseStandings(it.value), it.updatedAt, it.stale) }
+        get("https://site.api.espn.com/apis/v2/sports/${l.sport.key}/${l.slug}/standings", maxAgeMs = 15 * 60_000L).let { Fetched(parseStandings(it.value), it.updatedAt, it.stale) }
 
     suspend fun teams(l: League): List<Side> =
-        if (l.sport == Sport.CRICKET) CRICKET_NATIONS else parseTeams(get("$site/${l.sport.key}/${l.slug}/teams").value)
+        if (l.sport == Sport.CRICKET) CRICKET_NATIONS else parseTeams(get("$site/${l.sport.key}/${l.slug}/teams", maxAgeMs = 24 * 3_600_000L).value)
 
     /** F1 drivers' teams (Jolpica, the open Ergast successor), cached like the rest. */
-    suspend fun driverTeams(): List<DriverTeam> = parseDriverTeams(get("https://api.jolpi.ca/ergast/f1/current/driverStandings.json").value)
+    suspend fun driverTeams(): List<DriverTeam> = parseDriverTeams(get("https://api.jolpi.ca/ergast/f1/current/driverStandings.json", maxAgeMs = 12 * 3_600_000L).value)
 }
 
 /** ESPN has no cricket team list: the Test nations by their ESPNcricinfo ids, which its scoreboards use (#68). */
