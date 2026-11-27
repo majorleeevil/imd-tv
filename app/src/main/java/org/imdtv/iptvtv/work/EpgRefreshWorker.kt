@@ -34,7 +34,12 @@ class EpgRefreshWorker(context: Context, params: WorkerParameters) : CoroutineWo
         val active = c.providerRepository.activeProviderId.first()
         var attempted = 0
         var failed = 0
-        for (p in c.db.providerDao().all()) {
+        val started = System.currentTimeMillis()
+        // Android stops a job after 10 minutes and WorkManager restarts it; big guides on two playlists can take longer.
+        // A restart skips what the stopped run already imported, so it carries on instead of starting over (#66).
+        Log.i(EpgImporter.TAG, "Guide refresh started (attempt ${runAttemptCount + 1})")
+        // The active playlist first: it's the guide on screen.
+        for (p in c.db.providerDao().all().sortedBy { it.id != active }) {
             if (p.type.mediaServer) {
                 // No live channels. 0.7.0 could make Plex active, which gave it open-source guide files to import: drop them.
                 c.db.epgDao().sources(p.id).forEach { s ->
@@ -57,6 +62,7 @@ class EpgRefreshWorker(context: Context, params: WorkerParameters) : CoroutineWo
             // Open-source mode keeps epgshare01 files for the active playlist only: another one would lose all its links.
             if (sources.isEmpty() && p.id != active) continue
             for (s in sources) {
+                if (importedThisRun(s.lastFetched, started, runAttemptCount)) continue
                 attempted++
                 // One bad source must not block the others; keep its previous guide (importer is atomic).
                 runCatching { c.epgImporter.import(s, settings.epgDaysToKeep, settings.epgPastDays) }
@@ -78,6 +84,10 @@ class EpgRefreshWorker(context: Context, params: WorkerParameters) : CoroutineWo
     companion object {
         /** A dead feed among good ones waits for the next period instead of re-importing every source. */
         fun shouldRetry(attempted: Int, failed: Int) = attempted > 0 && failed == attempted
+
+        /** A restarted run ([attempt] > 0) skips a source imported in the 2 hours before it [started]. */
+        fun importedThisRun(lastFetched: Long?, started: Long, attempt: Int) =
+            attempt > 0 && lastFetched != null && started - lastFetched < 2 * 3_600_000L
         private val network = Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
 
         /** UPDATE keeps the period's timing but applies a changed interval. */

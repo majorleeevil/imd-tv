@@ -28,4 +28,13 @@ class EpgRefreshWorkerTest {
         assertEquals(ExistingWorkPolicy.REPLACE, p(listOf(R, B, B, B), false, false))     // an old backlog becomes one run
         assertEquals(ExistingWorkPolicy.REPLACE, p(listOf(E, B), true, true))
     }
+
+    @Test
+    fun restartedRunSkipsGuidesTheStoppedRunImported() {
+        val start = 10 * 3_600_000L
+        assertFalse(EpgRefreshWorker.importedThisRun(start - 60_000, start, attempt = 0))  // a fresh run imports everything
+        assertTrue(EpgRefreshWorker.importedThisRun(start - 60_000, start, attempt = 1))   // the stopped run got this one
+        assertFalse(EpgRefreshWorker.importedThisRun(start - 3 * 3_600_000L, start, attempt = 1)) // older: import again
+        assertFalse(EpgRefreshWorker.importedThisRun(null, start, attempt = 1))            // never imported
+    }
 }
