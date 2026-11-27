@@ -1,6 +1,27 @@
 // IMD TV site: builds the section rail, highlights the section in view, reveals each section once. No tracking.
 (function () {
   document.documentElement.classList.remove('no-js');
+
+  // Eased wheel scrolling: each wheel step moves a target and the page glides to it, slowing as it arrives.
+  // Touch, keyboard, scrollbar and anchor scrolling stay native; off for people who ask for reduced motion.
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    var target = 0, current = 0, gliding = false;
+    function glide() {
+      current += (target - current) * 0.1;
+      if (Math.abs(target - current) < 0.5) { current = target; gliding = false; }
+      window.scrollTo({ top: current, behavior: 'instant' });
+      if (gliding) requestAnimationFrame(glide);
+    }
+    window.addEventListener('wheel', function (e) {
+      if (e.ctrlKey || Math.abs(e.deltaX) > Math.abs(e.deltaY)) return; // pinch-zoom and sideways scrolls
+      if (e.deltaMode === 0 && Math.abs(e.deltaY) < 50) return; // touchpads send small steps and already glide
+      e.preventDefault();
+      if (!gliding) target = current = window.scrollY; // pick up wherever keyboard or links left the page
+      var max = document.documentElement.scrollHeight - innerHeight;
+      target = Math.max(0, Math.min(max, target + e.deltaY * (e.deltaMode === 1 ? 16 : 1)));
+      if (!gliding) { gliding = true; requestAnimationFrame(glide); }
+    }, { passive: false });
+  }
   var sections = Array.prototype.slice.call(document.querySelectorAll('main section[data-name]'));
   var rail = document.querySelector('.rail');
   var links = sections.map(function (s) {
