@@ -138,7 +138,7 @@ A **PIN** and backup word. Lock by **rating**, by **category** or by **channel**
 <td width="50%" align="center"><img src="site/img/movies-rail.webp" alt="Movies with a Jellyfin section in the rail"><br><sub>Movies with a Jellyfin section in the rail</sub></td>
 </tr>
 <tr>
-<td width="50%" align="center"><img src="site/img/continue-watching.webp" alt="Continue watching across playlists and servers"><br><sub>Continue watching across playlists and servers</sub></td>
+<td width="50%" align="center"><img src="site/img/continue-watching.webp" alt="Continue watching movies &amp; series"><br><sub>Continue watching movies &amp; series</sub></td>
 <td width="50%" align="center"><img src="site/img/search.webp" alt="Search the TV guide: on now and later"><br><sub>Search the TV guide: on now and later</sub></td>
 </tr>
 <tr>
@@ -150,8 +150,8 @@ A **PIN** and backup word. Lock by **rating**, by **category** or by **channel**
 <td width="50%" align="center"><img src="site/img/parental-locked.webp" alt="A child-locked channel"><br><sub>A child-locked channel</sub></td>
 </tr>
 <tr>
-<td width="50%" align="center"><img src="site/img/movie-detail.webp" alt="Movie details"><br><sub>Movie details</sub></td>
 <td width="50%" align="center"><img src="site/img/settings/phone-form.webp" alt="Add a playlist from your phone"><br><sub>Add a playlist from your phone</sub></td>
+<td width="50%"></td>
 </tr>
 <tr>
 <td width="50%" align="center"><img src="site/img/sportshub-games.webp" alt="SportsHub, Games: a live game at the top, today's games below with favourite leagues starred"><br><sub>SportsHub: your teams at the top, every other game below</sub></td>
