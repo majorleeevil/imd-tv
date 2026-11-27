@@ -16,6 +16,7 @@ class IptvApp : Application(), coil.ImageLoaderFactory {
 
     override fun onCreate() {
         super.onCreate()
+        org.imdtv.iptvtv.data.support.CrashReport.install(this)
         container = AppContainer(this)
         // Once per old playlist: encrypt its login and take it out of saved links (no-op afterwards).
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {

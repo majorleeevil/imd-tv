@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">IMD TV</string>
+    <!-- Shown only when the app crashed within 30 s of starting last time (#69). -->
+    <string name="crash_title">IMD TV stopped while starting. Copy the details below into a GitHub issue.</string>
+    <string name="crash_copy">Copy</string>
+    <string name="crash_open_anyway">Open anyway</string>
 </resources>

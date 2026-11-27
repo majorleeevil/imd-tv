@@ -89,6 +89,8 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        crashScreen = org.imdtv.iptvtv.data.support.CrashReport.showIfPending(this) { recreate() }
+        if (crashScreen) return
         // Phones and tablets (#60): Android 15 draws apps under the status bar, which sat over the top of every screen.
         // Full screen like a video app instead; a swipe from the edge shows the bars for a moment.
         if (!isTv(this)) androidx.core.view.WindowCompat.getInsetsController(window, window.decorView).run {
@@ -329,8 +331,12 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    /** The last start crashed (#69): only its report is shown, so nothing else may touch the view models. */
+    private var crashScreen = false
+
     override fun onStop() {
         super.onStop()
+        if (crashScreen) return
         // Don't keep streaming (or holding the provider's connection) after the user leaves the app.
         app.player.toBackground()
         (application as IptvApp).container.parental.relock() // "Until the app closes"
@@ -338,6 +344,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
+        if (crashScreen) return
         app.player.toForeground()
         // TV boxes keep the app alive for days: check on every return to it, at most once an hour.
         lifecycleScope.launch { (application as IptvApp).container.updater.check() }
