@@ -39,7 +39,7 @@
       <div>
         <p class="kicker">Free · Open source · Android TV</p>
         <h1>Live TV, films<br>and series.<br><span class="grad">One app.</span></h1>
-        <p class="lead">IMD TV plays your own Xtream, M3U or Stalker portal playlist, and your Plex, Jellyfin and Stremio libraries, with a TV guide that keeps up with the remote, six themes, and no ads, tracking or paywalls.</p>
+        <p class="lead">IMD TV plays your own Xtream, M3U or Stalker portal playlist, and your Plex, Jellyfin, Emby and Stremio libraries, with a TV guide that keeps up with the remote, six themes, and no ads, tracking or paywalls.</p>
         <div class="btns">
           <a class="btn primary" href="#download">Download for Android TV</a>
           <a class="btn ghost" href="https://github.com/majorleeevil/imd-tv">View on GitHub</a>
@@ -111,9 +111,11 @@
       <div class="feature flip">
         <div class="text">
           <h3>Movies and series</h3>
-          <p>Posters, seasons and episodes, and resume where you left off – from your playlist and your Plex, Jellyfin and Stremio libraries.</p>
+          <p>Posters, seasons and episodes, and resume where you left off – from your playlist, your Plex, Jellyfin, Emby and Stremio libraries, and your SMB / NAS shares.</p>
           <ul role="list">
             <li>Subtitles in your language, when the film or episode has them</li>
+            <li>Continue watching that syncs both ways with Plex, Jellyfin, Emby and Stremio</li>
+            <li>Network shares: folders become categories, S01E02-style files become series</li>
           </ul>
         </div>
         <figure class="shot"><img src="img/continue-watching.webp" width="1920" height="1080" loading="lazy" alt="Movies screen: Continue watching with films from a Jellyfin server, the focused film's artwork behind"></figure>
@@ -136,6 +138,7 @@
             <li>Starts a little early and ends a little late, because guide times drift</li>
             <li>Keeps the box awake while it records</li>
             <li>Watch your recordings from the Recordings tab</li>
+            <li>Or set a reminder: a popup two minutes before it starts, with Watch or Dismiss</li>
           </ul>
         </div>
         <figure class="shot"><img src="img/recordings.webp" width="1920" height="1080" loading="lazy" alt="Recordings tab: a Blaze programme recording now, two scheduled and one finished"></figure>
@@ -147,7 +150,8 @@
           <ul role="list">
             <li>Your teams' games at the top, every other game below, favourite leagues first</li>
             <li>A match page with line-ups, recent form and where to watch</li>
-            <li>Football, American football, basketball, ice hockey, rugby union and cricket</li>
+            <li>Football, American football, basketball, ice hockey, rugby union, cricket, F1, golf, UFC and US college sports</li>
+            <li>Multi-Watch: up to four live channels at once, sound on the tile you highlight</li>
             <li>Turn it off in Settings if you don't follow sport</li>
           </ul>
         </div>
@@ -173,14 +177,19 @@
 
       <h3 class="more-title">And all of this, free</h3>
       <ul class="more" role="list">
-        <li>Your Plex and Jellyfin libraries, and the movie and series catalogs of your Stremio add-ons, next to your playlist's. Sign in with a code, pick the libraries, and later updates fetch only what changed</li>
-        <li>Continue watching that works both ways with Plex, Jellyfin and Stremio: start a film here and finish it in the app on your phone</li>
+        <li>Multi-Watch: up to four live channels on screen at once, added from the player's menu or from SportsHub</li>
+        <li>Your Plex, Jellyfin and Emby libraries, and the movie and series catalogs of your Stremio add-ons, next to your playlist's. Sign in with a code, pick the libraries, and later updates fetch only what changed</li>
+        <li>SMB / NAS network shares: folders become categories, S01E02-style files become series, the rest become movies</li>
+        <li>Continue watching that works both ways with Plex, Jellyfin, Emby and Stremio: start a film here and finish it in the app on your phone</li>
+        <li>Stremio's Choose source lists every direct link the add-ons offer; Plex subtitle files (.srt, .ass, .vtt) show in the player</li>
+        <li>Reminders: a popup two minutes before a programme starts, with Watch or Dismiss</li>
         <li>One Favourites list and one Continue watching for every playlist and media server you use</li>
         <li>Parental controls: a PIN and backup word, locks by rating, by category or by channel, and you choose how long an unlock lasts</li>
         <li>Add or edit a playlist from your phone: scan the QR code on the TV and type the login there. Your passwords are never sent to the phone</li>
         <li>Search the TV guide: programmes on now and later, then watch or record in one press</li>
         <li>Sort channels by the playlist's order, A–Z or your own order, and give channels your own numbers</li>
-        <li>Show channels by name, by logo or both, and pick the text size that suits your TV</li>
+        <li>Show channels by name, by logo or both, with wide channel names if you want them, and pick the text size that suits your TV</li>
+        <li>Mark the playing channel with ▶ in the TV guide</li>
         <li>Sort movies and series by the playlist's order, A–Z or recently added</li>
         <li>Playlists and media servers update in the background, every 6, 12, 24 or 48 hours</li>
         <li>Channel and Page Up/Down move a whole screen at a time; hold Back in the guide for the other Back action, or go full screen on its own after a few minutes</li>
@@ -197,11 +206,12 @@
         <li>DRM channels: M3U channels protected with ClearKey or Widevine play too</li>
         <li>Recently watched channels, one press away</li>
         <li>An open-source guide, built in – if you want it. No more creating your own guides</li>
-        <li>The ability to choose the priority of EPGs: the open-source guide, your playlist's guide or EPG sources you add yourself. You decide</li>
+        <li>The ability to choose the priority of EPGs: the open-source guide, your playlist's guide or EPG sources you add yourself (typed on the TV or sent from your phone). Pick or remove the guide for any single channel</li>
         <li>Keep up to 14 days of guide, past and upcoming</li>
         <li>Plays HLS, DASH and MPEG-TS streams, with a custom user agent per playlist if your provider needs one</li>
-        <li>Subtitles on live TV, when the channel has them</li>
-        <li>Change channel with Up/Down or Left/Right, and step back through the channels you watched</li>
+        <li>Subtitles on live TV, including the CEA-608/708 closed captions US channels carry</li>
+        <li>Choose what each arrow key does while watching: next or previous channel, back through watched channels, the guide, categories and more</li>
+        <li>Audio sync, for all channels or saved per channel, and a choice of how long to buffer before playing</li>
         <li>Aspect ratio in the player: Auto, 16:9, 4:3 or Fill</li>
         <li>An on-screen clock, 12- or 24-hour and also while you watch, and an optional connection ping</li>
         <li>One-click updates, with a short “what's new” after each one</li>
@@ -277,7 +287,8 @@
         <div class="qa"><h3>Will a scheduled recording wake my box?</h3><p>Not always. A box in deep standby may miss the start, and the recording is marked "Missed". If the box wakes while the programme is still on, the rest is recorded.</p></div>
         <div class="qa"><h3>What can't it record?</h3><p>DASH and encrypted streams. Recordings are saved as they arrive (.ts files), not converted. There's no live pause and no series recording.</p></div>
         <div class="qa"><h3>Is it really free?</h3><p>Yes, with no ads, subscriptions or paid features. If you'd like to say thanks, there's an optional coffee link below.</p></div>
-        <div class="qa"><h3>What data does it collect?</h3><p>None. There are no accounts or analytics. The app only talks to your provider, to the guide and logo sources you choose, and to GitHub for open-source logos.</p></div>
+        <div class="qa"><h3>What data does it collect?</h3><p>None. There are no accounts or analytics. The app only talks to your provider, to the guide and logo sources you choose, to GitHub for open-source logos, and, while SportsHub is open, to ESPN's public score feeds.</p></div>
+        <div class="qa"><h3>How many channels can Multi-Watch show?</h3><p>Up to four. Each tile is its own stream, so you need as many connections as your provider allows. Some boxes can't decode four HD channels at once; a tile that can't play shows its error.</p></div>
       </div>
     </div>
   </section>
