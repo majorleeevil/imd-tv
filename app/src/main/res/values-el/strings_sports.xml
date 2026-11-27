@@ -71,6 +71,7 @@
     <string name="sports_region_europe">Ευρώπη</string>
     <string name="sports_region_international">Διεθνή</string>
     <string name="sports_sport_f1">Formula 1</string>
+    <string name="sports_sport_golf">Γκολφ</string>
     <string name="sports_f1_practice">Ελεύθερες δοκιμές %1$d</string>
     <string name="sports_f1_sprint_qualifying">Κατατακτήριες Sprint</string>
     <string name="sports_f1_sprint">Sprint</string>

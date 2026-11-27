@@ -74,6 +74,8 @@
     <string name="sports_region_europe">Europe</string>
     <string name="sports_region_international">International</string>
     <string name="sports_sport_f1">Formula 1</string>
+    <string name="sports_sport_golf">Golf</string>
+    <string name="sports_sport_mma">UFC (MMA)</string>
     <!-- F1 sessions. %1$d = 1, 2 or 3. -->
     <string name="sports_f1_practice">Practice %1$d</string>
     <string name="sports_f1_sprint_qualifying">Sprint qualifying</string>

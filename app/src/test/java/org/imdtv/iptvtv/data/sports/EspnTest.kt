@@ -214,4 +214,20 @@ class EspnTest {
         assertEquals("L", formResult("L", "0-1"))
         assertEquals("W", formResult("W", ""))
     }
+
+    @Test fun golfIsALeaderboardAndUfcACardOfFights() {
+        val golf = parseGolf(fx("scoreboard-golf-lpga.json"), leagueById("golf/lpga")!!).single()
+        val r = golf.race!!
+        assertEquals("CME Group Tour Championship", r.gp)
+        assertEquals(GameState.POST, golf.state)
+        assertEquals("Jeeno Thitikul", r.order.first().name)
+        assertEquals("-24", r.order.first().score)
+        assertEquals(0, golfMatch("Live Golf: CME Group Tour Championship", r))
+        assertEquals(1, golfMatch("LPGA Tour Golf highlights", r))
+        assertEquals(null, golfMatch("CME Group news", r))
+        val fights = parseFights(fx("scoreboard-ufc.json"), leagueById("mma/ufc")!!)
+        assertEquals(14, fights.size)
+        assertTrue(fights.all { it.home.name.isNotEmpty() && it.away.name.isNotEmpty() && it.home.logo != null })
+        assertEquals("UFC Fight Night: Adesanya vs Magomedov", fights.first().leagueName)
+    }
 }

@@ -71,6 +71,7 @@
     <string name="sports_region_europe">Europa</string>
     <string name="sports_region_international">Internacional</string>
     <string name="sports_sport_f1">Fórmula 1</string>
+    <string name="sports_sport_golf">Golfe</string>
     <string name="sports_f1_practice">Treino livre %1$d</string>
     <string name="sports_f1_sprint_qualifying">Qualificação sprint</string>
     <string name="sports_f1_sprint">Sprint</string>

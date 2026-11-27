@@ -182,8 +182,10 @@ class SportsViewModel(app: Application) : AndroidViewModel(app) {
         // Every name, the full one too: a common short one ("villa") can fill a cap the full one ("aston villa") isn't caught by.
         // F1: programmes naming Formula 1 and the place ("Formula 1: Qatar Grand Prix Qualifying"), scored by session.
         val race = g.race
-        val names = if (race != null) listOf("formula 1", "f1", "grand prix") else teamNames(g.home)
-        fun strength(text: String) = if (race != null) org.imdtv.iptvtv.data.sports.raceMatch(text, race) else gameMatch(text, g.home, g.away)
+        val golf = g.league.sport == org.imdtv.iptvtv.data.sports.Sport.GOLF
+        // Golf: programmes naming golf, the tournament's own first.
+        val names = when { golf -> listOf("golf") + race!!.place; race != null -> listOf("formula 1", "f1", "grand prix"); else -> teamNames(g.home) }
+        fun strength(text: String) = when { golf -> org.imdtv.iptvtv.data.sports.golfMatch(text, race!!); race != null -> org.imdtv.iptvtv.data.sports.raceMatch(text, race); else -> gameMatch(text, g.home, g.away) }
         for (q in names) {
             // From kick-off (not now), so earlier mentions of a common word ("Villa") can't use up the cap before the game.
             searchOrEmpty { c.search.guide(pid, strip, q, at, cap = 300, inDesc = true, startsBy = at + 10 * 60_000) }
@@ -266,9 +268,9 @@ class SportsViewModel(app: Application) : AndroidViewModel(app) {
     suspend fun pollMatch(g: Game) {
         match.value = null; matchFailed.value = false
         while (true) {
-            // F1 has no summary: the session comes back with its weekend.
+            // F1, golf and UFC have no summary: the session, tournament or fight comes back with its day.
             val m = runCatching {
-                if (g.race == null) espn.match(g)
+                if (g.race == null && g.league.sport != org.imdtv.iptvtv.data.sports.Sport.MMA) espn.match(g)
                 else espn.day(listOf(g.league), java.time.Instant.ofEpochMilli(g.start).atZone(java.time.ZoneId.systemDefault()).toLocalDate())
                     ?.let { f -> f.value.find { it.id == g.id }?.let { Fetched(org.imdtv.iptvtv.data.sports.Match(it, emptyList(), emptyList(), null), f.updatedAt, f.stale) } }
             }.getOrNull()

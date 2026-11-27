@@ -103,7 +103,7 @@ fun sportName(s: Sport) = stringResource(when (s) {
     Sport.FOOTBALL -> R.string.sports_sport_football; Sport.AMERICAN_FOOTBALL -> R.string.sports_sport_american_football
     Sport.BASKETBALL -> R.string.sports_sport_basketball; Sport.HOCKEY -> R.string.sports_sport_hockey
     Sport.RUGBY -> R.string.sports_sport_rugby; Sport.CRICKET -> R.string.sports_sport_cricket
-    Sport.F1 -> R.string.sports_sport_f1
+    Sport.F1 -> R.string.sports_sport_f1; Sport.GOLF -> R.string.sports_sport_golf; Sport.MMA -> R.string.sports_sport_mma
 })
 
 @Composable

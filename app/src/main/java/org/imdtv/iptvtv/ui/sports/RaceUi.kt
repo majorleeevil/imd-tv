@@ -48,8 +48,15 @@ fun sessionName(s: RaceSession): String = when (s) {
     RaceSession.RACE -> stringResource(R.string.sports_f1_race)
 }
 
+/** The session's name; golf's round ("Round 2 - In Progress") instead. */
 @Composable
-internal fun raceTitle(g: Game) = g.race!!.gp + " · " + sessionName(g.race.session)
+internal fun sessionName(r: org.imdtv.iptvtv.data.sports.Race): String = r.note ?: sessionName(r.session)
+
+/** "1. J. Thitikul -24": golf adds the to-par score. */
+private fun withScore(name: String, d: org.imdtv.iptvtv.data.sports.Driver) = d.score?.let { "$name $it" } ?: name
+
+@Composable
+internal fun raceTitle(g: Game) = g.race!!.gp + " · " + sessionName(g.race)
 
 /** The followed F1 teams' names ("racing:106893:Mercedes" → "Mercedes"). */
 internal fun followedF1Teams(favs: Collection<String>) = favs.filter { it.startsWith("racing:") }.map(::favouriteName)
@@ -60,7 +67,8 @@ internal fun followedF1Teams(favs: Collection<String>) = favs.filter { it.starts
  */
 internal fun followedDrivers(g: Game, favs: Collection<String>, teams: List<DriverTeam>): List<String> {
     val mine = followedF1Teams(favs)
-    if (mine.isEmpty()) return emptyList()
+    // Teams are matched by surname: only F1 has them (a golfer could share a driver's name).
+    if (mine.isEmpty() || g.league.sport != org.imdtv.iptvtv.data.sports.Sport.F1) return emptyList()
     val order = g.race?.order.orEmpty()
     if (g.state == GameState.PRE || order.isEmpty())
         return teams.filter { t -> mine.any { sameTeam(it, t.team) } }.map { it.name }
@@ -72,7 +80,7 @@ internal fun followedDrivers(g: Game, favs: Collection<String>, teams: List<Driv
 internal fun RaceCardLines(g: Game, fg: Color) {
     val r = g.race!!
     Text(r.gp, fontSize = 12.sp, color = fg, maxLines = 1, overflow = TextOverflow.Ellipsis)
-    Text(sessionName(r.session) + (r.order.firstOrNull()?.takeIf { g.state != GameState.PRE }?.let { " · ${it.short}" } ?: ""),
+    Text(sessionName(r) + (r.order.firstOrNull()?.takeIf { g.state != GameState.PRE }?.let { " · " + withScore(it.short, it) } ?: ""),
         fontSize = 12.sp, color = fg, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
 }
 
@@ -87,9 +95,9 @@ internal fun RaceScoreCard(g: Game, modifier: Modifier) {
             Text(g.leagueName, fontSize = 11.sp, color = colors.muted, maxLines = 1, modifier = Modifier.padding(start = 6.dp))
         }
         Text(r.gp, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White, maxLines = 1, modifier = Modifier.padding(top = 8.dp))
-        Text(sessionName(r.session), fontSize = 13.sp, color = Color.White)
+        Text(sessionName(r), fontSize = 13.sp, color = Color.White, maxLines = 1)
         if (g.state == GameState.PRE) Text(clockTime(g.start), fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.White, modifier = Modifier.padding(top = 6.dp))
-        else r.order.take(3).forEachIndexed { i, d -> Text("${i + 1}. ${d.name}", fontSize = 12.sp, color = Color.White, maxLines = 1) }
+        else r.order.take(3).forEachIndexed { i, d -> Text(withScore("${i + 1}. ${d.name}", d), fontSize = 12.sp, color = Color.White, maxLines = 1) }
         if (g.state != GameState.PRE) Text(g.detail, fontSize = 11.sp, color = if (g.state == GameState.IN) colors.accent else colors.muted, modifier = Modifier.padding(top = 6.dp))
     }
 }
@@ -104,7 +112,7 @@ internal fun RacePanel(g: Game, teams: List<DriverTeam>, favs: Collection<String
         Column(Modifier.width(240.dp).fillMaxHeight().panel().padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Badge(g.leagueLogo, 44.dp)
             Text(r.gp, fontSize = 17.sp, fontWeight = FontWeight.Bold, color = Color.White, modifier = Modifier.padding(top = 6.dp))
-            Text(sessionName(r.session), fontSize = 14.sp, color = Color.White)
+            Text(sessionName(r), fontSize = 14.sp, color = Color.White)
             Text(if (g.state == GameState.PRE) dayDate(g.start) + " " + clockTime(g.start) else g.detail, fontSize = 13.sp, fontWeight = FontWeight.Bold,
                 color = if (g.state == GameState.IN) colors.accent else colors.muted)
             staleSince?.let { Text(stringResource(R.string.sports_updated, clockTime(it)), fontSize = 10.sp, color = colors.muted) }
@@ -114,7 +122,7 @@ internal fun RacePanel(g: Game, teams: List<DriverTeam>, favs: Collection<String
             if (r.order.isEmpty() || g.state == GameState.PRE) item {
                 Text(stringResource(R.string.sports_f1_no_results), fontSize = 12.sp, color = colors.muted)
             } else itemsIndexed(r.order, key = { _, d -> d.id }) { i, d ->
-                val team = driverTeam(d, teams)
+                val team = if (g.league.sport == org.imdtv.iptvtv.data.sports.Sport.F1) driverTeam(d, teams) else null
                 val fav = team != null && mine.any { sameTeam(it, team.team) }
                 val fg = if (fav) colors.accent else Color.White
                 Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(Color(0x0DFFFFFF)).padding(horizontal = 10.dp, vertical = 4.dp),
@@ -123,7 +131,7 @@ internal fun RacePanel(g: Game, teams: List<DriverTeam>, favs: Collection<String
                     Badge(d.flag, 16.dp)
                     Text(d.name, fontSize = 12.sp, color = fg, fontWeight = if (fav) FontWeight.Bold else FontWeight.Normal, maxLines = 1,
                         modifier = Modifier.padding(start = 8.dp).weight(1f))
-                    Text(team?.team.orEmpty(), fontSize = 11.sp, color = colors.muted, maxLines = 1)
+                    Text(team?.team ?: d.score.orEmpty(), fontSize = 11.sp, color = if (team == null) Color.White else colors.muted, maxLines = 1)
                     Spacer(Modifier.width(4.dp))
                 }
             }
